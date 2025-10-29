@@ -1,21 +1,20 @@
 <?php
 
+use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\TimerController;
-use App\Http\Controllers\GifController;
 
 Route::get('/', function () {
     return view('welcome');
 });
 
-// Auth routes will be provided by Laravel Breeze once installed
+Route::get('/dashboard', function () {
+    return view('dashboard');
+})->middleware(['auth', 'verified'])->name('dashboard');
 
-// Dashboard & timers (authenticated)
-Route::middleware(['auth'])->group(function () {
-    Route::get('/dashboard', [TimerController::class, 'index'])->name('dashboard');
-    Route::resource('timers', TimerController::class)->except(['index', 'show']);
-    Route::get('timers/{timer}/preview', [TimerController::class, 'preview'])->name('timers.preview');
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-// Public GIF endpoint
-Route::get('/timers/{user_id}/{filename}.gif', [GifController::class, 'show'])->where('filename', '.*');
+require __DIR__.'/auth.php';
