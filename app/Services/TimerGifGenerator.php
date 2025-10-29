@@ -29,11 +29,12 @@ class TimerGifGenerator
                 // Timer expired - show only "Time's Up" frame
                 $durationForGif = 0;
             } else {
-                // Countdown from current remaining time (up to 5 minutes for reasonable file size)
-                $durationForGif = $remaining;//min(300, max(1, $remaining));
+                // For fixed-date timers, limit GIF to 5 minutes max for performance
+                // The GIF will regenerate when accessed to show updated remaining time
+                $durationForGif = min(300, max(1, $remaining));
             }
         } else {
-            // Reload-based: use full duration
+            // Reload-based: use full duration (always shows the same countdown)
             $durationForGif = max(1, $remaining);
         }
 
@@ -65,11 +66,12 @@ class TimerGifGenerator
                 // Timer expired - show only "Time's Up" frame
                 $durationForGif = 0;
             } else {
-                // Countdown from current remaining time (up to 5 minutes for reasonable file size)
-                $durationForGif = $remaining;//min(300, max(1, $remaining));
+                // For fixed-date timers, limit GIF to 5 minutes max for performance
+                // The GIF will regenerate when accessed to show updated remaining time
+                $durationForGif = min(300, max(1, $remaining));
             }
         } else {
-            // Reload-based: use full duration
+            // Reload-based: use full duration (always shows the same countdown)
             $durationForGif = max(1, $remaining);
         }
         $skin = $this->loadSkin($timer->skin);
