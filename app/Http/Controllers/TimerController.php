@@ -13,13 +13,13 @@ class TimerController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth');
+        // $this->middleware('auth');
     }
 
     public function index()
     {
         $timers = Timer::where('user_id', Auth::id())->latest()->paginate(12);
-        return view('dashboard.index', compact('timers'));
+        return view('dashboard', compact('timers'));
     }
 
     public function create()
