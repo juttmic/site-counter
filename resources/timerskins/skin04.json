@@ -1,0 +1,11 @@
+{
+  "width": 420,
+  "height": 160,
+  "background": "#1E1E1E",
+  "textColor": "#90EE90",
+  "accentColor": "#32CD32",
+  "fontSize": 40,
+  "fontPath": "resources/fonts/DejaVuSans.ttf"
+}
+
+

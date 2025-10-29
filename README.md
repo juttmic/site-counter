@@ -57,3 +57,49 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+## TimerGIF App - Setup
+
+1) Create and configure MySQL database
+- Create a database (e.g., `timergif`).
+- Copy `.env.example` to `.env` and set `DB_*` and `APP_URL` (e.g., `http://localhost`).
+
+2) Install dependencies and Breeze (Auth)
+```bash
+composer install
+php artisan key:generate
+
+# Install Laravel Breeze for auth scaffolding (email + password)
+composer require laravel/breeze --dev
+php artisan breeze:install blade --silent
+npm install --silent
+npm run build
+```
+
+3) Migrate and seed
+```bash
+php artisan migrate --force
+php artisan db:seed --force
+```
+
+Seeded user:
+- Email: `demo@example.com`
+- Password: `password`
+
+4) Ensure GD or Imagick is enabled
+- PHP GD is required (Imagick is optional; if present, GIFs are generated via Imagick for best quality).
+
+5) Run the app
+```bash
+php artisan serve
+```
+
+6) Usage
+- Login at `/login` using the seeded credentials.
+- Go to `Dashboard` and create timers.
+- Public GIFs are served at `/timers/{user_id}/{filename}.gif`.
+
+7) Files storage
+- GIFs are saved to `public/timers/{user_id}/` and are publicly accessible.
+- `.gitignore` excludes `public/timers`.
+
