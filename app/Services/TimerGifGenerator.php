@@ -98,12 +98,17 @@ class TimerGifGenerator
     {
         $frames = [];
         
-        // For very long durations, create frames every few seconds to keep file size reasonable
-        $step = $seconds > 60 ? max(1, intval($seconds / 60)) : 1;
+        // For durations up to 5 minutes (300s), show every second
+        // For longer durations, show every 5 seconds to keep file size reasonable
+        $step = $seconds > 1;//300 ? 5 : 1;
         
-        for ($i = $seconds; $i >= 0; $i -= $step) {
+        // Generate frames counting down from seconds to 0
+        for ($i = $seconds; $i > 0; $i -= $step) {
             $frames[] = $this->renderPngFrame($i, $skin, $customText, $textPosition);
         }
+        
+        // Always include the 0 second frame
+        $frames[] = $this->renderPngFrame(0, $skin, $customText, $textPosition);
         
         // Always include the final "Time's Up" frame
         $frames[] = $this->renderFinalFrame($skin, $customText, $textPosition);
@@ -219,10 +224,11 @@ class TimerGifGenerator
 
     private function encodeAnimatedGif(array $pngFrames, string $outputPath, int $totalSeconds): void
     {
-        // Calculate frame delay based on total duration and number of frames
-        $frameCount = count($pngFrames);
-        $step = $totalSeconds > 60 ? max(1, intval($totalSeconds / 60)) : 1;
-        $frameDelay = max(1, intval(100 * $step)); // Convert to centiseconds
+        // Calculate frame delay based on step size (must match buildFrames logic)
+        // For durations up to 5 minutes (300s), show every second
+        // For longer durations, show every 5 seconds
+        $step = 1;//$totalSeconds > 300 ? 3 : 1;
+        $frameDelay = 100 * $step; // Convert to centiseconds (100 = 1 second)
         
         // Try Imagick first if available
         if (class_exists(\Imagick::class)) {
