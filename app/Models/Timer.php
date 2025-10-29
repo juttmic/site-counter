@@ -61,6 +61,8 @@ class Timer extends Model
         }
 
         if ($this->isReloadBased() && $this->duration_seconds) {
+            // For reload-based timers, always return the full duration
+            // The GIF will show the countdown from this duration
             return max(0, (int) $this->duration_seconds);
         }
 

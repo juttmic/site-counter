@@ -34,14 +34,16 @@ class TimerSeeder extends Seeder
         );
 
         $timer2 = Timer::firstOrCreate(
-            ['user_id' => $user->id, 'title' => '10-min Promo'],
+            ['user_id' => $user->id, 'title' => '100s Test Timer'],
             [
                 'timer_type' => 'reload_based',
                 'target_datetime' => null,
-                'duration_seconds' => 600,
-                'skin' => 'skin03',
-                'text_position' => 'bottom',
-                'custom_text' => 'Limited Time Offer',
+                'duration_seconds' => 100,
+                'width' => 500,
+                'height' => 200,
+                'skin' => 'skin06',
+                'text_position' => 'top',
+                'custom_text' => 'Countdown Test',
                 'gif_url' => '',
                 'cache_key' => null,
                 'status' => 'active',

@@ -21,7 +21,12 @@ class TimerGifGenerator
         $fullPath = $directory . DIRECTORY_SEPARATOR . $filename;
 
         $remaining = $timer->remainingSecondsFromNow();
-        $durationForGif = min(60, max(1, $remaining));
+        // For reload-based timers, use the full duration; for fixed-date, limit to 60s for performance
+        if ($timer->isReloadBased()) {
+            $durationForGif = max(1, $remaining);
+        } else {
+            $durationForGif = min(60, max(1, $remaining));
+        }
 
         $skin = $this->loadSkin($timer->skin);
         // Override skin size with timer-specific dimensions if provided
@@ -43,7 +48,12 @@ class TimerGifGenerator
     public function regenerateForCache(Timer $timer, string $targetPath): void
     {
         $remaining = $timer->remainingSecondsFromNow();
-        $durationForGif = min(60, max(1, $remaining));
+        // For reload-based timers, use the full duration; for fixed-date, limit to 60s for performance
+        if ($timer->isReloadBased()) {
+            $durationForGif = max(1, $remaining);
+        } else {
+            $durationForGif = min(60, max(1, $remaining));
+        }
         $skin = $this->loadSkin($timer->skin);
         $frames = $this->buildFrames($durationForGif, $skin, $timer->custom_text, $timer->text_position);
         $this->encodeAnimatedGif($frames, $targetPath);
