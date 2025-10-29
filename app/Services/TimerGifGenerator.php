@@ -167,22 +167,29 @@ class TimerGifGenerator
         // Apply skin style
         $this->applySkinStyle($im, $skin, $width, $height, $bgCol, $textCol, $accentCol, $secondsRemaining);
 
-        $timeText = $this->formatSeconds($secondsRemaining);
+        // Get font variables for both timer text and custom text rendering
         $font = $skin['fontPath'];
         $fontSize = (int) $skin['fontSize'];
 
-        if (is_file($font)) {
-            $centerY = (int) ($height / 2 + $fontSize / 2);
-            $centerX = (int) ($width / 2 - $this->textBoxWidth($timeText, $font, $fontSize) / 2);
-            imagettftext($im, $fontSize, 0, $centerX, $centerY, $textCol, $font, $timeText);
+        // Special rendering for clean white timer with labels
+        if (($skin['style'] ?? '') === 'clean_white_timer') {
+            $this->renderCleanWhiteTimerText($im, $secondsRemaining, $skin, $width, $height, $textCol, $accentCol);
         } else {
-            // Fallback to built-in font
-            $builtIn = 5; // GD built-in font size
-            $textWidth = imagefontwidth($builtIn) * strlen($timeText);
-            $textHeight = imagefontheight($builtIn);
-            $x = (int) (($width - $textWidth) / 2);
-            $y = (int) (($height - $textHeight) / 2);
-            imagestring($im, $builtIn, $x, $y, $timeText, $textCol);
+            $timeText = $this->formatSeconds($secondsRemaining);
+
+            if (is_file($font)) {
+                $centerY = (int) ($height / 2 + $fontSize / 2);
+                $centerX = (int) ($width / 2 - $this->textBoxWidth($timeText, $font, $fontSize) / 2);
+                imagettftext($im, $fontSize, 0, $centerX, $centerY, $textCol, $font, $timeText);
+            } else {
+                // Fallback to built-in font
+                $builtIn = 5; // GD built-in font size
+                $textWidth = imagefontwidth($builtIn) * strlen($timeText);
+                $textHeight = imagefontheight($builtIn);
+                $x = (int) (($width - $textWidth) / 2);
+                $y = (int) (($height - $textHeight) / 2);
+                imagestring($im, $builtIn, $x, $y, $timeText, $textCol);
+            }
         }
 
         if ($customText && $textPosition !== 'none') {
@@ -249,6 +256,9 @@ class TimerGifGenerator
                 break;
             case 'classic_digital':
                 $this->drawClassicDigital($im, $width, $height, $bgCol, $textCol);
+                break;
+            case 'clean_white_timer':
+                $this->drawCleanWhiteTimer($im, $width, $height, $bgCol, $textCol, $accentCol);
                 break;
             default:
                 // Default rounded rectangle
@@ -398,6 +408,104 @@ class TimerGifGenerator
         for ($i = 1; $i < 4; $i++) {
             $x = ($width / 4) * $i;
             imageline($im, $x, 0, $x, $height, $textCol);
+        }
+    }
+
+    private function drawCleanWhiteTimer($im, int $width, int $height, int $bgCol, int $textCol, int $accentCol): void
+    {
+        // White background
+        imagefilledrectangle($im, 0, 0, $width, $height, $bgCol);
+        
+        // Thin black border
+        imagerectangle($im, 0, 0, $width - 1, $height - 1, $textCol);
+    }
+
+    private function renderCleanWhiteTimerText($im, int $secondsRemaining, array $skin, int $width, int $height, int $textCol, int $accentCol): void
+    {
+        $font = $skin['fontPath'];
+        $fontSize = (int) $skin['fontSize'];
+        $labelSize = max(12, (int) round($fontSize * 0.3)); // Smaller font for labels
+        
+        // Calculate time components
+        $days = intdiv($secondsRemaining, 86400);
+        $hours = intdiv($secondsRemaining % 86400, 3600);
+        $minutes = intdiv($secondsRemaining % 3600, 60);
+        $seconds = $secondsRemaining % 60;
+        
+        // Time units and labels
+        $timeUnits = [
+            ['value' => $days, 'label' => 'D'],
+            ['value' => $hours, 'label' => 'H'],
+            ['value' => $minutes, 'label' => 'M'],
+            ['value' => $seconds, 'label' => 'S']
+        ];
+        
+        // Calculate positions
+        $unitWidth = $width / 4;
+        $centerY = $height / 2;
+        
+        if (is_file($font)) {
+            for ($i = 0; $i < 4; $i++) {
+                $unit = $timeUnits[$i];
+                $unitX = $unitWidth * $i + $unitWidth / 2;
+                
+                // Format number with leading zero
+                $numberText = sprintf('%02d', $unit['value']);
+                
+                // Calculate text position
+                $numberWidth = $this->textBoxWidth($numberText, $font, $fontSize);
+                $numberX = $unitX - $numberWidth / 2;
+                $numberY = $centerY - 10; // Slightly above center
+                
+                // Draw number
+                imagettftext($im, $fontSize, 0, $numberX, $numberY, $textCol, $font, $numberText);
+                
+                // Draw label below
+                $labelWidth = $this->textBoxWidth($unit['label'], $font, $labelSize);
+                $labelX = $unitX - $labelWidth / 2;
+                $labelY = $centerY + 20; // Below the number
+                
+                imagettftext($im, $labelSize, 0, $labelX, $labelY, $accentCol, $font, $unit['label']);
+                
+                // Draw colon separator (except for last unit)
+                if ($i < 3) {
+                    $colonX = $unitX + $unitWidth / 2 - 5;
+                    $colonY = $centerY - 5;
+                    imagettftext($im, $fontSize, 0, $colonX, $colonY, $textCol, $font, ':');
+                }
+            }
+        } else {
+            // Fallback to built-in font
+            $builtIn = 5;
+            $labelBuiltIn = 3;
+            
+            for ($i = 0; $i < 4; $i++) {
+                $unit = $timeUnits[$i];
+                $unitX = $unitWidth * $i + $unitWidth / 2;
+                
+                $numberText = sprintf('%02d', $unit['value']);
+                $numberWidth = imagefontwidth($builtIn) * strlen($numberText);
+                $numberHeight = imagefontheight($builtIn);
+                $numberX = $unitX - $numberWidth / 2;
+                $numberY = $centerY - $numberHeight / 2 - 5;
+                
+                imagestring($im, $builtIn, $numberX, $numberY, $numberText, $textCol);
+                
+                // Draw label
+                $labelWidth = imagefontwidth($labelBuiltIn) * strlen($unit['label']);
+                $labelHeight = imagefontheight($labelBuiltIn);
+                $labelX = $unitX - $labelWidth / 2;
+                $labelY = $centerY + 10;
+                
+                imagestring($im, $labelBuiltIn, $labelX, $labelY, $unit['label'], $accentCol);
+                
+                // Draw colon
+                if ($i < 3) {
+                    $colonX = $unitX + $unitWidth / 2 - 3;
+                    $colonY = $centerY - 3;
+                    imagestring($im, $builtIn, $colonX, $colonY, ':', $textCol);
+                }
+            }
         }
     }
 

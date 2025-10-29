@@ -1,11 +1,20 @@
 {
+  "name": "Clean White Timer",
   "width": 400,
   "height": 160,
-  "background": "#121212",
-  "textColor": "#00E5FF",
-  "accentColor": "#00E5FF",
-  "fontSize": 42,
-  "fontPath": "resources/fonts/DejaVuSans.ttf"
+  "background": "#ffffff",
+  "textColor": "#000000",
+  "accentColor": "#ff0000",
+  "fontSize": 48,
+  "fontPath": "resources/fonts/DejaVuSans.ttf",
+  "style": "clean_white_timer",
+  "showDays": true,
+  "showHours": true,
+  "showMinutes": true,
+  "showSeconds": true,
+  "separator": " : ",
+  "layout": "horizontal",
+  "animation": "none"
 }
 
 
