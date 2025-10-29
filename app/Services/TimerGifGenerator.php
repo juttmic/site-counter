@@ -39,7 +39,7 @@ class TimerGifGenerator
 
         $frames = $this->buildFrames($durationForGif, $skin, $timer->custom_text, $timer->text_position);
 
-        $this->encodeAnimatedGif($frames, $fullPath);
+        $this->encodeAnimatedGif($frames, $fullPath, $durationForGif);
 
         $url = "/timers/{$userId}/{$filename}";
         return $url;
@@ -56,7 +56,7 @@ class TimerGifGenerator
         }
         $skin = $this->loadSkin($timer->skin);
         $frames = $this->buildFrames($durationForGif, $skin, $timer->custom_text, $timer->text_position);
-        $this->encodeAnimatedGif($frames, $targetPath);
+        $this->encodeAnimatedGif($frames, $targetPath, $durationForGif);
     }
 
     private function loadSkin(string $skinName): array
@@ -97,12 +97,17 @@ class TimerGifGenerator
     private function buildFrames(int $seconds, array $skin, ?string $customText, string $textPosition): array
     {
         $frames = [];
-        for ($i = $seconds; $i >= 0; $i--) {
+        
+        // For very long durations, create frames every few seconds to keep file size reasonable
+        $step = $seconds > 60 ? max(1, intval($seconds / 60)) : 1;
+        
+        for ($i = $seconds; $i >= 0; $i -= $step) {
             $frames[] = $this->renderPngFrame($i, $skin, $customText, $textPosition);
         }
-        if ($seconds === 0) {
-            $frames[] = $this->renderFinalFrame($skin, $customText, $textPosition);
-        }
+        
+        // Always include the final "Time's Up" frame
+        $frames[] = $this->renderFinalFrame($skin, $customText, $textPosition);
+        
         return $frames;
     }
 
@@ -212,8 +217,13 @@ class TimerGifGenerator
         return $pngData;
     }
 
-    private function encodeAnimatedGif(array $pngFrames, string $outputPath): void
+    private function encodeAnimatedGif(array $pngFrames, string $outputPath, int $totalSeconds): void
     {
+        // Calculate frame delay based on total duration and number of frames
+        $frameCount = count($pngFrames);
+        $step = $totalSeconds > 60 ? max(1, intval($totalSeconds / 60)) : 1;
+        $frameDelay = max(1, intval(100 * $step)); // Convert to centiseconds
+        
         // Try Imagick first if available
         if (class_exists(\Imagick::class)) {
             $imagick = new \Imagick();
@@ -222,17 +232,21 @@ class TimerGifGenerator
                 $frameImagick = new \Imagick();
                 $frameImagick->readImageBlob($frame);
                 $frameImagick->setImageFormat('gif');
-                $frameImagick->setImageDelay(100); // 10 fps -> 0.1s per frame
+                $frameImagick->setImageDelay($frameDelay); // centiseconds per frame
+                $frameImagick->setImageDispose(\Imagick::DISPOSE_BACKGROUND);
                 $imagick->addImage($frameImagick);
             }
             $imagick = $imagick->coalesceImages();
+            foreach ($imagick as $img) {
+                $img->setImageIterations(0); // loop forever
+            }
             $imagick->writeImages($outputPath, true);
             return;
         }
 
         // Fallback to pure-PHP encoder
         $encoder = new GifCreator();
-        $durations = array_fill(0, count($pngFrames), 10); // 10 = 0.1s per frame
+        $durations = array_fill(0, count($pngFrames), $frameDelay);
         $encoder->create($pngFrames, $durations, 0);
         File::put($outputPath, $encoder->getGif());
     }
