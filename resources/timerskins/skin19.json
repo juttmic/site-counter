@@ -1,0 +1,18 @@
+{
+  "name": "Segmented Digit Timer",
+  "width": 400,
+  "height": 160,
+  "fontSize": 36,
+  "background": "#FFFFFF",
+  "textColor": "#2196F3",
+  "accentColor": "#2196F3",
+  "fontPath": "resources/fonts/DejaVuSans.ttf",
+  "style": "segmented_digit",
+  "showDays": true,
+  "showHours": true,
+  "showMinutes": true,
+  "showSeconds": true,
+  "separator": ":",
+  "layout": "horizontal",
+  "animation": "none"
+}

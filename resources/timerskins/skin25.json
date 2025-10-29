@@ -1,0 +1,18 @@
+{
+  "name": "Classic Digital Timer",
+  "width": 400,
+  "height": 160,
+  "fontSize": 36,
+  "background": "#000000",
+  "textColor": "#00FF00",
+  "accentColor": "#00FF00",
+  "fontPath": "resources/fonts/DejaVuSans.ttf",
+  "style": "classic_digital",
+  "showDays": true,
+  "showHours": true,
+  "showMinutes": true,
+  "showSeconds": true,
+  "separator": ":",
+  "layout": "horizontal",
+  "animation": "digital_flicker"
+}

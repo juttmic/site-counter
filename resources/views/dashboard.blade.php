@@ -24,11 +24,18 @@
                                         <br>Skin: {{ $timer->skin }}
                                         <br>Status: <span class="px-2 py-0.5 rounded {{ $timer->status==='active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">{{ $timer->status }}</span>
                                     </div>
-                                    @if($timer->gif_url)
-                                        <div class="mt-3">
+                                    <div class="mt-3">
+                                        @if($timer->gif_url)
                                             <img src="{{ url($timer->gif_url) }}" alt="preview" class="border w-full">
-                                        </div>
-                                    @endif
+                                        @else
+                                            <div class="border w-full h-32 bg-gray-100 flex items-center justify-center text-gray-500">
+                                                <div class="text-center">
+                                                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-2"></div>
+                                                    <div class="text-sm">Generating GIF...</div>
+                                                </div>
+                                            </div>
+                                        @endif
+                                    </div>
                                     <div class="mt-3 flex gap-2">
                                         <a class="px-3 py-1 border rounded" href="{{ route('timers.preview', $timer) }}">Preview</a>
                                         <a class="px-3 py-1 border rounded bg-indigo-600 text-white" href="{{ route('timers.edit', $timer) }}">Edit</a>

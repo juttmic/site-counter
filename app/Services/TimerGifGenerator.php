@@ -151,8 +151,11 @@ class TimerGifGenerator
 
         $bgCol = imagecolorallocate($im, $br, $bg, $bb);
         $textCol = imagecolorallocate($im, $tr, $tg, $tb);
-        // Rounded background for nicer skins
-        $this->drawRoundedRect($im, 0, 0, $width, $height, 12, $bgCol);
+        [$ar, $ag, $ab] = $this->hexToRgb($skin['accentColor']);
+        $accentCol = imagecolorallocate($im, $ar, $ag, $ab);
+        
+        // Apply skin style
+        $this->applySkinStyle($im, $skin, $width, $height, $bgCol, $textCol, $accentCol, $secondsRemaining);
 
         $timeText = $this->formatSeconds($secondsRemaining);
         $font = $skin['fontPath'];
@@ -193,6 +196,244 @@ class TimerGifGenerator
         $pngData = ob_get_clean();
         imagedestroy($im);
         return $pngData;
+    }
+
+    private function applySkinStyle($im, array $skin, int $width, int $height, int $bgCol, int $textCol, int $accentCol, int $secondsRemaining): void
+    {
+        $style = $skin['style'] ?? 'default';
+        
+        switch ($style) {
+            case 'circular_progress':
+                $this->drawCircularProgress($im, $width, $height, $bgCol, $accentCol, $secondsRemaining);
+                break;
+            case 'squared_outline':
+                $this->drawSquaredOutline($im, $width, $height, $bgCol, $textCol);
+                break;
+            case 'flip_clock':
+            case 'flip_clock_white':
+                $this->drawFlipClock($im, $width, $height, $bgCol, $textCol);
+                break;
+            case 'solid_circular':
+                $this->drawSolidCircular($im, $width, $height, $bgCol, $accentCol);
+                break;
+            case 'rounded_square_outline':
+                $this->drawRoundedSquareOutline($im, $width, $height, $bgCol, $accentCol);
+                break;
+            case 'segmented_digit':
+                $this->drawSegmentedDigit($im, $width, $height, $bgCol, $accentCol);
+                break;
+            case 'dotted_circular_progress':
+                $this->drawDottedCircularProgress($im, $width, $height, $bgCol, $accentCol, $secondsRemaining);
+                break;
+            case 'solid_blue_background':
+                $this->drawSolidBlueBackground($im, $width, $height, $accentCol);
+                break;
+            case 'dashed_circular_progress':
+                $this->drawDashedCircularProgress($im, $width, $height, $bgCol, $accentCol, $secondsRemaining);
+                break;
+            case 'gradient_circular':
+                $this->drawGradientCircular($im, $width, $height, $bgCol, $accentCol, $secondsRemaining);
+                break;
+            case 'neon_glow':
+                $this->drawNeonGlow($im, $width, $height, $bgCol, $textCol, $accentCol);
+                break;
+            case 'classic_digital':
+                $this->drawClassicDigital($im, $width, $height, $bgCol, $textCol);
+                break;
+            default:
+                // Default rounded rectangle
+                $this->drawRoundedRect($im, 0, 0, $width, $height, 12, $bgCol);
+                break;
+        }
+    }
+
+    private function drawCircularProgress($im, int $width, int $height, int $bgCol, int $accentCol, int $secondsRemaining): void
+    {
+        // Draw circular progress indicators for each time unit
+        $unitWidth = $width / 4;
+        $centerY = $height / 2;
+        $radius = min($unitWidth / 3, $height / 4);
+        
+        for ($i = 0; $i < 4; $i++) {
+            $centerX = $unitWidth * $i + $unitWidth / 2;
+            $this->drawCircle($im, $centerX, $centerY, $radius, $bgCol);
+            $this->drawCircle($im, $centerX, $centerY, $radius, $accentCol, false);
+        }
+    }
+
+    private function drawSquaredOutline($im, int $width, int $height, int $bgCol, int $textCol): void
+    {
+        $unitWidth = $width / 4;
+        for ($i = 0; $i < 4; $i++) {
+            $x = $unitWidth * $i + 5;
+            $y = 5;
+            $w = $unitWidth - 10;
+            $h = $height - 10;
+            imagerectangle($im, $x, $y, $x + $w, $y + $h, $textCol);
+        }
+    }
+
+    private function drawFlipClock($im, int $width, int $height, int $bgCol, int $textCol): void
+    {
+        $unitWidth = $width / 4;
+        for ($i = 0; $i < 4; $i++) {
+            $x = $unitWidth * $i + 5;
+            $y = 5;
+            $w = $unitWidth - 10;
+            $h = $height - 10;
+            imagefilledrectangle($im, $x, $y, $x + $w, $y + $h, $bgCol);
+            imagerectangle($im, $x, $y, $x + $w, $y + $h, $textCol);
+        }
+    }
+
+    private function drawSolidCircular($im, int $width, int $height, int $bgCol, int $accentCol): void
+    {
+        $unitWidth = $width / 4;
+        $centerY = $height / 2;
+        $radius = min($unitWidth / 3, $height / 4);
+        
+        for ($i = 0; $i < 4; $i++) {
+            $centerX = $unitWidth * $i + $unitWidth / 2;
+            $this->drawCircle($im, $centerX, $centerY, $radius, $accentCol);
+        }
+    }
+
+    private function drawRoundedSquareOutline($im, int $width, int $height, int $bgCol, int $accentCol): void
+    {
+        $unitWidth = $width / 4;
+        for ($i = 0; $i < 4; $i++) {
+            $x = $unitWidth * $i + 5;
+            $y = 5;
+            $w = $unitWidth - 10;
+            $h = $height - 10;
+            $this->drawRoundedRect($im, $x, $y, $w, $h, 8, $bgCol);
+            $this->drawRoundedRect($im, $x, $y, $w, $h, 8, $accentCol, false);
+        }
+    }
+
+    private function drawSegmentedDigit($im, int $width, int $height, int $bgCol, int $accentCol): void
+    {
+        $unitWidth = $width / 4;
+        for ($i = 0; $i < 4; $i++) {
+            $x = $unitWidth * $i + 5;
+            $y = 5;
+            $w = $unitWidth - 10;
+            $h = $height - 10;
+            // Draw segmented digit blocks
+            $blockWidth = $w / 2;
+            $blockHeight = $h / 2;
+            imagefilledrectangle($im, $x, $y, $x + $blockWidth, $y + $blockHeight, $accentCol);
+            imagefilledrectangle($im, $x + $blockWidth, $y, $x + $w, $y + $blockHeight, $accentCol);
+            imagefilledrectangle($im, $x, $y + $blockHeight, $x + $blockWidth, $y + $h, $accentCol);
+            imagefilledrectangle($im, $x + $blockWidth, $y + $blockHeight, $x + $w, $y + $h, $accentCol);
+        }
+    }
+
+    private function drawDottedCircularProgress($im, int $width, int $height, int $bgCol, int $accentCol, int $secondsRemaining): void
+    {
+        $unitWidth = $width / 4;
+        $centerY = $height / 2;
+        $radius = min($unitWidth / 3, $height / 4);
+        
+        for ($i = 0; $i < 4; $i++) {
+            $centerX = $unitWidth * $i + $unitWidth / 2;
+            $this->drawDottedCircle($im, $centerX, $centerY, $radius, $accentCol);
+        }
+    }
+
+    private function drawSolidBlueBackground($im, int $width, int $height, int $accentCol): void
+    {
+        imagefilledrectangle($im, 0, 0, $width, $height, $accentCol);
+    }
+
+    private function drawDashedCircularProgress($im, int $width, int $height, int $bgCol, int $accentCol, int $secondsRemaining): void
+    {
+        $unitWidth = $width / 4;
+        $centerY = $height / 2;
+        $radius = min($unitWidth / 3, $height / 4);
+        
+        for ($i = 0; $i < 4; $i++) {
+            $centerX = $unitWidth * $i + $unitWidth / 2;
+            $this->drawDashedCircle($im, $centerX, $centerY, $radius, $accentCol);
+        }
+    }
+
+    private function drawGradientCircular($im, int $width, int $height, int $bgCol, int $accentCol, int $secondsRemaining): void
+    {
+        $unitWidth = $width / 4;
+        $centerY = $height / 2;
+        $radius = min($unitWidth / 3, $height / 4);
+        
+        for ($i = 0; $i < 4; $i++) {
+            $centerX = $unitWidth * $i + $unitWidth / 2;
+            $this->drawGradientCircle($im, $centerX, $centerY, $radius, $bgCol, $accentCol);
+        }
+    }
+
+    private function drawNeonGlow($im, int $width, int $height, int $bgCol, int $textCol, int $accentCol): void
+    {
+        // Dark background with neon glow effect
+        imagefilledrectangle($im, 0, 0, $width, $height, $bgCol);
+        // Add glow effect around borders
+        for ($i = 1; $i <= 3; $i++) {
+            imagerectangle($im, $i, $i, $width - $i, $height - $i, $accentCol);
+        }
+    }
+
+    private function drawClassicDigital($im, int $width, int $height, int $bgCol, int $textCol): void
+    {
+        // Classic green digital display
+        imagefilledrectangle($im, 0, 0, $width, $height, $bgCol);
+        // Add digital display grid lines
+        for ($i = 1; $i < 4; $i++) {
+            $x = ($width / 4) * $i;
+            imageline($im, $x, 0, $x, $height, $textCol);
+        }
+    }
+
+    private function drawCircle($im, int $centerX, int $centerY, int $radius, int $color, bool $filled = true): void
+    {
+        if ($filled) {
+            imagefilledellipse($im, $centerX, $centerY, $radius * 2, $radius * 2, $color);
+        } else {
+            imageellipse($im, $centerX, $centerY, $radius * 2, $radius * 2, $color);
+        }
+    }
+
+    private function drawDottedCircle($im, int $centerX, int $centerY, int $radius, int $color): void
+    {
+        // Draw dotted circle
+        for ($angle = 0; $angle < 360; $angle += 10) {
+            $x = $centerX + $radius * cos(deg2rad($angle));
+            $y = $centerY + $radius * sin(deg2rad($angle));
+            imagefilledellipse($im, $x, $y, 3, 3, $color);
+        }
+    }
+
+    private function drawDashedCircle($im, int $centerX, int $centerY, int $radius, int $color): void
+    {
+        // Draw dashed circle
+        for ($angle = 0; $angle < 360; $angle += 5) {
+            $x = $centerX + $radius * cos(deg2rad($angle));
+            $y = $centerY + $radius * sin(deg2rad($angle));
+            if ($angle % 10 < 5) {
+                imagefilledellipse($im, $x, $y, 2, 2, $color);
+            }
+        }
+    }
+
+    private function drawGradientCircle($im, int $centerX, int $centerY, int $radius, int $bgCol, int $accentCol): void
+    {
+        // Simple gradient effect
+        for ($r = $radius; $r > 0; $r--) {
+            $ratio = $r / $radius;
+            $color = imagecolorallocate($im, 
+                (int) (($ratio * 255) + ((1 - $ratio) * 0)),
+                (int) (($ratio * 255) + ((1 - $ratio) * 0)),
+                (int) (($ratio * 255) + ((1 - $ratio) * 255))
+            );
+            imagefilledellipse($im, $centerX, $centerY, $r * 2, $r * 2, $color);
+        }
     }
 
     private function renderFinalFrame(array $skin, ?string $customText, string $textPosition): string
@@ -304,10 +545,16 @@ class TimerGifGenerator
 
     private function formatSeconds(int $seconds): string
     {
-        $hours = intdiv($seconds, 3600);
+        $days = intdiv($seconds, 86400);
+        $hours = intdiv($seconds % 86400, 3600);
         $minutes = intdiv($seconds % 3600, 60);
         $secs = $seconds % 60;
-        return sprintf('%02d:%02d:%02d', $hours, $minutes, $secs);
+        
+        if ($days > 0) {
+            return sprintf('%02d:%02d:%02d:%02d', $days, $hours, $minutes, $secs);
+        } else {
+            return sprintf('%02d:%02d:%02d', $hours, $minutes, $secs);
+        }
     }
 
     private function drawRoundedRect($im, int $x, int $y, int $w, int $h, int $r, int $color): void

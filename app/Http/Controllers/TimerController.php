@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\GenerateTimerGif;
 use App\Models\Timer;
 use App\Services\TimerGifGenerator;
 use Illuminate\Http\RedirectResponse;
@@ -28,20 +29,20 @@ class TimerController extends Controller
         return view('timers.create', compact('skins'));
     }
 
-    public function store(Request $request, TimerGifGenerator $generator): RedirectResponse
+    public function store(Request $request): RedirectResponse
     {
         $data = $this->validateTimer($request);
         $data['user_id'] = Auth::id();
 
         $timer = new Timer($data);
         $timer->gif_url = '';
-        $timer->save();
-
         $timer->cache_key = 'timer_' . $timer->id . '_' . bin2hex(random_bytes(3));
-        $timer->gif_url = $generator->generateAndStore($timer);
         $timer->save();
 
-        return redirect()->route('timers.edit', $timer)->with('status', 'Timer created');
+        // Dispatch job to generate GIF in background
+        GenerateTimerGif::dispatch($timer);
+
+        return redirect()->route('timers.edit', $timer)->with('status', 'Timer created! GIF is being generated in the background.');
     }
 
     public function edit(Timer $timer)
@@ -51,20 +52,22 @@ class TimerController extends Controller
         return view('timers.edit', compact('timer', 'skins'));
     }
 
-    public function update(Request $request, Timer $timer, TimerGifGenerator $generator): RedirectResponse
+    public function update(Request $request, Timer $timer): RedirectResponse
     {
         $this->authorizeOwner($timer);
         $data = $this->validateTimer($request);
         $timer->fill($data);
         $timer->save();
 
-        // Regenerate GIF and clear cache entry if any
-        $timer->gif_url = $generator->generateAndStore($timer);
-        $timer->save();
+        // Clear cache entry if any
         if ($timer->cache_key) {
             Cache::forget($timer->cache_key);
         }
-        return redirect()->route('timers.edit', $timer)->with('status', 'Timer updated');
+
+        // Dispatch job to regenerate GIF in background
+        GenerateTimerGif::dispatch($timer);
+
+        return redirect()->route('timers.edit', $timer)->with('status', 'Timer updated! GIF is being regenerated in the background.');
     }
 
     public function destroy(Timer $timer): RedirectResponse

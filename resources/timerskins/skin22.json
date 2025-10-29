@@ -1,0 +1,18 @@
+{
+  "name": "Dashed Circular Progress Timer",
+  "width": 400,
+  "height": 160,
+  "fontSize": 36,
+  "background": "#FFFFFF",
+  "textColor": "#FFFFFF",
+  "accentColor": "#2196F3",
+  "fontPath": "resources/fonts/DejaVuSans.ttf",
+  "style": "dashed_circular_progress",
+  "showDays": true,
+  "showHours": true,
+  "showMinutes": true,
+  "showSeconds": true,
+  "separator": ":",
+  "layout": "horizontal",
+  "animation": "dashed_progress"
+}
