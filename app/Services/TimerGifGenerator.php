@@ -24,6 +24,13 @@ class TimerGifGenerator
         $durationForGif = min(60, max(1, $remaining));
 
         $skin = $this->loadSkin($timer->skin);
+        // Override skin size with timer-specific dimensions if provided
+        if (!empty($timer->width) && !empty($timer->height)) {
+            $skin['width'] = max(120, min(1200, (int) $timer->width));
+            $skin['height'] = max(80, min(800, (int) $timer->height));
+            // Adjust font size proportionally
+            $skin['fontSize'] = max(12, (int) round(($skin['height']) * 0.28));
+        }
 
         $frames = $this->buildFrames($durationForGif, $skin, $timer->custom_text, $timer->text_position);
 
@@ -57,7 +64,7 @@ class TimerGifGenerator
             ];
         }
         $json = json_decode(file_get_contents($path), true) ?: [];
-        return array_merge([
+        $skin = array_merge([
             'width' => 400,
             'height' => 160,
             'background' => '#000000',
@@ -66,6 +73,15 @@ class TimerGifGenerator
             'fontSize' => 36,
             'fontPath' => resource_path('fonts/DejaVuSans.ttf'),
         ], $json);
+        // Validate
+        $skin['width'] = max(120, min(1200, (int) ($skin['width'] ?? 400)));
+        $skin['height'] = max(80, min(800, (int) ($skin['height'] ?? 160)));
+        $skin['fontSize'] = max(12, (int) ($skin['fontSize'] ?? 36));
+        if (empty($skin['background']) || !is_string($skin['background'])) $skin['background'] = '#000000';
+        if (empty($skin['textColor']) || !is_string($skin['textColor'])) $skin['textColor'] = '#FFFFFF';
+        if (empty($skin['accentColor']) || !is_string($skin['accentColor'])) $skin['accentColor'] = '#FFCC00';
+        if (empty($skin['fontPath']) || !is_string($skin['fontPath'])) $skin['fontPath'] = resource_path('fonts/DejaVuSans.ttf');
+        return $skin;
     }
 
     private function buildFrames(int $seconds, array $skin, ?string $customText, string $textPosition): array
@@ -82,8 +98,8 @@ class TimerGifGenerator
 
     private function renderPngFrame(int $secondsRemaining, array $skin, ?string $customText, string $textPosition): string
     {
-        $width = (int) $skin['width'];
-        $height = (int) $skin['height'];
+        $width = max(120, (int) $skin['width']);
+        $height = max(80, (int) $skin['height']);
 
         $im = imagecreatetruecolor($width, $height);
         [$br, $bg, $bb] = $this->hexToRgb($skin['background']);
@@ -91,7 +107,8 @@ class TimerGifGenerator
 
         $bgCol = imagecolorallocate($im, $br, $bg, $bb);
         $textCol = imagecolorallocate($im, $tr, $tg, $tb);
-        imagefilledrectangle($im, 0, 0, $width, $height, $bgCol);
+        // Rounded background for nicer skins
+        $this->drawRoundedRect($im, 0, 0, $width, $height, 12, $bgCol);
 
         $timeText = $this->formatSeconds($secondsRemaining);
         $font = $skin['fontPath'];
@@ -136,15 +153,15 @@ class TimerGifGenerator
 
     private function renderFinalFrame(array $skin, ?string $customText, string $textPosition): string
     {
-        $width = (int) $skin['width'];
-        $height = (int) $skin['height'];
+        $width = max(120, (int) $skin['width']);
+        $height = max(80, (int) $skin['height']);
 
         $im = imagecreatetruecolor($width, $height);
         [$br, $bg, $bb] = $this->hexToRgb($skin['background']);
         [$tr, $tg, $tb] = $this->hexToRgb($skin['textColor']);
         $bgCol = imagecolorallocate($im, $br, $bg, $bb);
         $textCol = imagecolorallocate($im, $tr, $tg, $tb);
-        imagefilledrectangle($im, 0, 0, $width, $height, $bgCol);
+        $this->drawRoundedRect($im, 0, 0, $width, $height, 12, $bgCol);
 
         $font = $skin['fontPath'];
         $fontSize = (int) $skin['fontSize'];
@@ -233,9 +250,24 @@ class TimerGifGenerator
 
     private function formatSeconds(int $seconds): string
     {
-        $minutes = intdiv($seconds, 60);
+        $hours = intdiv($seconds, 3600);
+        $minutes = intdiv($seconds % 3600, 60);
         $secs = $seconds % 60;
-        return sprintf('%02d:%02d', $minutes, $secs);
+        return sprintf('%02d:%02d:%02d', $hours, $minutes, $secs);
+    }
+
+    private function drawRoundedRect($im, int $x, int $y, int $w, int $h, int $r, int $color): void
+    {
+        // Clamp radius
+        $r = max(0, min((int) floor(min($w, $h) / 2), $r));
+        // Center
+        imagefilledrectangle($im, $x + $r, $y, $x + $w - $r, $y + $h, $color);
+        imagefilledrectangle($im, $x, $y + $r, $x + $w, $y + $h - $r, $color);
+        // Corners
+        imagefilledellipse($im, $x + $r, $y + $r, $r * 2, $r * 2, $color);
+        imagefilledellipse($im, $x + $w - $r, $y + $r, $r * 2, $r * 2, $color);
+        imagefilledellipse($im, $x + $r, $y + $h - $r, $r * 2, $r * 2, $color);
+        imagefilledellipse($im, $x + $w - $r, $y + $h - $r, $r * 2, $r * 2, $color);
     }
 }
 

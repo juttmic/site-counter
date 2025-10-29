@@ -17,6 +17,8 @@ class Timer extends Model
         'timer_type',
         'target_datetime',
         'duration_seconds',
+        'width',
+        'height',
         'skin',
         'text_position',
         'custom_text',
@@ -27,6 +29,8 @@ class Timer extends Model
 
     protected $casts = [
         'target_datetime' => 'datetime',
+        'width' => 'integer',
+        'height' => 'integer',
     ];
 
     public function user(): BelongsTo

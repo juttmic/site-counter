@@ -90,6 +90,8 @@ class TimerController extends Controller
             'timer_type' => ['required', 'in:fixed_date,reload_based'],
             'target_datetime' => ['nullable', 'date'],
             'duration_seconds' => ['nullable', 'integer', 'min:1', 'max:604800'],
+            'width' => ['nullable', 'integer', 'min:120', 'max:1200'],
+            'height' => ['nullable', 'integer', 'min:80', 'max:800'],
             'skin' => ['required', 'string'],
             'text_position' => ['required', 'in:top,bottom,none'],
             'custom_text' => ['nullable', 'string', 'max:255'],

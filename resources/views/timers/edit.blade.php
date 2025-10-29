@@ -39,6 +39,16 @@
                             <label class="block text-sm font-medium">Duration (seconds)</label>
                             <input type="number" name="duration_seconds" class="mt-1 w-full border rounded p-2" min="1" max="604800" value="{{ old('duration_seconds', $timer->duration_seconds) }}">
                         </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium">Width (px)</label>
+                                <input type="number" name="width" class="mt-1 w-full border rounded p-2" min="120" max="1200" value="{{ old('width', $timer->width) }}" placeholder="e.g. 400">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium">Height (px)</label>
+                                <input type="number" name="height" class="mt-1 w-full border rounded p-2" min="80" max="800" value="{{ old('height', $timer->height) }}" placeholder="e.g. 160">
+                            </div>
+                        </div>
                         <div>
                             <label class="block text-sm font-medium">Skin</label>
                             <select name="skin" class="mt-1 w-full border rounded p-2">
