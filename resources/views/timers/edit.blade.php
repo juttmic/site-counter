@@ -68,11 +68,11 @@
                         <div class="mt-6">
                             <h3 class="font-semibold mb-2">Embed</h3>
                             <div class="flex gap-2">
-                                <input type="text" class="w-full border rounded p-2" value='<img src="{{ $timer->gif_url }}" alt="Countdown Timer">' readonly>
+                                <input type="text" class="w-full border rounded p-2" value='<img src="{{ url($timer->gif_url) }}" alt="Countdown Timer">' readonly>
                                 <button class="px-3 py-2 border rounded" onclick="navigator.clipboard.writeText(this.previousElementSibling.value)">Copy</button>
                             </div>
                             <div class="mt-3">
-                                <img src="{{ $timer->gif_url }}" class="border max-w-full" alt="preview">
+                                <img src="{{ url($timer->gif_url) }}" class="border max-w-full" alt="preview">
                             </div>
                         </div>
                     @endif

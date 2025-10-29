@@ -29,7 +29,7 @@ class TimerGifGenerator
 
         $this->encodeAnimatedGif($frames, $fullPath);
 
-        $url = rtrim(config('app.url'), '/') . "/timers/{$userId}/{$filename}";
+        $url = "/timers/{$userId}/{$filename}";
         return $url;
     }
 

@@ -26,7 +26,7 @@
                                     </div>
                                     @if($timer->gif_url)
                                         <div class="mt-3">
-                                            <img src="{{ $timer->gif_url }}" alt="preview" class="border w-full">
+                                            <img src="{{ url($timer->gif_url) }}" alt="preview" class="border w-full">
                                         </div>
                                     @endif
                                     <div class="mt-3 flex gap-2">
