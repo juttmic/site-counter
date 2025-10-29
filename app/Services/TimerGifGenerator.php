@@ -21,11 +21,20 @@ class TimerGifGenerator
         $fullPath = $directory . DIRECTORY_SEPARATOR . $filename;
 
         $remaining = $timer->remainingSecondsFromNow();
-        // For reload-based timers, use the full duration; for fixed-date, limit to 60s for performance
-        if ($timer->isReloadBased()) {
-            $durationForGif = max(1, $remaining);
+        
+        // For fixed-date timers: if expired, show only "Time's Up"; otherwise countdown from remaining time
+        // For reload-based timers: always show full countdown from duration
+        if ($timer->isFixedDate()) {
+            if ($remaining <= 0) {
+                // Timer expired - show only "Time's Up" frame
+                $durationForGif = 0;
+            } else {
+                // Countdown from current remaining time (up to 5 minutes for reasonable file size)
+                $durationForGif = $remaining;//min(300, max(1, $remaining));
+            }
         } else {
-            $durationForGif = min(60, max(1, $remaining));
+            // Reload-based: use full duration
+            $durationForGif = max(1, $remaining);
         }
 
         $skin = $this->loadSkin($timer->skin);
@@ -48,11 +57,20 @@ class TimerGifGenerator
     public function regenerateForCache(Timer $timer, string $targetPath): void
     {
         $remaining = $timer->remainingSecondsFromNow();
-        // For reload-based timers, use the full duration; for fixed-date, limit to 60s for performance
-        if ($timer->isReloadBased()) {
-            $durationForGif = max(1, $remaining);
+        
+        // For fixed-date timers: if expired, show only "Time's Up"; otherwise countdown from remaining time
+        // For reload-based timers: always show full countdown from duration
+        if ($timer->isFixedDate()) {
+            if ($remaining <= 0) {
+                // Timer expired - show only "Time's Up" frame
+                $durationForGif = 0;
+            } else {
+                // Countdown from current remaining time (up to 5 minutes for reasonable file size)
+                $durationForGif = $remaining;//min(300, max(1, $remaining));
+            }
         } else {
-            $durationForGif = min(60, max(1, $remaining));
+            // Reload-based: use full duration
+            $durationForGif = max(1, $remaining);
         }
         $skin = $this->loadSkin($timer->skin);
         $frames = $this->buildFrames($durationForGif, $skin, $timer->custom_text, $timer->text_position);
@@ -97,6 +115,12 @@ class TimerGifGenerator
     private function buildFrames(int $seconds, array $skin, ?string $customText, string $textPosition): array
     {
         $frames = [];
+        
+        // If timer expired (seconds = 0), show only "Time's Up" frame
+        if ($seconds <= 0) {
+            $frames[] = $this->renderFinalFrame($skin, $customText, $textPosition);
+            return $frames;
+        }
         
         // For durations up to 5 minutes (300s), show every second
         // For longer durations, show every 5 seconds to keep file size reasonable
