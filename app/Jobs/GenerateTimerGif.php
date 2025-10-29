@@ -15,6 +15,16 @@ class GenerateTimerGif implements ShouldQueue
     use Queueable, InteractsWithQueue, SerializesModels;
 
     protected $timer;
+    
+    /**
+     * The number of times the job may be attempted.
+     */
+    public $tries = 3;
+    
+    /**
+     * The maximum number of seconds the job can run.
+     */
+    public $timeout = 120;
 
     /**
      * Create a new job instance.

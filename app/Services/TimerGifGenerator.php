@@ -122,9 +122,17 @@ class TimerGifGenerator
             return $frames;
         }
         
-        // For durations up to 5 minutes (300s), show every second
-        // For longer durations, show every 5 seconds to keep file size reasonable
-        $step = $seconds > 1;//300 ? 5 : 1;
+        // Optimize frame generation for better performance
+        // For durations up to 60s, show every second
+        // For 1-5 minutes, show every 2 seconds  
+        // For longer durations, show every 5 seconds
+        if ($seconds <= 60) {
+            $step = 1;
+        } elseif ($seconds <= 300) {
+            $step = 2;
+        } else {
+            $step = 5;
+        }
         
         // Generate frames counting down from seconds to 0
         for ($i = $seconds; $i > 0; $i -= $step) {
@@ -490,9 +498,16 @@ class TimerGifGenerator
     private function encodeAnimatedGif(array $pngFrames, string $outputPath, int $totalSeconds): void
     {
         // Calculate frame delay based on step size (must match buildFrames logic)
-        // For durations up to 5 minutes (300s), show every second
+        // For durations up to 60s, show every second
+        // For 1-5 minutes, show every 2 seconds  
         // For longer durations, show every 5 seconds
-        $step = 1;//$totalSeconds > 300 ? 3 : 1;
+        if ($totalSeconds <= 60) {
+            $step = 1;
+        } elseif ($totalSeconds <= 300) {
+            $step = 2;
+        } else {
+            $step = 5;
+        }
         $frameDelay = 100 * $step; // Convert to centiseconds (100 = 1 second)
         
         // Try Imagick first if available
