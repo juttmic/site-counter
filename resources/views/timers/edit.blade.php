@@ -123,6 +123,7 @@
         const card = document.createElement('div');
         card.className = 'shrink-0 grow-0 box-border border rounded p-2 cursor-pointer transition hover:ring-2 hover:ring-indigo-500 hover:shadow-md';
         card.style.flexBasis = 'calc(50% - 0.25rem)';
+        card.style.cursor = "pointer";
         card.innerHTML = `
           <img src="${s.preview_url}" alt="${s.name}" class="w-auto max-w-full h-24 mx-auto object-contain bg-gray-50">
           <div class="mt-1 text-xs truncate text-center">${s.name}</div>

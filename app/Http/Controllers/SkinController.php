@@ -31,15 +31,53 @@ class SkinController extends Controller
             return response()->json(['message' => 'Skin not found'], 404);
         }
         $json = json_decode(File::get($path), true) ?: [];
+        $fields = $json['fields'] ?? $this->inferFieldsFromSkin($json);
         // Only expose editable parts and defaults
         $exposed = [
             'key' => $key,
             'name' => $json['name'] ?? $key,
             'defaults' => $json,
-            'fields' => $json['fields'] ?? [],
+            'fields' => $fields,
             'preview_url' => url('/skin-previews/' . $key . '.png'),
         ];
         return response()->json($exposed);
+    }
+
+    /**
+     * Generate a reasonable default list of editable fields based on common skin keys.
+     */
+    private function inferFieldsFromSkin(array $skin): array
+    {
+        $fields = [];
+
+        $add = function(string $key, string $label, string $type, array $extra = []) use (&$fields, $skin) {
+            if (array_key_exists($key, $skin)) {
+                $fields[] = array_merge(['key' => $key, 'label' => $label, 'type' => $type], $extra);
+            }
+        };
+
+        $add('width', 'Width', 'number', ['min' => 100, 'max' => 2000, 'step' => 10]);
+        $add('height', 'Height', 'number', ['min' => 50, 'max' => 1000, 'step' => 5]);
+        $add('background', 'Background Color', 'color');
+        $add('textColor', 'Text Color', 'color');
+        $add('accentColor', 'Accent Color', 'color');
+        $add('fontSize', 'Font Size', 'number', ['min' => 8, 'max' => 200, 'step' => 1]);
+        $add('fontPath', 'Font', 'font');
+        $add('showDays', 'Show Days', 'boolean');
+        $add('showHours', 'Show Hours', 'boolean');
+        $add('showMinutes', 'Show Minutes', 'boolean');
+        $add('showSeconds', 'Show Seconds', 'boolean');
+        $add('separator', 'Separator', 'text', ['maxLength' => 5]);
+        if (!empty($skin['layout'])) {
+            $options = is_array($skin['layout']) ? $skin['layout'] : ['horizontal','vertical'];
+            $fields[] = ['key' => 'layout', 'label' => 'Layout', 'type' => 'select', 'options' => $options];
+        }
+        if (!empty($skin['animation'])) {
+            $options = is_array($skin['animation']) ? $skin['animation'] : ['none','fade','slide'];
+            $fields[] = ['key' => 'animation', 'label' => 'Animation', 'type' => 'select', 'options' => $options];
+        }
+
+        return $fields;
     }
 }
 
