@@ -54,11 +54,15 @@
 
                         <div>
                             <label class="block text-sm font-medium">Skin</label>
-                            <select name="skin" class="mt-1 w-full border rounded p-2">
-                                @foreach($skins as $skin)
-                                    <option value="{{ $skin }}">{{ $skin }}</option>
-                                @endforeach
-                            </select>
+                            <input type="hidden" name="skin" id="skin_key" />
+                            <div id="skin_grid" class="mt-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"></div>
+                            <p class="text-sm text-gray-500 mt-1">Click a preview to select a skin.</p>
+                        </div>
+
+                        <div id="skin_overrides_section" class="mt-4 hidden">
+                            <label class="block text-sm font-medium">Customize Skin</label>
+                            <div id="skin_fields" class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+                            <input type="hidden" name="skin_overrides" id="skin_overrides_input" />
                         </div>
 
                         <div>
@@ -92,6 +96,120 @@
       document.getElementById('duration_input').classList.toggle('hidden', type !== 'reload_based');
     }
     document.addEventListener('DOMContentLoaded', toggleInputs);
+
+    // Skins loading and dynamic form
+    async function fetchJson(url) {
+      const res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+      if (!res.ok) throw new Error('Failed to load ' + url);
+      return await res.json();
+    }
+
+    function renderSkinGrid(skins) {
+      const grid = document.getElementById('skin_grid');
+      grid.innerHTML = '';
+      skins.forEach(s => {
+        const card = document.createElement('button');
+        card.type = 'button';
+        card.className = 'border rounded p-2 hover:ring-2 hover:ring-indigo-500 text-left';
+        card.innerHTML = `
+          <img src="${s.preview_url}" alt="${s.name}" class="w-full h-24 object-contain bg-gray-50">
+          <div class="mt-2 text-sm">${s.name}</div>
+        `;
+        card.addEventListener('click', () => selectSkin(s.key));
+        grid.appendChild(card);
+      });
+    }
+
+    function renderFields(metadata) {
+      const fieldsWrap = document.getElementById('skin_fields');
+      const overrides = {};
+      const defaults = metadata.defaults || {};
+      const fields = Array.isArray(metadata.fields) ? metadata.fields : [];
+      fieldsWrap.innerHTML = '';
+      document.getElementById('skin_overrides_section').classList.toggle('hidden', fields.length === 0);
+
+      fields.forEach(field => {
+        const key = field.key;
+        const label = field.label || key;
+        const type = field.type || 'text';
+        const value = defaults[key];
+
+        const container = document.createElement('div');
+        container.innerHTML = `<label class="block text-sm font-medium mb-1">${label}</label>`;
+        let input;
+        if (type === 'color') {
+          input = document.createElement('input');
+          input.type = 'color';
+          input.value = /^#/.test(value) ? value : '#000000';
+          input.className = 'w-20 h-10 p-1 border rounded';
+        } else if (type === 'number') {
+          input = document.createElement('input');
+          input.type = 'number';
+          if (field.min != null) input.min = field.min;
+          if (field.max != null) input.max = field.max;
+          if (field.step != null) input.step = field.step;
+          input.value = value ?? '';
+          input.className = 'mt-1 w-full border rounded p-2';
+        } else if (type === 'boolean') {
+          input = document.createElement('input');
+          input.type = 'checkbox';
+          input.checked = !!value;
+          input.className = 'mt-1';
+        } else if (type === 'select') {
+          input = document.createElement('select');
+          input.className = 'mt-1 w-full border rounded p-2';
+          (field.options || []).forEach(opt => {
+            const o = document.createElement('option');
+            o.value = opt; o.textContent = opt; if (opt === value) o.selected = true; input.appendChild(o);
+          });
+        } else {
+          input = document.createElement('input');
+          input.type = 'text';
+          if (field.maxLength != null) input.maxLength = field.maxLength;
+          input.value = value ?? '';
+          input.className = 'mt-1 w-full border rounded p-2';
+        }
+        input.dataset.key = key;
+        input.addEventListener('change', syncOverrides);
+        container.appendChild(input);
+        fieldsWrap.appendChild(container);
+      });
+
+      function syncOverrides() {
+        const inputs = fieldsWrap.querySelectorAll('[data-key]');
+        const data = {};
+        inputs.forEach(el => {
+          const k = el.dataset.key;
+          if (el.type === 'checkbox') data[k] = !!el.checked;
+          else if (el.type === 'number') data[k] = el.value === '' ? null : Number(el.value);
+          else data[k] = el.value;
+        });
+        document.getElementById('skin_overrides_input').value = JSON.stringify(data);
+      }
+
+      // initialize
+      syncOverrides();
+    }
+
+    async function selectSkin(key) {
+      document.getElementById('skin_key').value = key;
+      try {
+        const meta = await fetchJson(`/skins/${encodeURIComponent(key)}`);
+        renderFields(meta);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        const skins = await fetchJson('/skins');
+        renderSkinGrid(skins);
+        if (skins.length) selectSkin(skins[0].key);
+      } catch (e) {
+        console.error(e);
+      }
+    });
     </script>
 </x-app-layout>
 

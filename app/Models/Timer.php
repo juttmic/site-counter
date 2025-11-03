@@ -25,12 +25,16 @@ class Timer extends Model
         'gif_url',
         'cache_key',
         'status',
+        'skin_overrides',
+        'skin_resolved_config',
     ];
 
     protected $casts = [
         'target_datetime' => 'datetime',
         'width' => 'integer',
         'height' => 'integer',
+        'skin_overrides' => 'array',
+        'skin_resolved_config' => 'array',
     ];
 
     public function user(): BelongsTo

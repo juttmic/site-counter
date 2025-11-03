@@ -39,7 +39,11 @@ class TimerGifGenerator
         }
 
         $skin = $this->loadSkin($timer->skin);
-        // Override skin size with timer-specific dimensions if provided
+        // Apply per-timer overrides if present
+        if (is_array($timer->skin_overrides) && !empty($timer->skin_overrides)) {
+            $skin = array_replace_recursive($skin, $timer->skin_overrides);
+        }
+        // Override skin size with legacy timer-specific dimensions if provided
         if (!empty($timer->width) && !empty($timer->height)) {
             $skin['width'] = max(120, min(1200, (int) $timer->width));
             $skin['height'] = max(80, min(800, (int) $timer->height));
@@ -75,8 +79,24 @@ class TimerGifGenerator
             $durationForGif = max(1, $remaining);
         }
         $skin = $this->loadSkin($timer->skin);
+        if (is_array($timer->skin_overrides) && !empty($timer->skin_overrides)) {
+            $skin = array_replace_recursive($skin, $timer->skin_overrides);
+        }
         $frames = $this->buildFrames($durationForGif, $skin, $timer->custom_text, $timer->text_position);
         $this->encodeAnimatedGif($frames, $targetPath, $durationForGif);
+    }
+
+    /**
+     * Render a 1-frame PNG preview for a given skin into the provided output path.
+     */
+    public function renderSkinPreview(string $skinName, string $outputPath): void
+    {
+        $skin = $this->loadSkin($skinName);
+        // Use an illustrative sample remaining time (12h 34m 56s)
+        $sampleSeconds = (12 * 3600) + (34 * 60) + 56;
+        $png = $this->renderPngFrame($sampleSeconds, $skin, null, 'none');
+        \Illuminate\Support\Facades\File::ensureDirectoryExists(dirname($outputPath));
+        \Illuminate\Support\Facades\File::put($outputPath, $png);
     }
 
     private function loadSkin(string $skinName): array

@@ -99,6 +99,7 @@ class TimerController extends Controller
             'text_position' => ['required', 'in:top,bottom,none'],
             'custom_text' => ['nullable', 'string', 'max:255'],
             'status' => ['nullable', 'in:active,inactive'],
+            'skin_overrides' => ['nullable', 'string'],
         ];
 
         $data = $request->validate($rules);
@@ -110,6 +111,19 @@ class TimerController extends Controller
         }
 
         $data['status'] = $data['status'] ?? 'active';
+
+        // Decode overrides JSON if provided
+        $overridesRaw = $request->input('skin_overrides');
+        if (is_string($overridesRaw) && $overridesRaw !== '') {
+            try {
+                $decoded = json_decode($overridesRaw, true, 512, JSON_THROW_ON_ERROR);
+                if (is_array($decoded)) {
+                    $data['skin_overrides'] = $decoded;
+                }
+            } catch (\Throwable $e) {
+                // Ignore malformed overrides; validation remains successful without them
+            }
+        }
         return $data;
     }
 

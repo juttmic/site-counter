@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TimerController;
+use App\Http\Controllers\SkinController;
 use App\Http\Controllers\GifController;
 use Illuminate\Support\Facades\Route;
 
@@ -23,6 +24,10 @@ Route::middleware('auth')->group(function () {
     Route::resource('timers', TimerController::class)->except(['store','index', 'show']);
     Route::post('timerss', [TimerController::class, 'store'])->name('timers.store');
     Route::get('timers/{timer}/preview', [TimerController::class, 'preview'])->name('timers.preview');
+
+    // Skins metadata and previews for UI
+    Route::get('/skins', [SkinController::class, 'index'])->name('skins.index');
+    Route::get('/skins/{key}', [SkinController::class, 'show'])->name('skins.show');
 });
 
 // Public GIF endpoint (no auth)
