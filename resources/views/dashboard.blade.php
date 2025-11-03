@@ -26,9 +26,11 @@
                                     </div>
                                     <div class="mt-3">
                                         @if($timer->gif_url)
-                                            <img src="{{ url($timer->gif_url) }}" alt="preview" class="border w-full">
+                                            <div class="w-full h-40 bg-gray-50 border flex items-center justify-center overflow-hidden">
+                                                <img src="{{ url($timer->gif_url) }}" alt="preview" class="w-auto max-w-full h-40 object-contain">
+                                            </div>
                                         @else
-                                            <div class="border w-full h-32 bg-gray-100 flex items-center justify-center text-gray-500">
+                                            <div class="border w-full h-40 bg-gray-100 flex items-center justify-center text-gray-500">
                                                 <div class="text-center">
                                                     <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-2"></div>
                                                     <div class="text-sm">Generating GIF...</div>
