@@ -95,6 +95,22 @@ class TimerGifGenerator
         // Use an illustrative sample remaining time (12h 34m 56s)
         $sampleSeconds = (12 * 3600) + (34 * 60) + 56;
         $png = $this->renderPngFrame($sampleSeconds, $skin, null, 'none');
+        // Normalize height across previews while preserving aspect ratio
+        $targetHeight = 120; // px
+        $img = imagecreatefromstring($png);
+        if ($img !== false) {
+            $origW = imagesx($img);
+            $origH = imagesy($img);
+            $ratio = $origW / max(1, $origH);
+            $targetWidth = (int) round($targetHeight * $ratio);
+            $dst = imagecreatetruecolor($targetWidth, $targetHeight);
+            imagecopyresampled($dst, $img, 0, 0, 0, 0, $targetWidth, $targetHeight, $origW, $origH);
+            ob_start();
+            imagepng($dst);
+            $png = ob_get_clean();
+            imagedestroy($dst);
+            imagedestroy($img);
+        }
         \Illuminate\Support\Facades\File::ensureDirectoryExists(dirname($outputPath));
         \Illuminate\Support\Facades\File::put($outputPath, $png);
     }

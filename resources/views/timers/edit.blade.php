@@ -49,12 +49,16 @@
                                 <input type="number" name="height" class="mt-1 w-full border rounded p-2" min="80" max="800" value="{{ old('height', $timer->height) }}" placeholder="e.g. 160">
                             </div>
                         </div>
-                        <div>
-                            <label class="block text-sm font-medium">Skin</label>
-                            <input type="hidden" name="skin" id="skin_key" value="{{ $timer->skin }}" />
-                            <div id="skin_grid" class="mt-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"></div>
-                            <p class="text-sm text-gray-500 mt-1">Click a preview to select a skin.</p>
-                        </div>
+						<div>
+							<label class="block text-sm font-medium">Skin</label>
+							<input type="hidden" name="skin" id="skin_key" value="{{ $timer->skin }}" />
+							<div class="mt-2 flex items-center gap-2">
+								<button type="button" id="toggle_skin_selector" class="px-3 py-1 border rounded text-sm">Choose Skin</button>
+								<span id="selected_skin_label" class="text-sm text-gray-600"></span>
+							</div>
+							<div id="skin_grid" class="mt-2 hidden grid grid-cols-2 gap-2"></div>
+							<p class="text-xs text-gray-500 mt-1">Click a preview to select a skin.</p>
+						</div>
 
                         <div id="skin_overrides_section" class="mt-4 hidden">
                             <label class="block text-sm font-medium">Customize Skin</label>
@@ -117,10 +121,10 @@
       skins.forEach(s => {
         const card = document.createElement('button');
         card.type = 'button';
-        card.className = 'border rounded p-2 hover:ring-2 hover:ring-indigo-500 text-left';
+        card.className = 'border rounded p-1 hover:ring-2 hover:ring-indigo-500 text-left';
         card.innerHTML = `
           <img src="${s.preview_url}" alt="${s.name}" class="w-full h-24 object-contain bg-gray-50">
-          <div class="mt-2 text-sm">${s.name}</div>
+          <div class="mt-1 text-xs truncate">${s.name}</div>
         `;
         if (s.key === current) card.classList.add('ring-2','ring-indigo-600');
         card.addEventListener('click', () => selectSkin(s.key));
@@ -206,6 +210,8 @@
         renderFields(meta);
         // highlight selection
         renderSkinGrid(await fetchJson('/skins'));
+        document.getElementById('selected_skin_label').textContent = key;
+        document.getElementById('skin_grid').classList.add('hidden');
       } catch (e) {
         console.error(e);
       }
@@ -220,6 +226,10 @@
           const meta = await fetchJson(`/skins/${encodeURIComponent(current)}`);
           renderFields(meta);
         }
+        document.getElementById('selected_skin_label').textContent = current || (skins[0]?.key || '');
+        document.getElementById('toggle_skin_selector').addEventListener('click', () => {
+          document.getElementById('skin_grid').classList.toggle('hidden');
+        });
       } catch (e) {
         console.error(e);
       }

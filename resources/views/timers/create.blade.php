@@ -52,12 +52,16 @@
                             </div>
                         </div>
 
-                        <div>
-                            <label class="block text-sm font-medium">Skin</label>
-                            <input type="hidden" name="skin" id="skin_key" />
-                            <div id="skin_grid" class="mt-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"></div>
-                            <p class="text-sm text-gray-500 mt-1">Click a preview to select a skin.</p>
-                        </div>
+						<div>
+							<label class="block text-sm font-medium">Skin</label>
+							<input type="hidden" name="skin" id="skin_key" />
+							<div class="mt-2 flex items-center gap-2">
+								<button type="button" id="toggle_skin_selector" class="px-3 py-1 border rounded text-sm">Choose Skin</button>
+								<span id="selected_skin_label" class="text-sm text-gray-600"></span>
+							</div>
+							<div id="skin_grid" class="mt-2 hidden grid grid-cols-2 gap-2"></div>
+							<p class="text-xs text-gray-500 mt-1">Click a preview to select a skin.</p>
+						</div>
 
                         <div id="skin_overrides_section" class="mt-4 hidden">
                             <label class="block text-sm font-medium">Customize Skin</label>
@@ -110,10 +114,10 @@
       skins.forEach(s => {
         const card = document.createElement('button');
         card.type = 'button';
-        card.className = 'border rounded p-2 hover:ring-2 hover:ring-indigo-500 text-left';
+        card.className = 'border rounded p-1 hover:ring-2 hover:ring-indigo-500 text-left';
         card.innerHTML = `
           <img src="${s.preview_url}" alt="${s.name}" class="w-full h-24 object-contain bg-gray-50">
-          <div class="mt-2 text-sm">${s.name}</div>
+          <div class="mt-1 text-xs truncate">${s.name}</div>
         `;
         card.addEventListener('click', () => selectSkin(s.key));
         grid.appendChild(card);
@@ -193,9 +197,12 @@
 
     async function selectSkin(key) {
       document.getElementById('skin_key').value = key;
+      document.getElementById('selected_skin_label').textContent = key;
       try {
         const meta = await fetchJson(`/skins/${encodeURIComponent(key)}`);
         renderFields(meta);
+        // collapse grid after selection
+        document.getElementById('skin_grid').classList.add('hidden');
       } catch (e) {
         console.error(e);
       }
@@ -206,6 +213,10 @@
         const skins = await fetchJson('/skins');
         renderSkinGrid(skins);
         if (skins.length) selectSkin(skins[0].key);
+        document.getElementById('selected_skin_label').textContent = skins.length ? skins[0].key : '';
+        document.getElementById('toggle_skin_selector').addEventListener('click', () => {
+          document.getElementById('skin_grid').classList.toggle('hidden');
+        });
       } catch (e) {
         console.error(e);
       }
