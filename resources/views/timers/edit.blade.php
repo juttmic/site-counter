@@ -56,7 +56,7 @@
 								<button type="button" id="toggle_skin_selector" class="px-3 py-1 border rounded text-sm">Choose Skin</button>
 								<span id="selected_skin_label" class="text-sm text-gray-600"></span>
 							</div>
-							<div id="skin_grid" class="mt-2 hidden grid grid-cols-2 gap-2"></div>
+							<div id="skin_grid" class="mt-2 hidden w-full flex flex-wrap gap-2"></div>
 							<p class="text-xs text-gray-500 mt-1">Click a preview to select a skin.</p>
 						</div>
 
@@ -119,12 +119,12 @@
       const current = document.getElementById('skin_key').value;
       grid.innerHTML = '';
       skins.forEach(s => {
-        const card = document.createElement('button');
-        card.type = 'button';
-        card.className = 'border rounded p-1 hover:ring-2 hover:ring-indigo-500 text-left';
+        const card = document.createElement('div');
+        card.className = 'shrink-0 grow-0 box-border border rounded p-2 hover:ring-2 hover:ring-indigo-500 cursor-pointer';
+        card.style.flexBasis = 'calc(50% - 0.25rem)';
         card.innerHTML = `
-          <img src="${s.preview_url}" alt="${s.name}" class="w-full h-24 object-contain bg-gray-50">
-          <div class="mt-1 text-xs truncate">${s.name}</div>
+          <img src="${s.preview_url}" alt="${s.name}" class="w-auto max-w-full h-24 mx-auto object-contain bg-gray-50">
+          <div class="mt-1 text-xs truncate text-center">${s.name}</div>
         `;
         if (s.key === current) card.classList.add('ring-2','ring-indigo-600');
         card.addEventListener('click', () => selectSkin(s.key));
