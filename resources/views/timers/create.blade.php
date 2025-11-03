@@ -55,9 +55,10 @@
 						<div>
 							<label class="block text-sm font-medium">Skin</label>
 							<input type="hidden" name="skin" id="skin_key" />
-							<div class="mt-2 flex items-center gap-2">
+							<div class="mt-2 flex items-center gap-3">
 								<button type="button" id="toggle_skin_selector" class="px-3 py-1 border rounded text-sm">Choose Skin</button>
 								<span id="selected_skin_label" class="text-sm text-gray-600"></span>
+								<img id="selected_skin_preview" alt="Selected skin preview" class="h-10 w-auto hidden border rounded bg-gray-50" />
 							</div>
 							<div id="skin_grid" class="mt-2 hidden w-full flex flex-wrap gap-2" style="flex-wrap: wrap;"></div>
 							<p class="text-xs text-gray-500 mt-1">Click a preview to select a skin.</p>
@@ -113,8 +114,9 @@
       grid.innerHTML = '';
       skins.forEach(s => {
         const card = document.createElement('div');
-        card.className = 'shrink-0 grow-0 box-border border rounded p-2 hover:ring-2 hover:ring-indigo-500 cursor-pointer';
+        card.className = 'shrink-0 grow-0 box-border border rounded p-2 cursor-pointer transition hover:ring-2 hover:ring-indigo-500 hover:shadow-md';
         card.style.flexBasis = 'calc(50% - 0.25rem)';
+        card.style.cursor = "pointer";
         card.innerHTML = `
           <img src="${s.preview_url}" alt="${s.name}" class="w-auto max-w-full h-24 mx-auto object-contain bg-gray-50">
           <div class="mt-1 text-xs truncate text-center">${s.name}</div>
@@ -201,8 +203,13 @@
       try {
         const meta = await fetchJson(`/skins/${encodeURIComponent(key)}`);
         renderFields(meta);
-        // collapse grid after selection
+        // collapse grid after selection and show selected preview
         document.getElementById('skin_grid').classList.add('hidden');
+        const prevEl = document.getElementById('selected_skin_preview');
+        if (meta && meta.preview_url) {
+          prevEl.src = meta.preview_url;
+          prevEl.classList.remove('hidden');
+        }
       } catch (e) {
         console.error(e);
       }
