@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Models\Timer;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
+use App\Services\Skins\SkinRendererFactory;
+use App\Services\Skins\SkinRendererInterface;
 
 class TimerGifGenerator
 {
@@ -207,9 +209,10 @@ class TimerGifGenerator
         $font = $skin['fontPath'];
         $fontSize = (int) $skin['fontSize'];
 
-        // Special rendering for clean white timer with labels
-        if (($skin['style'] ?? '') === 'clean_white_timer') {
-            $this->renderCleanWhiteTimerText($im, $secondsRemaining, $skin, $width, $height, $textCol, $accentCol);
+        // Delegate time rendering to renderer if available; otherwise default
+        $renderer = SkinRendererFactory::resolve($skin['style'] ?? null);
+        if ($renderer instanceof SkinRendererInterface && $renderer->renderTimeText($im, $secondsRemaining, $skin, $width, $height, $textCol, $accentCol)) {
+            // handled by renderer
         } else {
             $timeText = $this->formatSeconds($secondsRemaining);
 
@@ -254,7 +257,13 @@ class TimerGifGenerator
     private function applySkinStyle($im, array $skin, int $width, int $height, int $bgCol, int $textCol, int $accentCol, int $secondsRemaining): void
     {
         $style = $skin['style'] ?? 'default';
-        
+        // First, try pluggable renderer by style
+        $renderer = SkinRendererFactory::resolve($style);
+        if ($renderer instanceof SkinRendererInterface) {
+            $renderer->renderStyle($im, $skin, $width, $height, $bgCol, $textCol, $accentCol, $secondsRemaining);
+            return;
+        }
+
         switch ($style) {
             case 'circular_progress':
                 $this->drawCircularProgress($im, $width, $height, $bgCol, $accentCol, $secondsRemaining);
@@ -363,7 +372,7 @@ class TimerGifGenerator
             $w = $unitWidth - 10;
             $h = $height - 10;
             $this->drawRoundedRect($im, $x, $y, $w, $h, 8, $bgCol);
-            $this->drawRoundedRect($im, $x, $y, $w, $h, 8, $accentCol, false);
+            $this->drawRoundedRect($im, $x, $y, $w, $h, 8, $accentCol);
         }
     }
 
