@@ -66,7 +66,7 @@
 
                         <div id="skin_overrides_section" class="mt-4 hidden">
                             <label class="block text-sm font-medium">Customize Skin</label>
-                            <div id="skin_fields" class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+                            <div id="skin_fields" class="mt-2 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3"></div>
                             <input type="hidden" name="skin_overrides" id="skin_overrides_input" />
                         </div>
 
@@ -134,6 +134,7 @@
       fieldsWrap.innerHTML = '';
       document.getElementById('skin_overrides_section').classList.toggle('hidden', fields.length === 0);
 
+      const smallKeys = new Set(['fontSize','separator','layout','animation','showDays','showHours','showMinutes','showSeconds']);
       fields.forEach(field => {
         const key = field.key;
         const label = field.label || key;
@@ -141,13 +142,15 @@
         const value = defaults[key];
 
         const container = document.createElement('div');
-        container.innerHTML = `<label class="block text-sm font-medium mb-1">${label}</label>`;
+        const isSmall = type === 'color' || type === 'boolean' || smallKeys.has(key);
+        container.className = isSmall ? 'col-span-1' : 'sm:col-span-2 md:col-span-3';
+        container.innerHTML = `<label class="block text-xs font-medium mb-1">${label}</label>`;
         let input;
         if (type === 'color') {
           input = document.createElement('input');
           input.type = 'color';
           input.value = /^#/.test(value) ? value : '#000000';
-          input.className = 'w-20 h-10 p-1 border rounded';
+          input.className = 'w-16 h-8 p-0.5 border rounded';
         } else if (type === 'number') {
           input = document.createElement('input');
           input.type = 'number';
@@ -160,7 +163,7 @@
           input = document.createElement('input');
           input.type = 'checkbox';
           input.checked = !!value;
-          input.className = 'mt-1';
+          input.className = 'mt-1 h-4 w-4';
         } else if (type === 'select') {
           input = document.createElement('select');
           input.className = 'mt-1 w-full border rounded p-2';
