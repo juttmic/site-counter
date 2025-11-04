@@ -70,15 +70,16 @@
                         <!-- Dimensions are controlled via skin fields (width/height) in the customization panel -->
 
                         <div>
-                            <label class="block text-sm font-medium">Skin</label>
+                            <label class="block text-sm font-medium">Selected Skin</label>
                             <input type="hidden" name="skin" id="skin_key" value="{{ $isEdit ? $timer->skin : '' }}" />
-                            <div class="mt-2 flex items-center gap-3">
-                                <button type="button" id="toggle_skin_selector" class="px-3 py-1 border rounded text-sm">Choose Skin</button>
-                                <span id="selected_skin_label" class="text-sm text-gray-600"></span>
-                                <img id="selected_skin_preview" alt="Selected skin preview" class="h-10 w-auto hidden border rounded bg-gray-50" />
+                            <div class="mt-2 relative inline-flex items-center gap-3 border rounded p-2 bg-gray-50">
+                                <img id="selected_skin_preview" alt="Selected skin preview" class="h-10 w-auto hidden border rounded bg-white" />
+                                <span id="selected_skin_label" class="text-sm text-gray-700"></span>
+                                <button type="button" id="open_skin_modal" class="absolute -top-2 -right-2 h-8 w-8 rounded-full bg-white border shadow flex items-center justify-center text-gray-700 hover:bg-gray-100" title="Change skin" aria-label="Change skin">
+                                    <i class="fa-solid fa-rotate"></i>
+                                </button>
                             </div>
-                            <div id="skin_grid" class="mt-2 hidden w-full flex flex-wrap gap-2" style="flex-wrap: wrap;"></div>
-                            <p class="text-xs text-gray-500 mt-1">Click a preview to select a skin.</p>
+                            <p class="text-xs text-gray-500 mt-1">Click the change icon to pick a different skin.</p>
                         </div>
 
                         <div id="skin_overrides_section" class="mt-4 hidden">
@@ -136,6 +137,15 @@
 </div>
 
 <script>
+// Font Awesome (for the change icon)
+if (!document.getElementById('fa-cdn')) {
+  const link = document.createElement('link');
+  link.id = 'fa-cdn';
+  link.rel = 'stylesheet';
+  link.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css';
+  document.head.appendChild(link);
+}
+
 function toggleInputs() {
   const type = document.getElementById('timer_type').value;
   document.getElementById('fixed_date_input').classList.toggle('hidden', type !== 'fixed_date');
@@ -150,23 +160,67 @@ async function fetchJson(url) {
   return await res.json();
 }
 
-function renderSkinGrid(skins) {
-  const grid = document.getElementById('skin_grid');
-  const current = document.getElementById('skin_key').value;
-  grid.innerHTML = '';
-  skins.forEach(s => {
-    const card = document.createElement('div');
-    card.className = 'shrink-0 grow-0 box-border border rounded p-2 cursor-pointer transition hover:ring-2 hover:ring-indigo-500 hover:shadow-md';
-    card.style.flexBasis = 'calc(50% - 0.25rem)';
-    card.style.cursor = "pointer";
-    card.innerHTML = `
-      <img src="${s.preview_url}" alt="${s.name}" class="w-auto max-w-full h-24 mx-auto object-contain bg-gray-50">
-      <div class="mt-1 text-xs truncate text-center">${s.name}</div>
-    `;
-    if (s.key === current) card.classList.add('ring-2','ring-indigo-600');
-    card.addEventListener('click', () => selectSkin(s.key));
-    grid.appendChild(card);
-  });
+// Modal for skin selection
+function ensureSkinModal() {
+  let modal = document.getElementById('skin_modal');
+  if (modal) return modal;
+  modal = document.createElement('div');
+  modal.id = 'skin_modal';
+  modal.className = 'fixed inset-0 z-50 hidden';
+  modal.innerHTML = `
+    <div class="absolute inset-0 bg-black/50" data-dismiss></div>
+    <div class="absolute inset-0 flex items-center justify-center p-4">
+      <div class="bg-white rounded-lg shadow-lg w-full max-w-4xl max-h-[80vh] overflow-auto">
+        <div class="flex items-center justify-between p-4 border-b">
+          <h3 class="text-lg font-semibold">Choose a Skin</h3>
+          <button class="text-gray-500 hover:text-gray-700" data-dismiss aria-label="Close"><i class="fa-solid fa-xmark text-xl"></i></button>
+        </div>
+        <div id="skin_modal_grid" class="p-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3"></div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', (e) => { if (e.target.hasAttribute('data-dismiss')) hideSkinModal(); });
+  return modal;
+}
+
+function showSkinModal() {
+  const modal = ensureSkinModal();
+  modal.classList.remove('hidden');
+  loadSkinsIntoModal();
+}
+
+function hideSkinModal() {
+  const modal = document.getElementById('skin_modal');
+  if (modal) modal.classList.add('hidden');
+}
+
+async function loadSkinsIntoModal() {
+  const grid = document.getElementById('skin_modal_grid');
+  if (!grid) return;
+  grid.innerHTML = '<div class="col-span-full text-center text-sm text-gray-500">Loading skins...</div>';
+  try {
+    const skins = await fetchJson('/skins');
+    const current = document.getElementById('skin_key').value;
+    grid.innerHTML = '';
+    skins.forEach(s => {
+      const card = document.createElement('button');
+      card.type = 'button';
+      card.className = 'border rounded p-2 hover:ring-2 hover:ring-indigo-500 text-left bg-white';
+      card.innerHTML = `
+        <img src="${s.preview_url}" alt="${s.name}" class="w-full h-24 object-contain bg-gray-50">
+        <div class="mt-2 text-sm truncate">${s.name}</div>
+      `;
+      if (s.key === current) card.classList.add('ring-2','ring-indigo-600');
+      card.addEventListener('click', async () => {
+        await selectSkin(s.key);
+        hideSkinModal();
+      });
+      grid.appendChild(card);
+    });
+  } catch (e) {
+    grid.innerHTML = '<div class="col-span-full text-center text-sm text-red-500">Failed to load skins</div>';
+  }
 }
 
 let currentSkinMetadata = null;
@@ -267,8 +321,6 @@ async function selectSkin(key) {
     const meta = await fetchJson(`/skins/${encodeURIComponent(key)}`);
     // When changing skin, reset to new skin's defaults (overrides were for old skin)
     renderFields(meta, {});
-    // collapse grid after selection and show selected preview
-    document.getElementById('skin_grid').classList.add('hidden');
     const prevEl = document.getElementById('selected_skin_preview');
     if (meta && meta.preview_url) {
       prevEl.src = meta.preview_url;
@@ -281,8 +333,6 @@ async function selectSkin(key) {
 
 document.addEventListener('DOMContentLoaded', async () => {
   try {
-    const skins = await fetchJson('/skins');
-    renderSkinGrid(skins);
     const current = document.getElementById('skin_key').value;
     // Load saved overrides from hidden input (for edit mode)
     const savedOverrides = (() => {
@@ -303,15 +353,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         prevEl.src = meta.preview_url;
         prevEl.classList.remove('hidden');
       }
-    } else if (skins.length) {
-      // Create mode: select first skin
-      selectSkin(skins[0].key);
-      document.getElementById('selected_skin_label').textContent = skins[0].key;
+    } else {
+      // Create mode: default to first skin after modal load/selection, or keep empty until user chooses
     }
     
-    document.getElementById('toggle_skin_selector').addEventListener('click', () => {
-      document.getElementById('skin_grid').classList.toggle('hidden');
-    });
+    const changeBtn = document.getElementById('open_skin_modal');
+    if (changeBtn) changeBtn.addEventListener('click', showSkinModal);
   } catch (e) {
     console.error(e);
   }
