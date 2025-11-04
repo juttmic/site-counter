@@ -128,15 +128,13 @@
                               </div>
                           @endif
                       </div>
-                      @if($isEdit && isset($timer->gif_url) && $timer->gif_url)
-                          <div class="mt-4">
-                              <h4 class="font-semibold mb-2 text-sm">Embed Code</h4>
-                              <div class="flex gap-2">
-                                  <input type="text" class="w-full border rounded p-2 text-xs" value='<img src="{{ url($timer->gif_url) }}" alt="Countdown Timer">' readonly>
-                                  <button class="px-3 py-2 border rounded text-sm hover:bg-gray-50" onclick="navigator.clipboard.writeText(this.previousElementSibling.value); this.textContent='Copied!'; setTimeout(() => this.textContent='Copy', 2000)">Copy</button>
-                              </div>
+                      <div id="embed_section" class="mt-4 {{ $isEdit && isset($timer->gif_url) && $timer->gif_url ? '' : 'hidden' }}">
+                          <h4 class="font-semibold mb-2 text-sm">Embed Code</h4>
+                          <div class="flex gap-2">
+                              <input id="embed_input" type="text" class="w-full border rounded p-2 text-xs" value="@if($isEdit && isset($timer->gif_url) && $timer->gif_url)<img src='{{ url($timer->gif_url) }}' alt='Countdown Timer'>@endif" readonly>
+                              <button id="embed_copy_btn" type="button" class="px-3 py-2 border rounded text-sm hover:bg-gray-50" onclick="(function(btn){var inp=document.getElementById('embed_input'); if(!inp) return; navigator.clipboard.writeText(inp.value); btn.textContent='Copied!'; setTimeout(function(){btn.textContent='Copy';},1500);})(this)">Copy</button>
                           </div>
-                      @endif
+                      </div>
                   </div>
               </div>
             </div>
@@ -436,6 +434,14 @@ function startPreviewPolling(timerId) {
         clearInterval(interval);
         if (previewWrap) {
           previewWrap.innerHTML = `<img src="${json.gif_url}" class="max-w-full max-h-[400px] object-contain" alt="Timer preview" />`;
+        }
+        // update embed section
+        const embedSection = document.getElementById('embed_section');
+        const embedInput = document.getElementById('embed_input');
+        if (embedSection && embedInput) {
+          const absUrl = new URL(json.gif_url, window.location.origin).href;
+          embedInput.value = `<img src="${absUrl}" alt="Countdown Timer">`;
+          embedSection.classList.remove('hidden');
         }
       } else if (attempts >= maxAttempts) {
         clearInterval(interval);
