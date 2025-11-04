@@ -65,7 +65,8 @@ class TimerController extends Controller
         }
 
         // Dispatch job to regenerate GIF in background
-        GenerateTimerGif::dispatch($timer);
+        $gen = new GenerateTimerGif($timer);
+        $gen->handle();
 
         return redirect()->route('timers.edit', $timer)->with('status', 'Timer updated! GIF is being regenerated in the background.');
     }
