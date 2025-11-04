@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="light">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -29,6 +29,7 @@
                     var isDark = document.documentElement.classList.toggle('dark');
                     try { localStorage.setItem('theme', isDark ? 'dark' : 'light'); } catch (e) {}
                 }
+
                 window.toggleTheme = toggleTheme; // keep global for inline callers
                 function bindThemeButtons(){
                     var buttons = document.querySelectorAll('[data-theme-toggle]');
@@ -62,7 +63,7 @@
                                     <i class="fa-regular fa-square-plus mr-2"></i>
                                     Create Timer
                                 </a>
-                                <button onclick="toggleTheme()" type="button" data-theme-toggle class="inline-flex items-center px-3 py-1.5 rounded-md text-sm bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600">
+                                <button onclick="toggleTheme()" type="button" class="inline-flex items-center px-3 py-1.5 rounded-md text-sm bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600">
                                     <span class="hidden dark:inline">Light Mode</span>
                                     <span class="dark:hidden">Dark Mode</span>
                                 </button>

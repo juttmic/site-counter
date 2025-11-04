@@ -31,7 +31,7 @@
 
     <div class="border-t border-gray-100 p-3 dark:border-gray-700">
         <div class="text-xs text-gray-500 mb-2 dark:text-gray-300" x-show="!collapsed" x-cloak>{{ Auth::user()->name }}</div>
-        <button type="button" data-theme-toggle onclick="toggleTheme()" class="w-full mb-2 inline-flex items-center justify-center px-3 py-2 rounded-md text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600">
+        <button type="button" onclick="toggleTheme()" class="w-full mb-2 inline-flex items-center justify-center px-3 py-2 rounded-md text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600">
             <i class="fa-regular fa-moon mr-2 hidden dark:inline"></i>
             <i class="fa-regular fa-sun mr-2 dark:hidden"></i>
             <span class="hidden dark:inline" x-show="!collapsed" x-cloak>Light Mode</span>
