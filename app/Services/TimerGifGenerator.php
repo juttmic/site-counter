@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Timer;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 use App\Services\Skins\SkinRendererFactory;
 use App\Services\Skins\SkinRendererInterface;
 
@@ -153,7 +154,34 @@ class TimerGifGenerator
         if (empty($skin['background']) || !is_string($skin['background'])) $skin['background'] = '#000000';
         if (empty($skin['textColor']) || !is_string($skin['textColor'])) $skin['textColor'] = '#FFFFFF';
         if (empty($skin['accentColor']) || !is_string($skin['accentColor'])) $skin['accentColor'] = '#FFCC00';
-        if (empty($skin['fontPath']) || !is_string($skin['fontPath'])) $skin['fontPath'] = resource_path('fonts/DejaVuSans.ttf');
+        if (empty($skin['fontPath']) || !is_string($skin['fontPath'])) {
+            $skin['fontPath'] = resource_path('fonts/DejaVuSans.ttf');
+        }
+        // Normalize fontPath to an absolute, web-safe path
+        $fontPath = (string) $skin['fontPath'];
+        if (!is_file($fontPath)) {
+            // Common case: JSON uses "resources/..."
+            if (Str::startsWith($fontPath, 'resources/')) {
+                $relative = Str::after($fontPath, 'resources/');
+                $tryPath = resource_path($relative);
+                if (is_file($tryPath)) {
+                    $fontPath = $tryPath;
+                }
+            }
+        }
+        if (!is_file($fontPath)) {
+            // Try fonts directory with just filename
+            $basename = basename($fontPath);
+            $tryPath = resource_path('fonts/' . $basename);
+            if (is_file($tryPath)) {
+                $fontPath = $tryPath;
+            }
+        }
+        if (!is_file($fontPath)) {
+            // Final fallback
+            $fontPath = resource_path('fonts/DejaVuSans.ttf');
+        }
+        $skin['fontPath'] = $fontPath;
         return $skin;
     }
 
