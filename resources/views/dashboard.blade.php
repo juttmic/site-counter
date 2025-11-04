@@ -10,27 +10,27 @@
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 text-gray-900">
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg dark:bg-gray-800">
+                <div class="p-6 text-gray-900 dark:text-gray-100">
                     @if(isset($timers) && $timers->isEmpty())
                         <div class="p-4 bg-blue-50 text-blue-800 rounded">No timers yet. Create your first one!</div>
                     @else
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             @foreach($timers as $timer)
-                                <div class="border rounded p-4">
+                                <div class="border rounded p-4 dark:border-gray-700">
                                     <div class="font-semibold">{{ $timer->title }}</div>
-                                    <div class="text-sm text-gray-600 mt-1">
-                                        Type: <span class="px-2 py-0.5 bg-gray-100 rounded">{{ $timer->timer_type }}</span>
+                                    <div class="text-sm text-gray-600 mt-1 dark:text-gray-300">
+                                        Type: <span class="px-2 py-0.5 bg-gray-100 rounded dark:bg-gray-700 dark:text-gray-100">{{ $timer->timer_type }}</span>
                                         <br>Skin: {{ $timer->skin }}
-                                        <br>Status: <span class="px-2 py-0.5 rounded {{ $timer->status==='active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">{{ $timer->status }}</span>
+                                        <br>Status: <span class="px-2 py-0.5 rounded {{ $timer->status==='active' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' }}">{{ $timer->status }}</span>
                                     </div>
                                     <div class="mt-3">
                                         @if($timer->gif_url)
-                                            <div class="w-full h-40 bg-gray-50 border flex items-center justify-center overflow-hidden">
+                                            <div class="w-full h-40 bg-gray-50 border flex items-center justify-center overflow-hidden dark:bg-gray-900 dark:border-gray-700">
                                                 <img src="{{ url($timer->gif_url) }}" alt="preview" class="w-auto max-w-full h-40 object-contain" style="230px">
                                             </div>
                                         @else
-                                            <div class="border w-full h-40 bg-gray-100 flex items-center justify-center text-gray-500">
+                                            <div class="border w-full h-40 bg-gray-100 flex items-center justify-center text-gray-500 dark:bg-gray-900 dark:text-gray-300 dark:border-gray-700">
                                                 <div class="text-center">
                                                     <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-2"></div>
                                                     <div class="text-sm">Generating GIF...</div>
@@ -39,7 +39,7 @@
                                         @endif
                                     </div>
                                     <div class="mt-3 flex gap-2">
-                                        <a class="px-3 py-1 border rounded" href="{{ route('timers.preview', $timer) }}">Preview</a>
+                                        <a class="px-3 py-1 border rounded dark:border-gray-700" href="{{ route('timers.preview', $timer) }}">Preview</a>
                                         <a class="px-3 py-1 border rounded bg-indigo-600 text-white" href="{{ route('timers.edit', $timer) }}">Edit</a>
                                         <form action="{{ route('timers.destroy', $timer) }}" method="POST" onsubmit="return confirm('Delete this timer?');">
                                             @csrf

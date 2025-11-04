@@ -16,8 +16,8 @@
                         @endif
 
                         <!-- Begin two-column form content -->
-                        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                        <div class="p-3 text-gray-900">
+                        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg dark:bg-gray-800">
+                        <div class="p-3 text-gray-900 dark:text-gray-100">
                             <label class="block text-sm font-medium">Title</label>
                             <input type="text" name="title" value="{{ old('title', $timer->title ?? '') }}" class="mt-1 w-full border rounded p-2" required>
                         </div>
@@ -26,7 +26,7 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-3"> 
                           <div>
                             <label class="block text-sm font-medium">Text Position</label>
-                            <select name="text_position" class="mt-1 w-full border rounded p-2">
+                            <select name="text_position" class="mt-1 w-full border rounded p-2 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100">
                                 <option value="none" {{ ($isEdit && $timer->text_position === 'none') || !$isEdit ? 'selected' : '' }}>None</option>
                                 <option value="top" {{ $isEdit && $timer->text_position === 'top' ? 'selected' : '' }}>Top</option>
                                 <option value="bottom" {{ $isEdit && $timer->text_position === 'bottom' ? 'selected' : '' }}>Bottom</option>
@@ -35,7 +35,7 @@
 
                         <div>
                             <label class="block text-sm font-medium">Custom Text {{ !$isEdit ? '(optional)' : '' }}</label>
-                            <input type="text" name="custom_text" class="mt-1 w-full border rounded p-2" maxlength="255" 
+                            <input type="text" name="custom_text" class="mt-1 w-full border rounded p-2 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100" maxlength="255" 
                                 value="{{ old('custom_text', $timer->custom_text ?? '') }}">
                         </div>
                         </div>
@@ -43,7 +43,7 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-3">
                           <div>
                               <label class="block text-sm font-medium">Status</label>
-                              <select name="status" class="mt-1 w-full border rounded p-2">
+                              <select name="status" class="mt-1 w-full border rounded p-2 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100">
                                   <option value="active" {{ ($isEdit && $timer->status === 'active') || !$isEdit ? 'selected' : '' }}>Active</option>
                                   <option value="inactive" {{ $isEdit && $timer->status === 'inactive' ? 'selected' : '' }}>Inactive</option>
                               </select>
@@ -51,7 +51,7 @@
   
                           <div>
                               <label class="block text-sm font-medium">Timer Type</label>
-                              <select name="timer_type" id="timer_type" class="mt-1 w-full border rounded p-2" onchange="toggleInputs()">
+                              <select name="timer_type" id="timer_type" class="mt-1 w-full border rounded p-2 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100" onchange="toggleInputs()">
                                   <option value="fixed_date" {{ ($isEdit && $timer->timer_type === 'fixed_date') || !$isEdit ? 'selected' : '' }}>Fixed Date</option>
                                   <option value="reload_based" {{ $isEdit && $timer->timer_type === 'reload_based' ? 'selected' : '' }}>Reload Based</option>
                               </select>
@@ -59,13 +59,13 @@
                           </div>
                         <div id="fixed_date_input" class="{{ $isEdit && $timer->timer_type !== 'fixed_date' ? 'hidden' : '' }} p-3">
                             <label class="block text-sm font-medium">Target DateTime</label>
-                            <input type="datetime-local" name="target_datetime" class="mt-1 w-full border rounded p-2" 
+                            <input type="datetime-local" name="target_datetime" class="mt-1 w-full border rounded p-2 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100" 
                                 value="{{ old('target_datetime', $isEdit && $timer->target_datetime ? $timer->target_datetime->format('Y-m-d\\TH:i') : '') }}">
                         </div>
 
                         <div id="duration_input" class="{{ ($isEdit && $timer->timer_type !== 'reload_based') || !$isEdit ? 'hidden' : '' }} p-3">
                             <label class="block text-sm font-medium">Duration (seconds)</label>
-                            <input type="number" name="duration_seconds" class="mt-1 w-full border rounded p-2" min="1" max="604800" 
+                            <input type="number" name="duration_seconds" class="mt-1 w-full border rounded p-2 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100" min="1" max="604800" 
                                 value="{{ old('duration_seconds', $timer->duration_seconds ?? '') }}">
                         </div>
 
@@ -74,20 +74,20 @@
                         <div class="p-3">
                             <label class="block text-sm font-medium">Selected Skin</label>
                             <input type="hidden" name="skin" id="skin_key" value="{{ $isEdit ? $timer->skin : '' }}" />
-                            <div class="mt-2 relative inline-flex items-center gap-3 border rounded p-2 bg-gray-50">
-                                <img id="selected_skin_preview" alt="Selected skin preview" class="h-10 w-auto hidden border rounded bg-white" />
-                                <span id="selected_skin_label" class="text-sm text-gray-700"></span>
-                                <button type="button" id="open_skin_modal" class="absolute -top-2 -right-2 h-8 w-8 rounded-full bg-white border shadow flex items-center justify-center text-gray-700 hover:bg-gray-100" title="Change skin" aria-label="Change skin">
+                            <div class="mt-2 relative inline-flex items-center gap-3 border rounded p-2 bg-gray-50 dark:bg-gray-900 dark:border-gray-700">
+                                <img id="selected_skin_preview" alt="Selected skin preview" class="h-10 w-auto hidden border rounded bg-white dark:bg-gray-800 dark:border-gray-700" />
+                                <span id="selected_skin_label" class="text-sm text-gray-700 dark:text-gray-200"></span>
+                                <button type="button" id="open_skin_modal" class="absolute -top-2 -right-2 h-8 w-8 rounded-full bg-white border shadow flex items-center justify-center text-gray-700 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700" title="Change skin" aria-label="Change skin">
                                     <i class="fa-solid fa-rotate"></i>
                                 </button>
                             </div>
-                            <p class="text-xs text-gray-500 mt-1">Click the change icon to pick a different skin.</p>
+                            <p class="text-xs text-gray-500 mt-1 dark:text-gray-400">Click the change icon to pick a different skin.</p>
                         </div>
                         </div> <!-- end left card -->
 
                         <!-- Right card of form: skin customization fields -->
-                        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                          <div class="p-3">
+                        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg dark:bg-gray-800">
+                          <div class="p-3 text-gray-900 dark:text-gray-100">
                             <label class="block text-sm font-medium">Customize Skin</label>
                             <div id="skin_overrides_section" class="mt-2 hidden">
                                 <div id="skin_fields" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3"></div>
@@ -102,18 +102,18 @@
                         <div class="flex gap-2">
                             <button id="save_btn" type="button" class="px-4 py-2 bg-indigo-600 text-white rounded">Save</button>
                             
-                            <a href="{{ route('dashboard') }}" class="px-4 py-2 border rounded">{{ $isEdit ? 'Back' : 'Cancel' }}</a>
+                            <a href="{{ route('dashboard') }}" class="px-4 py-2 border rounded dark:border-gray-700">{{ $isEdit ? 'Back' : 'Cancel' }}</a>
                         </div>
                     </form>
                 </div>
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                  <div class="p-6">
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg dark:bg-gray-800">
+                  <div class="p-6 text-gray-900 dark:text-gray-100">
                       <h3 class="text-lg font-semibold mb-4">Preview</h3>
-                      <div id="timer_preview" class="flex items-center justify-center min-h-[400px] bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg mb-4">
+                      <div id="timer_preview" class="flex items-center justify-center min-h-[400px] bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg mb-4 dark:bg-gray-900 dark:border-gray-700">
                           @if($isEdit && isset($timer->gif_url) && $timer->gif_url)
                               <img src="{{ url($timer->gif_url) }}" class="max-w-full max-h-[400px] object-contain" alt="Timer preview" id="preview_gif">
                           @else
-                              <div class="text-center text-gray-500">
+                              <div class="text-center text-gray-500 dark:text-gray-300">
                                   @if($isEdit)
                                       <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-2"></div>
                                       <p class="text-sm">Generating GIF...</p>
@@ -131,8 +131,8 @@
                       <div id="embed_section" class="mt-4 {{ $isEdit && isset($timer->gif_url) && $timer->gif_url ? '' : 'hidden' }}">
                           <h4 class="font-semibold mb-2 text-sm">Embed Code</h4>
                           <div class="flex gap-2">
-                              <input id="embed_input" type="text" class="w-full border rounded p-2 text-xs" value="@if($isEdit && isset($timer->gif_url) && $timer->gif_url)<img src='{{ url($timer->gif_url) }}' alt='Countdown Timer'>@endif" readonly>
-                              <button id="embed_copy_btn" type="button" class="px-3 py-2 border rounded text-sm hover:bg-gray-50" onclick="(function(btn){var inp=document.getElementById('embed_input'); if(!inp) return; navigator.clipboard.writeText(inp.value); btn.textContent='Copied!'; setTimeout(function(){btn.textContent='Copy';},1500);})(this)">Copy</button>
+                              <input id="embed_input" type="text" class="w-full border rounded p-2 text-xs dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100" value="@if($isEdit && isset($timer->gif_url) && $timer->gif_url)<img src='{{ url($timer->gif_url) }}' alt='Countdown Timer'>@endif" readonly>
+                              <button id="embed_copy_btn" type="button" class="px-3 py-2 border rounded text-sm hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700" onclick="(function(btn){var inp=document.getElementById('embed_input'); if(!inp) return; navigator.clipboard.writeText(inp.value); btn.textContent='Copied!'; setTimeout(function(){btn.textContent='Copy';},1500);})(this)">Copy</button>
                           </div>
                       </div>
                   </div>

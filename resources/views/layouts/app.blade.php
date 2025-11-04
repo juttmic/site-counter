@@ -24,10 +24,24 @@
                     }
                 } catch (e) {}
             })();
-            window.toggleTheme = function() {
-                var isDark = document.documentElement.classList.toggle('dark');
-                try { localStorage.setItem('theme', isDark ? 'dark' : 'light'); } catch (e) {}
-            };
+            (function(){
+                function toggleTheme() {
+                    var isDark = document.documentElement.classList.toggle('dark');
+                    try { localStorage.setItem('theme', isDark ? 'dark' : 'light'); } catch (e) {}
+                }
+                window.toggleTheme = toggleTheme; // keep global for inline callers
+                function bindThemeButtons(){
+                    var buttons = document.querySelectorAll('[data-theme-toggle]');
+                    buttons.forEach(function(btn){
+                        btn.addEventListener('click', toggleTheme);
+                    });
+                }
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', bindThemeButtons);
+                } else {
+                    bindThemeButtons();
+                }
+            })();
         </script>
     </head>
     <body class="font-sans antialiased bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-gray-100">
@@ -35,17 +49,23 @@
             <div class="flex">
                 @include('layouts.sidebar')
                 <div class="flex-1 min-h-screen">
-                    @isset($header)
-                        <header class="bg-white border-b border-gray-100 dark:bg-gray-800 dark:border-gray-700">
-                            <div class="mx-auto py-4 px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-                                {{ $header }}
-                                <button type="button" onclick="toggleTheme()" class="inline-flex items-center px-3 py-1.5 rounded-md text-sm bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600">
+                    <header class="bg-white border-b border-gray-100 dark:bg-gray-800 dark:border-gray-700">
+                        <div class="mx-auto py-3 px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+                            <div class="min-h-[24px]">
+                                {{ $header ?? '' }}
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <a href="{{ route('timers.create') }}" class="hidden sm:inline-flex items-center px-3 py-1.5 rounded-md text-sm bg-indigo-600 text-white hover:bg-indigo-700">
+                                    <i class="fa-regular fa-square-plus mr-2"></i>
+                                    Create Timer
+                                </a>
+                                <button onclick="toggleTheme()" type="button" data-theme-toggle class="inline-flex items-center px-3 py-1.5 rounded-md text-sm bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600">
                                     <span class="hidden dark:inline">Light Mode</span>
                                     <span class="dark:hidden">Dark Mode</span>
                                 </button>
                             </div>
-                        </header>
-                    @endisset
+                        </div>
+                    </header>
                     <main class="p-4 sm:p-6 lg:p-8">
                         {{ $slot }}
                     </main>
