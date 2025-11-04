@@ -247,7 +247,20 @@ class TimerGifGenerator
         if ($renderer instanceof SkinRendererInterface && $renderer->renderTimeText($im, $secondsRemaining, $skin, $width, $height, $textCol, $accentCol)) {
             // handled by renderer
         } else {
-            $timeText = $this->formatSeconds($secondsRemaining);
+            // Build fallback time text honoring skin flags and separator
+            $sep = (string)($skin['separator'] ?? ':');
+            if ($sep === '') { $sep = ':'; }
+            $days = intdiv($secondsRemaining, 86400);
+            $hours = intdiv($secondsRemaining % 86400, 3600);
+            $minutes = intdiv($secondsRemaining % 3600, 60);
+            $secs = $secondsRemaining % 60;
+            $parts = [];
+            if (($skin['showDays'] ?? true) === true)    { $parts[] = sprintf('%02d', $days); }
+            if (($skin['showHours'] ?? true) === true)   { $parts[] = sprintf('%02d', $hours); }
+            if (($skin['showMinutes'] ?? true) === true) { $parts[] = sprintf('%02d', $minutes); }
+            if (($skin['showSeconds'] ?? true) === true) { $parts[] = sprintf('%02d', $secs); }
+            if (empty($parts)) { $parts[] = sprintf('%02d', $secs); }
+            $timeText = implode($sep, $parts);
 
             if (is_file($font)) {
                 $centerY = (int) ($height / 2 + $fontSize / 2);

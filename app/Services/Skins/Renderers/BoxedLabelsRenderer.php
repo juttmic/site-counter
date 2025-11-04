@@ -63,12 +63,13 @@ class BoxedLabelsRenderer implements SkinRendererInterface
         $minutes = (int) floor(($secondsRemaining % 3600) / 60);
         $seconds = (int) ($secondsRemaining % 60);
 
-        $units = [
-            ['value' => $days,    'label' => 'DAYS'],
-            ['value' => $hours,   'label' => 'HOURS'],
-            ['value' => $minutes, 'label' => 'MINUTES'],
-            ['value' => $seconds, 'label' => 'SECONDS'],
-        ];
+        // Respect checkbox flags
+        $units = [];
+        if (($skin['showDays'] ?? true) === true)    { $units[] = ['value' => $days,    'label' => 'DAYS']; }
+        if (($skin['showHours'] ?? true) === true)   { $units[] = ['value' => $hours,   'label' => 'HOURS']; }
+        if (($skin['showMinutes'] ?? true) === true) { $units[] = ['value' => $minutes, 'label' => 'MINUTES']; }
+        if (($skin['showSeconds'] ?? true) === true) { $units[] = ['value' => $seconds, 'label' => 'SECONDS']; }
+        if (empty($units)) { $units[] = ['value' => $seconds, 'label' => 'SECONDS']; }
 
         $segments = count($units);
         $gap = max(6, (int)round($width * 0.02));

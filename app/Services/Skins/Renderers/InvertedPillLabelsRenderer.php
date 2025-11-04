@@ -41,10 +41,13 @@ class InvertedPillLabelsRenderer implements SkinRendererInterface
         $labelCol = imagecolorallocate($im, $ar, $ag, $ab);
         $colonCol = imagecolorallocate($im, 0, 0, 0); // colon in dark for contrast
 
+        // Layout orientation
+        $vertical = isset($skin['layout']) && $skin['layout'] === 'vertical';
+
         // Draw two rounded tiles per segment (for each digit)
         for ($i = 0; $i < $segments; $i++) {
             $segX1 = $gapX + $i * ($segW + $gapX);
-            $segY1 = $padTop; // consistent top padding
+            $segY1 = $padTop; // consistent top padding; for vertical we still align top and renderer will compute below
             $segX2 = $segX1 + $segW;
             $segY2 = $segY1 + $digitTileH;
 
@@ -79,10 +82,14 @@ class InvertedPillLabelsRenderer implements SkinRendererInterface
         $font = $skin['fontPath'] ?? '';
         $fontSize = (int)($skin['fontSize'] ?? 32);
         if (is_file($font)) {
+            $sep = (string)($skin['separator'] ?? ':');
+            if ($sep === '') { $sep = ':'; }
+            // Use first visible character for placement calculations
+            $sepChar = mb_substr($sep, 0, 1);
             for ($i = 0; $i < $segments - 1; $i++) {
                 $cx = $gapX + ($i + 1) * $segW + $i * $gapX + (int)($gapX / 2);
                 $cy = (int)($padTop + $digitTileH * 0.50);
-                $colon = ':';
+                $colon = $sepChar;
                 $box = imagettfbbox($fontSize, 0, $font, $colon);
                 $cw  = abs($box[4] - $box[0]);
                 $ch  = abs($box[5] - $box[1]);
@@ -108,12 +115,15 @@ class InvertedPillLabelsRenderer implements SkinRendererInterface
         $minutes = (int) floor(($secondsRemaining % 3600) / 60);
         $seconds = (int) ($secondsRemaining % 60);
 
-        $units = [
-            ['value' => $days,    'label' => 'DAYS'],
-            ['value' => $hours,   'label' => 'HOURS'],
-            ['value' => $minutes, 'label' => 'MINUTES'],
-            ['value' => $seconds, 'label' => 'SECONDS'],
-        ];
+        // Respect checkbox flags to show/hide units
+        $units = [];
+        if (($skin['showDays'] ?? true) === true)    { $units[] = ['value' => $days,    'label' => 'DAYS']; }
+        if (($skin['showHours'] ?? true) === true)   { $units[] = ['value' => $hours,   'label' => 'HOURS']; }
+        if (($skin['showMinutes'] ?? true) === true) { $units[] = ['value' => $minutes, 'label' => 'MINUTES']; }
+        if (($skin['showSeconds'] ?? true) === true) { $units[] = ['value' => $seconds, 'label' => 'SECONDS']; }
+        if (empty($units)) {
+            $units = [ ['value'=>$seconds,'label'=>'SECONDS'] ];
+        }
 
         $segments = count($units);
         $gapX = max(8, (int)round($width * 0.02));

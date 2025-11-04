@@ -23,12 +23,17 @@ class MinimalBlackCountdownRenderer implements SkinRendererInterface
         $minutes = intdiv($secondsRemaining % 3600, 60);
         $seconds = $secondsRemaining % 60;
 
-        $timeUnits = [
-            ['value' => $days, 'label' => 'D'],
-            ['value' => $hours, 'label' => 'H'],
-            ['value' => $minutes, 'label' => 'M'],
-            ['value' => $seconds, 'label' => 'S']
-        ];
+        // Respect checkbox flags
+        $timeUnits = [];
+        if (($skin['showDays'] ?? true) === true)    { $timeUnits[] = ['value' => $days, 'label' => 'D']; }
+        if (($skin['showHours'] ?? true) === true)   { $timeUnits[] = ['value' => $hours, 'label' => 'H']; }
+        if (($skin['showMinutes'] ?? true) === true) { $timeUnits[] = ['value' => $minutes, 'label' => 'M']; }
+        if (($skin['showSeconds'] ?? true) === true) { $timeUnits[] = ['value' => $seconds, 'label' => 'S']; }
+        if (empty($timeUnits)) { $timeUnits[] = ['value' => $seconds, 'label' => 'S']; }
+
+        $separator = (string)($skin['separator'] ?? ':');
+        if ($separator === '') { $separator = ':'; }
+        $sepChar = mb_substr($separator, 0, 1);
 
         if (is_file($font)) {
             $unitCount = count($timeUnits);
@@ -55,9 +60,9 @@ class MinimalBlackCountdownRenderer implements SkinRendererInterface
                 $labelY = (int) ($centerY + $numberHeight / 2);
                 imagettftext($im, $labelSize, 0, $labelX, $labelY, $textCol, $font, $labelText);
 
-                // Colon separator
+                // Separator between units
                 if ($i < $unitCount - 1) {
-                    $colon = ':';
+                    $colon = $sepChar;
                     $colonBox = imagettfbbox($fontSize, 0, $font, $colon);
                     $colonWidth = abs($colonBox[4] - $colonBox[0]);
                     $colonX = (int) ($unitX + $unitWidth / 2 - $colonWidth / 2);
