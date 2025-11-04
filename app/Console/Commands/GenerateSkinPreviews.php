@@ -50,13 +50,14 @@ class GenerateSkinPreviews extends Command
                 }
             }
 
-            $outPath = $outDir . DIRECTORY_SEPARATOR . $skinKey . '.png';
+            $outPath = $outDir . DIRECTORY_SEPARATOR . $skinKey . '.gif';
             if (!$force && File::exists($outPath)) {
                 $this->line("Skip existing: {$skinKey}");
                 continue;
             }
             try {
-                $generator->renderSkinPreview($skinKey, $outPath);
+                // Generate short (6s) animated GIF preview using the skin renderer
+                $generator->renderSkinGifPreview($skinKey, $outPath, 6);
                 $this->info("Generated preview: {$skinKey}");
                 $count++;
             } catch (\Throwable $e) {

@@ -18,7 +18,7 @@ class SkinController extends Controller
             $skins[] = [
                 'key' => $key,
                 'name' => $json['name'] ?? $key,
-                'preview_url' => url('/skin-previews/' . $key . '.png'),
+                'preview_url' => url('/skin-previews/' . $key . '.gif'),
             ];
         }
         return response()->json($skins);
@@ -38,9 +38,24 @@ class SkinController extends Controller
             'name' => $json['name'] ?? $key,
             'defaults' => $json,
             'fields' => $fields,
-            'preview_url' => url('/skin-previews/' . $key . '.png'),
+            'preview_url' => url('/skin-previews/' . $key . '.gif'),
         ];
         return response()->json($exposed);
+    }
+
+    public function gallery()
+    {
+        $dir = public_path('skin-previews');
+        $files = collect(glob($dir . DIRECTORY_SEPARATOR . '*.gif'));
+        $items = $files->map(function ($path) {
+            $file = pathinfo($path, PATHINFO_BASENAME);
+            $key = pathinfo($path, PATHINFO_FILENAME);
+            return [
+                'key' => $key,
+                'url' => url('skin-previews/' + $file),
+            ];
+        });
+        return view('skins.gallery', ['items' => $items]);
     }
 
     /**

@@ -29,6 +29,7 @@ Route::middleware('auth')->group(function () {
     // Skins metadata and previews for UI
     Route::get('/skins', [SkinController::class, 'index'])->name('skins.index');
     Route::get('/skins/{key}', [SkinController::class, 'show'])->name('skins.show');
+    Route::get('/skin-previews', [SkinController::class, 'gallery'])->name('skins.gallery');
 });
 
 // Public GIF endpoint (no auth)

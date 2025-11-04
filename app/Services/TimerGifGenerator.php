@@ -110,6 +110,18 @@ class TimerGifGenerator
         \Illuminate\Support\Facades\File::put($outputPath, $png);
     }
 
+    /**
+     * Render a short animated GIF preview for a given skin.
+     * Generates a countdown of $seconds length (default 6s) using the skin's renderer.
+     */
+    public function renderSkinGifPreview(string $skinName, string $outputPath, int $seconds = 6): void
+    {
+        $skin = $this->loadSkin($skinName);
+        $frames = $this->buildFrames(max(1, $seconds), $skin, null, 'none');
+        \Illuminate\Support\Facades\File::ensureDirectoryExists(dirname($outputPath));
+        $this->encodeAnimatedGif($frames, $outputPath, max(1, $seconds));
+    }
+
     private function loadSkin(string $skinName): array
     {
         $path = resource_path('timerskins/' . $skinName . '.json');
