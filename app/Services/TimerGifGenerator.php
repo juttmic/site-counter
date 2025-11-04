@@ -41,16 +41,9 @@ class TimerGifGenerator
         }
 
         $skin = $this->loadSkin($timer->skin);
-        // Apply per-timer overrides if present
+        // Apply per-timer overrides if present (preferred source for width/height and other settings)
         if (is_array($timer->skin_overrides) && !empty($timer->skin_overrides)) {
             $skin = array_replace_recursive($skin, $timer->skin_overrides);
-        }
-        // Override skin size with legacy timer-specific dimensions if provided
-        if (!empty($timer->width) && !empty($timer->height)) {
-            $skin['width'] = max(120, min(1200, (int) $timer->width));
-            $skin['height'] = max(80, min(800, (int) $timer->height));
-            // Adjust font size proportionally
-            $skin['fontSize'] = max(12, (int) round(($skin['height']) * 0.28));
         }
 
         $frames = $this->buildFrames($durationForGif, $skin, $timer->custom_text, $timer->text_position);
