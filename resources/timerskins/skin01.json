@@ -14,8 +14,7 @@
   "showSeconds": true,
   "separator": " : ",
   "layout": "horizontal",
-  "animation": "none"
-  ,
+  "animation": "none",
   "fields": [
     { "key": "width", "label": "Width", "type": "number", "min": 100, "max": 2000, "step": 10 },
     { "key": "height", "label": "Height", "type": "number", "min": 50, "max": 1000, "step": 5 },
