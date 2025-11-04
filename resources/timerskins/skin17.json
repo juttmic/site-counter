@@ -6,7 +6,7 @@
   "background": "#FFFFFF",
   "textColor": "#2196F3",
   "accentColor": "#2196F3",
-  "fontPath": "resources/fonts/DejaVuSans.ttf",
+  "fontPath": "resources/fonts/dejavu-sans.book.ttf",
   "style": "rounded_square_outline",
   "showDays": true,
   "showHours": true,

@@ -6,7 +6,7 @@
   "textColor": "#ECF0F1",
   "accentColor": "#E74C3C",
   "fontSize": 50,
-  "fontPath": "resources/fonts/DejaVuSans.ttf",
+  "fontPath": "resources/fonts/dejavu-sans.book.ttf",
   "style": "default",
   "showDays": true,
   "showHours": true,

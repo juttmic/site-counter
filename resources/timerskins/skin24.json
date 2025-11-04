@@ -6,7 +6,7 @@
   "background": "#000000",
   "textColor": "#00FFFF",
   "accentColor": "#FF00FF",
-  "fontPath": "resources/fonts/DejaVuSans.ttf",
+  "fontPath": "resources/fonts/dejavu-sans.book.ttf",
   "style": "neon_glow",
   "showDays": true,
   "showHours": true,

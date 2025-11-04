@@ -134,7 +134,7 @@ class TimerGifGenerator
                 'textColor' => '#FFFFFF',
                 'accentColor' => '#FFCC00',
                 'fontSize' => 36,
-                'fontPath' => resource_path('fonts/DejaVuSans.ttf'),
+                'fontPath' => resource_path('fonts/dejavu-sans.book.ttf'),
             ];
         }
         $json = json_decode(file_get_contents($path), true) ?: [];
@@ -145,7 +145,7 @@ class TimerGifGenerator
             'textColor' => '#FFFFFF',
             'accentColor' => '#FFCC00',
             'fontSize' => 36,
-            'fontPath' => resource_path('fonts/DejaVuSans.ttf'),
+            'fontPath' => resource_path('fonts/dejavu-sans.book.ttf'),
         ], $json);
         // Validate
         $skin['width'] = max(120, min(1200, (int) ($skin['width'] ?? 400)));
@@ -155,7 +155,7 @@ class TimerGifGenerator
         if (empty($skin['textColor']) || !is_string($skin['textColor'])) $skin['textColor'] = '#FFFFFF';
         if (empty($skin['accentColor']) || !is_string($skin['accentColor'])) $skin['accentColor'] = '#FFCC00';
         if (empty($skin['fontPath']) || !is_string($skin['fontPath'])) {
-            $skin['fontPath'] = resource_path('fonts/DejaVuSans.ttf');
+            $skin['fontPath'] = resource_path('fonts/dejavu-sans.book.ttf');
         }
         // Normalize fontPath to an absolute, web-safe path
         $fontPath = (string) $skin['fontPath'];
@@ -179,7 +179,7 @@ class TimerGifGenerator
         }
         if (!is_file($fontPath)) {
             // Final fallback
-            $fontPath = resource_path('fonts/DejaVuSans.ttf');
+            $fontPath = resource_path('fonts/dejavu-sans.book.ttf');
         }
         $skin['fontPath'] = $fontPath;
         return $skin;

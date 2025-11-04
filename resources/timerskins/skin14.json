@@ -6,7 +6,7 @@
   "background": "#000000",
   "textColor": "#FFFFFF",
   "accentColor": "#FFFFFF",
-  "fontPath": "resources/fonts/DejaVuSans.ttf",
+  "fontPath": "resources/fonts/dejavu-sans.book.ttf",
   "style": "flip_clock_white",
   "showDays": true,
   "showHours": true,

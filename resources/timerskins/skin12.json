@@ -6,7 +6,7 @@
   "background": "#FFFFFF",
   "textColor": "#000000",
   "accentColor": "#FF0000",
-  "fontPath": "resources/fonts/DejaVuSans.ttf",
+  "fontPath": "resources/fonts/dejavu-sans.book.ttf",
   "style": "slashed_separator",
   "showDays": true,
   "showHours": true,
