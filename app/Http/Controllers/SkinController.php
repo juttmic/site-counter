@@ -52,7 +52,7 @@ class SkinController extends Controller
             $key = pathinfo($path, PATHINFO_FILENAME);
             return [
                 'key' => $key,
-                'url' => url('skin-previews/' + $file),
+                'url' => url('skin-previews/' . $file),
             ];
         });
         return view('skins.gallery', ['items' => $items]);

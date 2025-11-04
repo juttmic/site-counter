@@ -21,7 +21,7 @@
                 </a>
             </li>
             <li>
-                <a href="{{ url('/skin-previews') }}" class="flex items-center px-3 py-2 rounded-md text-sm font-medium {{ request()->is('skin-previews') ? 'bg-gray-100 text-gray-900 dark:bg-gray-700 dark:text-gray-100' : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-200 dark:hover:bg-gray-700 dark:hover:text-white' }}">
+                <a href="{{ url('/skins') }}" class="flex items-center px-3 py-2 rounded-md text-sm font-medium {{ request()->is('skins') ? 'bg-gray-100 text-gray-900 dark:bg-gray-700 dark:text-gray-100' : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-200 dark:hover:bg-gray-700 dark:hover:text-white' }}">
                     <i class="fa-regular fa-images mr-2"></i>
                     <span>Skin Gallery</span>
                 </a>
@@ -60,7 +60,7 @@
         <ul class="py-2">
             <li><a class="block px-4 py-2" href="{{ route('dashboard') }}">Dashboard</a></li>
             <li><a class="block px-4 py-2" href="{{ route('timers.create') }}">Create Timer</a></li>
-            <li><a class="block px-4 py-2" href="{{ url('/skin-previews') }}">Skin Gallery</a></li>
+            <li><a class="block px-4 py-2" href="{{ url('/skins') }}">Skin Gallery</a></li>
             <li>
                 <form method="POST" action="{{ route('logout') }}" class="px-4 py-2">
                     @csrf

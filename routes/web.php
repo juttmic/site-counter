@@ -26,10 +26,11 @@ Route::middleware('auth')->group(function () {
     Route::get('timers/{timer}/preview', [TimerController::class, 'preview'])->name('timers.preview');
     Route::get('timers/{timer}/status', [TimerController::class, 'status'])->name('timers.status');
 
-    // Skins metadata and previews for UI
-    Route::get('/skins', [SkinController::class, 'index'])->name('skins.index');
+    // Skins gallery page
+    Route::get('/skins', [SkinController::class, 'gallery'])->name('skins.gallery');
+    // JSON endpoints (if needed by modal or API)
     Route::get('/skins/{key}', [SkinController::class, 'show'])->name('skins.show');
-    Route::get('/skin-previews', [SkinController::class, 'gallery'])->name('skins.gallery');
+    Route::get('/skin-previews', [SkinController::class, 'gallery']);
 });
 
 // Public GIF endpoint (no auth)
