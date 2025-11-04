@@ -13,24 +13,44 @@
 
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+        <script>
+            (function() {
+                try {
+                    var saved = localStorage.getItem('theme');
+                    if (saved === 'dark' || (!saved && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                        document.documentElement.classList.add('dark');
+                    } else {
+                        document.documentElement.classList.remove('dark');
+                    }
+                } catch (e) {}
+            })();
+            window.toggleTheme = function() {
+                var isDark = document.documentElement.classList.toggle('dark');
+                try { localStorage.setItem('theme', isDark ? 'dark' : 'light'); } catch (e) {}
+            };
+        </script>
     </head>
-    <body class="font-sans antialiased">
-        <div class="min-h-screen bg-gray-100">
-            @include('layouts.navigation')
-
-            <!-- Page Heading -->
-            @isset($header)
-                <header class="bg-white shadow">
-                    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-                        {{ $header }}
-                    </div>
-                </header>
-            @endisset
-
-            <!-- Page Content -->
-            <main>
-                {{ $slot }}
-            </main>
+    <body class="font-sans antialiased bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-gray-100">
+        <div class="min-h-screen">
+            <div class="flex">
+                @include('layouts.sidebar')
+                <div class="flex-1 min-h-screen">
+                    @isset($header)
+                        <header class="bg-white border-b border-gray-100 dark:bg-gray-800 dark:border-gray-700">
+                            <div class="mx-auto py-4 px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+                                {{ $header }}
+                                <button type="button" onclick="toggleTheme()" class="inline-flex items-center px-3 py-1.5 rounded-md text-sm bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600">
+                                    <span class="hidden dark:inline">Light Mode</span>
+                                    <span class="dark:hidden">Dark Mode</span>
+                                </button>
+                            </div>
+                        </header>
+                    @endisset
+                    <main class="p-4 sm:p-6 lg:p-8">
+                        {{ $slot }}
+                    </main>
+                </div>
+            </div>
         </div>
     </body>
 </html>
