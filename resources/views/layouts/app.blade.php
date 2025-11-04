@@ -46,7 +46,7 @@
     </head>
     <body class="font-sans antialiased bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-gray-100">
         <div class="min-h-screen">
-            <div class="flex">
+            <div class="flex" x-data="{ collapsed: false }">
                 @include('layouts.sidebar')
                 <div class="flex-1 min-h-screen">
                     <header class="bg-white border-b border-gray-100 dark:bg-gray-800 dark:border-gray-700">
@@ -55,6 +55,9 @@
                                 {{ $header ?? '' }}
                             </div>
                             <div class="flex items-center gap-2">
+                                <button type="button" @click="collapsed = !collapsed" class="inline-flex items-center px-3 py-1.5 rounded-md text-sm bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600" title="Toggle sidebar">
+                                    <i class="fa-solid fa-bars"></i>
+                                </button>
                                 <a href="{{ route('timers.create') }}" class="hidden sm:inline-flex items-center px-3 py-1.5 rounded-md text-sm bg-indigo-600 text-white hover:bg-indigo-700">
                                     <i class="fa-regular fa-square-plus mr-2"></i>
                                     Create Timer
