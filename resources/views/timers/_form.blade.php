@@ -209,7 +209,7 @@ async function loadSkinsIntoModal() {
   if (!grid) return;
   grid.innerHTML = '<div class="col-span-full text-center text-sm text-gray-500">Loading skins...</div>';
   try {
-    const skins = await fetchJson('/skins');
+    const skins = await fetchJson('/api/skins');
     const current = document.getElementById('skin_key').value;
     grid.innerHTML = '';
     skins.forEach(s => {

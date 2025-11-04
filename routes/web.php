@@ -26,9 +26,10 @@ Route::middleware('auth')->group(function () {
     Route::get('timers/{timer}/preview', [TimerController::class, 'preview'])->name('timers.preview');
     Route::get('timers/{timer}/status', [TimerController::class, 'status'])->name('timers.status');
 
-    // Skins gallery page
+    // Skins gallery page (HTML)
     Route::get('/skins', [SkinController::class, 'gallery'])->name('skins.gallery');
-    // JSON endpoints (if needed by modal or API)
+    // JSON endpoints for create/edit modal
+    Route::get('/api/skins', [SkinController::class, 'index'])->name('skins.index');
     Route::get('/skins/{key}', [SkinController::class, 'show'])->name('skins.show');
     Route::get('/skin-previews', [SkinController::class, 'gallery']);
 });
