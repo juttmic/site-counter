@@ -7,10 +7,12 @@
     </x-slot>
 
     <div class="py-12">
-        <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 text-gray-900">
-                    <form method="POST" action="{{ route('timers.update', $timer) }}" class="grid grid-cols-1 gap-4">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Left: Form -->
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                    <div class="p-6 text-gray-900">
+                        <form method="POST" action="{{ route('timers.update', $timer) }}" class="grid grid-cols-1 gap-4">
                         @csrf
                         @method('PUT')
                         <div>
@@ -83,18 +85,33 @@
                             <a href="{{ route('dashboard') }}" class="px-4 py-2 border rounded">Back</a>
                         </div>
                     </form>
-                    @if($timer->gif_url)
-                        <div class="mt-6">
-                            <h3 class="font-semibold mb-2">Embed</h3>
-                            <div class="flex gap-2">
-                                <input type="text" class="w-full border rounded p-2" value='<img src="{{ url($timer->gif_url) }}" alt="Countdown Timer">' readonly>
-                                <button class="px-3 py-2 border rounded" onclick="navigator.clipboard.writeText(this.previousElementSibling.value)">Copy</button>
-                            </div>
-                            <div class="mt-3">
-                                <img src="{{ url($timer->gif_url) }}" class="border max-w-full" alt="preview">
-                            </div>
+                    </div>
+                </div>
+
+                <!-- Right: Preview -->
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                    <div class="p-6">
+                        <h3 class="text-lg font-semibold mb-4">Preview</h3>
+                        <div id="timer_preview" class="flex items-center justify-center min-h-[400px] bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg mb-4">
+                            @if($timer->gif_url)
+                                <img src="{{ url($timer->gif_url) }}" class="max-w-full max-h-[400px] object-contain" alt="Timer preview" id="preview_gif">
+                            @else
+                                <div class="text-center text-gray-500">
+                                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-2"></div>
+                                    <p class="text-sm">Generating GIF...</p>
+                                </div>
+                            @endif
                         </div>
-                    @endif
+                        @if($timer->gif_url)
+                            <div class="mt-4">
+                                <h4 class="font-semibold mb-2 text-sm">Embed Code</h4>
+                                <div class="flex gap-2">
+                                    <input type="text" class="w-full border rounded p-2 text-xs" value='<img src="{{ url($timer->gif_url) }}" alt="Countdown Timer">' readonly>
+                                    <button class="px-3 py-2 border rounded text-sm hover:bg-gray-50" onclick="navigator.clipboard.writeText(this.previousElementSibling.value); this.textContent='Copied!'; setTimeout(() => this.textContent='Copy', 2000)">Copy</button>
+                                </div>
+                            </div>
+                        @endif
+                    </div>
                 </div>
             </div>
         </div>
@@ -134,11 +151,13 @@
       });
     }
 
-    function renderFields(metadata) {
+    let currentSkinMetadata = null;
+
+    function renderFields(metadata, savedOverrides = {}) {
+      currentSkinMetadata = metadata;
       const fieldsWrap = document.getElementById('skin_fields');
       const defaults = metadata.defaults || {};
       const fields = Array.isArray(metadata.fields) ? metadata.fields : [];
-      const saved = (() => { try { return JSON.parse(document.getElementById('skin_overrides_input').value || '{}'); } catch(e) { return {}; } })();
       fieldsWrap.innerHTML = '';
       document.getElementById('skin_overrides_section').classList.toggle('hidden', fields.length === 0);
 
@@ -147,12 +166,13 @@
         const key = field.key;
         const label = field.label || key;
         const type = field.type || 'text';
-        const value = (saved[key] !== undefined) ? saved[key] : defaults[key];
+        // Use saved override if exists, otherwise use skin default
+        const value = (savedOverrides[key] !== undefined) ? savedOverrides[key] : defaults[key];
 
         const container = document.createElement('div');
         const isSmall = type === 'color' || type === 'boolean' || smallKeys.has(key);
         container.className = isSmall ? 'col-span-1' : 'sm:col-span-2 md:col-span-3';
-        container.innerHTML = `<label class=\"block text-xs font-medium mb-1\">${label}</label>`;
+        container.innerHTML = `<label class="block text-xs font-medium mb-1">${label}</label>`;
         let input;
         if (type === 'color') {
           input = document.createElement('input');
@@ -188,31 +208,46 @@
         }
         input.dataset.key = key;
         input.addEventListener('change', syncOverrides);
-        fieldsWrap.appendChild(container);
         container.appendChild(input);
+        fieldsWrap.appendChild(container);
       });
 
-      function syncOverrides() {
-        const inputs = fieldsWrap.querySelectorAll('[data-key]');
-        const data = {};
-        inputs.forEach(el => {
-          const k = el.dataset.key;
-          if (el.type === 'checkbox') data[k] = !!el.checked;
-          else if (el.type === 'number') data[k] = el.value === '' ? null : Number(el.value);
-          else data[k] = el.value;
-        });
-        document.getElementById('skin_overrides_input').value = JSON.stringify(data);
-      }
-
-      // initialize
+      // Sync initial state to hidden input
       syncOverrides();
+    }
+
+    function syncOverrides() {
+      const fieldsWrap = document.getElementById('skin_fields');
+      const inputs = fieldsWrap.querySelectorAll('[data-key]');
+      const data = {};
+      const defaults = currentSkinMetadata?.defaults || {};
+      
+      inputs.forEach(el => {
+        const k = el.dataset.key;
+        let val;
+        if (el.type === 'checkbox') {
+          val = !!el.checked;
+        } else if (el.type === 'number') {
+          val = el.value === '' ? null : Number(el.value);
+        } else {
+          val = el.value;
+        }
+        
+        // Only store if different from default
+        if (val !== defaults[k]) {
+          data[k] = val;
+        }
+      });
+      
+      document.getElementById('skin_overrides_input').value = JSON.stringify(data);
     }
 
     async function selectSkin(key) {
       document.getElementById('skin_key').value = key;
       try {
         const meta = await fetchJson(`/skins/${encodeURIComponent(key)}`);
-        renderFields(meta);
+        // When changing skin, reset to new skin's defaults (overrides were for old skin)
+        renderFields(meta, {});
         // highlight selection
         renderSkinGrid(await fetchJson('/skins'));
         document.getElementById('selected_skin_label').textContent = key;
@@ -232,9 +267,19 @@
         const skins = await fetchJson('/skins');
         renderSkinGrid(skins);
         const current = document.getElementById('skin_key').value;
+        // Load saved overrides from hidden input
+        const savedOverrides = (() => {
+          try {
+            return JSON.parse(document.getElementById('skin_overrides_input').value || '{}');
+          } catch(e) {
+            return {};
+          }
+        })();
+        
         if (current) {
           const meta = await fetchJson(`/skins/${encodeURIComponent(current)}`);
-          renderFields(meta);
+          // Load with saved overrides merged with current skin defaults
+          renderFields(meta, savedOverrides);
           if (meta && meta.preview_url) {
             const prevEl = document.getElementById('selected_skin_preview');
             prevEl.src = meta.preview_url;

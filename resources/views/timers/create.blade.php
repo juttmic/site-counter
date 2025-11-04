@@ -4,10 +4,12 @@
     </x-slot>
 
     <div class="py-12">
-        <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 text-gray-900">
-                    <form method="POST" action="{{ route('timers.store') }}" class="grid grid-cols-1 gap-4">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Left: Form -->
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                    <div class="p-6 text-gray-900">
+                        <form method="POST" action="{{ route('timers.store') }}" class="grid grid-cols-1 gap-4">
                         @csrf
 
                         <div>
@@ -89,6 +91,24 @@
                             <a href="{{ route('dashboard') }}" class="px-4 py-2 border rounded">Cancel</a>
                         </div>
                     </form>
+                    </div>
+                </div>
+
+                <!-- Right: Preview -->
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                    <div class="p-6">
+                        <h3 class="text-lg font-semibold mb-4">Preview</h3>
+                        <div id="timer_preview" class="flex items-center justify-center min-h-[400px] bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg">
+                            <div class="text-center text-gray-500">
+                                <svg class="mx-auto h-12 w-12 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <p class="text-sm">Timer preview will appear here</p>
+                                <p class="text-xs mt-2">Configure your timer settings to see the preview</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -126,9 +146,11 @@
       });
     }
 
-    function renderFields(metadata) {
+    let currentSkinMetadata = null;
+
+    function renderFields(metadata, savedOverrides = {}) {
+      currentSkinMetadata = metadata;
       const fieldsWrap = document.getElementById('skin_fields');
-      const overrides = {};
       const defaults = metadata.defaults || {};
       const fields = Array.isArray(metadata.fields) ? metadata.fields : [];
       fieldsWrap.innerHTML = '';
@@ -139,7 +161,8 @@
         const key = field.key;
         const label = field.label || key;
         const type = field.type || 'text';
-        const value = defaults[key];
+        // Use saved override if exists, otherwise use skin default
+        const value = (savedOverrides[key] !== undefined) ? savedOverrides[key] : defaults[key];
 
         const container = document.createElement('div');
         const isSmall = type === 'color' || type === 'boolean' || smallKeys.has(key);
@@ -149,7 +172,7 @@
         if (type === 'color') {
           input = document.createElement('input');
           input.type = 'color';
-          input.value = /^#/.test(value) ? value : '#000000';
+          input.value = /^#/.test(value) ? value : (defaults[key] || '#000000');
           input.className = 'w-16 h-8 p-0.5 border rounded';
         } else if (type === 'number') {
           input = document.createElement('input');
@@ -157,7 +180,7 @@
           if (field.min != null) input.min = field.min;
           if (field.max != null) input.max = field.max;
           if (field.step != null) input.step = field.step;
-          input.value = value ?? '';
+          input.value = (value ?? '');
           input.className = 'mt-1 w-full border rounded p-2';
         } else if (type === 'boolean') {
           input = document.createElement('input');
@@ -184,20 +207,34 @@
         fieldsWrap.appendChild(container);
       });
 
-      function syncOverrides() {
-        const inputs = fieldsWrap.querySelectorAll('[data-key]');
-        const data = {};
-        inputs.forEach(el => {
-          const k = el.dataset.key;
-          if (el.type === 'checkbox') data[k] = !!el.checked;
-          else if (el.type === 'number') data[k] = el.value === '' ? null : Number(el.value);
-          else data[k] = el.value;
-        });
-        document.getElementById('skin_overrides_input').value = JSON.stringify(data);
-      }
-
-      // initialize
+      // Sync initial state to hidden input
       syncOverrides();
+    }
+
+    function syncOverrides() {
+      const fieldsWrap = document.getElementById('skin_fields');
+      const inputs = fieldsWrap.querySelectorAll('[data-key]');
+      const data = {};
+      const defaults = currentSkinMetadata?.defaults || {};
+      
+      inputs.forEach(el => {
+        const k = el.dataset.key;
+        let val;
+        if (el.type === 'checkbox') {
+          val = !!el.checked;
+        } else if (el.type === 'number') {
+          val = el.value === '' ? null : Number(el.value);
+        } else {
+          val = el.value;
+        }
+        
+        // Only store if different from default
+        if (val !== defaults[k]) {
+          data[k] = val;
+        }
+      });
+      
+      document.getElementById('skin_overrides_input').value = JSON.stringify(data);
     }
 
     async function selectSkin(key) {
@@ -205,7 +242,8 @@
       document.getElementById('selected_skin_label').textContent = key;
       try {
         const meta = await fetchJson(`/skins/${encodeURIComponent(key)}`);
-        renderFields(meta);
+        // When changing skin, reset to new skin's defaults (no saved overrides)
+        renderFields(meta, {});
         // collapse grid after selection and show selected preview
         document.getElementById('skin_grid').classList.add('hidden');
         const prevEl = document.getElementById('selected_skin_preview');
