@@ -5,11 +5,11 @@
 @endphp
 
 <div class="py-12">
-    <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+    <div class="mx-auto sm:px-6 lg:px-8">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <!-- Left + Middle: Form (two columns) -->
             <div class="lg:col-span-2">
-                <form method="POST" action="{{ $formAction }}" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <form id="timer_form" method="POST" action="{{ $formAction }}" class="grid grid-cols-1 lg:grid-cols-2 gap-6" data-timer-id="{{ $isEdit ? $timer->id : '' }}">
                         @csrf
                         @if($isEdit)
                             @method('PUT')
@@ -100,7 +100,7 @@
                         
 
                         <div class="flex gap-2">
-                            <button class="px-4 py-2 bg-indigo-600 text-white rounded">Save</button>
+                            <button id="save_btn" type="button" class="px-4 py-2 bg-indigo-600 text-white rounded">Save</button>
                             <a href="{{ route('dashboard') }}" class="px-4 py-2 border rounded">{{ $isEdit ? 'Back' : 'Cancel' }}</a>
                         </div>
                     </form>
@@ -373,5 +373,74 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.error(e);
   }
 });
+
+// AJAX save + preview polling
+async function ajaxSaveAndPoll() {
+  const form = document.getElementById('timer_form');
+  const saveBtn = document.getElementById('save_btn');
+  if (!form || !saveBtn) return;
+  saveBtn.addEventListener('click', async () => {
+    saveBtn.disabled = true;
+    const formData = new FormData(form);
+    // Ensure _method is present for PUT
+    const methodOverride = form.querySelector('input[name="_method"]');
+    const isPut = methodOverride && methodOverride.value.toUpperCase() === 'PUT';
+    try {
+      const res = await fetch(form.action, {
+        method: 'POST',
+        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
+        body: formData
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        alert(err.message || 'Failed to save. Please check your inputs.');
+        saveBtn.disabled = false;
+        return;
+      }
+      const json = await res.json();
+      const timerId = json.id || form.dataset.timerId;
+      if (!timerId) {
+        saveBtn.disabled = false;
+        return;
+      }
+      form.dataset.timerId = timerId;
+      // Start polling for gif_url
+      startPreviewPolling(timerId);
+    } catch (e) {
+      console.error(e);
+      alert('Network error while saving.');
+    } finally {
+      saveBtn.disabled = false;
+    }
+  });
+}
+
+function startPreviewPolling(timerId) {
+  const previewWrap = document.getElementById('timer_preview');
+  if (previewWrap) {
+    previewWrap.innerHTML = '<div class="text-center text-gray-500"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-2"></div><p class="text-sm">Generating GIF...</p></div>';
+  }
+  let attempts = 0;
+  const maxAttempts = 60; // up to ~2 minutes if interval is 2s
+  const interval = setInterval(async () => {
+    attempts++;
+    try {
+      const res = await fetch(`/timers/${encodeURIComponent(timerId)}/status`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+      const json = await res.json();
+      if (json.gif_url) {
+        clearInterval(interval);
+        if (previewWrap) {
+          previewWrap.innerHTML = `<img src="${json.gif_url}" class="max-w-full max-h-[400px] object-contain" alt="Timer preview" />`;
+        }
+      } else if (attempts >= maxAttempts) {
+        clearInterval(interval);
+      }
+    } catch (e) {
+      // ignore transient errors
+    }
+  }, 2000);
+}
+
+ajaxSaveAndPoll();
 </script>
 

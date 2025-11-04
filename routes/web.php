@@ -24,6 +24,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('timers', TimerController::class)->except(['store','index', 'show']);
     Route::post('timerss', [TimerController::class, 'store'])->name('timers.store');
     Route::get('timers/{timer}/preview', [TimerController::class, 'preview'])->name('timers.preview');
+    Route::get('timers/{timer}/status', [TimerController::class, 'status'])->name('timers.status');
 
     // Skins metadata and previews for UI
     Route::get('/skins', [SkinController::class, 'index'])->name('skins.index');

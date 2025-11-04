@@ -29,7 +29,7 @@ class TimerController extends Controller
         return view('timers.create', compact('skins'));
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request)
     {
         $data = $this->validateTimer($request);
         $data['user_id'] = Auth::id();
@@ -40,7 +40,17 @@ class TimerController extends Controller
         $timer->save();
 
         // Dispatch job to generate GIF in background
-        GenerateTimerGif::dispatch($timer);
+        $gen = new GenerateTimerGif($timer);
+        $gen->handle();
+        // GenerateTimerGif::dispatch($timer);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'id' => $timer->id,
+                'gif_url' => $timer->gif_url,
+                'message' => 'Timer created. GIF is being generated in the background.'
+            ]);
+        }
 
         return redirect()->route('timers.edit', $timer)->with('status', 'Timer created! GIF is being generated in the background.');
     }
@@ -52,7 +62,7 @@ class TimerController extends Controller
         return view('timers.edit', compact('timer', 'skins'));
     }
 
-    public function update(Request $request, Timer $timer): RedirectResponse
+    public function update(Request $request, Timer $timer)
     {
         $this->authorizeOwner($timer);
         $data = $this->validateTimer($request);
@@ -67,6 +77,15 @@ class TimerController extends Controller
         // Dispatch job to regenerate GIF in background
         $gen = new GenerateTimerGif($timer);
         $gen->handle();
+        // GenerateTimerGif::dispatch($timer);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'id' => $timer->id,
+                'gif_url' => $timer->gif_url,
+                'message' => 'Timer updated. GIF is being regenerated in the background.'
+            ]);
+        }
 
         return redirect()->route('timers.edit', $timer)->with('status', 'Timer updated! GIF is being regenerated in the background.');
     }
@@ -85,6 +104,16 @@ class TimerController extends Controller
     {
         $this->authorizeOwner($timer);
         return view('timers.preview', compact('timer'));
+    }
+
+    public function status(Timer $timer)
+    {
+        $this->authorizeOwner($timer);
+        return response()->json([
+            'id' => $timer->id,
+            'gif_url' => $timer->gif_url,
+            'status' => $timer->status,
+        ]);
     }
 
     private function validateTimer(Request $request): array
