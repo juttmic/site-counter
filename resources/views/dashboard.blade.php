@@ -27,7 +27,7 @@
                                     <div class="mt-3">
                                         @if($timer->gif_url)
                                             <div class="w-full h-40 bg-gray-50 border flex items-center justify-center overflow-hidden">
-                                                <img src="{{ url($timer->gif_url) }}" alt="preview" class="w-auto max-w-full h-40 object-contain">
+                                                <img src="{{ url($timer->gif_url) }}" alt="preview" class="w-auto max-w-full h-40 object-contain" style="230px">
                                             </div>
                                         @else
                                             <div class="border w-full h-40 bg-gray-100 flex items-center justify-center text-gray-500">
