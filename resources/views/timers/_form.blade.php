@@ -9,7 +9,7 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <!-- Left + Middle: Form (two columns) -->
             <div class="lg:col-span-2">
-                <form id="timer_form" method="POST" action="{{ $formAction }}" class="grid grid-cols-1 lg:grid-cols-2 gap-6" data-timer-id="{{ $isEdit ? $timer->id : '' }}">
+                <form id="timer_form" method="POST" action="{{ $formAction }}" class="grid grid-cols-1 lg:grid-cols-2 gap-6" data-timer-id="{{ $isEdit ? $timer->id : '' }}" data-is-edit="{{ $isEdit ? '1' : '0' }}" data-has-gif="{{ $isEdit && !empty($timer->gif_url) ? '1' : '0' }}">
                         @csrf
                         @if($isEdit)
                             @method('PUT')
@@ -101,6 +101,7 @@
 
                         <div class="flex gap-2">
                             <button id="save_btn" type="button" class="px-4 py-2 bg-indigo-600 text-white rounded">Save</button>
+                            
                             <a href="{{ route('dashboard') }}" class="px-4 py-2 border rounded">{{ $isEdit ? 'Back' : 'Cancel' }}</a>
                         </div>
                     </form>
@@ -341,45 +342,45 @@ async function selectSkin(key) {
   }
 }
 
-document.addEventListener('DOMContentLoaded', async () => {
-  try {
-    const current = document.getElementById('skin_key').value;
-    // Load saved overrides from hidden input (for edit mode)
-    const savedOverrides = (() => {
-      try {
-        return JSON.parse(document.getElementById('skin_overrides_input').value || '{}');
-      } catch(e) {
-        return {};
+document.addEventListener('DOMContentLoaded', () => {
+  (async () => {
+    try {
+      const current = document.getElementById('skin_key').value;
+      // Load saved overrides from hidden input (for edit mode)
+      const savedOverrides = (() => {
+        try {
+          return JSON.parse(document.getElementById('skin_overrides_input').value || '{}');
+        } catch(e) {
+          return {};
+        }
+      })();
+      
+      if (current) {
+        // Edit mode: load existing skin with saved overrides
+        const meta = await fetchJson(`/skins/${encodeURIComponent(current)}`);
+        renderFields(meta, savedOverrides);
+        document.getElementById('selected_skin_label').textContent = current;
+        if (meta && meta.preview_url) {
+          const prevEl = document.getElementById('selected_skin_preview');
+          prevEl.src = meta.preview_url;
+          prevEl.classList.remove('hidden');
+        }
       }
-    })();
-    
-    if (current) {
-      // Edit mode: load existing skin with saved overrides
-      const meta = await fetchJson(`/skins/${encodeURIComponent(current)}`);
-      renderFields(meta, savedOverrides);
-      document.getElementById('selected_skin_label').textContent = current;
-      if (meta && meta.preview_url) {
-        const prevEl = document.getElementById('selected_skin_preview');
-        prevEl.src = meta.preview_url;
-        prevEl.classList.remove('hidden');
-      }
-    } else {
-      // Create mode: default to first skin after modal load/selection, or keep empty until user chooses
+      const changeBtn = document.getElementById('open_skin_modal');
+      if (changeBtn) changeBtn.addEventListener('click', showSkinModal);
+    } catch (e) {
+      // swallow to avoid noisy console during navigation
     }
-    
-    const changeBtn = document.getElementById('open_skin_modal');
-    if (changeBtn) changeBtn.addEventListener('click', showSkinModal);
-  } catch (e) {
-    console.error(e);
-  }
+  })();
 });
 
 // AJAX save + preview polling
 async function ajaxSaveAndPoll() {
   const form = document.getElementById('timer_form');
   const saveBtn = document.getElementById('save_btn');
-  if (!form || !saveBtn) return;
+  if (!form) return;
   saveBtn.addEventListener('click', async () => {
+    console.log('saveBtn clicked');
     saveBtn.disabled = true;
     const formData = new FormData(form);
     // Ensure _method is present for PUT
@@ -405,6 +406,10 @@ async function ajaxSaveAndPoll() {
       }
       form.dataset.timerId = timerId;
       // Start polling for gif_url
+      if (form.dataset.isEdit !== '1') {
+        window.location.href = `/dashboard`;
+        return;
+      }
       startPreviewPolling(timerId);
     } catch (e) {
       console.error(e);
@@ -442,5 +447,14 @@ function startPreviewPolling(timerId) {
 }
 
 ajaxSaveAndPoll();
+
+// Auto-poll on edit page load when GIF not yet available
+(function autoPollOnLoad(){
+  const form = document.getElementById('timer_form');
+  if (!form) return;
+  if (form.dataset.isEdit === '1' && form.dataset.hasGif !== '1' && form.dataset.timerId) {
+    startPreviewPolling(form.dataset.timerId);
+  }
+})();
 </script>
 
