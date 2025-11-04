@@ -21,6 +21,7 @@
                             <input type="text" name="title" value="{{ old('title', $timer->title ?? '') }}" class="mt-1 w-full border rounded p-2" required>
                         </div>
 
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium">Status</label>
                             <select name="status" class="mt-1 w-full border rounded p-2">
@@ -35,6 +36,23 @@
                                 <option value="fixed_date" {{ ($isEdit && $timer->timer_type === 'fixed_date') || !$isEdit ? 'selected' : '' }}>Fixed Date</option>
                                 <option value="reload_based" {{ $isEdit && $timer->timer_type === 'reload_based' ? 'selected' : '' }}>Reload Based</option>
                             </select>
+                        </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4"> 
+                          <div>
+                            <label class="block text-sm font-medium">Text Position</label>
+                            <select name="text_position" class="mt-1 w-full border rounded p-2">
+                                <option value="none" {{ ($isEdit && $timer->text_position === 'none') || !$isEdit ? 'selected' : '' }}>None</option>
+                                <option value="top" {{ $isEdit && $timer->text_position === 'top' ? 'selected' : '' }}>Top</option>
+                                <option value="bottom" {{ $isEdit && $timer->text_position === 'bottom' ? 'selected' : '' }}>Bottom</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium">Custom Text {{ !$isEdit ? '(optional)' : '' }}</label>
+                            <input type="text" name="custom_text" class="mt-1 w-full border rounded p-2" maxlength="255" 
+                                value="{{ old('custom_text', $timer->custom_text ?? '') }}">
+                        </div>
                         </div>
 
                         <div id="fixed_date_input" class="{{ $isEdit && $timer->timer_type !== 'fixed_date' ? 'hidden' : '' }}">
@@ -69,20 +87,7 @@
                             <input type="hidden" name="skin_overrides" id="skin_overrides_input" value="{{ $isEdit ? json_encode($timer->skin_overrides ?? []) : '' }}" />
                         </div>
 
-                        <div>
-                            <label class="block text-sm font-medium">Text Position</label>
-                            <select name="text_position" class="mt-1 w-full border rounded p-2">
-                                <option value="none" {{ ($isEdit && $timer->text_position === 'none') || !$isEdit ? 'selected' : '' }}>None</option>
-                                <option value="top" {{ $isEdit && $timer->text_position === 'top' ? 'selected' : '' }}>Top</option>
-                                <option value="bottom" {{ $isEdit && $timer->text_position === 'bottom' ? 'selected' : '' }}>Bottom</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium">Custom Text {{ !$isEdit ? '(optional)' : '' }}</label>
-                            <input type="text" name="custom_text" class="mt-1 w-full border rounded p-2" maxlength="255" 
-                                value="{{ old('custom_text', $timer->custom_text ?? '') }}">
-                        </div>
+                        
 
                         <div class="flex gap-2">
                             <button class="px-4 py-2 bg-indigo-600 text-white rounded">Save</button>
