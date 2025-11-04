@@ -6,39 +6,24 @@
 
 <div class="py-12">
     <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <!-- Left: Form -->
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 text-gray-900">
-                    <form method="POST" action="{{ $formAction }}" class="grid grid-cols-1 gap-4">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Left + Middle: Form (two columns) -->
+            <div class="lg:col-span-2">
+                <form method="POST" action="{{ $formAction }}" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         @csrf
                         @if($isEdit)
                             @method('PUT')
                         @endif
 
-                        <div>
+                        <!-- Begin two-column form content -->
+                        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                        <div class="p-3 text-gray-900">
                             <label class="block text-sm font-medium">Title</label>
                             <input type="text" name="title" value="{{ old('title', $timer->title ?? '') }}" class="mt-1 w-full border rounded p-2" required>
                         </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium">Status</label>
-                            <select name="status" class="mt-1 w-full border rounded p-2">
-                                <option value="active" {{ ($isEdit && $timer->status === 'active') || !$isEdit ? 'selected' : '' }}>Active</option>
-                                <option value="inactive" {{ $isEdit && $timer->status === 'inactive' ? 'selected' : '' }}>Inactive</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium">Timer Type</label>
-                            <select name="timer_type" id="timer_type" class="mt-1 w-full border rounded p-2" onchange="toggleInputs()">
-                                <option value="fixed_date" {{ ($isEdit && $timer->timer_type === 'fixed_date') || !$isEdit ? 'selected' : '' }}>Fixed Date</option>
-                                <option value="reload_based" {{ $isEdit && $timer->timer_type === 'reload_based' ? 'selected' : '' }}>Reload Based</option>
-                            </select>
-                        </div>
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4"> 
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-3"> 
                           <div>
                             <label class="block text-sm font-medium">Text Position</label>
                             <select name="text_position" class="mt-1 w-full border rounded p-2">
@@ -55,13 +40,30 @@
                         </div>
                         </div>
 
-                        <div id="fixed_date_input" class="{{ $isEdit && $timer->timer_type !== 'fixed_date' ? 'hidden' : '' }}">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-3">
+                          <div>
+                              <label class="block text-sm font-medium">Status</label>
+                              <select name="status" class="mt-1 w-full border rounded p-2">
+                                  <option value="active" {{ ($isEdit && $timer->status === 'active') || !$isEdit ? 'selected' : '' }}>Active</option>
+                                  <option value="inactive" {{ $isEdit && $timer->status === 'inactive' ? 'selected' : '' }}>Inactive</option>
+                              </select>
+                          </div>
+  
+                          <div>
+                              <label class="block text-sm font-medium">Timer Type</label>
+                              <select name="timer_type" id="timer_type" class="mt-1 w-full border rounded p-2" onchange="toggleInputs()">
+                                  <option value="fixed_date" {{ ($isEdit && $timer->timer_type === 'fixed_date') || !$isEdit ? 'selected' : '' }}>Fixed Date</option>
+                                  <option value="reload_based" {{ $isEdit && $timer->timer_type === 'reload_based' ? 'selected' : '' }}>Reload Based</option>
+                              </select>
+                          </div>
+                          </div>
+                        <div id="fixed_date_input" class="{{ $isEdit && $timer->timer_type !== 'fixed_date' ? 'hidden' : '' }} p-3">
                             <label class="block text-sm font-medium">Target DateTime</label>
                             <input type="datetime-local" name="target_datetime" class="mt-1 w-full border rounded p-2" 
                                 value="{{ old('target_datetime', $isEdit && $timer->target_datetime ? $timer->target_datetime->format('Y-m-d\\TH:i') : '') }}">
                         </div>
 
-                        <div id="duration_input" class="{{ ($isEdit && $timer->timer_type !== 'reload_based') || !$isEdit ? 'hidden' : '' }}">
+                        <div id="duration_input" class="{{ ($isEdit && $timer->timer_type !== 'reload_based') || !$isEdit ? 'hidden' : '' }} p-3">
                             <label class="block text-sm font-medium">Duration (seconds)</label>
                             <input type="number" name="duration_seconds" class="mt-1 w-full border rounded p-2" min="1" max="604800" 
                                 value="{{ old('duration_seconds', $timer->duration_seconds ?? '') }}">
@@ -69,7 +71,7 @@
 
                         <!-- Dimensions are controlled via skin fields (width/height) in the customization panel -->
 
-                        <div>
+                        <div class="p-3">
                             <label class="block text-sm font-medium">Selected Skin</label>
                             <input type="hidden" name="skin" id="skin_key" value="{{ $isEdit ? $timer->skin : '' }}" />
                             <div class="mt-2 relative inline-flex items-center gap-3 border rounded p-2 bg-gray-50">
@@ -81,12 +83,19 @@
                             </div>
                             <p class="text-xs text-gray-500 mt-1">Click the change icon to pick a different skin.</p>
                         </div>
+                        </div> <!-- end left card -->
 
-                        <div id="skin_overrides_section" class="mt-4 hidden">
+                        <!-- Right card of form: skin customization fields -->
+                        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                          <div class="p-3">
                             <label class="block text-sm font-medium">Customize Skin</label>
-                            <div id="skin_fields" class="mt-2 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3"></div>
+                            <div id="skin_overrides_section" class="mt-2 hidden">
+                                <div id="skin_fields" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3"></div>
+                            </div>
                             <input type="hidden" name="skin_overrides" id="skin_overrides_input" value="{{ $isEdit ? json_encode($timer->skin_overrides ?? []) : '' }}" />
+                          </div>
                         </div>
+                        </form>
 
                         
 
@@ -96,42 +105,43 @@
                         </div>
                     </form>
                 </div>
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                  <div class="p-6">
+                      <h3 class="text-lg font-semibold mb-4">Preview</h3>
+                      <div id="timer_preview" class="flex items-center justify-center min-h-[400px] bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg mb-4">
+                          @if($isEdit && isset($timer->gif_url) && $timer->gif_url)
+                              <img src="{{ url($timer->gif_url) }}" class="max-w-full max-h-[400px] object-contain" alt="Timer preview" id="preview_gif">
+                          @else
+                              <div class="text-center text-gray-500">
+                                  @if($isEdit)
+                                      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-2"></div>
+                                      <p class="text-sm">Generating GIF...</p>
+                                  @else
+                                      <svg class="mx-auto h-12 w-12 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
+                                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                      </svg>
+                                      <p class="text-sm">Timer preview will appear here</p>
+                                      <p class="text-xs mt-2">Configure your timer settings to see the preview</p>
+                                  @endif
+                              </div>
+                          @endif
+                      </div>
+                      @if($isEdit && isset($timer->gif_url) && $timer->gif_url)
+                          <div class="mt-4">
+                              <h4 class="font-semibold mb-2 text-sm">Embed Code</h4>
+                              <div class="flex gap-2">
+                                  <input type="text" class="w-full border rounded p-2 text-xs" value='<img src="{{ url($timer->gif_url) }}" alt="Countdown Timer">' readonly>
+                                  <button class="px-3 py-2 border rounded text-sm hover:bg-gray-50" onclick="navigator.clipboard.writeText(this.previousElementSibling.value); this.textContent='Copied!'; setTimeout(() => this.textContent='Copy', 2000)">Copy</button>
+                              </div>
+                          </div>
+                      @endif
+                  </div>
+              </div>
             </div>
 
             <!-- Right: Preview -->
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6">
-                    <h3 class="text-lg font-semibold mb-4">Preview</h3>
-                    <div id="timer_preview" class="flex items-center justify-center min-h-[400px] bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg mb-4">
-                        @if($isEdit && isset($timer->gif_url) && $timer->gif_url)
-                            <img src="{{ url($timer->gif_url) }}" class="max-w-full max-h-[400px] object-contain" alt="Timer preview" id="preview_gif">
-                        @else
-                            <div class="text-center text-gray-500">
-                                @if($isEdit)
-                                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-2"></div>
-                                    <p class="text-sm">Generating GIF...</p>
-                                @else
-                                    <svg class="mx-auto h-12 w-12 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                    </svg>
-                                    <p class="text-sm">Timer preview will appear here</p>
-                                    <p class="text-xs mt-2">Configure your timer settings to see the preview</p>
-                                @endif
-                            </div>
-                        @endif
-                    </div>
-                    @if($isEdit && isset($timer->gif_url) && $timer->gif_url)
-                        <div class="mt-4">
-                            <h4 class="font-semibold mb-2 text-sm">Embed Code</h4>
-                            <div class="flex gap-2">
-                                <input type="text" class="w-full border rounded p-2 text-xs" value='<img src="{{ url($timer->gif_url) }}" alt="Countdown Timer">' readonly>
-                                <button class="px-3 py-2 border rounded text-sm hover:bg-gray-50" onclick="navigator.clipboard.writeText(this.previousElementSibling.value); this.textContent='Copied!'; setTimeout(() => this.textContent='Copy', 2000)">Copy</button>
-                            </div>
-                        </div>
-                    @endif
-                </div>
-            </div>
+            
         </div>
     </div>
 </div>
