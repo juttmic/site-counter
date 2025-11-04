@@ -1,13 +1,13 @@
 {
-  "name": "Clean White Timer",
+  "name": "Minimal Black Countdown",
   "width": 400,
   "height": 160,
   "background": "#ffffff",
   "textColor": "#000000",
-  "accentColor": "#ff0000",
+  "accentColor": "#000000",
   "fontSize": 48,
-  "fontPath": "resources/fonts/DejaVuSans.ttf",
-  "style": "clean_white_timer",
+  "fontPath": "resources/fonts/DejaVuSans-Bold.ttf",
+  "style": "minimal_black_countdown",
   "showDays": true,
   "showHours": true,
   "showMinutes": true,
@@ -32,5 +32,3 @@
     { "key": "animation", "label": "Animation", "type": "select", "options": ["none", "fade", "slide"] }
   ]
 }
-
-
