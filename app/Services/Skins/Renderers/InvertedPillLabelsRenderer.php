@@ -26,9 +26,10 @@ class InvertedPillLabelsRenderer implements SkinRendererInterface
         $segments = 4;
         $gapX = max(8, (int)round($width * 0.02));            // gap between segments
         $innerGap = max(6, (int)round($width * 0.012));        // gap between the two digit tiles inside a segment
-        $padY  = max(10, (int)round($height * 0.15));          // leave room for labels
+        $padTop  = max(8, (int)round($height * 0.12));         // top padding above tiles
+        $labelArea = max(20, (int)round($height * 0.26));      // reserved height for labels
         $segW = (int) floor(($width - ($gapX * ($segments + 1))) / $segments);
-        $digitTileH = (int) round(($height - 2 * $padY) * 0.68); // height of digit tiles area
+        $digitTileH = max(24, $height - $labelArea - $padTop); // height of digit tiles area
 
         // Colors
         [$br, $bg_, $bb] = $this->hexToRgb($skin['background'] ?? '#FFFFFF'); // unused aside from $bgCol param
@@ -43,7 +44,7 @@ class InvertedPillLabelsRenderer implements SkinRendererInterface
         // Draw two rounded tiles per segment (for each digit)
         for ($i = 0; $i < $segments; $i++) {
             $segX1 = $gapX + $i * ($segW + $gapX);
-            $segY1 = $padY - (int)round($digitTileH * 0.15); // slight raise for look
+            $segY1 = $padTop; // consistent top padding
             $segX2 = $segX1 + $segW;
             $segY2 = $segY1 + $digitTileH;
 
@@ -80,13 +81,13 @@ class InvertedPillLabelsRenderer implements SkinRendererInterface
         if (is_file($font)) {
             for ($i = 0; $i < $segments - 1; $i++) {
                 $cx = $gapX + ($i + 1) * $segW + $i * $gapX + (int)($gapX / 2);
-                $cy = (int)($padY + $digitTileH * 0.45);
+                $cy = (int)($padTop + $digitTileH * 0.50);
                 $colon = ':';
                 $box = imagettfbbox($fontSize, 0, $font, $colon);
                 $cw  = abs($box[4] - $box[0]);
                 $ch  = abs($box[5] - $box[1]);
                 $x   = (int)($cx - $cw / 2);
-                $y   = (int)($cy + $ch / 2);
+                $y   = (int)($cy + $ch / 2 - 2);
                 imagettftext($im, $fontSize, 0, $x, $y, $colonCol, $font, $colon);
             }
         }
@@ -117,10 +118,11 @@ class InvertedPillLabelsRenderer implements SkinRendererInterface
         $segments = count($units);
         $gapX = max(8, (int)round($width * 0.02));
         $innerGap = max(6, (int)round($width * 0.012));
-        $padY  = max(10, (int)round($height * 0.15));
+        $padTop  = max(8, (int)round($height * 0.12));
+        $labelArea = max(20, (int)round($height * 0.26));
         $segW = (int) floor(($width - ($gapX * ($segments + 1))) / $segments);
-        $digitTileH = (int) round(($height - 2 * $padY) * 0.68);
-        $digitsBaselineY  = (int) ($padY + $digitTileH * 0.62);
+        $digitTileH = max(24, $height - $labelArea - $padTop);
+        $digitsCenterY  = (int) ($padTop + $digitTileH * 0.50);
 
         for ($i = 0; $i < $segments; $i++) {
             $segX1 = $gapX + $i * ($segW + $gapX);
@@ -137,12 +139,14 @@ class InvertedPillLabelsRenderer implements SkinRendererInterface
             // Center digits individually inside their tiles
             $leftBox = imagettfbbox($fontSize, 0, $font, $leftDigit);
             $leftW = abs($leftBox[4] - $leftBox[0]);
+            $leftH = abs($leftBox[5] - $leftBox[1]);
             $leftX = (int) ($leftX1 + ($singleTileW - $leftW) / 2);
-            $digitY = (int) ($digitsBaselineY - 8);
+            $digitY = (int) ($digitsCenterY + $leftH / 2 - 2);
             imagettftext($im, $fontSize, 0, $leftX, $digitY, $textCol, $font, $leftDigit);
 
             $rightBox = imagettfbbox($fontSize, 0, $font, $rightDigit);
             $rightW = abs($rightBox[4] - $rightBox[0]);
+            $rightH = abs($rightBox[5] - $rightBox[1]);
             $rightX = (int) ($rightX1 + ($singleTileW - $rightW) / 2);
             imagettftext($im, $fontSize, 0, $rightX, $digitY, $textCol, $font, $rightDigit);
 
@@ -151,7 +155,7 @@ class InvertedPillLabelsRenderer implements SkinRendererInterface
             $lblBox = imagettfbbox($labelSize, 0, $font, $label);
             $lblW = abs($lblBox[4] - $lblBox[0]);
             $lblX = (int) ($segX1 + ($segW - $lblW) / 2);
-            $lblY = (int) ($digitsBaselineY + $labelSize + 6);
+            $lblY = (int) ($padTop + $digitTileH + $labelSize + 6);
             imagettftext($im, $labelSize, 0, $lblX, $lblY, $accentCol, $font, $label);
         }
 
