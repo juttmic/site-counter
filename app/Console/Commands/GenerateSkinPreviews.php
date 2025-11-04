@@ -57,7 +57,7 @@ class GenerateSkinPreviews extends Command
             }
             try {
                 // Generate short (6s) animated GIF preview using the skin renderer
-                $generator->renderSkinGifPreview($skinKey, $outPath, 6);
+                $generator->renderSkinGifPreview($skinKey, $outPath, 15);
                 $this->info("Generated preview: {$skinKey}");
                 $count++;
             } catch (\Throwable $e) {
