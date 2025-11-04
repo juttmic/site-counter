@@ -3,13 +3,14 @@
 namespace App\Console\Commands;
 
 use App\Services\TimerGifGenerator;
+use App\Services\Skins\SkinRendererFactory;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 
 class GenerateSkinPreviews extends Command
 {
-    protected $signature = 'timergif:skins:previews {--force : Regenerate even if files exist}';
-    protected $description = 'Generate static preview images for all timer skins';
+    protected $signature = 'timergif:skins:previews {--force : Regenerate even if files exist} {--all : Generate for all skins, not only those with renderers}';
+    protected $description = 'Generate static preview images for skins. By default only for skins with a registered renderer.';
 
     public function handle(TimerGifGenerator $generator): int
     {
@@ -29,8 +30,26 @@ class GenerateSkinPreviews extends Command
         $force = (bool) $this->option('force');
         $count = 0;
 
+        $onlyWithRenderer = ! (bool) $this->option('all');
+
         foreach ($files as $file) {
             $skinKey = pathinfo($file->getFilename(), PATHINFO_FILENAME);
+            $json = [];
+            try {
+                $json = json_decode(File::get($file->getPathname()), true) ?: [];
+            } catch (\Throwable $e) {
+                $this->error("Skip {$skinKey}: invalid JSON");
+                continue;
+            }
+            $style = $json['style'] ?? null;
+            if ($onlyWithRenderer) {
+                $renderer = SkinRendererFactory::resolve($style);
+                if (!$renderer) {
+                    $this->line("Skip (no renderer): {$skinKey}" . ($style ? " [{$style}]" : ''));
+                    continue;
+                }
+            }
+
             $outPath = $outDir . DIRECTORY_SEPARATOR . $skinKey . '.png';
             if (!$force && File::exists($outPath)) {
                 $this->line("Skip existing: {$skinKey}");
