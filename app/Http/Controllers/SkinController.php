@@ -32,6 +32,8 @@ class SkinController extends Controller
         }
         $json = json_decode(File::get($path), true) ?: [];
         $fields = $json['fields'] ?? $this->inferFieldsFromSkin($json);
+        // Ensure new optional fields (e.g., separatorColor) are exposed when present but missing in provided fields
+        $fields = $this->ensureExtraFields($json, $fields);
         // Only expose editable parts and defaults
         $exposed = [
             'key' => $key,
@@ -76,6 +78,7 @@ class SkinController extends Controller
         $add('background', 'Background Color', 'color');
         $add('textColor', 'Text Color', 'color');
         $add('accentColor', 'Accent Color', 'color');
+        $add('separatorColor', 'Separator Color', 'color');
         $add('fontSize', 'Font Size', 'number', ['min' => 8, 'max' => 200, 'step' => 1]);
         $add('fontPath', 'Font', 'font');
         $add('showDays', 'Show Days', 'boolean');
@@ -92,6 +95,18 @@ class SkinController extends Controller
             $fields[] = ['key' => 'animation', 'label' => 'Animation', 'type' => 'select', 'options' => $options];
         }
 
+        return $fields;
+    }
+
+    private function ensureExtraFields(array $skin, array $fields): array
+    {
+        $have = [];
+        foreach ($fields as $f) {
+            if (isset($f['key'])) { $have[$f['key']] = true; }
+        }
+        if (array_key_exists('separatorColor', $skin) && !isset($have['separatorColor'])) {
+            $fields[] = ['key' => 'separatorColor', 'label' => 'Separator Color', 'type' => 'color'];
+        }
         return $fields;
     }
 }
