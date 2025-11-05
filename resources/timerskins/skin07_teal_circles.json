@@ -1,0 +1,32 @@
+{
+  "name": "Teal Circle Badges",
+  "width": 720,
+  "height": 180,
+  "background": "#FFFFFF",
+  "textColor": "#0F7892",
+  "accentColor": "#0F7892",
+  "fontSize": 36,
+  "fontPath": "resources/fonts/dejavu-sans.book.ttf",
+  "style": "teal_circle_badges",
+  "showDays": true,
+  "showHours": true,
+  "showMinutes": true,
+  "showSeconds": true,
+  "circleStroke": 6,
+  "fields": [
+    { "key": "width", "label": "Width", "type": "number", "min": 100, "max": 2000, "step": 10 },
+    { "key": "height", "label": "Height", "type": "number", "min": 80, "max": 1000, "step": 5 },
+    { "key": "background", "label": "Background Color", "type": "color" },
+    { "key": "textColor", "label": "Text Color", "type": "color" },
+    { "key": "accentColor", "label": "Accent/Border Color", "type": "color" },
+    { "key": "fontSize", "label": "Font Size", "type": "number", "min": 8, "max": 200, "step": 1 },
+    { "key": "fontPath", "label": "Font", "type": "font" },
+    { "key": "showDays", "label": "Show Days", "type": "boolean" },
+    { "key": "showHours", "label": "Show Hours", "type": "boolean" },
+    { "key": "showMinutes", "label": "Show Minutes", "type": "boolean" },
+    { "key": "showSeconds", "label": "Show Seconds", "type": "boolean" },
+    { "key": "circleStroke", "label": "Circle Stroke Width", "type": "number", "min": 1, "max": 20, "step": 1 }
+  ]
+}
+
+
