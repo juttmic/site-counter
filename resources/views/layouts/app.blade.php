@@ -62,15 +62,11 @@
                     <div class="container-fluid">
                         <div class="d-flex align-items-center justify-content-between py-3 px-3 px-md-4">
                             <div class="flex-grow-1">
+                                
                                 {{ $header ?? '' }}
                             </div>
                             <div class="d-flex align-items-center gap-2">
-                                <button type="button" 
-                                        onclick="toggleDesktopSidebar()" 
-                                        class="btn btn-outline-secondary btn-sm d-none d-md-inline-flex" 
-                                        title="Toggle sidebar">
-                                    <i class="bi bi-list"></i>
-                                </button>
+                                
                                 <a href="{{ route('timers.create') }}" class="btn btn-primary btn-sm d-none d-sm-inline-flex">
                                     <i class="bi bi-plus-square me-1"></i>
                                     Create Timer

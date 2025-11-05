@@ -6,6 +6,17 @@
             <x-application-logo class="d-block" style="height: 32px; width: auto;" />
             <span id="sidebarBrandText" class="ms-2 fw-semibold" style="transition: opacity 0.3s;">{{ config('app.name', 'TimerGIF App') }}</span>
         </a>
+        <button type="button" 
+                                        onclick="toggleDesktopSidebar()" 
+                                        class="btn btn-outline-secondary btn-sm d-none d-md-inline-flex" 
+                                        title="Toggle sidebar"
+                                        
+                                        
+                                        style="
+    justify-content: center;
+    margin-left: 20px;">
+                                    <i class="bi bi-list"></i>
+                                </button>
     </div>
 
     <!-- Navigation Menu -->
