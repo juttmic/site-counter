@@ -86,6 +86,7 @@ class SkinController extends Controller
         $add('showMinutes', 'Show Minutes', 'boolean');
         $add('showSeconds', 'Show Seconds', 'boolean');
         $add('separator', 'Separator', 'text', ['maxLength' => 5]);
+        // Optional fields we want to expose when present
         if (!empty($skin['layout'])) {
             $options = is_array($skin['layout']) ? $skin['layout'] : ['horizontal','vertical'];
             $fields[] = ['key' => 'layout', 'label' => 'Layout', 'type' => 'select', 'options' => $options];
@@ -106,6 +107,10 @@ class SkinController extends Controller
         }
         if (array_key_exists('separatorColor', $skin) && !isset($have['separatorColor'])) {
             $fields[] = ['key' => 'separatorColor', 'label' => 'Separator Color', 'type' => 'color'];
+        }
+        // Always allow a custom text color control, even if not present in defaults
+        if (!isset($have['customTextColor'])) {
+            $fields[] = ['key' => 'customTextColor', 'label' => 'Custom Text Color', 'type' => 'color'];
         }
         return $fields;
     }

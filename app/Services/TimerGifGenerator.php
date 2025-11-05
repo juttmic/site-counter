@@ -85,9 +85,12 @@ class TimerGifGenerator
     /**
      * Render a 1-frame PNG preview for a given skin into the provided output path.
      */
-    public function renderSkinPreview(string $skinName, string $outputPath, ?string $customText = null, string $textPosition = 'none'): void
+    public function renderSkinPreview(string $skinName, string $outputPath, ?string $customText = null, string $textPosition = 'none', ?string $customTextColor = null): void
     {
         $skin = $this->loadSkin($skinName);
+        if ($customTextColor) {
+            $skin['customTextColor'] = $customTextColor;
+        }
         // Use an illustrative sample remaining time (12h 34m 56s)
         $sampleSeconds = (12 * 3600) + (34 * 60) + 56;
         $png = $this->renderPngFrame($sampleSeconds, $skin, $customText, $textPosition);
@@ -115,9 +118,12 @@ class TimerGifGenerator
      * Render a short animated GIF preview for a given skin.
      * Generates a countdown of $seconds length (default 6s) using the skin's renderer.
      */
-    public function renderSkinGifPreview(string $skinName, string $outputPath, int $seconds = 6, ?string $customText = null, string $textPosition = 'none'): void
+    public function renderSkinGifPreview(string $skinName, string $outputPath, int $seconds = 6, ?string $customText = null, string $textPosition = 'none', ?string $customTextColor = null): void
     {
         $skin = $this->loadSkin($skinName);
+        if ($customTextColor) {
+            $skin['customTextColor'] = $customTextColor;
+        }
         $frames = $this->buildFrames(max(1, $seconds), $skin, $customText, $textPosition);
         \Illuminate\Support\Facades\File::ensureDirectoryExists(dirname($outputPath));
         $this->encodeAnimatedGif($frames, $outputPath, max(1, $seconds));
@@ -303,6 +309,12 @@ class TimerGifGenerator
         $im = imagecreatetruecolor($canvasW, $canvasH);
         $bgCol = imagecolorallocate($im, $br, $bg, $bb);
         $txtCol = imagecolorallocate($im, $tr, $tg, $tb);
+        // Choose color for custom text: default to skin textColor unless customTextColor is provided
+        $ctr = $tr; $ctg = $tg; $ctb = $tb;
+        if (!empty($skin['customTextColor'])) {
+            [$ctr, $ctg, $ctb] = $this->hexToRgb($skin['customTextColor']);
+        }
+        $customTxtCol = imagecolorallocate($im, $ctr, $ctg, $ctb);
         imagefilledrectangle($im, 0, 0, $canvasW, $canvasH, $bgCol);
 
         $offsetX = (int) (($canvasW - $timerW) / 2);
@@ -314,12 +326,12 @@ class TimerGifGenerator
             if (is_file($font)) {
                 $tx = (int) (($canvasW - $textW) / 2);
                 $ty = ($textPosition === 'top') ? (int) ($textH > 0 ? $textH : $textSize) : (int) ($timerH + $padY + $textSize);
-                imagettftext($im, $textSize, 0, $tx, $ty, $txtCol, $font, $customText);
+                imagettftext($im, $textSize, 0, $tx, $ty, $customTxtCol, $font, $customText);
             } else {
                 $bi2 = 3;
                 $tx = (int) (($canvasW - $textW) / 2);
                 $ty = ($textPosition === 'top') ? 5 : (int) ($timerH + 5);
-                imagestring($im, $bi2, $tx, $ty, $customText, $txtCol);
+                imagestring($im, $bi2, $tx, $ty, $customText, $customTxtCol);
             }
         }
 

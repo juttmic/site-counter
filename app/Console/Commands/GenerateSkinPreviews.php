@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\File;
 
 class GenerateSkinPreviews extends Command
 {
-    protected $signature = 'timergif:skins:previews {skin? : Optional single skin key to generate (e.g. skin07_teal_circles)} {--force : Regenerate even if files exist} {--all : Include skins without a registered renderer} {--skin=* : (Optional, legacy) Additional skin keys, comma-separated} {--seconds= : Override preview duration in seconds (default: 15)} {--text= : Optional custom text to render} {--text-position= : Text position: top|bottom|none} {--time=* : (Deprecated)}';
+    protected $signature = 'timergif:skins:previews {skin? : Optional single skin key to generate (e.g. skin07_teal_circles)} {--force : Regenerate even if files exist} {--all : Include skins without a registered renderer} {--skin=* : (Optional, legacy) Additional skin keys, comma-separated} {--seconds= : Override preview duration in seconds (default: 15)} {--text= : Optional custom text to render} {--text-position= : Text position: top|bottom|none} {--text-color= : Hex color for custom text (e.g. #FFFFFF)} {--time=* : (Deprecated)}';
     protected $description = 'Generate animated GIF previews for skins. If a skin key is provided, only that one is generated.';
 
     public function handle(TimerGifGenerator $generator): int
@@ -86,10 +86,11 @@ class GenerateSkinPreviews extends Command
 
                 $text = $this->option('text');
                 $textPos = $this->option('text-position') ?: 'none';
+                $textColor = $this->option('text-color');
                 if (!in_array($textPos, ['top','bottom','none'], true)) { $textPos = 'none'; }
 
                 // Generate animated GIF preview using the skin renderer (with optional custom text)
-                $generator->renderSkinGifPreview($skinKey, $outPath, max(1, $seconds), $text ?: null, $textPos);
+                $generator->renderSkinGifPreview($skinKey, $outPath, max(1, $seconds), $text ?: null, $textPos, $textColor ?: null);
                 $this->info("Generated preview: {$skinKey}");
                 $count++;
             } catch (\Throwable $e) {
