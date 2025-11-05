@@ -9,8 +9,8 @@ use Illuminate\Support\Facades\File;
 
 class GenerateSkinPreviews extends Command
 {
-    protected $signature = 'timergif:skins:previews {--force : Regenerate even if files exist} {--all : Generate for all skins, not only those with renderers} {--skin=* : Generate for specific skins, comma separated list} {--time=* : Generate for specific time durations, comma separated list}';
-    protected $description = 'Generate static preview images for skins. By default only for skins with a registered renderer.';
+    protected $signature = 'timergif:skins:previews {skin? : Optional single skin key to generate (e.g. skin07_teal_circles)} {--force : Regenerate even if files exist} {--all : Include skins without a registered renderer} {--skin=* : (Optional, legacy) Additional skin keys, comma-separated} {--seconds= : Override preview duration in seconds (default: 15)} {--time=* : (Deprecated)}';
+    protected $description = 'Generate animated GIF previews for skins. If a skin key is provided, only that one is generated.';
 
     public function handle(TimerGifGenerator $generator): int
     {
@@ -18,9 +18,22 @@ class GenerateSkinPreviews extends Command
         $outDir = public_path('skin-previews');
         File::ensureDirectoryExists($outDir);
 
+        // Determine selection of skins
+        $selected = [];
+        if ($arg = $this->argument('skin')) {
+            $selected[] = $arg;
+        }
+        $legacySkins = (array) ($this->option('skin') ?? []);
+        foreach ($legacySkins as $s) { $selected[] = $s; }
+
         $files = collect(File::files($skinsDir))
             ->filter(fn($f) => strtolower($f->getExtension()) === 'json')
-            ->filter(fn($f) => $this->option('skin') ? in_array(pathinfo($f->getFilename(), PATHINFO_FILENAME), $this->option('skin')) : true)
+            ->when(!empty($selected), function ($c) use ($selected) {
+                $set = array_map(fn($k) => trim($k), $selected);
+                return $c->filter(function ($f) use ($set) {
+                    return in_array(pathinfo($f->getFilename(), PATHINFO_FILENAME), $set, true);
+                });
+            })
             ->values();
 
         if ($files->isEmpty()) {
@@ -57,8 +70,22 @@ class GenerateSkinPreviews extends Command
                 continue;
             }
             try {
-                // Generate short (6s) animated GIF preview using the skin renderer
-                $generator->renderSkinGifPreview($skinKey, $outPath, $this->option('time') ? explode(',', $this->option('time')) : 15);
+                // Determine duration
+                $secondsOpt = $this->option('seconds');
+                // Backward compatibility: allow --time=NN or --time=NN (legacy array) to specify seconds
+                $legacyTime = $this->option('time');
+                if (is_array($legacyTime) && count($legacyTime) > 0) {
+                    $seconds = (int) ($legacyTime[0] ?? 15);
+                } else if (is_string($legacyTime) && $legacyTime !== '') {
+                    $seconds = (int) $legacyTime;
+                } else if ($secondsOpt !== null && $secondsOpt !== false) {
+                    $seconds = (int) $secondsOpt;
+                } else {
+                    $seconds = 15;
+                }
+
+                // Generate animated GIF preview using the skin renderer
+                $generator->renderSkinGifPreview($skinKey, $outPath, max(1, $seconds));
                 $this->info("Generated preview: {$skinKey}");
                 $count++;
             } catch (\Throwable $e) {
