@@ -535,6 +535,13 @@ class TimerGifGenerator
         $unitWidth = $width / 4;
         $centerY = $height / 2;
         
+        // Determine separator color for fallback renderer
+        $sepCol = $textCol;
+        if (!empty($skin['separatorColor'])) {
+            [$sr,$sg,$sb] = $this->hexToRgb($skin['separatorColor']);
+            $sepCol = imagecolorallocate($im, $sr, $sg, $sb);
+        }
+
         if (is_file($font)) {
             for ($i = 0; $i < 4; $i++) {
                 $unit = $timeUnits[$i];
@@ -562,7 +569,7 @@ class TimerGifGenerator
                 if ($i < 3) {
                     $colonX = $unitX + $unitWidth / 2 - 5;
                     $colonY = $centerY - 5;
-                    imagettftext($im, $fontSize, 0, $colonX, $colonY, $textCol, $font, ':');
+                    imagettftext($im, $fontSize, 0, $colonX, $colonY, $sepCol, $font, ':');
                 }
             }
         } else {
@@ -594,7 +601,7 @@ class TimerGifGenerator
                 if ($i < 3) {
                     $colonX = $unitX + $unitWidth / 2 - 3;
                     $colonY = $centerY - 3;
-                    imagestring($im, $builtIn, $colonX, $colonY, ':', $textCol);
+                    imagestring($im, $builtIn, $colonX, $colonY, ':', $sepCol);
                 }
             }
         }

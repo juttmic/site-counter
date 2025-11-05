@@ -41,8 +41,13 @@ class TealPillColonRenderer implements SkinRendererInterface
         $unitWidth = $width / max(1, $segments);
         $centerY = (int) round($height / 2);
 
-        // Foreground (numbers and labels) should be the text color; separators are also text color (white)
+        // Foreground (numbers/labels) use text color; separators prefer separatorColor if provided
         if (is_file($font)) {
+            $sepCol = $textCol;
+            if (!empty($skin['separatorColor']) && is_string($skin['separatorColor'])) {
+                [$sr,$sg,$sb] = $this->textToRgb($skin['separatorColor']);
+                $sepCol = imagecolorallocate($im, $sr, $sg, $sb);
+            }
             for ($i = 0; $i < $segments; $i++) {
                 $unitX = (int) round($unitWidth * $i + $unitWidth / 2);
                 $numberText = sprintf('%02d', $units[$i]['value']);
@@ -62,7 +67,7 @@ class TealPillColonRenderer implements SkinRendererInterface
                     $sepWidth = $this->textBoxWidth($sep, $font, $fontSize);
                     $sepX = (int) ($unitX + $unitWidth / 2 - $sepWidth / 2);
                     $sepY = (int) ($centerY - 6);
-                    imagettftext($im, $fontSize, 0, $sepX, $sepY, $textCol, $font, $sep);
+                    imagettftext($im, $fontSize, 0, $sepX, $sepY, $sepCol, $font, $sep);
                 }
             }
         } else {
@@ -82,7 +87,8 @@ class TealPillColonRenderer implements SkinRendererInterface
                 if ($i < $segments - 1) {
                     $sep = ":";
                     $sW = imagefontwidth($builtIn) * strlen($sep);
-                    imagestring($im, $builtIn, (int)($unitX + $unitWidth / 2 - $sW / 2), (int)($centerY - $nH / 2), $sep, $textCol);
+                    $sepColor = $textCol;
+                    imagestring($im, $builtIn, (int)($unitX + $unitWidth / 2 - $sW / 2), (int)($centerY - $nH / 2), $sep, $sepColor);
                 }
             }
         }
@@ -96,6 +102,19 @@ class TealPillColonRenderer implements SkinRendererInterface
         $minX = min($box[0], $box[2], $box[4], $box[6]);
         $maxX = max($box[0], $box[2], $box[4], $box[6]);
         return (int) ($maxX - $minX);
+    }
+
+    private function textToRgb(string $hex): array
+    {
+        $hex = ltrim($hex, '#');
+        if (strlen($hex) === 3) {
+            $hex = $hex[0].$hex[0].$hex[1].$hex[1].$hex[2].$hex[2];
+        }
+        return [
+            hexdec(substr($hex,0,2)),
+            hexdec(substr($hex,2,2)),
+            hexdec(substr($hex,4,2)),
+        ];
     }
 
     private function fillRoundedRect($im, int $x, int $y, int $w, int $h, int $r, int $color): void

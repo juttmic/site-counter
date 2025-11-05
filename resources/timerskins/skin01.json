@@ -4,6 +4,7 @@
   "height": 160,
   "background": "#ffffff",
   "textColor": "#000000",
+  "separatorColor": "#000000",
   "accentColor": "#000000",
   "fontSize": 30,
   "fontPath": "resources/fonts/dejavu-sans.book.ttf",

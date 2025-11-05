@@ -37,6 +37,11 @@ class FullWordLabelRenderer implements SkinRendererInterface
         $sepChar = mb_substr($separator, 0, 1);
 
         if (is_file($font)) {
+            $sepCol = $textCol;
+            if (!empty($skin['separatorColor']) && is_string($skin['separatorColor'])) {
+                [$sr,$sg,$sb] = $this->hexToRgb($skin['separatorColor']);
+                $sepCol = imagecolorallocate($im, $sr, $sg, $sb);
+            }
             $unitCount = count($timeUnits);
             $unitWidth = $width / max(1, $unitCount);
             $centerY = $height / 2;
@@ -70,11 +75,24 @@ class FullWordLabelRenderer implements SkinRendererInterface
                     $colonWidth = abs($colonBox[4] - $colonBox[0]);
                     $colonX = (int) ($unitX + $unitWidth / 2 - $colonWidth / 2);
                     $colonY = $numberY;
-                    imagettftext($im, $fontSize, 0, $colonX, $colonY, $textCol, $font, $colon);
+                    imagettftext($im, $fontSize, 0, $colonX, $colonY, $sepCol, $font, $colon);
                 }
             }
         }
 
         return true;
+    }
+
+    private function hexToRgb(string $hex): array
+    {
+        $hex = ltrim($hex, '#');
+        if (strlen($hex) === 3) {
+            $hex = $hex[0].$hex[0].$hex[1].$hex[1].$hex[2].$hex[2];
+        }
+        return [
+            hexdec(substr($hex,0,2)),
+            hexdec(substr($hex,2,2)),
+            hexdec(substr($hex,4,2)),
+        ];
     }
 }

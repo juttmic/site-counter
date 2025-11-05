@@ -38,6 +38,11 @@ class CleanWhiteTimerRenderer implements SkinRendererInterface
         $sepChar = mb_substr($separator, 0, 1);
 
         if (is_file($font)) {
+            $sepCol = $textCol;
+            if (!empty($skin['separatorColor']) && is_string($skin['separatorColor'])) {
+                [$sr,$sg,$sb] = $this->hexToRgb($skin['separatorColor']);
+                $sepCol = imagecolorallocate($im, $sr, $sg, $sb);
+            }
             $segments = count($timeUnits);
             for ($i = 0; $i < $segments; $i++) {
                 $unitWidth = $width / max(1, $segments);
@@ -55,10 +60,10 @@ class CleanWhiteTimerRenderer implements SkinRendererInterface
                 $labelY = (int) ($centerY + 20);
                 imagettftext($im, $labelSize, 0, $labelX, $labelY, $accentCol, $font, $timeUnits[$i]['label']);
 
-                if ($i < $segments - 1) {
+            if ($i < $segments - 1) {
                     $colonX = (int) ($unitX + $unitWidth / 2 - 5);
                     $colonY = (int) ($centerY - 5);
-                    imagettftext($im, $fontSize, 0, $colonX, $colonY, $textCol, $font, $sepChar);
+                imagettftext($im, $fontSize, 0, $colonX, $colonY, $sepCol, $font, $sepChar);
                 }
             }
         } else {
@@ -83,10 +88,10 @@ class CleanWhiteTimerRenderer implements SkinRendererInterface
                 $labelY = (int) ($centerY + 10);
                 imagestring($im, $labelBuiltIn, $labelX, $labelY, $timeUnits[$i]['label'], $accentCol);
 
-                if ($i < $segments - 1) {
+            if ($i < $segments - 1) {
                     $colonX = (int) ($unitX + $unitWidth / 2 - 3);
                     $colonY = (int) ($centerY - 3);
-                    imagestring($im, $builtIn, $colonX, $colonY, $sepChar, $textCol);
+                imagestring($im, $builtIn, $colonX, $colonY, $sepChar, $sepCol);
                 }
             }
         }
@@ -100,6 +105,19 @@ class CleanWhiteTimerRenderer implements SkinRendererInterface
         $minX = min($box[0], $box[2], $box[4], $box[6]);
         $maxX = max($box[0], $box[2], $box[4], $box[6]);
         return (int) ($maxX - $minX);
+    }
+
+    private function hexToRgb(string $hex): array
+    {
+        $hex = ltrim($hex, '#');
+        if (strlen($hex) === 3) {
+            $hex = $hex[0].$hex[0].$hex[1].$hex[1].$hex[2].$hex[2];
+        }
+        return [
+            hexdec(substr($hex,0,2)),
+            hexdec(substr($hex,2,2)),
+            hexdec(substr($hex,4,2)),
+        ];
     }
 }
 
