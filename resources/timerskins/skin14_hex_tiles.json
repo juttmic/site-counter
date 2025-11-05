@@ -1,0 +1,29 @@
+{
+  "name": "Hex Tile Labels",
+  "width": 760,
+  "height": 180,
+  "background": "#FFFFFF",
+  "textColor": "#FFFFFF",
+  "accentColor": "#3B8C8F",
+  "fontSize": 28,
+  "fontPath": "resources/fonts/dejavu-sans.bold.ttf",
+  "style": "hex_tile",
+  "showDays": true,
+  "showHours": true,
+  "showMinutes": true,
+  "showSeconds": true,
+  "fields": [
+    { "key": "width", "label": "Width", "type": "number", "min": 100, "max": 2000, "step": 10 },
+    { "key": "height", "label": "Height", "type": "number", "min": 80, "max": 1000, "step": 5 },
+    { "key": "textColor", "label": "Text Color", "type": "color" },
+    { "key": "accentColor", "label": "Tile Color", "type": "color" },
+    { "key": "fontSize", "label": "Font Size", "type": "number", "min": 8, "max": 200, "step": 1 },
+    { "key": "fontPath", "label": "Font", "type": "font" },
+    { "key": "showDays", "label": "Show Days", "type": "boolean" },
+    { "key": "showHours", "label": "Show Hours", "type": "boolean" },
+    { "key": "showMinutes", "label": "Show Minutes", "type": "boolean" },
+    { "key": "showSeconds", "label": "Show Seconds", "type": "boolean" }
+  ]
+}
+
+
