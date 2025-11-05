@@ -86,7 +86,12 @@ class InvertedPillLabelsRenderer implements SkinRendererInterface
             if ($sep === '') { $sep = ':'; }
             // Use first visible character for placement calculations
             $sepChar = mb_substr($sep, 0, 1);
-            // draw colon in text color for contrast
+            // Choose separator color if provided; fallback to text color
+            $sepCol = $textCol;
+            if (!empty($skin['separatorColor']) && is_string($skin['separatorColor'])) {
+                [$sr,$sg,$sb] = $this->hexToRgb($skin['separatorColor']);
+                $sepCol = imagecolorallocate($im, $sr, $sg, $sb);
+            }
             for ($i = 0; $i < $segments - 1; $i++) {
                 $cx = $gapX + ($i + 1) * $segW + $i * $gapX + (int)($gapX / 2);
                 $cy = (int)($padTop + $digitTileH * 0.50);
@@ -99,8 +104,7 @@ class InvertedPillLabelsRenderer implements SkinRendererInterface
                 $maxY = max($box[1], $box[3], $box[5], $box[7]);
                 $x    = (int)($cx - ($minX + $maxX) / 2);
                 $y    = (int)($cy - ($minY + $maxY) / 2); // center vertically relative to baseline
-                // dd($x, $y,$box );
-                imagettftext($im, $fontSize, 0, $x+1, $y, $textCol, $font, $colon);
+                imagettftext($im, $fontSize, 0, $x+1, $y, $sepCol, $font, $colon);
             }
         }
     }
