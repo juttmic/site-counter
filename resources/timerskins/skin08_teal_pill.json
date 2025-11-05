@@ -1,0 +1,29 @@
+{
+  "name": "Teal Pill Colon",
+  "width": 720,
+  "height": 160,
+  "background": "#FFFFFF",
+  "textColor": "#ECF0F1",
+  "accentColor": "#0F7892",
+  "fontSize": 36,
+  "fontPath": "resources/fonts/dejavu-sans.bold.ttf",
+  "style": "teal_pill_colon",
+  "showDays": true,
+  "showHours": true,
+  "showMinutes": true,
+  "showSeconds": true,
+  "fields": [
+    { "key": "width", "label": "Width", "type": "number", "min": 100, "max": 2000, "step": 10 },
+    { "key": "height", "label": "Height", "type": "number", "min": 80, "max": 1000, "step": 5 },
+    { "key": "textColor", "label": "Text Color", "type": "color" },
+    { "key": "accentColor", "label": "Pill Color", "type": "color" },
+    { "key": "fontSize", "label": "Font Size", "type": "number", "min": 8, "max": 200, "step": 1 },
+    { "key": "fontPath", "label": "Font", "type": "font" },
+    { "key": "showDays", "label": "Show Days", "type": "boolean" },
+    { "key": "showHours", "label": "Show Hours", "type": "boolean" },
+    { "key": "showMinutes", "label": "Show Minutes", "type": "boolean" },
+    { "key": "showSeconds", "label": "Show Seconds", "type": "boolean" }
+  ]
+}
+
+
