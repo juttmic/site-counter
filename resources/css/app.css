@@ -1,3 +1,67 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* Bootstrap is loaded via CDN, keeping minimal custom styles */
+
+/* Dark mode support for Bootstrap */
+.dark {
+    color-scheme: dark;
+}
+
+.dark body {
+    background-color: #1a1a1a;
+    color: #e9ecef;
+}
+
+.dark .bg-white {
+    background-color: #212529 !important;
+    color: #e9ecef !important;
+}
+
+.dark .bg-light {
+    background-color: #1a1a1a !important;
+}
+
+.dark .text-dark {
+    color: #e9ecef !important;
+}
+
+.dark .border-bottom,
+.dark .border-end,
+.dark .border-top {
+    border-color: #495057 !important;
+}
+
+.dark .btn-light {
+    background-color: #495057;
+    color: #e9ecef;
+    border-color: #495057;
+}
+
+.dark .btn-light:hover {
+    background-color: #5a6268;
+    border-color: #5a6268;
+}
+
+.dark .bg-light {
+    background-color: #495057 !important;
+}
+
+.dark .offcanvas {
+    background-color: #212529;
+    color: #e9ecef;
+}
+
+/* Dark mode text visibility */
+.dark .dark-mode-text {
+    display: inline !important;
+}
+
+.dark .light-mode-text {
+    display: none !important;
+}
+
+.light-mode-text {
+    display: inline;
+}
+
+.dark-mode-text {
+    display: none;
+}

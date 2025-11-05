@@ -11,8 +11,14 @@
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
+        <!-- Bootstrap 5 CSS -->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+        <!-- Bootstrap 5 JS -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
         <script>
             (function() {
                 try {
@@ -45,35 +51,45 @@
             })();
         </script>
     </head>
-    <body class="font-sans antialiased bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-gray-100">
-        <div class="min-h-screen">
-            <div class="flex" x-data="{ collapsed: false }">
-                @include('layouts.sidebar')
-                <div class="flex-1 min-h-screen">
-                    <header class="bg-white border-b border-gray-100 dark:bg-gray-800 dark:border-gray-700">
-                        <div class="mx-auto py-3 px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-                            <div class="min-h-[24px]">
+    <body class="bg-light">
+        <div class="min-vh-100">
+            @include('layouts.sidebar')
+            
+            <!-- Main Content Area -->
+            <div class="main-content" style="min-height: 100vh;">
+                <!-- Header -->
+                <header class="bg-white border-bottom shadow-sm sticky-top" style="z-index: 999;">
+                    <div class="container-fluid">
+                        <div class="d-flex align-items-center justify-content-between py-3 px-3 px-md-4">
+                            <div class="flex-grow-1">
                                 {{ $header ?? '' }}
                             </div>
-                            <div class="flex items-center gap-2">
-                                <button type="button" @click="collapsed = !collapsed" class="inline-flex items-center px-3 py-1.5 rounded-md text-sm bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600" title="Toggle sidebar">
-                                    <i class="fa-solid fa-bars"></i>
+                            <div class="d-flex align-items-center gap-2">
+                                <button type="button" 
+                                        onclick="toggleDesktopSidebar()" 
+                                        class="btn btn-outline-secondary btn-sm d-none d-md-inline-flex" 
+                                        title="Toggle sidebar">
+                                    <i class="bi bi-list"></i>
                                 </button>
-                                <a href="{{ route('timers.create') }}" class="hidden sm:inline-flex items-center px-3 py-1.5 rounded-md text-sm bg-indigo-600 text-white hover:bg-indigo-700">
-                                    <i class="fa-regular fa-square-plus mr-2"></i>
+                                <a href="{{ route('timers.create') }}" class="btn btn-primary btn-sm d-none d-sm-inline-flex">
+                                    <i class="bi bi-plus-square me-1"></i>
                                     Create Timer
                                 </a>
-                                <button onclick="toggleTheme()" type="button" class="inline-flex items-center px-3 py-1.5 rounded-md text-sm bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600">
-                                    <span class="hidden dark:inline">Light Mode</span>
-                                    <span class="dark:hidden">Dark Mode</span>
+                                <button onclick="toggleTheme()" 
+                                        type="button" 
+                                        class="btn btn-outline-secondary btn-sm d-none d-md-inline-flex">
+                                    <span class="d-none dark-mode-text">Light Mode</span>
+                                    <span class="light-mode-text">Dark Mode</span>
                                 </button>
                             </div>
                         </div>
-                    </header>
-                    <main class="p-4 sm:p-6 lg:p-8">
-                        {{ $slot }}
-                    </main>
-                </div>
+                    </div>
+                </header>
+                
+                <!-- Main Content -->
+                <main class="p-3 p-md-4">
+                    {{ $slot }}
+                </main>
             </div>
         </div>
     </body>
