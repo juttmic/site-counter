@@ -61,6 +61,27 @@
     border-color: #495057;
 }
 
+/* Bootstrap Toast dark mode */
+.dark .toast.text-bg-success,
+.dark .toast.text-bg-primary,
+.dark .toast.text-bg-danger,
+.dark .toast.text-bg-warning,
+.dark .toast.text-bg-info,
+.dark .toast.text-bg-secondary,
+.dark .toast.text-bg-dark,
+.dark .toast.text-bg-light {
+    color: #e9ecef;
+}
+
+.dark .toast,
+.dark .toast .toast-body {
+    background-color: #343a40;
+}
+
+.dark .btn-close-white {
+    filter: invert(1) grayscale(100%);
+}
+
 /* Bootstrap cards in dark mode */
 .dark .card {
     background-color: #212529;

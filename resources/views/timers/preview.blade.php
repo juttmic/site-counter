@@ -1,29 +1,52 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">Preview: {{ $timer->title }}</h2>
+        <div class="d-flex justify-content-center">
+            <h2 class="fw-semibold mb-0">Preview: {{ $timer->title }}</h2>
+        </div>
     </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 text-gray-900">
+    <div class="py-4 py-md-5">
+        <div class="container" style="max-width: 860px;">
+            <div class="card">
+                <div class="card-body">
                     @if($timer->gif_url)
-                        <div class="mb-4">
-                            <img src="{{ url($timer->gif_url) }}" class="border max-w-full" alt="preview">
+                        <div class="d-flex justify-content-center mb-3">
+                            <div class="d-flex align-items-center justify-content-center overflow-hidden bg-light border rounded" style="min-height: 260px;">
+                                <img src="{{ url($timer->gif_url) }}" class="img-fluid" style="max-height: 360px; object-fit: contain;" alt="preview">
+                            </div>
                         </div>
-                        <div class="mb-4">
-                            <label class="block text-sm font-medium mb-1">Embed Code</label>
-                            <input type="text" class="w-full border rounded p-2" value='<img src="{{ url($timer->gif_url) }}" alt="Countdown Timer">' readonly>
+                        <div class="text-center">
+                            <label class="form-label">Embed Code</label>
+                            <div class="d-flex gap-2 justify-content-center">
+                                <input id="preview_embed_input" type="text" class="form-control" style="max-width: 560px;" value='<img src="{{ url($timer->gif_url) }}" alt="Countdown Timer">' readonly>
+                                <button id="preview_embed_copy" type="button" class="btn btn-outline-secondary">Copy</button>
+                            </div>
                         </div>
                     @else
-                        <div class="p-4 bg-yellow-50 text-yellow-800 rounded">No GIF generated yet.</div>
+                        <div class="alert alert-warning text-center mb-0">No GIF generated yet.</div>
                     @endif
-
-                    <a href="{{ route('timers.edit', $timer) }}" class="px-4 py-2 border rounded">Back</a>
+                    <div class="d-flex justify-content-center mt-4">
+                        <a href="{{ route('timers.edit', $timer) }}" class="btn btn-outline-secondary">Back</a>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <script>
+        (function(){
+            var copyBtn = document.getElementById('preview_embed_copy');
+            if (copyBtn) {
+                copyBtn.addEventListener('click', function(){
+                    var inp = document.getElementById('preview_embed_input');
+                    if (!inp) return;
+                    navigator.clipboard.writeText(inp.value).then(function(){
+                        if (window.showToast) window.showToast('Embed code copied', 'success');
+                    }).catch(function(){});
+                });
+            }
+        })();
+    </script>
 </x-app-layout>
 
 

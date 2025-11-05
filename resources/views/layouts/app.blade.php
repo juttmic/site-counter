@@ -88,5 +88,33 @@
                 </main>
             </div>
         </div>
+        
+        <!-- Global Toast Container -->
+        <div class="toast-container position-fixed top-0 start-50 translate-middle-x p-3" id="globalToastContainer" style="z-index: 1080"></div>
+
+        <script>
+            // Global toast function: window.showToast(message, variant)
+            (function(){
+                window.showToast = function(message, variant){
+                    try {
+                        var container = document.getElementById('globalToastContainer');
+                        if (!container) return;
+                        var toastEl = document.createElement('div');
+                        toastEl.className = 'toast align-items-center text-bg-' + (variant || 'success') + ' border-0';
+                        toastEl.setAttribute('role', 'status');
+                        toastEl.setAttribute('aria-live', 'polite');
+                        toastEl.setAttribute('aria-atomic', 'true');
+                        toastEl.innerHTML = '<div class="d-flex">\
+                            <div class="toast-body">' + (message || '') + '</div>\
+                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>\
+                        </div>';
+                        container.appendChild(toastEl);
+                        var toast = new bootstrap.Toast(toastEl, { delay: 2000 });
+                        toast.show();
+                        toastEl.addEventListener('hidden.bs.toast', function(){ toastEl.remove(); });
+                    } catch (e) {}
+                };
+            })();
+        </script>
     </body>
 </html>
