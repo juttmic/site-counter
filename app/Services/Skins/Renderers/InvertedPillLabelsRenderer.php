@@ -86,16 +86,21 @@ class InvertedPillLabelsRenderer implements SkinRendererInterface
             if ($sep === '') { $sep = ':'; }
             // Use first visible character for placement calculations
             $sepChar = mb_substr($sep, 0, 1);
+            // draw colon in text color for contrast
             for ($i = 0; $i < $segments - 1; $i++) {
                 $cx = $gapX + ($i + 1) * $segW + $i * $gapX + (int)($gapX / 2);
                 $cy = (int)($padTop + $digitTileH * 0.50);
                 $colon = $sepChar;
                 $box = imagettfbbox($fontSize, 0, $font, $colon);
-                $cw  = abs($box[4] - $box[0]);
-                $ch  = abs($box[5] - $box[1]);
-                $x   = (int)($cx - $cw / 2);
-                $y   = (int)($cy + $ch / 2 - 2);
-                imagettftext($im, $fontSize, 0, $x, $y, $colonCol, $font, $colon);
+                // precise centering uses bbox min/max, not just width
+                $minX = min($box[0], $box[2], $box[4], $box[6]);
+                $maxX = max($box[0], $box[2], $box[4], $box[6]);
+                $minY = min($box[1], $box[3], $box[5], $box[7]);
+                $maxY = max($box[1], $box[3], $box[5], $box[7]);
+                $x    = (int)($cx - ($minX + $maxX) / 2);
+                $y    = (int)($cy - ($minY + $maxY) / 2); // center vertically relative to baseline
+                // dd($x, $y,$box );
+                imagettftext($im, $fontSize, 0, $x+1, $y, $textCol, $font, $colon);
             }
         }
     }
