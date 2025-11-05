@@ -4,7 +4,11 @@
     $formMethod = $isEdit ? 'PUT' : 'POST';
 @endphp
 
-<div class="py-4 py-md-5">
+<div class="py-1" style="border: 0px solid red; display: flex; justify-content: flex-end;">
+  <a href="{{ route('timers.preview', $timer) }}" class="btn btn-primary border rounded">Preview Timer</a>
+</div>
+
+<div class="py-4 py-md-3">
     <div class="container-fluid">
         <form id="timer_form" method="POST" action="{{ $formAction }}" data-timer-id="{{ $isEdit ? $timer->id : '' }}" data-is-edit="{{ $isEdit ? '1' : '0' }}" data-has-gif="{{ $isEdit && !empty($timer->gif_url) ? '1' : '0' }}">
             @csrf
@@ -72,10 +76,11 @@
                                 <div class="mt-2 position-relative d-inline-flex align-items-center gap-2 border rounded p-2 bg-light">
                                     <img id="selected_skin_preview" alt="Selected skin preview" class="border rounded bg-white d-none" style="height: 40px; width: auto;" />
                                     <span id="selected_skin_label" class="small"></span>
-                                    <button type="button" id="open_skin_modal" class="position-absolute top-0 end-0 translate-middle btn btn-sm btn-light border" title="Change skin" aria-label="Change skin">
-                                        <i class="fa-solid fa-rotate"></i>
-                                    </button>
+                                    
                                 </div>
+                                <button type="button" id="open_skin_modal" class="btn btn-sm btn-light border" title="Change skin" aria-label="Change skin" data-bs-toggle="modal" data-bs-target="#skinSelectModal">
+                                  <i class="fa-solid fa-rotate"></i>
+                              </button>
                                 <p class="form-text">Click the change icon to pick a different skin.</p>
                             </div>
                         </div>
@@ -142,6 +147,24 @@
     </div>
 </div>
 
+<!-- Skin Selection Modal (Bootstrap) -->
+<div class="modal fade" id="skinSelectModal" tabindex="-1" aria-labelledby="skinSelectModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="skinSelectModalLabel">Choose a Skin</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="skin_modal_grid" class="row g-3"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+    </div>
+
 <script>
 // Font Awesome (for the change icon)
 if (!document.getElementById('fa-cdn')) {
@@ -154,8 +177,8 @@ if (!document.getElementById('fa-cdn')) {
 
 function toggleInputs() {
   const type = document.getElementById('timer_type').value;
-  document.getElementById('fixed_date_input').classList.toggle('hidden', type !== 'fixed_date');
-  document.getElementById('duration_input').classList.toggle('hidden', type !== 'reload_based');
+  document.getElementById('fixed_date_input').classList.toggle('d-none', type !== 'fixed_date');
+  document.getElementById('duration_input').classList.toggle('d-none', type !== 'reload_based');
 }
 document.addEventListener('DOMContentLoaded', toggleInputs);
 
@@ -166,66 +189,42 @@ async function fetchJson(url) {
   return await res.json();
 }
 
-// Modal for skin selection
-function ensureSkinModal() {
-  let modal = document.getElementById('skin_modal');
-  if (modal) return modal;
-  modal = document.createElement('div');
-  modal.id = 'skin_modal';
-  modal.className = 'fixed inset-0 z-50 hidden';
-  modal.innerHTML = `
-    <div class="absolute inset-0 bg-black/50" data-dismiss></div>
-    <div class="absolute inset-0 flex items-center justify-center p-4">
-      <div class="bg-white rounded-lg shadow-lg w-full max-w-4xl max-h-[80vh] overflow-auto">
-        <div class="flex items-center justify-between p-4 border-b">
-          <h3 class="text-lg font-semibold">Choose a Skin</h3>
-          <button class="text-gray-500 hover:text-gray-700" data-dismiss aria-label="Close"><i class="fa-solid fa-xmark text-xl"></i></button>
-        </div>
-        <div id="skin_modal_grid" class="p-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3"></div>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(modal);
-  modal.addEventListener('click', (e) => { if (e.target.hasAttribute('data-dismiss')) hideSkinModal(); });
-  return modal;
-}
-
-function showSkinModal() {
-  const modal = ensureSkinModal();
-  modal.classList.remove('hidden');
-  loadSkinsIntoModal();
-}
-
-function hideSkinModal() {
-  const modal = document.getElementById('skin_modal');
-  if (modal) modal.classList.add('hidden');
-}
+// Bootstrap modal hooks for skin selection
 
 async function loadSkinsIntoModal() {
   const grid = document.getElementById('skin_modal_grid');
   if (!grid) return;
-  grid.innerHTML = '<div class="col-span-full text-center text-sm text-gray-500">Loading skins...</div>';
+  grid.innerHTML = '<div class="col-12 text-center text-muted small">Loading skins...</div>';
   try {
     const skins = await fetchJson('/api/skins');
     const current = document.getElementById('skin_key').value;
     grid.innerHTML = '';
     skins.forEach(s => {
+      const col = document.createElement('div');
+      col.className = 'col-6 col-md-4 col-lg-3';
       const card = document.createElement('button');
       card.type = 'button';
-      card.className = 'border rounded p-2 hover:ring-2 hover:ring-indigo-500 text-left bg-white';
+      card.className = 'w-100 border rounded p-2 bg-white text-start';
       card.innerHTML = `
-        <img src="${s.preview_url}" alt="${s.name}" class="w-full h-24 object-contain bg-gray-50">
-        <div class="mt-2 text-sm truncate">${s.name}</div>
+        <div class="d-flex align-items-center justify-content-center bg-light border rounded" style="height: 96px;">
+          <img src="${s.preview_url}" alt="${s.name}" class="img-fluid" style="max-height: 96px; object-fit: contain;">
+        </div>
+        <div class="mt-2 small text-truncate">${s.name}</div>
       `;
-      if (s.key === current) card.classList.add('ring-2','ring-indigo-600');
+      if (s.key === current) card.classList.add('border-primary');
       card.addEventListener('click', async () => {
         await selectSkin(s.key);
-        hideSkinModal();
+        const modalEl = document.getElementById('skinSelectModal');
+        if (modalEl) {
+          const inst = bootstrap.Modal.getInstance(modalEl);
+          if (inst) inst.hide();
+        }
       });
-      grid.appendChild(card);
+      col.appendChild(card);
+      grid.appendChild(col);
     });
   } catch (e) {
-    grid.innerHTML = '<div class="col-span-full text-center text-sm text-red-500">Failed to load skins</div>';
+    grid.innerHTML = '<div class="col-12 text-center text-danger small">Failed to load skins</div>';
   }
 }
 
@@ -237,7 +236,7 @@ function renderFields(metadata, savedOverrides = {}) {
   const defaults = metadata.defaults || {};
   const fields = Array.isArray(metadata.fields) ? metadata.fields : [];
   fieldsWrap.innerHTML = '';
-  document.getElementById('skin_overrides_section').classList.toggle('hidden', fields.length === 0);
+  document.getElementById('skin_overrides_section').classList.toggle('d-none', fields.length === 0);
 
   const smallKeys = new Set(['fontSize','separator','layout','animation','showDays','showHours','showMinutes','showSeconds']);
   fields.forEach(field => {
@@ -249,14 +248,14 @@ function renderFields(metadata, savedOverrides = {}) {
 
     const container = document.createElement('div');
     const isSmall = type === 'color' || type === 'boolean' || smallKeys.has(key);
-    container.className = isSmall ? 'col-span-1' : 'sm:col-span-2 md:col-span-3';
-    container.innerHTML = `<label class="block text-xs font-medium mb-1">${label}</label>`;
+    container.className = isSmall ? 'col-12 col-sm-6 col-md-4' : 'col-12';
+    container.innerHTML = `<label class="form-label small mb-1">${label}</label>`;
     let input;
     if (type === 'color') {
       input = document.createElement('input');
       input.type = 'color';
       input.value = /^#/.test(value) ? value : (defaults[key] || '#000000');
-      input.className = 'w-16 h-8 p-0.5 border rounded';
+      input.className = 'form-control form-control-color';
     } else if (type === 'number') {
       input = document.createElement('input');
       input.type = 'number';
@@ -264,15 +263,15 @@ function renderFields(metadata, savedOverrides = {}) {
       if (field.max != null) input.max = field.max;
       if (field.step != null) input.step = field.step;
       input.value = (value ?? '');
-      input.className = 'mt-1 w-full border rounded p-2';
+      input.className = 'form-control';
     } else if (type === 'boolean') {
       input = document.createElement('input');
       input.type = 'checkbox';
       input.checked = !!value;
-      input.className = 'mt-1 h-4 w-4';
+      input.className = 'form-check-input';
     } else if (type === 'select') {
       input = document.createElement('select');
-      input.className = 'mt-1 w-full border rounded p-2';
+      input.className = 'form-select';
       (field.options || []).forEach(opt => {
         const o = document.createElement('option');
         o.value = opt; o.textContent = opt; if (opt === value) o.selected = true; input.appendChild(o);
@@ -282,7 +281,7 @@ function renderFields(metadata, savedOverrides = {}) {
       input.type = 'text';
       if (field.maxLength != null) input.maxLength = field.maxLength;
       input.value = value ?? '';
-      input.className = 'mt-1 w-full border rounded p-2';
+      input.className = 'form-control';
     }
     input.dataset.key = key;
     input.addEventListener('change', syncOverrides);
@@ -330,7 +329,7 @@ async function selectSkin(key) {
     const prevEl = document.getElementById('selected_skin_preview');
     if (meta && meta.preview_url) {
       prevEl.src = meta.preview_url;
-      prevEl.classList.remove('hidden');
+      prevEl.classList.remove('d-none');
     }
   } catch (e) {
     console.error(e);
@@ -358,11 +357,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (meta && meta.preview_url) {
           const prevEl = document.getElementById('selected_skin_preview');
           prevEl.src = meta.preview_url;
-          prevEl.classList.remove('hidden');
+          prevEl.classList.remove('d-none');
         }
       }
-      const changeBtn = document.getElementById('open_skin_modal');
-      if (changeBtn) changeBtn.addEventListener('click', showSkinModal);
+      // Load skins when modal is shown
+      const modalEl = document.getElementById('skinSelectModal');
+      if (modalEl) {
+        modalEl.addEventListener('shown.bs.modal', loadSkinsIntoModal);
+      }
     } catch (e) {
       // swallow to avoid noisy console during navigation
     }

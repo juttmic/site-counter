@@ -49,6 +49,18 @@
     color: #e9ecef;
 }
 
+/* Modal dark mode */
+.dark .modal-content {
+    background-color: #212529;
+    color: #e9ecef;
+    border-color: #495057;
+}
+
+.dark .modal-header,
+.dark .modal-footer {
+    border-color: #495057;
+}
+
 /* Bootstrap cards in dark mode */
 .dark .card {
     background-color: #212529;
