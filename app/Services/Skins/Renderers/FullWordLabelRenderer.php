@@ -16,7 +16,8 @@ class FullWordLabelRenderer implements SkinRendererInterface
     {
         $font = $skin['fontPath'];
         $fontSize = (int) $skin['fontSize'];
-        $labelSize = max(10, (int) round($fontSize * 0.4));
+        // Use a slightly smaller label for better balance
+        $labelSize = max(10, (int) round($fontSize * 0.35));
 
         $days = intdiv($secondsRemaining, 86400);
         $hours = intdiv($secondsRemaining % 86400, 3600);
@@ -49,7 +50,8 @@ class FullWordLabelRenderer implements SkinRendererInterface
                 $numberWidth = abs($numberBox[4] - $numberBox[0]);
                 $numberHeight = abs($numberBox[5] - $numberBox[1]);
                 $numberX = (int) ($unitX - $numberWidth / 2);
-                $numberY = (int) ($centerY + $numberHeight/2);
+                // Align baseline slightly above center for symmetry with other skins
+                $numberY = (int) ($centerY - 6);
                 imagettftext($im, $fontSize, 0, $numberX, $numberY, $textCol, $font, $numberText);
 
                 // Small label below
@@ -57,7 +59,8 @@ class FullWordLabelRenderer implements SkinRendererInterface
                 $labelBox = imagettfbbox($labelSize, 0, $font, $labelText);
                 $labelWidth = abs($labelBox[4] - $labelBox[0]);
                 $labelX = (int) ($unitX - $labelWidth / 2);
-                $labelY = (int) ($centerY + $numberHeight);
+                // Consistent offset below number baseline
+                $labelY = (int) ($centerY + (int) round($fontSize * 0.9));
                 imagettftext($im, $labelSize, 0, $labelX, $labelY, $textCol, $font, $labelText);
 
                 // Separator between units
