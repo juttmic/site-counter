@@ -1,0 +1,19 @@
+{
+  "name": "Arc Gauges",
+  "width": 760,
+  "height": 220,
+  "background": "#FFFFFF",
+  "textColor": "#111111",
+  "accentColor": "#0EA5E9",
+  "fontSize": 28,
+  "fontPath": "resources/fonts/dejavu-sans.book.ttf",
+  "style": "arc_gauge",
+  "arcThickness": 12,
+  "showDays": true,
+  "showHours": true,
+  "showMinutes": true,
+  "showSeconds": true,
+  "fields": []
+}
+
+
