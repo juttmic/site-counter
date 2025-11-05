@@ -4,10 +4,11 @@
     $formMethod = $isEdit ? 'PUT' : 'POST';
 @endphp
 
+@if(isset($timer))
 <div class="py-1" style="border: 0px solid red; display: flex; justify-content: flex-end;">
   <a href="{{ route('timers.preview', $timer) }}" class="btn btn-primary border rounded">Preview Timer</a>
 </div>
-
+@endif
 <div class="py-4 py-md-3">
     <div class="container-fluid">
         <form id="timer_form" method="POST" action="{{ $formAction }}" data-timer-id="{{ $isEdit ? $timer->id : '' }}" data-is-edit="{{ $isEdit ? '1' : '0' }}" data-has-gif="{{ $isEdit && !empty($timer->gif_url) ? '1' : '0' }}">
