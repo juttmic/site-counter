@@ -1,0 +1,18 @@
+{
+  "name": "Orbit Dots",
+  "width": 760,
+  "height": 200,
+  "background": "#FFFFFF",
+  "textColor": "#111111",
+  "accentColor": "#22A699",
+  "fontSize": 30,
+  "fontPath": "resources/fonts/dejavu-sans.book.ttf",
+  "style": "orbit_dots",
+  "showDays": true,
+  "showHours": true,
+  "showMinutes": true,
+  "showSeconds": true,
+  "fields": []
+}
+
+
