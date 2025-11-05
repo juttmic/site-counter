@@ -1,0 +1,18 @@
+{
+  "name": "Split Flap Light",
+  "width": 760,
+  "height": 180,
+  "background": "#F8FAFB",
+  "textColor": "#1F2937",
+  "accentColor": "#D1D5DB",
+  "fontSize": 38,
+  "fontPath": "resources/fonts/dejavu-sans.bold.ttf",
+  "style": "split_flap_board",
+  "showDays": true,
+  "showHours": true,
+  "showMinutes": true,
+  "showSeconds": true,
+  "fields": []
+}
+
+

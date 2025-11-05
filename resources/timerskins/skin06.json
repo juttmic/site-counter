@@ -7,7 +7,7 @@
   "accentColor": "#22d3ee",
   "fontSize": 44,
   "fontPath": "resources/fonts/dejavu-sans.book.ttf",
-  "style": "default",
+  "style": "dark_neon_outline",
   "showDays": true,
   "showHours": true,
   "showMinutes": true,
