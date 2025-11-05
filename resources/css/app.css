@@ -49,6 +49,44 @@
     color: #e9ecef;
 }
 
+/* Bootstrap cards in dark mode */
+.dark .card {
+    background-color: #212529;
+    color: #e9ecef;
+    border-color: #495057;
+}
+
+.dark .card .card-title {
+    color: #e9ecef;
+}
+
+.dark .card .text-muted {
+    color: #adb5bd !important;
+}
+
+.dark .card .bg-light {
+    background-color: #343a40 !important;
+}
+
+/* Borders inside cards/previews */
+.dark .border,
+.dark .card .border {
+    border-color: #495057 !important;
+}
+
+/* Buttons outline in dark mode */
+.dark .btn-outline-secondary {
+    color: #e9ecef;
+    border-color: #adb5bd;
+}
+
+.dark .btn-outline-secondary:hover,
+.dark .btn-outline-secondary:focus {
+    background-color: #adb5bd;
+    color: #212529;
+    border-color: #adb5bd;
+}
+
 /* Dark mode text visibility */
 .dark .dark-mode-text {
     display: inline !important;
