@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\File;
 
 class GenerateSkinPreviews extends Command
 {
-    protected $signature = 'timergif:skins:previews {skin? : Optional single skin key to generate (e.g. skin07_teal_circles)} {--force : Regenerate even if files exist} {--all : Include skins without a registered renderer} {--skin=* : (Optional, legacy) Additional skin keys, comma-separated} {--seconds= : Override preview duration in seconds (default: 15)} {--text= : Optional custom text to render} {--text-position= : Text position: top|bottom|none} {--text-color= : Hex color for custom text (e.g. #FFFFFF)} {--time=* : (Deprecated)}';
+    protected $signature = 'timergif:skins:previews {skin? : Optional single skin key to generate (e.g. skin07_teal_circles)} {--force : Regenerate even if files exist} {--all : Include skins without a registered renderer} {--skin=* : (Optional, legacy) Additional skin keys, comma-separated} {--seconds= : Override preview duration in seconds (default: 15)} {--text= : Optional custom text to render} {--text-position= : Text position: top|bottom|none} {--text-color= : Hex color for custom text (e.g. #FFFFFF)} {--text-mt= : Text margin-top (px)} {--text-mr= : Text margin-right (px)} {--text-mb= : Text margin-bottom (px)} {--text-ml= : Text margin-left (px)} {--out-width= : Output GIF width} {--out-height= : Output GIF height} {--time=* : (Deprecated)}';
     protected $description = 'Generate animated GIF previews for skins. If a skin key is provided, only that one is generated.';
 
     public function handle(TimerGifGenerator $generator): int
@@ -89,8 +89,19 @@ class GenerateSkinPreviews extends Command
                 $textColor = $this->option('text-color');
                 if (!in_array($textPos, ['top','bottom','none'], true)) { $textPos = 'none'; }
 
+                // Collect optional overrides
+                $overrides = [];
+                foreach ([['customTextMarginTop','text-mt'],['customTextMarginRight','text-mr'],['customTextMarginBottom','text-mb'],['customTextMarginLeft','text-ml']] as [$key,$opt]) {
+                    $val = $this->option($opt);
+                    if ($val !== null && $val !== '') { $overrides[$key] = (int) $val; }
+                }
+                $outW = $this->option('out-width');
+                $outH = $this->option('out-height');
+                if ($outW !== null && $outW !== '') { $overrides['outputWidth'] = (int) $outW; }
+                if ($outH !== null && $outH !== '') { $overrides['outputHeight'] = (int) $outH; }
+
                 // Generate animated GIF preview using the skin renderer (with optional custom text)
-                $generator->renderSkinGifPreview($skinKey, $outPath, max(1, $seconds), $text ?: null, $textPos, $textColor ?: null);
+                $generator->renderSkinGifPreview($skinKey, $outPath, max(1, $seconds), $text ?: null, $textPos, $textColor ?: null, $overrides);
                 $this->info("Generated preview: {$skinKey}");
                 $count++;
             } catch (\Throwable $e) {

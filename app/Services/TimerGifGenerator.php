@@ -85,11 +85,14 @@ class TimerGifGenerator
     /**
      * Render a 1-frame PNG preview for a given skin into the provided output path.
      */
-    public function renderSkinPreview(string $skinName, string $outputPath, ?string $customText = null, string $textPosition = 'none', ?string $customTextColor = null): void
+    public function renderSkinPreview(string $skinName, string $outputPath, ?string $customText = null, string $textPosition = 'none', ?string $customTextColor = null, array $overrides = []): void
     {
         $skin = $this->loadSkin($skinName);
         if ($customTextColor) {
             $skin['customTextColor'] = $customTextColor;
+        }
+        if (!empty($overrides)) {
+            $skin = array_replace_recursive($skin, $overrides);
         }
         // Use an illustrative sample remaining time (12h 34m 56s)
         $sampleSeconds = (12 * 3600) + (34 * 60) + 56;
@@ -118,11 +121,14 @@ class TimerGifGenerator
      * Render a short animated GIF preview for a given skin.
      * Generates a countdown of $seconds length (default 6s) using the skin's renderer.
      */
-    public function renderSkinGifPreview(string $skinName, string $outputPath, int $seconds = 6, ?string $customText = null, string $textPosition = 'none', ?string $customTextColor = null): void
+    public function renderSkinGifPreview(string $skinName, string $outputPath, int $seconds = 6, ?string $customText = null, string $textPosition = 'none', ?string $customTextColor = null, array $overrides = []): void
     {
         $skin = $this->loadSkin($skinName);
         if ($customTextColor) {
             $skin['customTextColor'] = $customTextColor;
+        }
+        if (!empty($overrides)) {
+            $skin = array_replace_recursive($skin, $overrides);
         }
         $frames = $this->buildFrames(max(1, $seconds), $skin, $customText, $textPosition);
         \Illuminate\Support\Facades\File::ensureDirectoryExists(dirname($outputPath));
@@ -285,7 +291,6 @@ class TimerGifGenerator
 
         // Custom text measurement
         $hasText = ($customText !== null && $customText !== '' && $textPosition !== 'none');
-        $padY = 10; // margin between timer and custom text
         $padX = 10; // horizontal padding when text is wider than timer
         $textW = 0; $textH = 0; $textSize = max(12, (int) round($fontSize * 0.5));
         if ($hasText) {
@@ -300,10 +305,19 @@ class TimerGifGenerator
             }
         }
 
-        // Compute final canvas to avoid overlap
+        // Read optional overall output size overrides
+        $requestedW = isset($skin['outputWidth']) ? (int) $skin['outputWidth'] : null;
+        $requestedH = isset($skin['outputHeight']) ? (int) $skin['outputHeight'] : null;
+        // Read optional top/bottom margins for custom text
+        $marginTop = isset($skin['customTextMarginTop']) ? max(0, (int)$skin['customTextMarginTop']) : 10;
+        $marginBottom = isset($skin['customTextMarginBottom']) ? max(0, (int)$skin['customTextMarginBottom']) : 10;
+
         $canvasW = max($timerW, $hasText ? ($textW + 2 * $padX) : $timerW);
-        $extraH = $hasText ? ($textH + $padY) : 0;
-        $canvasH = $timerH + $extraH;
+        $extraTop = ($hasText && $textPosition === 'top') ? ($textH + $marginTop) : 0;
+        $extraBottom = ($hasText && $textPosition === 'bottom') ? ($textH + $marginBottom) : 0;
+        $canvasH = $extraTop + $timerH + $extraBottom;
+        if ($requestedW && $requestedW > 0) { $canvasW = max($canvasW, $requestedW); }
+        if ($requestedH && $requestedH > 0) { $canvasH = max($canvasH, $requestedH); }
 
         // Compose final image
         $im = imagecreatetruecolor($canvasW, $canvasH);
@@ -318,19 +332,21 @@ class TimerGifGenerator
         imagefilledrectangle($im, 0, 0, $canvasW, $canvasH, $bgCol);
 
         $offsetX = (int) (($canvasW - $timerW) / 2);
-        $offsetY = ($hasText && $textPosition === 'top') ? ($textH + $padY) : 0;
+        $offsetY = $extraTop;
         imagecopy($im, $timerIm, $offsetX, $offsetY, 0, 0, $timerW, $timerH);
         imagedestroy($timerIm);
 
         if ($hasText) {
             if (is_file($font)) {
                 $tx = (int) (($canvasW - $textW) / 2);
-                $ty = ($textPosition === 'top') ? (int) ($textH > 0 ? $textH : $textSize) : (int) ($timerH + $padY + $textSize);
+                $ty = ($textPosition === 'top')
+                    ? (int) max($textSize, $marginTop + $textSize)
+                    : (int) ($offsetY + $timerH + max($textSize, $marginBottom + $textSize));
                 imagettftext($im, $textSize, 0, $tx, $ty, $customTxtCol, $font, $customText);
             } else {
                 $bi2 = 3;
                 $tx = (int) (($canvasW - $textW) / 2);
-                $ty = ($textPosition === 'top') ? 5 : (int) ($timerH + 5);
+                $ty = ($textPosition === 'top') ? max(0, $marginTop) : (int) ($offsetY + $timerH + max(0, $marginBottom));
                 imagestring($im, $bi2, $tx, $ty, $customText, $customTxtCol);
             }
         }
