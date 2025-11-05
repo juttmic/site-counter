@@ -47,9 +47,11 @@ class TimerGifGenerator
             $skin = array_replace_recursive($skin, $timer->skin_overrides);
         }
 
-        $frames = $this->buildFrames($durationForGif, $skin, $timer->custom_text, $timer->text_position);
+        // Cap animation length to 60s but start from actual remaining
+        $animateFor = min(60, max(0, $durationForGif));
+        $frames = $this->buildFramesCapped($remaining, $animateFor, $skin, $timer->custom_text, $timer->text_position);
 
-        $this->encodeAnimatedGif($frames, $fullPath, $durationForGif);
+        $this->encodeAnimatedGif($frames, $fullPath, $animateFor);
 
         $url = "/timers/{$userId}/{$filename}";
         return $url;
@@ -78,8 +80,9 @@ class TimerGifGenerator
         if (is_array($timer->skin_overrides) && !empty($timer->skin_overrides)) {
             $skin = array_replace_recursive($skin, $timer->skin_overrides);
         }
-        $frames = $this->buildFrames($durationForGif, $skin, $timer->custom_text, $timer->text_position);
-        $this->encodeAnimatedGif($frames, $targetPath, $durationForGif);
+        $animateFor = min(60, max(0, $durationForGif));
+        $frames = $this->buildFramesCapped($remaining, $animateFor, $skin, $timer->custom_text, $timer->text_position);
+        $this->encodeAnimatedGif($frames, $targetPath, $animateFor);
     }
 
     /**
@@ -130,9 +133,11 @@ class TimerGifGenerator
         if (!empty($overrides)) {
             $skin = array_replace_recursive($skin, $overrides);
         }
-        $frames = $this->buildFrames(max(1, $seconds), $skin, $customText, $textPosition);
+        $start = max(1, $seconds);
+        $animateFor = min(60, $start);
+        $frames = $this->buildFramesCapped($start, $animateFor, $skin, $customText, $textPosition);
         \Illuminate\Support\Facades\File::ensureDirectoryExists(dirname($outputPath));
-        $this->encodeAnimatedGif($frames, $outputPath, max(1, $seconds));
+        $this->encodeAnimatedGif($frames, $outputPath, $animateFor);
     }
 
     private function loadSkin(string $skinName): array
@@ -230,6 +235,49 @@ class TimerGifGenerator
         // Always include the final "Time's Up" frame
         $frames[] = $this->renderFinalFrame($skin, $customText, $textPosition);
         
+        return $frames;
+    }
+
+    /**
+     * Build frames starting from the actual remaining time but animating for at most $animateSeconds.
+     * This preserves the real countdown value while capping GIF duration.
+     */
+    private function buildFramesCapped(int $startingRemaining, int $animateSeconds, array $skin, ?string $customText, string $textPosition): array
+    {
+        $frames = [];
+        // If nothing to animate, show final state(s)
+        if ($startingRemaining <= 0) {
+            $frames[] = $this->renderFinalFrame($skin, $customText, $textPosition);
+            return $frames;
+        }
+        $animateSeconds = max(0, min(60, $animateSeconds));
+        if ($animateSeconds === 0) {
+            $frames[] = $this->renderPngFrame($startingRemaining, $skin, $customText, $textPosition);
+            return $frames;
+        }
+
+        // Step policy identical to original, using the capped duration
+        if ($animateSeconds <= 60) {
+            $step = 1;
+        } elseif ($animateSeconds <= 300) {
+            $step = 2;
+        } else {
+            $step = 5;
+        }
+
+        // Render from startingRemaining down for animateSeconds seconds
+        for ($elapsed = 0; $elapsed < $animateSeconds; $elapsed += $step) {
+            $remaining = max(0, $startingRemaining - $elapsed);
+            $frames[] = $this->renderPngFrame($remaining, $skin, $customText, $textPosition);
+        }
+
+        // Always include the last animated second frame
+        $lastRemaining = max(0, $startingRemaining - $animateSeconds);
+        $frames[] = $this->renderPngFrame($lastRemaining, $skin, $customText, $textPosition);
+        if ($lastRemaining === 0) {
+            // If we reached zero, also include the Time's Up frame
+            $frames[] = $this->renderFinalFrame($skin, $customText, $textPosition);
+        }
         return $frames;
     }
 
