@@ -13,7 +13,20 @@
   "showHours": true,
   "showMinutes": true,
   "showSeconds": true,
-  "fields": []
+  "fields": [
+    { "key": "width", "label": "Width", "type": "number", "min": 100, "max": 2000, "step": 10 },
+    { "key": "height", "label": "Height", "type": "number", "min": 80, "max": 1000, "step": 5 },
+    { "key": "background", "label": "Background", "type": "color" },
+    { "key": "textColor", "label": "Text Color", "type": "color" },
+    { "key": "accentColor", "label": "Arc Color", "type": "color" },
+    { "key": "fontSize", "label": "Font Size", "type": "number", "min": 8, "max": 200, "step": 1 },
+    { "key": "fontPath", "label": "Font", "type": "font" },
+    { "key": "arcThickness", "label": "Arc Thickness", "type": "number", "min": 4, "max": 40, "step": 1 },
+    { "key": "showDays", "label": "Show Days", "type": "boolean" },
+    { "key": "showHours", "label": "Show Hours", "type": "boolean" },
+    { "key": "showMinutes", "label": "Show Minutes", "type": "boolean" },
+    { "key": "showSeconds", "label": "Show Seconds", "type": "boolean" }
+  ]
 }
 
 
