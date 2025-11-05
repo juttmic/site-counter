@@ -1,0 +1,18 @@
+{
+  "name": "Emoji Badges",
+  "width": 760,
+  "height": 200,
+  "background": "#FFFFFF",
+  "textColor": "#FFFFFF",
+  "accentColor": "#0EA5E9",
+  "fontSize": 28,
+  "fontPath": "resources/fonts/dejavu-sans.book.ttf",
+  "style": "emoji_badge",
+  "showDays": true,
+  "showHours": true,
+  "showMinutes": true,
+  "showSeconds": true,
+  "fields": []
+}
+
+
