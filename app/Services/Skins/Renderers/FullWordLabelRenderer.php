@@ -56,7 +56,7 @@ class FullWordLabelRenderer implements SkinRendererInterface
                 $labelText = $unit['label'];
                 $labelBox = imagettfbbox($labelSize, 0, $font, $labelText);
                 $labelWidth = abs($labelBox[4] - $labelBox[0]);
-                $labelX = (int) ($unitX - $numberWidth / 2);
+                $labelX = (int) ($unitX - $labelWidth / 2);
                 $labelY = (int) ($centerY + $numberHeight);
                 imagettftext($im, $labelSize, 0, $labelX, $labelY, $textCol, $font, $labelText);
 

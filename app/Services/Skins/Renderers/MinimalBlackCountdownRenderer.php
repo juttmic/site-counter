@@ -48,7 +48,7 @@ class MinimalBlackCountdownRenderer implements SkinRendererInterface
                 $numberBox = imagettfbbox($fontSize, 0, $font, $numberText);
                 $numberWidth = abs($numberBox[4] - $numberBox[0]);
                 $numberHeight = abs($numberBox[5] - $numberBox[1]);
-                $numberX = (int) ($unitX - $numberWidth / 2);
+                $numberX = (int) ($unitX - $numberWidth / 1.5);
                 $numberY = (int) ($centerY + $numberHeight/2);
                 imagettftext($im, $fontSize, 0, $numberX, $numberY, $textCol, $font, $numberText);
 

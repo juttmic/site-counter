@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\File;
 
 class GenerateSkinPreviews extends Command
 {
-    protected $signature = 'timergif:skins:previews {--force : Regenerate even if files exist} {--all : Generate for all skins, not only those with renderers}';
+    protected $signature = 'timergif:skins:previews {--force : Regenerate even if files exist} {--all : Generate for all skins, not only those with renderers} {--skin=* : Generate for specific skins, comma separated list} {--time=* : Generate for specific time durations, comma separated list}';
     protected $description = 'Generate static preview images for skins. By default only for skins with a registered renderer.';
 
     public function handle(TimerGifGenerator $generator): int
@@ -20,6 +20,7 @@ class GenerateSkinPreviews extends Command
 
         $files = collect(File::files($skinsDir))
             ->filter(fn($f) => strtolower($f->getExtension()) === 'json')
+            ->filter(fn($f) => $this->option('skin') ? in_array(pathinfo($f->getFilename(), PATHINFO_FILENAME), $this->option('skin')) : true)
             ->values();
 
         if ($files->isEmpty()) {
@@ -57,7 +58,7 @@ class GenerateSkinPreviews extends Command
             }
             try {
                 // Generate short (6s) animated GIF preview using the skin renderer
-                $generator->renderSkinGifPreview($skinKey, $outPath, 15);
+                $generator->renderSkinGifPreview($skinKey, $outPath, $this->option('time') ? explode(',', $this->option('time')) : 15);
                 $this->info("Generated preview: {$skinKey}");
                 $count++;
             } catch (\Throwable $e) {
