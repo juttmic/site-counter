@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
+use App\Services\TimerGifGenerator;
 
 class SkinController extends Controller
 {
@@ -58,6 +59,25 @@ class SkinController extends Controller
             ];
         });
         return view('skins.gallery', ['items' => $items]);
+    }
+
+    public function regenerate(string $key, TimerGifGenerator $generator)
+    {
+        $jsonPath = resource_path('timerskins/' . $key . '.json');
+        if (!File::exists($jsonPath)) {
+            return response()->json(['message' => 'Skin not found'], 404);
+        }
+        try {
+            $outDir = public_path('skin-previews');
+            File::ensureDirectoryExists($outDir);
+            $outPath = $outDir . DIRECTORY_SEPARATOR . $key . '.gif';
+            // Force 30-second preview regeneration
+            $generator->renderSkinGifPreview($key, $outPath, 30);
+            $url = url('/skin-previews/' . $key . '.gif') . '?v=' . time();
+            return response()->json(['ok' => true, 'url' => $url]);
+        } catch (\Throwable $e) {
+            return response()->json(['ok' => false, 'message' => 'Failed to regenerate: ' . $e->getMessage()], 500);
+        }
     }
 
     /**

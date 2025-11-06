@@ -28,6 +28,7 @@ Route::middleware('auth')->group(function () {
 
     // Skins gallery page (HTML)
     Route::get('/skins', [SkinController::class, 'gallery'])->name('skins.gallery');
+    Route::post('/skins/{key}/regenerate', [SkinController::class, 'regenerate'])->name('skins.regenerate');
     // JSON endpoints for create/edit modal
     Route::get('/api/skins', [SkinController::class, 'index'])->name('skins.index');
     Route::get('/skins/{key}', [SkinController::class, 'show'])->name('skins.show');
