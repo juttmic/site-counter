@@ -15,6 +15,11 @@
   "separator": ":",
   "layout": "horizontal",
   "animation": "none",
+  "finalMessage": "Time's Up",
+  "finalBackground": null,
+  "finalTextColor": null,
+  "borderWidth": 0,
+  "borderColor": "#FFFFFF",
   "fields": [
     { "key": "width", "label": "Width", "type": "number", "min": 100, "max": 2000, "step": 10 },
     { "key": "height", "label": "Height", "type": "number", "min": 50, "max": 1000, "step": 5 },
@@ -29,6 +34,11 @@
     { "key": "showSeconds", "label": "Show Seconds", "type": "boolean" },
     { "key": "separator", "label": "Separator", "type": "text", "maxLength": 5 },
     { "key": "layout", "label": "Layout", "type": "select", "options": ["horizontal", "vertical"] },
-    { "key": "animation", "label": "Animation", "type": "select", "options": ["none", "fade", "slide"] }
+    { "key": "animation", "label": "Animation", "type": "select", "options": ["none", "fade", "slide"] },
+    { "key": "finalMessage", "label": "Final Message", "type": "text", "maxLength": 64 },
+    { "key": "finalBackground", "label": "Final Background", "type": "color" },
+    { "key": "finalTextColor", "label": "Final Text Color", "type": "color" },
+    { "key": "borderWidth", "label": "Border Width", "type": "number", "min": 0, "max": 50, "step": 1 },
+    { "key": "borderColor", "label": "Border Color", "type": "color" }
   ]
 }

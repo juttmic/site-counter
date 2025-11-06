@@ -123,6 +123,7 @@ class TimerGifGenerator
     /**
      * Render a short animated GIF preview for a given skin.
      * Generates a countdown of $seconds length (default 6s) using the skin's renderer.
+     * Always includes the final "Time's Up" frame to show end screen customization.
      */
     public function renderSkinGifPreview(string $skinName, string $outputPath, int $seconds = 6, ?string $customText = null, string $textPosition = 'none', ?string $customTextColor = null, array $overrides = []): void
     {
@@ -136,6 +137,11 @@ class TimerGifGenerator
         $start = max(1, $seconds);
         $animateFor = min(60, $start);
         $frames = $this->buildFramesCapped($start, $animateFor, $skin, $customText, $textPosition);
+        
+        // Always append final frame for previews to show end screen customization
+        // This ensures users can see the final message, colors, and borders in gallery previews
+        $frames[] = $this->renderFinalFrame($skin, $customText, $textPosition);
+        
         \Illuminate\Support\Facades\File::ensureDirectoryExists(dirname($outputPath));
         $this->encodeAnimatedGif($frames, $outputPath, $animateFor);
     }
