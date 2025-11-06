@@ -383,7 +383,34 @@ async function ajaxSaveAndPoll() {
   const saveBtn = document.getElementById('save_btn');
   if (!form) return;
   saveBtn.addEventListener('click', async () => {
-    console.log('saveBtn clicked');
+    const isEdit = form.dataset.isEdit === '1';
+    
+    // Show confirmation dialog
+    const confirmResult = await Swal.fire({
+      title: 'Save Timer?',
+      text: isEdit ? 'This will update your timer and regenerate the GIF.' : 'This will create a new timer.',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, save it',
+      cancelButtonText: 'Cancel'
+    });
+    
+    if (!confirmResult.isConfirmed) {
+      return;
+    }
+    
+    // Show loading indicator
+    Swal.fire({
+      title: isEdit ? 'Updating timer...' : 'Creating timer...',
+      text: 'Please wait',
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      showConfirmButton: false,
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    });
+    
     saveBtn.disabled = true;
     const formData = new FormData(form);
     // Ensure _method is present for PUT
@@ -397,27 +424,50 @@ async function ajaxSaveAndPoll() {
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        alert(err.message || 'Failed to save. Please check your inputs.');
+        Swal.fire({
+          icon: 'error',
+          title: 'Save Failed',
+          text: err.message || 'Failed to save. Please check your inputs.'
+        });
         saveBtn.disabled = false;
         return;
       }
       const json = await res.json();
       const timerId = json.id || form.dataset.timerId;
       if (!timerId) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Timer ID not found'
+        });
         saveBtn.disabled = false;
         return;
       }
       form.dataset.timerId = timerId;
-      // Start polling for gif_url
+      
+      // For create mode: redirect after save
       if (form.dataset.isEdit !== '1') {
-        window.location.href = `/dashboard`;
+        Swal.fire({
+          icon: 'success',
+          title: 'Timer Created!',
+          text: 'Redirecting to dashboard...',
+          timer: 1500,
+          showConfirmButton: false
+        }).then(() => {
+          window.location.href = `/dashboard`;
+        });
         return;
       }
+      
+      // For edit mode: continue with polling (loader stays open)
       startPreviewPolling(timerId);
     } catch (e) {
       console.error(e);
-      alert('Network error while saving.');
-    } finally {
+      Swal.fire({
+        icon: 'error',
+        title: 'Network Error',
+        text: 'An error occurred while saving. Please try again.'
+      });
       saveBtn.disabled = false;
     }
   });
@@ -428,6 +478,15 @@ function startPreviewPolling(timerId) {
   if (previewWrap) {
     previewWrap.innerHTML = '<div class="text-center text-gray-500"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-2"></div><p class="text-sm">Generating GIF...</p></div>';
   }
+  
+  // Update Swal loading message if Swal is already open
+  if (Swal.isVisible()) {
+    Swal.update({
+      title: 'Generating GIF...',
+      text: 'Please wait while your timer GIF is being created'
+    });
+  }
+  
   let attempts = 0;
   const maxAttempts = 60; // up to ~2 minutes if interval is 2s
   const interval = setInterval(async () => {
@@ -437,6 +496,22 @@ function startPreviewPolling(timerId) {
       const json = await res.json();
       if (json.gif_url) {
         clearInterval(interval);
+        
+        // Close the loading Swal and show success (only if Swal was open)
+        if (Swal.isVisible()) {
+          Swal.fire({
+            icon: 'success',
+            title: 'Timer Updated!',
+            text: 'Your timer GIF has been generated.',
+            timer: 2000,
+            showConfirmButton: false
+          });
+        }
+        
+        // Re-enable save button
+        const saveBtn = document.getElementById('save_btn');
+        if (saveBtn) saveBtn.disabled = false;
+        
         if (previewWrap) {
           previewWrap.innerHTML = `<img src="${json.gif_url}" class="max-w-full max-h-[400px] object-contain" alt="Timer preview" />`;
         }
@@ -460,6 +535,15 @@ function startPreviewPolling(timerId) {
         }
       } else if (attempts >= maxAttempts) {
         clearInterval(interval);
+        if (Swal.isVisible()) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Timeout',
+            text: 'GIF generation is taking longer than expected. Please refresh the page.'
+          });
+        }
+        const saveBtn = document.getElementById('save_btn');
+        if (saveBtn) saveBtn.disabled = false;
       }
     } catch (e) {
       // ignore transient errors
