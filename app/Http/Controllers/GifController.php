@@ -12,11 +12,11 @@ class GifController extends Controller
 {
     public function show(int $userId, string $filename, TimerGifGenerator $generator)
     {
-        $path = public_path("timers/{$userId}/{$filename}");
+        $path = public_path("timers/{$userId}/{$filename}.gif");
 
         // Resolve timer by stored gif_url
         $timer = Timer::where('user_id', $userId)
-            ->where('gif_url', 'like', "%/{$userId}/{$filename}")
+            ->where('gif_url', 'like', "%/{$userId}/{$filename}.gif")
             ->first();
 
         if (!$timer) {
@@ -39,7 +39,7 @@ class GifController extends Controller
             }
         }
 
-        $gifUrl = "/timers/{$userId}/{$filename}";
+        $gifUrl = "/timers/{$userId}/{$filename}.gif";
         return redirect($gifUrl);
     }
 

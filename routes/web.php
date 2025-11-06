@@ -37,6 +37,6 @@ Route::middleware('auth')->group(function () {
 // Public GIF endpoint (no auth)
 Route::get('/timers/{user_id}/{filename}.gif', [GifController::class, 'show'])
     ->where('filename', '.*');
-Route::get('/gettimer/{user_id}/{filename}', [GifController::class, 'show']);
+Route::get('/gettimer/{user_id}/{filename}.gif', [GifController::class, 'show']);
 
 require __DIR__.'/auth.php';

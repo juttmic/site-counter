@@ -34,7 +34,8 @@
                                             <div class="mt-3">
                                                 @if($timer->gif_url)
                                                     <div class="d-flex align-items-center justify-content-center overflow-hidden bg-light border rounded" style="height: 160px;">
-                                                        <img src="{{ url($timer->gif_url) }}" alt="preview" class="img-fluid" style="max-height: 160px; max-width: 100%; object-fit: contain;">
+                                                        @php($embedUrl = url('/gettimer/'.$timer->user_id.'/'.pathinfo($timer->gif_url, PATHINFO_FILENAME)).'.gif')
+                                                        <img src="{{ $embedUrl }}" alt="preview" class="img-fluid" style="max-height: 160px; max-width: 100%; object-fit: contain;">
                                                     </div>
                                                 @else
                                                     <div class="border rounded bg-light d-flex align-items-center justify-content-center" style="height: 160px;">
