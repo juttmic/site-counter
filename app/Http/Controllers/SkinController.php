@@ -145,6 +145,8 @@ class SkinController extends Controller
         // Border customization
         if (!isset($have['borderWidth']))      { $fields[] = ['key' => 'borderWidth',      'label' => 'Border Width',      'type' => 'number', 'min' => 0, 'max' => 50, 'step' => 1]; }
         if (!isset($have['borderColor']))      { $fields[] = ['key' => 'borderColor',      'label' => 'Border Color',      'type' => 'color']; }
+        // Optional emoji font to improve emoji rendering in EmojiBadge skin
+        if (!isset($have['emojiFontPath']))    { $fields[] = ['key' => 'emojiFontPath',    'label' => 'Emoji Font (optional)', 'type' => 'font']; }
         return $fields;
     }
 }

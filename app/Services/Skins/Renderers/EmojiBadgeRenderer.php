@@ -22,8 +22,9 @@ class EmojiBadgeRenderer implements SkinRendererInterface
 
     public function renderTimeText($im, int $secondsRemaining, array $skin, int $width, int $height, int $textCol, int $accentCol): bool
     {
-        // Attempt to draw emojis with TTF; if font lacks emojis, they appear as monochrome glyphs
+        // Attempt to draw emojis with dedicated emoji font when provided; fallback to labels
         $font = (string) ($skin['fontPath'] ?? '');
+        $emojiFont = (string) ($skin['emojiFontPath'] ?? '');
         $fontSize = (int) ($skin['fontSize'] ?? 28);
         $labelSize = max(10, (int) round($fontSize * 0.28));
         $emojiSize = max(14, (int) round($fontSize * 0.9));
@@ -44,12 +45,21 @@ class EmojiBadgeRenderer implements SkinRendererInterface
         $unitWidth = $width / $segments;
         $centerY = (int) ($height / 2);
 
+        // Prefer an explicit emoji font if available
+        $canEmoji = is_file($emojiFont);
         if (is_file($font)) {
             for ($i = 0; $i < $segments; $i++) {
                 $cx = (int) ($unitWidth * $i + $unitWidth / 2);
-                $emoji = $units[$i]['e'];
-                $eW = $this->w($emoji, $font, $emojiSize);
-                imagettftext($im, $emojiSize, 0, (int)($cx - $eW / 2), (int)($centerY - 6), $textCol, $font, $emoji);
+                if ($canEmoji) {
+                    $emoji = $units[$i]['e'];
+                    $eW = $this->w($emoji, $emojiFont, $emojiSize);
+                    imagettftext($im, $emojiSize, 0, (int)($cx - $eW / 2), (int)($centerY - 6), $textCol, $emojiFont, $emoji);
+                } else {
+                    // Fallback: draw short label initial instead of emoji
+                    $label = mb_substr($units[$i]['l'], 0, 1, 'UTF-8');
+                    $lW = $this->w($label, $font, $emojiSize);
+                    imagettftext($im, $emojiSize, 0, (int)($cx - $lW / 2), (int)($centerY - 6), $textCol, $font, $label);
+                }
                 $num = sprintf('%02d', $units[$i]['v']);
                 $nW = $this->w($num, $font, $fontSize);
                 imagettftext($im, $fontSize, 0, (int)($cx - $nW / 2), (int)($centerY + (int)round($fontSize*0.9)), $textCol, $font, $num);
