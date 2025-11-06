@@ -8,17 +8,21 @@ class PennantBannerRenderer implements SkinRendererInterface
 {
     public function renderStyle($im, array $skin, int $width, int $height, int $bgCol, int $textCol, int $accentCol, int $secondsRemaining): void
     {
-        // A string line with triangular pennants per unit
-        imagefilledrectangle($im,0,0,$width,$height,$bgCol);
-        $segments=4; $unitW=$width/$segments; $mid=(int)($height*0.35);
-        $lineCol=imagecolorallocate($im,120,120,120);
-        imageline($im, (int)($unitW*0.1), $mid, (int)($width - $unitW*0.1), $mid, $lineCol);
-        for($i=0;$i<$segments;$i++){
-            $cx=(int)($unitW*$i + $unitW/2);
-            $topY=$mid; $bottomY=(int)($mid + $height*0.25);
-            $pts=[ $cx-18,$topY,  $cx+18,$topY,  $cx,$bottomY ];
-            imagefilledpolygon($im,$pts,3,$accentCol);
-        }
+        // Redesigned: clean banner bar instead of triangular pennants
+        imagefilledrectangle($im, 0, 0, $width, $height, $bgCol);
+
+        // Accent banner across the top third
+        $barH = (int) max(24, round($height * 0.28));
+        imagefilledrectangle($im, 0, 0, $width, $barH, $accentCol);
+
+        // Optional thin separator line below the bar
+        $sep = imagecolorallocate($im, 220, 220, 220);
+        imageline($im, 0, $barH, $width, $barH, $sep);
+
+        // Subtle side paddings (visual margins) using background color blocks
+        $pad = (int) max(6, round($width * 0.02));
+        imagefilledrectangle($im, 0, 0, $pad, $barH, $bgCol);
+        imagefilledrectangle($im, $width - $pad, 0, $width, $barH, $bgCol);
     }
 
     public function renderTimeText($im, int $secondsRemaining, array $skin, int $width, int $height, int $textCol, int $accentCol): bool

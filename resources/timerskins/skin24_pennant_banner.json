@@ -3,7 +3,7 @@
   "width": 760,
   "height": 220,
   "background": "#FFFFFF",
-  "textColor": "#FFFFFF",
+  "textColor": "#111827",
   "accentColor": "#EF4444",
   "fontSize": 28,
   "fontPath": "resources/fonts/dejavu-sans.bold.ttf",
