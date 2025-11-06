@@ -12,12 +12,12 @@ class TapeReelRenderer implements SkinRendererInterface
         imagefilledrectangle($im, 0, 0, $width, $height, $bgCol);
         $segments=4; $unitW=$width/$segments; $cy=(int)($height/2); $r=(int)round(min($unitW/3,$height/3));
         $hub = imagecolorallocate($im, 230,230,230);
-        for($i=0;$i<$segments;$i++){ $cx=(int)($unitW*$i + $unitW/2);
-            // tape body
+        for($i=0;$i<$segments;$i++){
+            $cx=(int)($unitW*$i + $unitW/2);
+            // tape body behind the center reel
             imagefilledrectangle($im,(int)($cx-$r*1.4),(int)($cy-$r*1.2),(int)($cx+$r*1.4),(int)($cy+$r*1.2),$accentCol);
-            // reels
-            imagefilledellipse($im,$cx,(int)($cy-$r*0.5),(int)($r*1.1),(int)($r*1.1),$hub);
-            imagefilledellipse($im,$cx,(int)($cy+$r*0.5),(int)($r*1.1),(int)($r*1.1),$hub);
+            // single center reel (one circle only)
+            imagefilledellipse($im,$cx,$cy,(int)($r*1.2),(int)($r*1.2),$hub);
         }
     }
 
