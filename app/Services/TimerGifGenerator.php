@@ -57,7 +57,7 @@ class TimerGifGenerator
         return $url;
     }
 
-    public function regenerateForCache(Timer $timer, string $targetPath): void
+    public function regenerateForCache(Timer $timer, string $targetPath, int $maxAnimateFor = 60): void
     {
         $remaining = $timer->remainingSecondsFromNow();
         
@@ -80,7 +80,7 @@ class TimerGifGenerator
         if (is_array($timer->skin_overrides) && !empty($timer->skin_overrides)) {
             $skin = array_replace_recursive($skin, $timer->skin_overrides);
         }
-        $animateFor = min(60, max(0, $durationForGif));
+        $animateFor = min($maxAnimateFor, max(0, $durationForGif));
         $frames = $this->buildFramesCapped($remaining, $animateFor, $skin, $timer->custom_text, $timer->text_position);
         $this->encodeAnimatedGif($frames, $targetPath, $animateFor);
     }
