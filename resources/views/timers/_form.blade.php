@@ -242,10 +242,17 @@ function renderFields(metadata, savedOverrides = {}) {
   const defaults = metadata.defaults || {};
   const fields = Array.isArray(metadata.fields) ? metadata.fields : [];
   fieldsWrap.innerHTML = '';
-  document.getElementById('skin_overrides_section').classList.toggle('d-none', fields.length === 0);
+  
+  // Fields to hide but use defaults for
+  const hiddenFields = new Set(['fontPath', 'font', 'showDays', 'showHours', 'showMinutes', 'showSeconds']);
+  
+  // Filter out hidden fields
+  const visibleFields = fields.filter(field => !hiddenFields.has(field.key));
+  
+  document.getElementById('skin_overrides_section').classList.toggle('d-none', visibleFields.length === 0);
 
   const smallKeys = new Set(['fontSize','separator','layout','animation','showDays','showHours','showMinutes','showSeconds']);
-  fields.forEach(field => {
+  visibleFields.forEach(field => {
     const key = field.key;
     const label = field.label || key;
     const type = field.type || 'text';
@@ -304,6 +311,20 @@ function syncOverrides() {
   const inputs = fieldsWrap.querySelectorAll('[data-key]');
   const data = {};
   const defaults = currentSkinMetadata?.defaults || {};
+  
+  // Fields that are hidden but should always use defaults
+  const hiddenFields = new Set(['fontPath', 'font', 'showDays', 'showHours', 'showMinutes', 'showSeconds']);
+  
+  // For hidden fields:
+  // - Font fields: don't store (use skin default)
+  // - show* fields: always set to true (always checked)
+  hiddenFields.forEach(key => {
+    if (key.startsWith('show')) {
+      // Always set show* fields to true (always checked)
+      data[key] = true;
+    }
+    // For font fields, don't store anything - will use skin default
+  });
   
   inputs.forEach(el => {
     const k = el.dataset.key;

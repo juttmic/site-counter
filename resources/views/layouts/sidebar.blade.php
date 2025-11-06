@@ -4,7 +4,7 @@
     <div class="d-flex align-items-center px-3 py-3 border-bottom">
         <a href="{{ route('dashboard') }}" class="d-flex align-items-center text-decoration-none text-dark w-100">
             <x-application-logo class="d-block" style="height: 32px; width: auto;" />
-            <span id="sidebarBrandText" class="ms-2 fw-semibold" style="transition: opacity 0.3s;">{{ config('app.name', 'TimerGIF App') }}</span>
+            {{-- <span id="sidebarBrandText" class="ms-2 fw-semibold" style="transition: opacity 0.3s;">{{ config('app.name', 'TimerGIF App') }}</span> --}}
         </a>
         <button type="button" 
                                         onclick="toggleDesktopSidebar()" 
