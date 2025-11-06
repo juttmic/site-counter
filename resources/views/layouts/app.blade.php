@@ -90,7 +90,7 @@
         </div>
         
         <!-- Global Toast Container -->
-        <div class="toast-container position-fixed top-0 start-50 translate-middle-x p-3" id="globalToastContainer" style="z-index: 1080"></div>
+        <div class="toast-container position-fixed top-0 start-100 translate-middle-x p-3" id="globalToastContainer" style="z-index: 1080; left:88% !important;"></div>
 
         <script>
             // Global toast function: window.showToast(message, variant)

@@ -27,7 +27,7 @@
                         <div class="alert alert-warning text-center mb-0">No GIF generated yet.</div>
                     @endif
                     <div class="d-flex justify-content-center mt-4">
-                        <a href="{{ route('timers.edit', $timer) }}" class="btn btn-outline-secondary">Back</a>
+                        <a href="{{ route('timers.edit', $timer) }}" class="btn btn-outline-secondary">Edit</a>
                     </div>
                 </div>
             </div>

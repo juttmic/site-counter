@@ -105,7 +105,7 @@
                 <div class="col-12">
                     <div class="d-flex gap-2 flex-wrap">
                         <button id="save_btn" type="button" class="btn btn-primary">Save</button>
-                        <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary">{{ $isEdit ? 'Back' : 'Cancel' }}</a>
+                        {{-- <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary">{{ $isEdit ? 'Back' : 'Cancel' }}</a> --}}
                     </div>
                 </div>
 
@@ -141,7 +141,7 @@
                                     @else
                                         <input id="embed_input" type="text" class="form-control form-control-sm" value="" readonly>
                                     @endif
-                                    <button id="embed_copy_btn" type="button" class="btn btn-outline-secondary btn-sm" onclick="(function(btn){var inp=document.getElementById('embed_input'); if(!inp) return; navigator.clipboard.writeText(inp.value); btn.textContent='Copied!'; setTimeout(function(){btn.textContent='Copy';},1500);})(this)">Copy</button>
+                                    <button id="embed_copy_btn" type="button" class="btn btn-outline-secondary btn-sm">Copy</button>
                                 </div>
                             </div>
                         </div>
@@ -477,5 +477,20 @@ ajaxSaveAndPoll();
     startPreviewPolling(form.dataset.timerId);
   }
 })();
+
+// Bind copy button to use global toast
+document.addEventListener('DOMContentLoaded', function(){
+  var btn = document.getElementById('embed_copy_btn');
+  if (!btn) return;
+  btn.addEventListener('click', function(){
+    var inp = document.getElementById('embed_input');
+    if (!inp || !inp.value) return;
+    navigator.clipboard.writeText(inp.value).then(function(){
+      if (window.showToast) window.showToast('Embed code copied', 'success');
+    }).catch(function(){
+      if (window.showToast) window.showToast('Copy failed', 'danger');
+    });
+  });
+});
 </script>
 
