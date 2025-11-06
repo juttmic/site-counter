@@ -55,9 +55,15 @@
                                     <!-- Actions -->
                                     <div class="mt-3 d-flex justify-content-end align-items-center">
                                       <div class="btn-group" role="group">
+                                        @php($embedCopyUrl = $timer->gif_url ? url('/gettimer/'.$timer->user_id.'/'.pathinfo($timer->gif_url, PATHINFO_FILENAME)).'.gif' : null)
                                         <a href="{{ route('timers.preview', $timer) }}" class="btn btn-outline-secondary btn-sm" title="Preview">
                                           <i class="bi bi-eye"></i>
                                         </a>
+                                        @if($embedCopyUrl)
+                                          <button type="button" class="btn btn-outline-secondary btn-sm copy-embed-btn" title="Copy code" data-embed-url="{{ $embedCopyUrl }}" style="margin-left: 2px;">
+                                            <i class="bi bi-clipboard"></i>
+                                          </button>
+                                        @endif
                                         <a href="{{ route('timers.edit', $timer) }}" class="btn btn-outline-primary btn-sm" title="Edit" style="margin-left: 2px;">
                                           <i class="bi bi-pencil"></i>
                                         </a>
@@ -83,4 +89,19 @@
             </div>
         </div>
     </div>
+    <script>
+    // Copy embed code for dashboard cards
+    document.addEventListener('click', function(e){
+      var btn = e.target.closest('.copy-embed-btn');
+      if (!btn) return;
+      var url = btn.getAttribute('data-embed-url');
+      if (!url) return;
+      var code = `<img src="${url}" alt="Countdown Timer">`;
+      navigator.clipboard.writeText(code).then(function(){
+        if (window.showToast) window.showToast('Embed code copied', 'success');
+      }).catch(function(){
+        if (window.showToast) window.showToast('Copy failed', 'danger');
+      });
+    });
+    </script>
 </x-app-layout>
