@@ -136,3 +136,50 @@
 .dark-mode-text {
     display: none;
 }
+
+/* Form controls in dark mode */
+.dark .form-control,
+.dark .form-select,
+.dark .form-control:focus,
+.dark .form-select:focus {
+    background-color: #343a40;
+    color: #e9ecef;
+    border-color: #495057;
+}
+
+.dark .form-control::placeholder {
+    color: #adb5bd;
+}
+
+.dark .form-control:disabled,
+.dark .form-select:disabled {
+    background-color: #212529;
+    color: #6c757d;
+    border-color: #343a40;
+}
+
+.dark .form-control[readonly] {
+    background-color: #343a40;
+    color: #e9ecef;
+}
+
+.dark .form-label {
+    color: #e9ecef;
+}
+
+.dark .form-text {
+    color: #adb5bd;
+}
+
+/* Form control color picker in dark mode */
+.dark .form-control-color {
+    background-color: #343a40;
+    border-color: #495057;
+}
+
+/* Alert in dark mode */
+.dark .alert-warning {
+    background-color: #664d03;
+    border-color: #997404;
+    color: #ffc107;
+}
