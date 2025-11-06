@@ -138,6 +138,13 @@ class SkinController extends Controller
         // Output canvas width/height (overall GIF)
         if (!isset($have['outputWidth']))  { $fields[] = ['key' => 'outputWidth',  'label' => 'Output Width (GIF)',  'type' => 'number', 'min' => 50, 'max' => 3000, 'step' => 1]; }
         if (!isset($have['outputHeight'])) { $fields[] = ['key' => 'outputHeight', 'label' => 'Output Height (GIF)', 'type' => 'number', 'min' => 50, 'max' => 3000, 'step' => 1]; }
+        // Final message and colors
+        if (!isset($have['finalMessage']))     { $fields[] = ['key' => 'finalMessage',     'label' => "Final Message",      'type' => 'text',   'maxLength' => 64]; }
+        if (!isset($have['finalBackground']))  { $fields[] = ['key' => 'finalBackground',  'label' => 'Final Background',  'type' => 'color']; }
+        if (!isset($have['finalTextColor']))   { $fields[] = ['key' => 'finalTextColor',   'label' => 'Final Text Color',   'type' => 'color']; }
+        // Border customization
+        if (!isset($have['borderWidth']))      { $fields[] = ['key' => 'borderWidth',      'label' => 'Border Width',      'type' => 'number', 'min' => 0, 'max' => 50, 'step' => 1]; }
+        if (!isset($have['borderColor']))      { $fields[] = ['key' => 'borderColor',      'label' => 'Border Color',      'type' => 'color']; }
         return $fields;
     }
 }

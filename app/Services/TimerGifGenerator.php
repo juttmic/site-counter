@@ -163,6 +163,12 @@ class TimerGifGenerator
             'accentColor' => '#FFCC00',
             'fontSize' => 36,
             'fontPath' => resource_path('fonts/dejavu-sans.book.ttf'),
+            // Optional customizations with sensible defaults
+            'finalMessage' => "Time's Up",
+            'finalBackground' => null, // defaults to background if null
+            'finalTextColor' => null,  // defaults to textColor if null
+            'borderWidth' => 0,
+            'borderColor' => '#FFFFFF',
         ], $json);
         // Validate
         $skin['width'] = max(120, min(1200, (int) ($skin['width'] ?? 400)));
@@ -199,6 +205,12 @@ class TimerGifGenerator
             $fontPath = resource_path('fonts/dejavu-sans.book.ttf');
         }
         $skin['fontPath'] = $fontPath;
+        // Normalize borderWidth
+        $bw = (int) ($skin['borderWidth'] ?? 0);
+        $skin['borderWidth'] = max(0, min(50, $bw));
+        if (empty($skin['borderColor']) || !is_string($skin['borderColor'])) {
+            $skin['borderColor'] = '#FFFFFF';
+        }
         return $skin;
     }
 
@@ -396,6 +408,19 @@ class TimerGifGenerator
                 $tx = (int) (($canvasW - $textW) / 2);
                 $ty = ($textPosition === 'top') ? max(0, $marginTop) : (int) ($offsetY + $timerH + max(0, $marginBottom));
                 imagestring($im, $bi2, $tx, $ty, $customText, $customTxtCol);
+            }
+        }
+
+        // Optional border around entire canvas
+        $borderWidth = (int) ($skin['borderWidth'] ?? 0);
+        if ($borderWidth > 0) {
+            [$brdR, $brdG, $brdB] = $this->hexToRgb((string) ($skin['borderColor'] ?? '#FFFFFF'));
+            $brdCol = imagecolorallocate($im, $brdR, $brdG, $brdB);
+            $bw = min($borderWidth, (int) floor(min($canvasW, $canvasH) / 2));
+            if ($bw > 0) {
+                if (function_exists('imagesetthickness')) { imagesetthickness($im, $bw); }
+                imagerectangle($im, (int) floor($bw/2), (int) floor($bw/2), $canvasW - 1 - (int) floor($bw/2), $canvasH - 1 - (int) floor($bw/2), $brdCol);
+                if (function_exists('imagesetthickness')) { imagesetthickness($im, 1); }
             }
         }
 
@@ -764,15 +789,17 @@ class TimerGifGenerator
         $height = max(80, (int) $skin['height']);
 
         $im = imagecreatetruecolor($width, $height);
-        [$br, $bg, $bb] = $this->hexToRgb($skin['background']);
-        [$tr, $tg, $tb] = $this->hexToRgb($skin['textColor']);
+        // Background: allow override via finalBackground
+        $bgHex = (string) ($skin['finalBackground'] ?? $skin['background']);
+        [$br, $bg, $bb] = $this->hexToRgb($bgHex);
+        [$tr, $tg, $tb] = $this->hexToRgb((string) ($skin['finalTextColor'] ?? $skin['textColor']));
         $bgCol = imagecolorallocate($im, $br, $bg, $bb);
         $textCol = imagecolorallocate($im, $tr, $tg, $tb);
         $this->drawRoundedRect($im, 0, 0, $width, $height, 12, $bgCol);
 
         $font = $skin['fontPath'];
         $fontSize = (int) $skin['fontSize'];
-        $msg = "Time's Up";
+        $msg = (string) ($skin['finalMessage'] ?? "Time's Up");
         if (is_file($font)) {
             $centerY = (int) ($height / 2 + $fontSize / 2);
             $centerX = (int) ($width / 2 - $this->textBoxWidth($msg, $font, $fontSize) / 2);
@@ -799,6 +826,19 @@ class TimerGifGenerator
                 $x = max(5, (int) (($width - $textWidth) / 2));
                 $y = $textPosition === 'top' ? 5 : (int) ($height - imagefontheight($builtIn) - 5);
                 imagestring($im, $builtIn, $x, $y, $customText, $textCol);
+            }
+        }
+
+        // Optional border on final frame
+        $borderWidth = (int) ($skin['borderWidth'] ?? 0);
+        if ($borderWidth > 0) {
+            [$brdR, $brdG, $brdB] = $this->hexToRgb((string) ($skin['borderColor'] ?? '#FFFFFF'));
+            $brdCol = imagecolorallocate($im, $brdR, $brdG, $brdB);
+            $bw = min($borderWidth, (int) floor(min($width, $height) / 2));
+            if ($bw > 0) {
+                if (function_exists('imagesetthickness')) { imagesetthickness($im, $bw); }
+                imagerectangle($im, (int) floor($bw/2), (int) floor($bw/2), $width - 1 - (int) floor($bw/2), $height - 1 - (int) floor($bw/2), $brdCol);
+                if (function_exists('imagesetthickness')) { imagesetthickness($im, 1); }
             }
         }
 
