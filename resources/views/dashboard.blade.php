@@ -67,7 +67,7 @@
                                         <a href="{{ route('timers.edit', $timer) }}" class="btn btn-outline-primary btn-sm" title="Edit" style="margin-left: 2px;">
                                           <i class="bi bi-pencil"></i>
                                         </a>
-                                        <form action="{{ route('timers.destroy', $timer) }}" method="POST" onsubmit="return confirm('Delete this timer?');" class="d-inline">
+                                        <form action="{{ route('timers.destroy', $timer) }}" method="POST" data-confirm="Delete this timer?" class="d-inline">
                                           @csrf
                                           @method('DELETE')
                                           <button type="submit" class="btn btn-outline-danger btn-sm" title="Delete" style="    border-radius: 0px 5px 5px 0px;

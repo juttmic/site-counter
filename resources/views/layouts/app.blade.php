@@ -19,6 +19,8 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         <!-- Bootstrap 5 JS -->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+        <!-- SweetAlert2 -->
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
         <script>
             (function() {
                 try {
@@ -114,6 +116,34 @@
                         toastEl.addEventListener('hidden.bs.toast', function(){ toastEl.remove(); });
                     } catch (e) {}
                 };
+            })();
+            // Global confirm handler using SweetAlert2
+            (function(){
+                function bindConfirmations(){
+                    document.addEventListener('submit', function(e){
+                        var form = e.target;
+                        if (!form || !form.matches('[data-confirm]')) return;
+                        e.preventDefault();
+                        var msg = form.getAttribute('data-confirm') || 'Are you sure?';
+                        Swal.fire({
+                            title: 'Please Confirm',
+                            text: msg,
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonText: 'Yes',
+                            cancelButtonText: 'Cancel'
+                        }).then(function(result){
+                            if (result.isConfirmed) {
+                                form.submit();
+                            }
+                        });
+                    }, true);
+                }
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', bindConfirmations);
+                } else {
+                    bindConfirmations();
+                }
             })();
         </script>
     </body>

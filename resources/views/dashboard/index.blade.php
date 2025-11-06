@@ -30,7 +30,7 @@
                                     <div class="mt-3 flex gap-2">
                                         <a class="px-3 py-1 border rounded" href="{{ route('timers.preview', $timer) }}">Preview</a>
                                         <a class="px-3 py-1 border rounded bg-indigo-600 text-white" href="{{ route('timers.edit', $timer) }}">Edit</a>
-                                        <form action="{{ route('timers.destroy', $timer) }}" method="POST" onsubmit="return confirm('Delete this timer?');">
+                                        <form action="{{ route('timers.destroy', $timer) }}" method="POST" data-confirm="Delete this timer?">
                                             @csrf
                                             @method('DELETE')
                                             <button class="px-3 py-1 border rounded bg-red-600 text-white">Delete</button>
