@@ -135,7 +135,12 @@
                             <div id="embed_section" class="mt-3 {{ $isEdit && isset($timer->gif_url) && $timer->gif_url ? '' : 'd-none' }}">
                                 <h4 class="h6 fw-semibold mb-2">Embed Code</h4>
                                 <div class="d-flex gap-2">
-                                    <input id="embed_input" type="text" class="form-control form-control-sm" value="@if($isEdit && isset($timer->gif_url) && $timer->gif_url)<img src='{{ url($timer->gif_url) }}' alt='Countdown Timer'>@endif" readonly>
+                                    @if($isEdit && isset($timer->gif_url) && $timer->gif_url)
+                                        @php($embedUrl = url('/gettimer/'.$timer->user_id.'/'.pathinfo($timer->gif_url, PATHINFO_FILENAME)).'.gif')
+                                        <input id="embed_input" type="text" class="form-control form-control-sm" value='<img src="{{ $embedUrl }}" alt="Countdown Timer">' readonly>
+                                    @else
+                                        <input id="embed_input" type="text" class="form-control form-control-sm" value="" readonly>
+                                    @endif
                                     <button id="embed_copy_btn" type="button" class="btn btn-outline-secondary btn-sm" onclick="(function(btn){var inp=document.getElementById('embed_input'); if(!inp) return; navigator.clipboard.writeText(inp.value); btn.textContent='Copied!'; setTimeout(function(){btn.textContent='Copy';},1500);})(this)">Copy</button>
                                 </div>
                             </div>
@@ -439,9 +444,19 @@ function startPreviewPolling(timerId) {
         const embedSection = document.getElementById('embed_section');
         const embedInput = document.getElementById('embed_input');
         if (embedSection && embedInput) {
-          const absUrl = new URL(json.gif_url, window.location.origin).href;
-          embedInput.value = `<img src="${absUrl}" alt="Countdown Timer">`;
-          embedSection.classList.remove('hidden');
+          // Extract user_id and filename from gif_url to build gettimer URL
+          const gifUrl = json.gif_url || '';
+          const match = gifUrl.match(/\/timers\/(\d+)\/([^\/]+)\.gif/);
+          if (match) {
+            const userId = match[1];
+            const filename = match[2];
+            const gettimerUrl = `${window.location.origin}/gettimer/${userId}/${filename}.gif`;
+            embedInput.value = `<img src="${gettimerUrl}" alt="Countdown Timer">`;
+          } else {
+            const absUrl = new URL(gifUrl, window.location.origin).href;
+            embedInput.value = `<img src="${absUrl}" alt="Countdown Timer">`;
+          }
+          embedSection.classList.remove('d-none');
         }
       } else if (attempts >= maxAttempts) {
         clearInterval(interval);
