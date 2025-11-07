@@ -42,6 +42,11 @@ class EmpirelyService
     protected function validateRegisterData($data)
     {
         // replace any spaces in email with +
+        if(!isset($data['email'])){
+            throw ValidationException::withMessages([
+                'email' => 'Email is required.'
+            ]);
+        }
         $data['email'] = str_replace(' ', '+', trim($data['email']));
 
         // Define the validation rules

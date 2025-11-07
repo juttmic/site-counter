@@ -10,9 +10,12 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return redirect()->route('dashboard');
 });
-Route::post('/api/auto/register', [EmpirelyController::class, 'register']);
-Route::get('/api/status', [EmpirelyController::class, 'statusCheck'])->name('status');
-Route::get('/auto/login', [EmpirelyController::class, 'login']);
+
+Route::get('/login', function () {
+    return redirect()->route('auto.login');
+})->name('login');
+
+Route::get('/auto/login', [EmpirelyController::class, 'login'])->name('auto.login');
 
 // Use controller for dashboard so it lists user's timers
 Route::get('/dashboard', [TimerController::class, 'index'])
