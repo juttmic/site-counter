@@ -92,12 +92,35 @@
     <script>
     // Copy embed code for dashboard cards
     document.addEventListener('click', function(e){
+      if (!window.copyToClipboard) {
+        window.copyToClipboard = function(text){
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            return navigator.clipboard.writeText(text);
+          }
+          return new Promise(function(resolve, reject){
+            try {
+              var textarea = document.createElement('textarea');
+              textarea.value = text;
+              textarea.setAttribute('readonly', '');
+              textarea.style.position = 'absolute';
+              textarea.style.left = '-9999px';
+              document.body.appendChild(textarea);
+              textarea.select();
+              var successful = document.execCommand('copy');
+              document.body.removeChild(textarea);
+              successful ? resolve() : reject(new Error('Copy command unsuccessful'));
+            } catch (err) {
+              reject(err);
+            }
+          });
+        };
+      }
       var btn = e.target.closest('.copy-embed-btn');
       if (!btn) return;
       var url = btn.getAttribute('data-embed-url');
       if (!url) return;
       var code = `<img src="${url}" alt="Countdown Timer">`;
-      navigator.clipboard.writeText(code).then(function(){
+      window.copyToClipboard(code).then(function(){
         if (window.showToast) window.showToast('Embed code copied', 'success');
       }).catch(function(){
         if (window.showToast) window.showToast('Copy failed', 'danger');

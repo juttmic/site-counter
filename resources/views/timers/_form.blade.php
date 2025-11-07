@@ -601,12 +601,36 @@ ajaxSaveAndPoll();
 
 // Bind copy button to use global toast
 document.addEventListener('DOMContentLoaded', function(){
+  if (!window.copyToClipboard) {
+    window.copyToClipboard = function(text){
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        return navigator.clipboard.writeText(text);
+      }
+      return new Promise(function(resolve, reject){
+        try {
+          var textarea = document.createElement('textarea');
+          textarea.value = text;
+          textarea.setAttribute('readonly', '');
+          textarea.style.position = 'absolute';
+          textarea.style.left = '-9999px';
+          document.body.appendChild(textarea);
+          textarea.select();
+          var successful = document.execCommand('copy');
+          document.body.removeChild(textarea);
+          successful ? resolve() : reject(new Error('Copy command unsuccessful'));
+        } catch (err) {
+          reject(err);
+        }
+      });
+    };
+  }
+
   var btn = document.getElementById('embed_copy_btn');
   if (!btn) return;
   btn.addEventListener('click', function(){
     var inp = document.getElementById('embed_input');
     if (!inp || !inp.value) return;
-    navigator.clipboard.writeText(inp.value).then(function(){
+    window.copyToClipboard(inp.value).then(function(){
       if (window.showToast) window.showToast('Embed code copied', 'success');
     }).catch(function(){
       if (window.showToast) window.showToast('Copy failed', 'danger');

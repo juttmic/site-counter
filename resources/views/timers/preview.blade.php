@@ -40,12 +40,35 @@
 
     <script>
         (function(){
+            if (!window.copyToClipboard) {
+                window.copyToClipboard = function(text){
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        return navigator.clipboard.writeText(text);
+                    }
+                    return new Promise(function(resolve, reject){
+                        try {
+                            var textarea = document.createElement('textarea');
+                            textarea.value = text;
+                            textarea.setAttribute('readonly', '');
+                            textarea.style.position = 'absolute';
+                            textarea.style.left = '-9999px';
+                            document.body.appendChild(textarea);
+                            textarea.select();
+                            var successful = document.execCommand('copy');
+                            document.body.removeChild(textarea);
+                            successful ? resolve() : reject(new Error('Copy command unsuccessful'));
+                        } catch (err) {
+                            reject(err);
+                        }
+                    });
+                };
+            }
             var copyBtn = document.getElementById('preview_embed_copy');
             if (copyBtn) {
                 copyBtn.addEventListener('click', function(){
                     var inp = document.getElementById('preview_embed_input');
                     if (!inp) return;
-                    navigator.clipboard.writeText(inp.value).then(function(){
+                    window.copyToClipboard(inp.value).then(function(){
                         if (window.showToast) window.showToast('Embed code copied', 'success');
                     }).catch(function(){});
                 });
