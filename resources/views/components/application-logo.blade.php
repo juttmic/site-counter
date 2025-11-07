@@ -47,6 +47,8 @@
         height: auto;
         width: auto;
         transition: none;
+        max-width: 160px;
+        object-fit: contain;
     }
 </style>
 @endonce
