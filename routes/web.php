@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\EmpirelyController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TimerController;
 use App\Http\Controllers\SkinController;
@@ -9,6 +10,9 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return redirect()->route('dashboard');
 });
+Route::post('/api/auto/register', [EmpirelyController::class, 'register']);
+Route::get('/api/status', [EmpirelyController::class, 'statusCheck'])->name('status');
+Route::get('/auto/login', [EmpirelyController::class, 'login']);
 
 // Use controller for dashboard so it lists user's timers
 Route::get('/dashboard', [TimerController::class, 'index'])
