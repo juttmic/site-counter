@@ -39,13 +39,13 @@
         style="height: 40px; width: auto;"
     >
     <img
-        src="{{ asset('assets/images/small_light.png') }}"
+        src="{{ asset('assets/images/small_dark.png') }}"
         alt="Countdownly icon"
         class="theme-logo-small theme-logo-small-light"
         style="height: 28px; width: auto;"
     >
     <img
-        src="{{ asset('assets/images/small_dark.png') }}"
+        src="{{ asset('assets/images/small_light.png') }}"
         alt="Countdownly icon"
         class="theme-logo-small theme-logo-small-dark"
         style="height: 28px; width: auto;"
