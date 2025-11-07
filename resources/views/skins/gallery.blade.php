@@ -14,9 +14,9 @@
                                     <div class="card-body d-flex flex-column align-items-center">
                                         <div class="w-100 position-relative d-flex align-items-center justify-content-center overflow-hidden bg-light border rounded" style="height: 160px;">
                                             <img id="img_{{ $item['key'] }}" src="{{ $item['url'] }}" alt="{{ $item['key'] }} preview" class="img-fluid" style="max-height: 160px; max-width: 100%; object-fit: contain;">
-                                            <button type="button" class="btn btn-light border position-absolute top-0 end-0 m-2 p-2 regenerate-skin-btn" title="Regenerate preview" data-skin-key="{{ $item['key'] }}">
+                                            {{-- <button type="button" class="btn btn-light border position-absolute top-0 end-0 m-2 p-2 regenerate-skin-btn" title="Regenerate preview" data-skin-key="{{ $item['key'] }}">
                                                 <i class="bi bi-arrow-repeat"></i>
-                                            </button>
+                                            </button> --}}
                                         </div>
                                         <div class="mt-2 small text-muted text-center">{{ $item['key'] }}</div>
                                     </div>

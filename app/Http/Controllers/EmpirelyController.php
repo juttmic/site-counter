@@ -41,7 +41,7 @@ class EmpirelyController extends Controller
         if($user) {
             return response()->json([
                 'email' => $user->email,
-                'isActive' => $user->status,
+                'isActive' => $user->status==='active',
                 'currentPlan' => $user->plan_code,//'MTYCOON',
                 'created' => $user->created_at->format('Y-m-d H:i:s')
             ], 200);
@@ -69,7 +69,7 @@ class EmpirelyController extends Controller
         $user = User::where('email', $email)->first();
 
         if($user){
-            if ($user->status == 1) {
+            if ($user->status === 'active') {
 
                 // Auth::guard('web')->login($user);
                 Auth::guard('web')->login($user);

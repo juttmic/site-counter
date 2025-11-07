@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             $table->string('plan_code')->nullable()->after('email_verified_at');
-            $table->boolean('status')->default(true)->after('plan_code');
+            $table->string('status')->default('active')->after('plan_code');
         });
     }
 

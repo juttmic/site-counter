@@ -97,11 +97,14 @@ class EmpirelyService
         $empirelyUser->plan_code = $data['plan_code'];
         $empirelyUser->password = $empirelyUser->password??Hash::make($data['password']);
         $empirelyUser->email_verified_at = $empirelyUser->email_verified_at ?? now();
-        // $empirelyUser->status = $data['trans_type'] === 'SALE' || $data['trans_type'] === 'TEST_SALE' ? 1 : 0;
-        if( $data['trans_type'] === 'RFND' ){
-            $empirelyUser->status = 0;
-        }elseif( $data['trans_type'] === 'SALE' || $data['trans_type'] === 'TEST_SALE' ){
-            $empirelyUser->status = 1;
+        if ($data['trans_type'] === 'RFND') {
+            $empirelyUser->status = 'suspended';
+        } elseif ($data['trans_type'] === 'SALE' || $data['trans_type'] === 'TEST_SALE') {
+            $empirelyUser->status = 'active';
+        }
+
+        if (empty($empirelyUser->status)) {
+            $empirelyUser->status = 'active';
         }
         if ($empirelyUser->save()) {
             // $plan_code = strtolower(trim($data['plan_code']));
@@ -117,7 +120,9 @@ class EmpirelyService
             $response = [
                 'status' => "success",
                 'statusCode' => 200,
-                'message' => $empirelyUser->status == 1 ? 'User '.($updating?'updated':'registered ').' successfully' : 'User set to inactive',
+                'message' => $empirelyUser->status === 'active'
+                    ? 'User '.($updating ? 'updated' : 'registered').' successfully'
+                    : 'User suspended',
                 // 'data' => $data
             ];
         } else {

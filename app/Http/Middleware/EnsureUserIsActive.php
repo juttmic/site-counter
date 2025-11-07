@@ -13,7 +13,7 @@ class EnsureUserIsActive
      */
     public function handle(Request $request, Closure $next)
     {
-        if (Auth::check() && (int) Auth::user()->status !== 1) {
+        if (Auth::check() && Auth::user()->status !== 'active') {
             Auth::logout();
 
             if ($request->hasSession()) {
