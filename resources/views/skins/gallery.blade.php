@@ -23,7 +23,7 @@
                                 </div>
                             </div>
                         @empty
-                            <div class="col-12 text-center text-muted">No previews found. Run <code>php artisan timergif:skins:previews --force</code>.</div>
+                            <div class="col-12 text-center text-muted">No previews yet.</div>
                         @endforelse
                     </div>
                 </div>
