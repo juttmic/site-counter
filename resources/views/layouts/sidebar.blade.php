@@ -223,7 +223,7 @@
 
 <style>
 .sidebar-desktop a:hover {
-    background-color: #f8f9fa !important;
+    /* background-color: #f8f9fa !important; */
 }
 
 .sidebar-text {
@@ -287,11 +287,12 @@
     height: 30px;
     margin-left: 16px;
     border-radius: 0 6px 6px 0px;
-    margin-top: -7px;
+    margin-top: 0px;
     /* box-shadow: 0 0 5px #000; */
 }
 button#desktopSidebarToggle:hover {
     background: #2e3266;
+    color:#fff;
 }
 
 .dark-mode-icon {
