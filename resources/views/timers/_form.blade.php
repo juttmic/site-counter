@@ -11,7 +11,7 @@
 @endif
 <div class="py-4 py-md-3">
     <div class="container-fluid">
-        <form id="timer_form" method="POST" action="{{ $formAction }}" data-timer-id="{{ $isEdit ? $timer->id : '' }}" data-is-edit="{{ $isEdit ? '1' : '0' }}" data-has-gif="{{ $isEdit && !empty($timer->gif_url) ? '1' : '0' }}">
+        <form id="timer_form" method="POST" action="{{ $formAction }}" data-timer-id="{{ $isEdit ? $timer->id : '' }}" data-is-edit="{{ $isEdit ? '1' : '0' }}" data-has-gif="{{ $isEdit && !empty($timer->gif_url) ? '1' : '0' }}" data-timer-status="{{ $isEdit ? $timer->status : 'active' }}">
             @csrf
             @if($isEdit)
                 @method('PUT')
@@ -132,10 +132,10 @@
                                     </div>
                                 @endif
                             </div>
-                            <div id="embed_section" class="mt-3 {{ $isEdit && isset($timer->gif_url) && $timer->gif_url ? '' : 'd-none' }}">
+                            <div id="embed_section" class="mt-3 {{ $isEdit && isset($timer->gif_url) && $timer->gif_url && $timer->status === 'active' ? '' : 'd-none' }}">
                                 <h4 class="h6 fw-semibold mb-2">Embed Code</h4>
                                 <div class="d-flex gap-2">
-                                    @if($isEdit && isset($timer->gif_url) && $timer->gif_url)
+                                    @if($isEdit && isset($timer->gif_url) && $timer->gif_url && $timer->status === 'active')
                                         @php($embedUrl = url('/gettimer/'.$timer->user_id.'/'.pathinfo($timer->gif_url, PATHINFO_FILENAME)).'.gif')
                                         <input id="embed_input" type="text" class="form-control form-control-sm" value='<img src="{{ $embedUrl }}" alt="Countdown Timer">' readonly>
                                     @else
@@ -143,6 +143,9 @@
                                     @endif
                                     <button id="embed_copy_btn" type="button" class="btn btn-outline-secondary btn-sm">Copy</button>
                                 </div>
+                            </div>
+                            <div id="embed_notice" class="mt-3 alert alert-warning py-2 px-3 small {{ $isEdit && isset($timer->status) && $timer->status !== 'active' ? '' : 'd-none' }}">
+                                Activate this timer to generate a shareable embed code.
                             </div>
                         </div>
                     </div>
@@ -515,6 +518,16 @@ function startPreviewPolling(timerId) {
     try {
       const res = await fetch(`/timers/${encodeURIComponent(timerId)}/status`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
       const json = await res.json();
+      const form = document.getElementById('timer_form');
+      if (form && json.status) {
+        form.dataset.timerStatus = json.status;
+      }
+      const isActive = json.status === 'active';
+      const embedSection = document.getElementById('embed_section');
+      const embedInput = document.getElementById('embed_input');
+      const embedNotice = document.getElementById('embed_notice');
+      if (embedSection) embedSection.classList.toggle('d-none', !isActive);
+      if (embedNotice) embedNotice.classList.toggle('d-none', isActive);
       if (json.gif_url) {
         clearInterval(interval);
         
@@ -537,8 +550,11 @@ function startPreviewPolling(timerId) {
           previewWrap.innerHTML = `<img src="${json.gif_url}" class="max-w-full max-h-[400px] object-contain" alt="Timer preview" />`;
         }
         // update embed section
-        const embedSection = document.getElementById('embed_section');
-        const embedInput = document.getElementById('embed_input');
+        if (embedInput) {
+          if (!json.share_available) {
+            embedInput.value = '';
+          }
+        }
         if (embedSection && embedInput) {
           // Extract user_id and filename from gif_url to build gettimer URL
           const gifUrl = json.gif_url || '';
@@ -552,7 +568,7 @@ function startPreviewPolling(timerId) {
             const absUrl = new URL(gifUrl, window.location.origin).href;
             embedInput.value = `<img src="${absUrl}" alt="Countdown Timer">`;
           }
-          embedSection.classList.remove('d-none');
+          embedSection.classList.toggle('d-none', !json.share_available);
         }
       } else if (attempts >= maxAttempts) {
         clearInterval(interval);

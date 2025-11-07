@@ -113,6 +113,7 @@ class TimerController extends Controller
             'id' => $timer->id,
             'gif_url' => $timer->gif_url,
             'status' => $timer->status,
+            'share_available' => $timer->isActive() && !empty($timer->gif_url),
         ]);
     }
 

@@ -19,7 +19,7 @@ class GifController extends Controller
             ->where('gif_url', 'like', "%/{$userId}/{$filename}.gif")
             ->first();
 
-        if (!$timer) {
+        if (!$timer || !$timer->isActive()) {
             abort(404);
         }
 

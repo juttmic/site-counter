@@ -59,7 +59,7 @@
                                         <a href="{{ route('timers.preview', $timer) }}" class="btn btn-outline-secondary btn-sm" title="Preview">
                                           <i class="bi bi-eye"></i>
                                         </a>
-                                        @if($embedCopyUrl)
+                                        @if($embedCopyUrl && $timer->status === 'active')
                                           <button type="button" class="btn btn-outline-secondary btn-sm copy-embed-btn" title="Copy code" data-embed-url="{{ $embedCopyUrl }}" style="margin-left: 2px;">
                                             <i class="bi bi-clipboard"></i>
                                           </button>

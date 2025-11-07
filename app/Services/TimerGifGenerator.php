@@ -19,8 +19,21 @@ class TimerGifGenerator
             File::makeDirectory($directory, 0755, true);
         }
 
-        $unique = bin2hex(random_bytes(5));
-        $filename = $unique . '.gif';
+        $existingUrl = $timer->gif_url;
+        $filename = null;
+        if (!empty($existingUrl)) {
+            $path = parse_url($existingUrl, PHP_URL_PATH) ?: $existingUrl;
+            $candidate = basename($path);
+            if (is_string($candidate) && $candidate !== '') {
+                $filename = $candidate;
+            }
+        }
+
+        if (!$filename || pathinfo($filename, PATHINFO_EXTENSION) !== 'gif') {
+            $unique = bin2hex(random_bytes(5));
+            $filename = $unique . '.gif';
+        }
+
         $fullPath = $directory . DIRECTORY_SEPARATOR . $filename;
 
         $remaining = $timer->remainingSecondsFromNow();

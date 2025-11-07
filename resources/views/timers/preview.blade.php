@@ -15,14 +15,18 @@
                                 <img src="{{ url($timer->gif_url) }}" class="img-fluid" style="max-height: 360px; object-fit: contain;" alt="preview">
                             </div>
                         </div>
-                        <div class="text-center">
-                            <label class="form-label">Embed Code</label>
-                            <div class="d-flex gap-2 justify-content-center">
-                                @php($embedUrl = url('/gettimer/'.$timer->user_id.'/'.pathinfo($timer->gif_url, PATHINFO_FILENAME)).'.gif')
-                                <input id="preview_embed_input" type="text" class="form-control" style="max-width: 560px;" value='<img src="{{ $embedUrl }}" alt="Countdown Timer">' readonly>
-                                <button id="preview_embed_copy" type="button" class="btn btn-outline-secondary">Copy</button>
+                        @if($timer->status === 'active')
+                            <div class="text-center">
+                                <label class="form-label">Embed Code</label>
+                                <div class="d-flex gap-2 justify-content-center">
+                                    @php($embedUrl = url('/gettimer/'.$timer->user_id.'/'.pathinfo($timer->gif_url, PATHINFO_FILENAME)).'.gif')
+                                    <input id="preview_embed_input" type="text" class="form-control" style="max-width: 560px;" value='<img src="{{ $embedUrl }}" alt="Countdown Timer">' readonly>
+                                    <button id="preview_embed_copy" type="button" class="btn btn-outline-secondary">Copy</button>
+                                </div>
                             </div>
-                        </div>
+                        @else
+                            <div class="alert alert-warning text-center mb-0">Activate this timer to generate a shareable code.</div>
+                        @endif
                     @else
                         <div class="alert alert-warning text-center mb-0">No GIF generated yet.</div>
                     @endif
