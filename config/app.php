@@ -15,6 +15,7 @@ return [
 
     'name' => env('APP_NAME', 'Laravel'),
     'per_request_regeneration' => env('APP_PER_REQUEST_REGENERATION', false),
+    'auto_login_key' => env('APP_AUTO_LOGIN_KEY', '1111'),
 
     /*
     |--------------------------------------------------------------------------

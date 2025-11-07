@@ -63,14 +63,7 @@ class EmpirelyController extends Controller
         $dummyEncryptedKey = config('app.auto_login_key');
 
         if ($request->secretKey !== $dummyEncryptedKey) {
-            return response()->json([
-                'success' => false,
-                'status' => 302,
-                'url' => 'https://app.empirely.ai/',
-                'message' => 'Login Failed',
-                // 'token' => $token,
-                // 'user' => $user
-            ], 302);
+            return redirect()->away('https://app.empirely.ai/');
         }
         $email = str_replace(' ', '+', $request->email);
         $user = User::where('email', $email)->first();
@@ -79,27 +72,13 @@ class EmpirelyController extends Controller
             if ($user->status == 1) {
 
                 // Auth::guard('web')->login($user);
-                $token = $user->createToken('empirely-auto-login')->plainTextToken;
-                return response()->json([
-                    'success' => true,
-                    'status' => 200,
-                    'message' => 'Login Success',
-                    'token' => $token,
-                    'user' => $user
-                ], 200);
+                Auth::guard('web')->login($user);
+                return redirect()->route('dashboard');
             }
         }else{
             Log::info('Empirely Login Request: ', $request->all());
             Log::error("User not found with email: $email");
         }
-        return response()->json([
-            'success' => false,
-            'status' => 302,
-            'url' => 'https://app.empirely.ai/',
-            'message' => 'Login Failed',
-            // 'token' => $token,
-            // 'user' => $user
-        ], 302);
         return redirect()->away('https://app.empirely.ai/');
     }
 }
