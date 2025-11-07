@@ -1,0 +1,39 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+# change from none to main to make this pipeline live
+
+
+trigger: 
+- main
+  
+pr: none
+    
+pool: default
+
+jobs:
+  - job: deploy
+    displayName: 'Deploy Via SSH'  
+    steps:
+      - checkout: self
+        #clean: true
+        displayName: 'Checkout From Repo'
+      
+      - task: PowerShell@2
+        inputs:
+          filePath: 'D:\SelfHostedAgentLive\PowerShellScripts\countdownly.ps1'
+          arguments: '-SourcePath "$(System.DefaultWorkingDirectory)"'
+      
+      - task: PublishBuildArtifacts@1
+        displayName: 'Publishing Files as Artifacts'
+        inputs:
+          PathtoPublish: 'D:\SelfHostedAgentLive\AllBuilds\PublishCountdownly\countdownly_drop'
+          ArtifactName: 'countdownly_drop'   
+          publishLocation: Container
+
+
+
+
+
+ 
