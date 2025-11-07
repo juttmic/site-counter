@@ -85,7 +85,7 @@
                 </header>
                 
                 <!-- Main Content -->
-                <main class="p-3 p-md-4">
+                <main class="p-2 p-sm-2 p-md-3 p-lg-4">
                     {{ $slot }}
                 </main>
             </div>

@@ -6,17 +6,13 @@
             <x-application-logo class="d-block" style="height: 32px; width: auto;" />
             {{-- <span id="sidebarBrandText" class="ms-2 fw-semibold" style="transition: opacity 0.3s;">{{ config('app.name', 'TimerGIF App') }}</span> --}}
         </a>
-        <button type="button" 
-                                        onclick="toggleDesktopSidebar()" 
-                                        class="btn btn-outline-secondary btn-sm d-none d-md-inline-flex" 
-                                        title="Toggle sidebar"
-                                        
-                                        
-                                        style="
-    justify-content: center;
-    margin-left: 20px;">
-                                    <i class="bi bi-list"></i>
-                                </button>
+        <button type="button"
+                id="desktopSidebarToggle"
+                onclick="toggleDesktopSidebar()"
+                class="btn btn-outline-secondary btn-sm d-none d-md-inline-flex align-items-center justify-content-center sidebar-toggle-btn"
+                title="Toggle sidebar">
+            <i id="sidebarToggleIcon" class="bi bi-chevron-left"></i>
+        </button>
     </div>
 
     <!-- Navigation Menu -->
@@ -74,7 +70,7 @@
 <div class="offcanvas offcanvas-start" tabindex="-1" id="mobileSidebar" aria-labelledby="mobileSidebarLabel">
     <div class="offcanvas-header border-bottom">
         <h5 class="offcanvas-title" id="mobileSidebarLabel">
-            <a href="{{ route('dashboard') }}" class="d-flex align-items-center text-decoration-none text-dark">
+            <a href="{{ route('dashboard') }}" class="d-flex align-items-center text-decoration-none text-dark gap-2">
                 <x-application-logo class="d-block me-2" style="height: 32px; width: auto;" />
                 <span>{{ config('app.name', 'TimerGIF App') }}</span>
             </a>
@@ -152,86 +148,75 @@
 <!-- Sidebar Toggle Script -->
 <script>
 (function() {
-    // Sidebar collapse functionality
     let sidebarCollapsed = false;
-    
-    // Load saved state
-    try {
-        const saved = localStorage.getItem('sidebarCollapsed');
-        if (saved === 'true') {
-            toggleSidebar();
-        }
-    } catch (e) {}
+    const sidebar = document.getElementById('desktopSidebar');
+    const toggleIcon = document.getElementById('sidebarToggleIcon');
 
-    function toggleSidebar() {
-        const sidebar = document.getElementById('desktopSidebar');
-        const brandText = document.getElementById('sidebarBrandText');
-        const userName = document.getElementById('sidebarUserName');
-        const sidebarTexts = document.querySelectorAll('.sidebar-text');
-        const mainContent = document.querySelector('.main-content');
-        
+    function applySidebarState(isCollapsed) {
         if (!sidebar) return;
-        
-        sidebarCollapsed = !sidebarCollapsed;
-        
-        if (sidebarCollapsed) {
-            sidebar.style.width = '70px';
-            if (brandText) brandText.style.opacity = '0';
-            if (userName) userName.style.opacity = '0';
-            sidebarTexts.forEach(text => text.style.opacity = '0');
-            if (mainContent) mainContent.style.marginLeft = '70px';
-            
-            // Center icons
-            sidebar.querySelectorAll('a').forEach(link => {
-                link.style.justifyContent = 'center';
-            });
-            sidebar.querySelectorAll('button').forEach(btn => {
-                btn.style.justifyContent = 'center';
-            });
-        } else {
-            sidebar.style.width = '250px';
-            if (brandText) brandText.style.opacity = '1';
-            if (userName) userName.style.opacity = '1';
-            sidebarTexts.forEach(text => text.style.opacity = '1');
-            if (mainContent) mainContent.style.marginLeft = '250px';
-            
-            // Reset alignment
-            sidebar.querySelectorAll('a').forEach(link => {
-                link.style.justifyContent = '';
-            });
-            sidebar.querySelectorAll('button').forEach(btn => {
-                btn.style.justifyContent = '';
-            });
+
+        sidebar.classList.toggle('collapsed', isCollapsed);
+
+        const mainContent = document.querySelector('.main-content');
+        if (mainContent) {
+            if (window.innerWidth >= 768) {
+                mainContent.style.marginLeft = isCollapsed ? '70px' : '250px';
+            } else {
+                mainContent.style.marginLeft = '0';
+            }
+            mainContent.style.transition = 'margin-left 0.3s ease';
         }
-        
-        // Save state
+
+        const userName = document.getElementById('sidebarUserName');
+        if (userName) {
+            userName.style.display = isCollapsed ? 'none' : '';
+        }
+
+        const sidebarTexts = document.querySelectorAll('.sidebar-text');
+        sidebarTexts.forEach(text => {
+            text.style.opacity = isCollapsed ? '0' : '1';
+            text.style.display = isCollapsed ? 'none' : '';
+        });
+
+        if (toggleIcon) {
+            toggleIcon.className = isCollapsed ? 'bi bi-chevron-right' : 'bi bi-chevron-left';
+        }
+    }
+
+    function toggleSidebar(forceState) {
+        if (!sidebar) return;
+
+        if (typeof forceState === 'boolean') {
+            sidebarCollapsed = forceState;
+        } else {
+            sidebarCollapsed = !sidebarCollapsed;
+        }
+
+        applySidebarState(sidebarCollapsed);
+
         try {
             localStorage.setItem('sidebarCollapsed', sidebarCollapsed.toString());
         } catch (e) {}
     }
-    
-    // Make toggle function global
+
+    // Load saved state
+    try {
+        const saved = localStorage.getItem('sidebarCollapsed');
+        if (saved === 'true') {
+            sidebarCollapsed = true;
+        }
+    } catch (e) {}
+
+    applySidebarState(sidebarCollapsed);
+
     window.toggleDesktopSidebar = toggleSidebar;
-    
-    // Initialize main content margin
+
     document.addEventListener('DOMContentLoaded', function() {
-        const mainContent = document.querySelector('.main-content');
-        if (mainContent && window.innerWidth >= 768) {
-            mainContent.style.marginLeft = sidebarCollapsed ? '70px' : '250px';
-            mainContent.style.transition = 'margin-left 0.3s ease';
-        }
+        applySidebarState(sidebarCollapsed);
     });
-    
-    // Handle window resize
+
     window.addEventListener('resize', function() {
-        const mainContent = document.querySelector('.main-content');
-        if (mainContent) {
-            if (window.innerWidth >= 768) {
-                mainContent.style.marginLeft = sidebarCollapsed ? '70px' : '250px';
-            } else {
-                mainContent.style.marginLeft = '0';
-            }
-        }
+        applySidebarState(sidebarCollapsed);
     });
 })();
 </script>
@@ -244,6 +229,69 @@
 .sidebar-text {
     transition: opacity 0.3s ease;
     white-space: nowrap;
+}
+
+.sidebar-desktop {
+    transition: width 0.3s ease;
+}
+
+.sidebar-toggle-btn {
+    margin-left: 20px;
+    width: 38px;
+    height: 36px;
+    padding: 0 10px;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    gap: 4px;
+}
+
+.sidebar-toggle-btn i {
+    font-size: 1.1rem;
+    transition: transform 0.3s ease;
+}
+
+.sidebar-desktop.collapsed {
+    width: 70px !important;
+}
+
+.sidebar-desktop.collapsed .sidebar-text,
+.sidebar-desktop.collapsed #sidebarUserName {
+    display: none !important;
+}
+
+.sidebar-desktop.collapsed a,
+.sidebar-desktop.collapsed button {
+    justify-content: center !important;
+}
+
+.sidebar-desktop.collapsed a .bi,
+.sidebar-desktop.collapsed button .bi {
+    margin-right: 0 !important;
+}
+
+.sidebar-desktop.collapsed nav a {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+    text-align: center;
+}
+
+.sidebar-desktop.collapsed .border-top .btn {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+}
+
+.sidebar-desktop.collapsed .sidebar-toggle-btn {
+    margin-left: auto;
+    margin-right: auto;
+    width: 30px;
+    height: 30px;
+    margin-left: 16px;
+    border-radius: 0 6px 6px 0px;
+    margin-top: -7px;
+    /* box-shadow: 0 0 5px #000; */
+}
+button#desktopSidebarToggle:hover {
+    background: #2e3266;
 }
 
 .dark-mode-icon {
