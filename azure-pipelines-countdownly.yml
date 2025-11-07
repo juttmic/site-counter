@@ -28,7 +28,7 @@ jobs:
       - task: PublishBuildArtifacts@1
         displayName: 'Publishing Files as Artifacts'
         inputs:
-          PathtoPublish: 'D:\SelfHostedAgentLive\AllBuilds\PublishSurveyly\countdownly_drop'
+          PathtoPublish: 'D:\SelfHostedAgentLive\AllBuilds\PublishCountdownly\countdownly_drop'
           ArtifactName: 'countdownly_drop'   
           publishLocation: Container
 
