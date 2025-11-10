@@ -27,6 +27,7 @@ class Timer extends Model
         'status',
         'skin_overrides',
         'skin_resolved_config',
+        'animation_frame_limit',
     ];
 
     protected $appends = [
@@ -39,6 +40,7 @@ class Timer extends Model
         'height' => 'integer',
         'skin_overrides' => 'array',
         'skin_resolved_config' => 'array',
+        'animation_frame_limit' => 'integer',
     ];
 
     public function user(): BelongsTo

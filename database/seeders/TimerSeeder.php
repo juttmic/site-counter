@@ -30,6 +30,7 @@ class TimerSeeder extends Seeder
                 'gif_url' => '',
                 'cache_key' => null,
                 'status' => 'active',
+                'animation_frame_limit' => 20,
             ]
         );
 
@@ -47,6 +48,7 @@ class TimerSeeder extends Seeder
                 'gif_url' => '',
                 'cache_key' => null,
                 'status' => 'active',
+                'animation_frame_limit' => 20,
             ]
         );
 

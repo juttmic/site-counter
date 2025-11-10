@@ -59,6 +59,19 @@
                                 </div>
                             </div>
 
+                            <div class="row g-3 mt-1">
+                                <div class="col-12 col-sm-6">
+                                    <label class="form-label">Animated Seconds</label>
+                                    <input type="number"
+                                           name="animation_frame_limit"
+                                           class="form-control"
+                                           min="10"
+                                           max="60"
+                                           value="{{ old('animation_frame_limit', $timer->animation_frame_limit ?? 20) }}">
+                                    <div class="form-text">Animated duration for generated GIF (10-60 seconds).</div>
+                                </div>
+                            </div>
+
                             <div id="fixed_date_input" class="mt-3 {{ $isEdit && $timer->timer_type !== 'fixed_date' ? 'd-none' : '' }}">
                                 <label class="form-label">Target DateTime</label>
                                 <input type="datetime-local" name="target_datetime" class="form-control"

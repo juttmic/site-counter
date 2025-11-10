@@ -60,8 +60,9 @@ class TimerGifGenerator
             $skin = array_replace_recursive($skin, $timer->skin_overrides);
         }
 
-        // Cap animation length to 60s but start from actual remaining
-        $animateFor = min(60, max(0, $durationForGif));
+        $frameLimit = $this->resolveFrameLimit($timer);
+        // Cap animation length to configured limit but start from actual remaining
+        $animateFor = min($frameLimit, max(0, $durationForGif));
         $frames = $this->buildFramesCapped($remaining, $animateFor, $skin, $timer->custom_text, $timer->text_position);
 
         $this->encodeAnimatedGif($frames, $fullPath, $animateFor);
@@ -93,7 +94,8 @@ class TimerGifGenerator
         if (is_array($timer->skin_overrides) && !empty($timer->skin_overrides)) {
             $skin = array_replace_recursive($skin, $timer->skin_overrides);
         }
-        $animateFor = min($maxAnimateFor, max(0, $durationForGif));
+        $frameLimit = $this->resolveFrameLimit($timer);
+        $animateFor = min($frameLimit, $maxAnimateFor, max(0, $durationForGif));
         $frames = $this->buildFramesCapped($remaining, $animateFor, $skin, $timer->custom_text, $timer->text_position);
         $this->encodeAnimatedGif($frames, $targetPath, $animateFor);
     }
@@ -448,6 +450,12 @@ class TimerGifGenerator
         $pngData = ob_get_clean();
         imagedestroy($im);
         return $pngData;
+    }
+
+    private function resolveFrameLimit(Timer $timer): int
+    {
+        $limit = (int) ($timer->animation_frame_limit ?? 20);
+        return max(10, min(60, $limit));
     }
 
     private function applySkinStyle($im, array $skin, int $width, int $height, int $bgCol, int $textCol, int $accentCol, int $secondsRemaining): void

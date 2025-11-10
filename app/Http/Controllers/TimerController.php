@@ -130,6 +130,7 @@ class TimerController extends Controller
             'custom_text' => ['nullable', 'string', 'max:255'],
             'status' => ['nullable', 'in:active,inactive'],
             'skin_overrides' => ['nullable', 'string'],
+            'animation_frame_limit' => ['nullable', 'integer', 'min:10', 'max:60'],
         ];
 
         $data = $request->validate($rules);
@@ -141,6 +142,7 @@ class TimerController extends Controller
         }
 
         $data['status'] = $data['status'] ?? 'active';
+        $data['animation_frame_limit'] = (int) ($data['animation_frame_limit'] ?? 20);
 
         // Decode overrides JSON if provided
         $overridesRaw = $request->input('skin_overrides');
