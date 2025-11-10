@@ -29,6 +29,10 @@ class Timer extends Model
         'skin_resolved_config',
     ];
 
+    protected $appends = [
+        'gif_url_with_cache_bust',
+    ];
+
     protected $casts = [
         'target_datetime' => 'datetime',
         'width' => 'integer',
@@ -71,6 +75,22 @@ class Timer extends Model
         }
 
         return 0;
+    }
+
+    public function getGifUrlWithCacheBustAttribute(): ?string
+    {
+        if (empty($this->gif_url)) {
+            return null;
+        }
+        $cacheToken = $this->cache_key;
+        if (!$cacheToken && $this->updated_at) {
+            $cacheToken = (string) $this->updated_at->getTimestamp();
+        }
+        if (!$cacheToken) {
+            return $this->gif_url;
+        }
+        $separator = str_contains($this->gif_url, '?') ? '&' : '?';
+        return $this->gif_url . $separator . 'v=' . urlencode($cacheToken);
     }
 }
 

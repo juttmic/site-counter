@@ -116,7 +116,7 @@
                             <h3 class="h6 fw-semibold mb-3">Preview</h3>
                             <div id="timer_preview" class="d-flex align-items-center justify-content-center rounded border bg-light mb-3" style="min-height: 400px;">
                                 @if($isEdit && isset($timer->gif_url) && $timer->gif_url)
-                                    <img src="{{ url($timer->gif_url) }}" class="img-fluid" style="max-height: 400px; object-fit: contain;" alt="Timer preview" id="preview_gif">
+                                    <img src="{{ $timer->gif_url_with_cache_bust ? url($timer->gif_url_with_cache_bust) : url($timer->gif_url) }}" class="img-fluid" style="max-height: 400px; object-fit: contain;" alt="Timer preview" id="preview_gif">
                                 @else
                                     <div class="text-center text-muted">
                                         @if($isEdit)
@@ -547,7 +547,8 @@ function startPreviewPolling(timerId) {
         if (saveBtn) saveBtn.disabled = false;
         
         if (previewWrap) {
-          previewWrap.innerHTML = `<img src="${json.gif_url}" class="max-w-full max-h-[400px] object-contain" alt="Timer preview" />`;
+          const previewSrc = json.gif_url_with_cache_bust || json.gif_url;
+          previewWrap.innerHTML = `<img src="${previewSrc}" class="max-w-full max-h-[400px] object-contain" alt="Timer preview" />`;
         }
         // update embed section
         if (embedInput) {

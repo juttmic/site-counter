@@ -112,6 +112,7 @@ class TimerController extends Controller
         return response()->json([
             'id' => $timer->id,
             'gif_url' => $timer->gif_url,
+            'gif_url_with_cache_bust' => $timer->gif_url_with_cache_bust,
             'status' => $timer->status,
             'share_available' => $timer->isActive() && !empty($timer->gif_url),
         ]);
