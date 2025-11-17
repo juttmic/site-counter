@@ -93,7 +93,7 @@
                                     
                                 </div>
                                 <button type="button" id="open_skin_modal" class="btn btn-sm btn-light border" title="Change skin" aria-label="Change skin" data-bs-toggle="modal" data-bs-target="#skinSelectModal">
-                                  <i class="fa-solid fa-rotate"></i>
+                                  Change Skin
                               </button>
                                 <p class="form-text">Click the change icon to pick a different skin.</p>
                             </div>
