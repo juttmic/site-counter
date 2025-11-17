@@ -23,6 +23,7 @@
     { "key": "height", "label": "Height", "type": "number", "min": 80, "max": 1000, "step": 5 },
     { "key": "textColor", "label": "Text Color", "type": "color" },
     { "key": "accentColor", "label": "Pill Color", "type": "color" },
+    { "key": "background", "label": "Background Color", "type": "color" },
     { "key": "fontSize", "label": "Font Size", "type": "number", "min": 8, "max": 200, "step": 1 },
     { "key": "fontPath", "label": "Font", "type": "font" },
     { "key": "showDays", "label": "Show Days", "type": "boolean" },

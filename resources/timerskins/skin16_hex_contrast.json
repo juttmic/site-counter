@@ -23,6 +23,7 @@
     { "key": "background", "label": "Background", "type": "color" },
     { "key": "textColor", "label": "Text Color", "type": "color" },
     { "key": "accentColor", "label": "Tile Color", "type": "color" },
+    { "key": "background", "label": "Background Color", "type": "color" },
     { "key": "fontSize", "label": "Font Size", "type": "number", "min": 8, "max": 200, "step": 1 },
     { "key": "fontPath", "label": "Font", "type": "font" },
     { "key": "showDays", "label": "Show Days", "type": "boolean" },
