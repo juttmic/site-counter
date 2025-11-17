@@ -274,15 +274,42 @@ function renderFields(metadata, savedOverrides = {}) {
   
   document.getElementById('skin_overrides_section').classList.toggle('d-none', visibleFields.length === 0);
 
+  const grouped = [
+    { key: 'overall', title: 'Overall settings', fields: [] },
+    { key: 'timer', title: 'Timer settings', fields: [] },
+    { key: 'custom', title: 'Custom text', fields: [] },
+    { key: 'final', title: 'Final screen', fields: [] },
+    { key: 'extra', title: 'Extra options', fields: [] },
+  ];
+  const groupMap = grouped.reduce((acc, group) => {
+    acc[group.key] = group;
+    return acc;
+  }, {});
+
   const smallKeys = new Set(['fontSize','separator','layout','animation','showDays','showHours','showMinutes','showSeconds','width','height','outputWidth','outputHeight']);
   const marginKeys = new Set(['customTextMarginTop','customTextMarginBottom','textMarginTop','textMarginBottom','marginTop','marginBottom','labelMarginTop','labelMarginBottom']);
-  visibleFields.forEach(field => {
+  const customKeys = new Set(['customtext','custom_text','textposition','text_position','customtextcolor','customtextmargintop','customtextmarginbottom']);
+  const timerKeys = new Set(['showdays','showhours','showminutes','showseconds','separator','layout','animation','digitspacing','countdirection','refreshrate','pulsespeed']);
+  const finalKeys = new Set(['finalmessage','finalbackground','finaltextcolor','finalscreentext','finalscreencolor']);
+  const extraKeys = new Set(['borderwidth','bordercolor','outputwidth','outputheight','shadowcolor','glowcolor']);
+
+  const determineGroup = (field) => {
+    const explicit = (field.group || '').toLowerCase();
+    if (explicit && groupMap[explicit]) {
+      return groupMap[explicit];
+    }
+    const key = (field.key || '').toLowerCase();
+    if (customKeys.has(key)) return groupMap.custom;
+    if (finalKeys.has(key)) return groupMap.final;
+    if (timerKeys.has(key)) return groupMap.timer;
+    if (extraKeys.has(key)) return groupMap.extra;
+    return groupMap.overall;
+  };
+
+  const createFieldInput = (field, value) => {
     const key = field.key;
     const label = field.label || key;
     const type = field.type || 'text';
-    // Use saved override if exists, otherwise use skin default
-    const value = (savedOverrides[key] !== undefined) ? savedOverrides[key] : defaults[key];
-
     const container = document.createElement('div');
     const isSmall = type === 'color' || type === 'boolean' || smallKeys.has(key);
     const isMarginField = marginKeys.has(key);
@@ -328,7 +355,36 @@ function renderFields(metadata, savedOverrides = {}) {
     input.dataset.key = key;
     input.addEventListener('change', syncOverrides);
     container.appendChild(input);
-    fieldsWrap.appendChild(container);
+    return container;
+  };
+
+  visibleFields.forEach(field => {
+    const group = determineGroup(field) || groupMap.overall;
+    const value = (savedOverrides[field.key] !== undefined) ? savedOverrides[field.key] : defaults[field.key];
+    group.fields.push({ field, value });
+  });
+
+  grouped.forEach(group => {
+    if (!group.fields.length) return;
+    const col = document.createElement('div');
+    col.className = 'col-12';
+    const card = document.createElement('div');
+    card.className = 'card border shadow-sm mb-3';
+    const header = document.createElement('div');
+    header.className = 'card-header bg-light py-2';
+    header.innerHTML = `<span class="text-uppercase text-muted fw-semibold small">${group.title}</span>`;
+    const body = document.createElement('div');
+    body.className = 'card-body';
+    const row = document.createElement('div');
+    row.className = 'row g-3';
+    group.fields.forEach(({ field, value }) => {
+      row.appendChild(createFieldInput(field, value));
+    });
+    body.appendChild(row);
+    card.appendChild(header);
+    card.appendChild(body);
+    col.appendChild(card);
+    fieldsWrap.appendChild(col);
   });
 
   // Sync initial state to hidden input
