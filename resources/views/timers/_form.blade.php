@@ -274,7 +274,8 @@ function renderFields(metadata, savedOverrides = {}) {
   
   document.getElementById('skin_overrides_section').classList.toggle('d-none', visibleFields.length === 0);
 
-  const smallKeys = new Set(['fontSize','separator','layout','animation','showDays','showHours','showMinutes','showSeconds']);
+  const smallKeys = new Set(['fontSize','separator','layout','animation','showDays','showHours','showMinutes','showSeconds','width','height','outputWidth','outputHeight']);
+  const marginKeys = new Set(['customTextMarginTop','customTextMarginBottom','textMarginTop','textMarginBottom','marginTop','marginBottom','labelMarginTop','labelMarginBottom']);
   visibleFields.forEach(field => {
     const key = field.key;
     const label = field.label || key;
@@ -284,7 +285,12 @@ function renderFields(metadata, savedOverrides = {}) {
 
     const container = document.createElement('div');
     const isSmall = type === 'color' || type === 'boolean' || smallKeys.has(key);
-    container.className = isSmall ? 'col-12 col-sm-6 col-md-4' : 'col-12';
+    const isMarginField = marginKeys.has(key);
+    if (isMarginField) {
+      container.className = 'col-12 col-sm-4 col-md-3';
+    } else {
+      container.className = isSmall ? 'col-12 col-sm-6 col-md-4' : 'col-12';
+    }
     container.innerHTML = `<label class="form-label small mb-1">${label}</label>`;
     let input;
     if (type === 'color') {
@@ -299,7 +305,7 @@ function renderFields(metadata, savedOverrides = {}) {
       if (field.max != null) input.max = field.max;
       if (field.step != null) input.step = field.step;
       input.value = (value ?? '');
-      input.className = 'form-control';
+      input.className = 'form-control' + (isMarginField ? ' form-control-sm' : '');
     } else if (type === 'boolean') {
       input = document.createElement('input');
       input.type = 'checkbox';
