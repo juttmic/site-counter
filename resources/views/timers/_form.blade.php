@@ -251,16 +251,23 @@ async function loadSkinsIntoModal() {
 }
 
 let currentSkinMetadata = null;
+let currentHiddenOverrides = {};
 
 function renderFields(metadata, savedOverrides = {}) {
   currentSkinMetadata = metadata;
+  currentHiddenOverrides = {};
   const fieldsWrap = document.getElementById('skin_fields');
   const defaults = metadata.defaults || {};
   const fields = Array.isArray(metadata.fields) ? metadata.fields : [];
   fieldsWrap.innerHTML = '';
   
   // Fields to hide but use defaults for
-  const hiddenFields = new Set(['fontPath', 'font', 'showDays', 'showHours', 'showMinutes', 'showSeconds']);
+  const hiddenFields = new Set(['fontPath', 'font', 'showDays', 'showHours', 'showMinutes', 'showSeconds', 'layout', 'animation', 'accentColor']);
+  hiddenFields.forEach(key => {
+    if (savedOverrides[key] !== undefined) {
+      currentHiddenOverrides[key] = savedOverrides[key];
+    }
+  });
   
   // Filter out hidden fields
   const visibleFields = fields.filter(field => !hiddenFields.has(field.key));
@@ -325,11 +332,11 @@ function renderFields(metadata, savedOverrides = {}) {
 function syncOverrides() {
   const fieldsWrap = document.getElementById('skin_fields');
   const inputs = fieldsWrap.querySelectorAll('[data-key]');
-  const data = {};
+  const data = { ...(currentHiddenOverrides || {}) };
   const defaults = currentSkinMetadata?.defaults || {};
   
   // Fields that are hidden but should always use defaults
-  const hiddenFields = new Set(['fontPath', 'font', 'showDays', 'showHours', 'showMinutes', 'showSeconds']);
+  const hiddenFields = new Set(['fontPath', 'font', 'showDays', 'showHours', 'showMinutes', 'showSeconds', 'layout', 'animation', 'accentColor']);
   
   // For hidden fields:
   // - Font fields: don't store (use skin default)
