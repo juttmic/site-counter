@@ -291,7 +291,7 @@ function renderFields(metadata, savedOverrides = {}) {
   const customKeys = new Set(['customtext','custom_text','textposition','text_position','customtextcolor','customtextmargintop','customtextmarginbottom']);
   const timerKeys = new Set(['showdays','showhours','showminutes','showseconds','separator','layout','animation','digitspacing','countdirection','refreshrate','pulsespeed']);
   const finalKeys = new Set(['finalmessage','finalbackground','finaltextcolor','finalscreentext','finalscreencolor']);
-  const extraKeys = new Set(['borderwidth','bordercolor','outputwidth','outputheight','shadowcolor','glowcolor']);
+  const extraKeys = new Set(['shadowcolor','glowcolor','blurstrength','outlinecolor','outlinewidth']);
 
   const determineGroup = (field) => {
     const explicit = (field.group || '').toLowerCase();

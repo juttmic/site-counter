@@ -40,7 +40,7 @@
     { "key": "finalMessage", "label": "Final Message", "type": "text", "maxLength": 64, "group": "final" },
     { "key": "finalBackground", "label": "Final Background", "type": "color", "group": "final" },
     { "key": "finalTextColor", "label": "Final Text Color", "type": "color", "group": "final" },
-    { "key": "borderWidth", "label": "Border Width", "type": "number", "min": 0, "max": 50, "step": 1, "group": "extra" },
-    { "key": "borderColor", "label": "Border Color", "type": "color", "group": "extra" }
+    { "key": "borderWidth", "label": "Border Width", "type": "number", "min": 0, "max": 50, "step": 1, "group": "overall" },
+    { "key": "borderColor", "label": "Border Color", "type": "color", "group": "overall" }
   ]
 }
