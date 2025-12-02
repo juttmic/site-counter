@@ -252,6 +252,26 @@ async function loadSkinsIntoModal() {
 let currentSkinMetadata = null;
 let currentHiddenOverrides = {};
 
+function setupCollapsibles(root) {
+  const scope = root || document;
+  scope.querySelectorAll('.collapsible-header').forEach(header => {
+    if (header.dataset.collapsibleBound === '1') return;
+    const targetSelector = header.dataset.target;
+    const body = targetSelector ? document.querySelector(targetSelector) : header.nextElementSibling;
+    if (!body) return;
+    const icon = header.querySelector('.collapse-icon');
+
+    header.style.cursor = 'pointer';
+    header.addEventListener('click', () => {
+      const isHidden = body.classList.toggle('d-none');
+      if (icon) {
+        icon.textContent = isHidden ? '+' : '−';
+      }
+    });
+    header.dataset.collapsibleBound = '1';
+  });
+}
+
 function renderFields(metadata, savedOverrides = {}) {
   currentSkinMetadata = metadata;
   currentHiddenOverrides = {};
@@ -391,6 +411,8 @@ function renderFields(metadata, savedOverrides = {}) {
 
   // Sync initial state to hidden input
   syncOverrides();
+  // Enable collapsible behavior for newly rendered groups
+  setupCollapsibles(fieldsWrap);
 }
 
 function syncOverrides() {
@@ -451,6 +473,9 @@ async function selectSkin(key) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Initial collapsible setup for static headers (general/customize cards)
+  setupCollapsibles(document);
+
   (async () => {
     try {
       const current = document.getElementById('skin_key').value;
@@ -482,24 +507,6 @@ document.addEventListener('DOMContentLoaded', () => {
       // swallow to avoid noisy console during navigation
     }
   })();
-});
-
-// Collapsible sections (general + customize + skin groups)
-document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('.collapsible-header').forEach(header => {
-    const targetSelector = header.dataset.target;
-    const body = targetSelector ? document.querySelector(targetSelector) : header.nextElementSibling;
-    if (!body) return;
-    const icon = header.querySelector('.collapse-icon');
-
-    header.style.cursor = 'pointer';
-    header.addEventListener('click', () => {
-      const isHidden = body.classList.toggle('d-none');
-      if (icon) {
-        icon.textContent = isHidden ? '+' : '−';
-      }
-    });
-  });
 });
 
 // AJAX save + preview polling
