@@ -261,9 +261,9 @@ async function loadSkinsIntoScrollBar() {
     bar.innerHTML = '';
 
     skins.forEach(s => {
-      const wrapper = document.createElement('label');
-      wrapper.className = 'd-flex flex-column align-items-center text-center border rounded p-2 bg-white flex-shrink-0';
-      wrapper.style.width = '140px';
+      const wrapper = document.createElement('div');
+      wrapper.className = 'skin-card d-flex flex-column align-items-center text-center border rounded p-2 bg-white flex-shrink-0';
+      wrapper.style.width = '220px';
       wrapper.style.cursor = 'pointer';
 
       const preview = document.createElement('div');
@@ -282,51 +282,34 @@ async function loadSkinsIntoScrollBar() {
       name.className = 'small text-truncate w-100';
       name.textContent = s.name;
 
-      const checkWrap = document.createElement('div');
-      checkWrap.className = 'form-check mt-1';
-
-      const checkbox = document.createElement('input');
-      checkbox.type = 'checkbox';
-      checkbox.name = 'skin_choice';
-      checkbox.value = s.key;
-      checkbox.className = 'form-check-input';
-      checkbox.id = `skin_choice_${s.key}`;
+      wrapper.appendChild(preview);
+      wrapper.appendChild(name);
 
       if (s.key === current) {
-        checkbox.checked = true;
-        wrapper.classList.add('border-primary');
+        wrapper.classList.add('border-primary', 'selected-skin');
       }
 
-      checkbox.addEventListener('change', async () => {
-        if (!checkbox.checked) {
-          // Prevent having zero selected; immediately re-check
-          checkbox.checked = true;
-          return;
-        }
-
-        // Uncheck all other checkboxes and remove highlight
-        bar.querySelectorAll('input[name="skin_choice"]').forEach(input => {
-          if (input !== checkbox) {
-            input.checked = false;
-          }
+      wrapper.addEventListener('click', async () => {
+        // Clear previous selection
+        bar.querySelectorAll('.skin-card.selected-skin').forEach(el => {
+          el.classList.remove('selected-skin', 'border-primary');
         });
-        bar.querySelectorAll('label.border-primary').forEach(el => el.classList.remove('border-primary'));
-        wrapper.classList.add('border-primary');
 
+        wrapper.classList.add('selected-skin', 'border-primary');
         await selectSkin(s.key);
       });
 
-      const checkLabel = document.createElement('label');
-      checkLabel.className = 'form-check-label small';
-      checkLabel.setAttribute('for', checkbox.id);
-      checkLabel.textContent = 'Select';
+      wrapper.addEventListener('mouseenter', () => {
+        if (!wrapper.classList.contains('selected-skin')) {
+          wrapper.classList.add('border-primary');
+        }
+      });
 
-      checkWrap.appendChild(checkbox);
-      checkWrap.appendChild(checkLabel);
-
-      wrapper.appendChild(preview);
-      wrapper.appendChild(name);
-      wrapper.appendChild(checkWrap);
+      wrapper.addEventListener('mouseleave', () => {
+        if (!wrapper.classList.contains('selected-skin')) {
+          wrapper.classList.remove('border-primary');
+        }
+      });
 
       bar.appendChild(wrapper);
     });
