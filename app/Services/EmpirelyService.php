@@ -57,7 +57,7 @@ class EmpirelyService
             'plan_code' => 'required|string',
             'trans_type' => 'required|string|in:SALE,TEST_SALE,RFND',
             'password' => 'nullable|string|min:5',
-            'send_email' => 'nullable|boolean',
+            'send_email' => 'nullable',
         ];
 
         // Validate the data
