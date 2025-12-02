@@ -249,6 +249,92 @@ async function loadSkinsIntoModal() {
   }
 }
 
+// Horizontal skin selector bar (top of form)
+async function loadSkinsIntoScrollBar() {
+  const bar = document.getElementById('skin_scroll_bar');
+  if (!bar) return;
+  bar.innerHTML = '<span class="text-muted small">Loading skins...</span>';
+
+  try {
+    const skins = await fetchJson('/api/skins');
+    const current = document.getElementById('skin_key').value;
+    bar.innerHTML = '';
+
+    skins.forEach(s => {
+      const wrapper = document.createElement('label');
+      wrapper.className = 'd-flex flex-column align-items-center text-center border rounded p-2 bg-white flex-shrink-0';
+      wrapper.style.width = '140px';
+      wrapper.style.cursor = 'pointer';
+
+      const preview = document.createElement('div');
+      preview.className = 'd-flex align-items-center justify-content-center bg-light border rounded w-100 mb-2';
+      preview.style.height = '96px';
+
+      const img = document.createElement('img');
+      img.src = s.preview_url;
+      img.alt = s.name;
+      img.className = 'img-fluid';
+      img.style.maxHeight = '92px';
+      img.style.objectFit = 'contain';
+      preview.appendChild(img);
+
+      const name = document.createElement('div');
+      name.className = 'small text-truncate w-100';
+      name.textContent = s.name;
+
+      const checkWrap = document.createElement('div');
+      checkWrap.className = 'form-check mt-1';
+
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.name = 'skin_choice';
+      checkbox.value = s.key;
+      checkbox.className = 'form-check-input';
+      checkbox.id = `skin_choice_${s.key}`;
+
+      if (s.key === current) {
+        checkbox.checked = true;
+        wrapper.classList.add('border-primary');
+      }
+
+      checkbox.addEventListener('change', async () => {
+        if (!checkbox.checked) {
+          // Prevent having zero selected; immediately re-check
+          checkbox.checked = true;
+          return;
+        }
+
+        // Uncheck all other checkboxes and remove highlight
+        bar.querySelectorAll('input[name="skin_choice"]').forEach(input => {
+          if (input !== checkbox) {
+            input.checked = false;
+          }
+        });
+        bar.querySelectorAll('label.border-primary').forEach(el => el.classList.remove('border-primary'));
+        wrapper.classList.add('border-primary');
+
+        await selectSkin(s.key);
+      });
+
+      const checkLabel = document.createElement('label');
+      checkLabel.className = 'form-check-label small';
+      checkLabel.setAttribute('for', checkbox.id);
+      checkLabel.textContent = 'Select';
+
+      checkWrap.appendChild(checkbox);
+      checkWrap.appendChild(checkLabel);
+
+      wrapper.appendChild(preview);
+      wrapper.appendChild(name);
+      wrapper.appendChild(checkWrap);
+
+      bar.appendChild(wrapper);
+    });
+  } catch (e) {
+    bar.innerHTML = '<span class="text-danger small">Failed to load skins</span>';
+  }
+}
+
 let currentSkinMetadata = null;
 let currentHiddenOverrides = {};
 
