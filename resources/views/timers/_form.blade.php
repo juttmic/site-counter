@@ -18,116 +18,118 @@
             @endif
 
             <div class="row g-3">
-                <!-- Left column -->
-                <div class="col-12 col-md-6">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <div class="mb-3">
-                                <label class="form-label">Title</label>
-                                <input type="text" name="title" value="{{ old('title', $timer->title ?? '') }}" class="form-control" required>
-                            </div>
-
-                            <div class="row g-3">
-                                <div class="col-12 col-sm-6">
-                                    <label class="form-label">Text Position</label>
-                                    <select name="text_position" class="form-select">
-                                        <option value="none" {{ ($isEdit && $timer->text_position === 'none') || !$isEdit ? 'selected' : '' }}>None</option>
-                                        <option value="top" {{ $isEdit && $timer->text_position === 'top' ? 'selected' : '' }}>Top</option>
-                                        <option value="bottom" {{ $isEdit && $timer->text_position === 'bottom' ? 'selected' : '' }}>Bottom</option>
-                                    </select>
-                                </div>
-                                <div class="col-12 col-sm-6">
-                                    <label class="form-label">Custom Text {{ !$isEdit ? '(optional)' : '' }}</label>
-                                    <input type="text" name="custom_text" class="form-control" maxlength="255" value="{{ old('custom_text', $timer->custom_text ?? '') }}">
-                                </div>
-                            </div>
-
-                            <div class="row g-3 mt-1">
-                                <div class="col-12 col-sm-6">
-                                    <label class="form-label">Status</label>
-                                    <select name="status" class="form-select">
-                                        <option value="active" {{ ($isEdit && $timer->status === 'active') || !$isEdit ? 'selected' : '' }}>Active</option>
-                                        <option value="inactive" {{ $isEdit && $timer->status === 'inactive' ? 'selected' : '' }}>Inactive</option>
-                                    </select>
-                                </div>
-                                <div class="col-12 col-sm-6">
-                                    <label class="form-label">Timer Type</label>
-                                    <select name="timer_type" id="timer_type" class="form-select" onchange="toggleInputs()">
-                                        <option value="fixed_date" {{ ($isEdit && $timer->timer_type === 'fixed_date') || !$isEdit ? 'selected' : '' }}>Fixed Date</option>
-                                        <option value="reload_based" {{ $isEdit && $timer->timer_type === 'reload_based' ? 'selected' : '' }}>Reload Based</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="row g-3 mt-1">
-                                <div class="col-12 col-sm-6">
-                                    <label class="form-label">Animated Seconds</label>
-                                    <input type="number"
-                                           name="animation_frame_limit"
-                                           class="form-control"
-                                           min="10"
-                                           max="60"
-                                           value="{{ old('animation_frame_limit', $timer->animation_frame_limit ?? 20) }}">
-                                    <div class="form-text">Animated duration for generated GIF (10-60 seconds).</div>
-                                </div>
-                            </div>
-
-                            <div id="fixed_date_input" class="mt-3 {{ $isEdit && $timer->timer_type !== 'fixed_date' ? 'd-none' : '' }}">
-                                <label class="form-label">Target DateTime</label>
-                                <input type="datetime-local" name="target_datetime" class="form-control"
-                                       value="{{ old('target_datetime', $isEdit && $timer->target_datetime ? $timer->target_datetime->format('Y-m-d\\TH:i') : '') }}">
-                            </div>
-
-                            <div id="duration_input" class="mt-3 {{ ($isEdit && $timer->timer_type !== 'reload_based') || !$isEdit ? 'd-none' : '' }}">
-                                <label class="form-label">Duration (seconds)</label>
-                                <input type="number" name="duration_seconds" class="form-control" min="1" max="604800"
-                                       value="{{ old('duration_seconds', $timer->duration_seconds ?? '') }}">
-                            </div>
-
-                            <div class="mt-3">
-                                <label class="form-label">Selected Skin</label>
-                                <input type="hidden" name="skin" id="skin_key" value="{{ $isEdit ? $timer->skin : '' }}" />
-                                <div class="mt-2 position-relative d-inline-flex align-items-center gap-2 border rounded p-2 bg-light">
-                                    <img id="selected_skin_preview" alt="Selected skin preview" class="border rounded bg-white d-none" style="height: 40px; width: auto;" />
-                                    <span id="selected_skin_label" class="small"></span>
-                                    
-                                </div>
-                                <button type="button" id="open_skin_modal" class="btn btn-sm btn-light border" title="Change skin" aria-label="Change skin" data-bs-toggle="modal" data-bs-target="#skinSelectModal">
-                                  Change Skin
-                              </button>
-                                <p class="form-text">Click the change icon to pick a different skin.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Right column -->
-                <div class="col-12 col-md-6">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <label class="form-label">Customize Skin</label>
-                            <div id="skin_overrides_section" class="mt-2 d-none">
-                                <div id="skin_fields" class="row g-3"></div>
-                            </div>
-                            <input type="hidden" name="skin_overrides" id="skin_overrides_input" value="{{ $isEdit ? json_encode($timer->skin_overrides ?? []) : '' }}" />
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Actions -->
-                <div class="col-12">
-                    <div class="d-flex gap-2 flex-wrap">
-                        <button id="save_btn" type="button" class="btn btn-primary">Save</button>
-                        {{-- <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary">{{ $isEdit ? 'Back' : 'Cancel' }}</a> --}}
-                    </div>
-                </div>
-
-                <!-- Preview full width -->
+                <!-- Top skin selector bar -->
                 <div class="col-12">
                     <div class="card">
                         <div class="card-body">
+                            <label class="form-label d-block mb-2">Choose a Skin</label>
+                            <input type="hidden" name="skin" id="skin_key" value="{{ $isEdit ? $timer->skin : '' }}" />
+                            <div id="skin_scroll_bar" class="d-flex gap-3 overflow-auto py-1">
+                                <!-- Skins will be injected here -->
+                            </div>
+                            <small class="text-muted d-block mt-2">Scroll horizontally to see more skins, then select one with the radio button.</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Left column: all form fields + customization -->
+                <div class="col-12 col-md-6">
+                    <div class="d-flex flex-column gap-3 h-100">
+                        <!-- General settings -->
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label">Title</label>
+                                    <input type="text" name="title" value="{{ old('title', $timer->title ?? '') }}" class="form-control" required>
+                                </div>
+
+                                <div class="row g-3">
+                                    <div class="col-12 col-sm-6">
+                                        <label class="form-label">Text Position</label>
+                                        <select name="text_position" class="form-select">
+                                            <option value="none" {{ ($isEdit && $timer->text_position === 'none') || !$isEdit ? 'selected' : '' }}>None</option>
+                                            <option value="top" {{ $isEdit && $timer->text_position === 'top' ? 'selected' : '' }}>Top</option>
+                                            <option value="bottom" {{ $isEdit && $timer->text_position === 'bottom' ? 'selected' : '' }}>Bottom</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-12 col-sm-6">
+                                        <label class="form-label">Custom Text {{ !$isEdit ? '(optional)' : '' }}</label>
+                                        <input type="text" name="custom_text" class="form-control" maxlength="255" value="{{ old('custom_text', $timer->custom_text ?? '') }}">
+                                    </div>
+                                </div>
+
+                                <div class="row g-3 mt-1">
+                                    <div class="col-12 col-sm-6">
+                                        <label class="form-label">Status</label>
+                                        <select name="status" class="form-select">
+                                            <option value="active" {{ ($isEdit && $timer->status === 'active') || !$isEdit ? 'selected' : '' }}>Active</option>
+                                            <option value="inactive" {{ $isEdit && $timer->status === 'inactive' ? 'selected' : '' }}>Inactive</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-12 col-sm-6">
+                                        <label class="form-label">Timer Type</label>
+                                        <select name="timer_type" id="timer_type" class="form-select" onchange="toggleInputs()">
+                                            <option value="fixed_date" {{ ($isEdit && $timer->timer_type === 'fixed_date') || !$isEdit ? 'selected' : '' }}>Fixed Date</option>
+                                            <option value="reload_based" {{ $isEdit && $timer->timer_type === 'reload_based' ? 'selected' : '' }}>Reload Based</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="row g-3 mt-1">
+                                    <div class="col-12 col-sm-6">
+                                        <label class="form-label">Animated Seconds</label>
+                                        <input type="number"
+                                               name="animation_frame_limit"
+                                               class="form-control"
+                                               min="10"
+                                               max="60"
+                                               value="{{ old('animation_frame_limit', $timer->animation_frame_limit ?? 20) }}">
+                                        <div class="form-text">Animated duration for generated GIF (10-60 seconds).</div>
+                                    </div>
+                                </div>
+
+                                <div id="fixed_date_input" class="mt-3 {{ $isEdit && $timer->timer_type !== 'fixed_date' ? 'd-none' : '' }}">
+                                    <label class="form-label">Target DateTime</label>
+                                    <input type="datetime-local" name="target_datetime" class="form-control"
+                                           value="{{ old('target_datetime', $isEdit && $timer->target_datetime ? $timer->target_datetime->format('Y-m-d\\TH:i') : '') }}">
+                                </div>
+
+                                <div id="duration_input" class="mt-3 {{ ($isEdit && $timer->timer_type !== 'reload_based') || !$isEdit ? 'd-none' : '' }}">
+                                    <label class="form-label">Duration (seconds)</label>
+                                    <input type="number" name="duration_seconds" class="form-control" min="1" max="604800"
+                                           value="{{ old('duration_seconds', $timer->duration_seconds ?? '') }}">
+                                </div>
+
+                                <div class="mt-3">
+                                    <label class="form-label">Selected Skin</label>
+                                    <div class="mt-2 position-relative d-inline-flex align-items-center gap-2 border rounded p-2 bg-light">
+                                        <img id="selected_skin_preview" alt="Selected skin preview" class="border rounded bg-white d-none" style="height: 40px; width: auto;" />
+                                        <span id="selected_skin_label" class="small"></span>
+                                    </div>
+                                    <p class="form-text mb-0">Use the skin bar above to change the selected skin.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Customize skin (grouped fields) -->
+                        <div class="card flex-grow-1">
+                            <div class="card-body">
+                                <label class="form-label">Customize Skin</label>
+                                <div id="skin_overrides_section" class="mt-2 d-none">
+                                    <div id="skin_fields" class="row g-3"></div>
+                                </div>
+                                <input type="hidden" name="skin_overrides" id="skin_overrides_input" value="{{ $isEdit ? json_encode($timer->skin_overrides ?? []) : '' }}" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right column: live preview -->
+                <div class="col-12 col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body d-flex flex-column">
                             <h3 class="h6 fw-semibold mb-3">Preview</h3>
-                            <div id="timer_preview" class="d-flex align-items-center justify-content-center rounded border bg-light mb-3" style="min-height: 400px;">
+                            <div id="timer_preview" class="d-flex align-items-center justify-content-center rounded border bg-light mb-3 flex-grow-1" style="min-height: 400px;">
                                 @if($isEdit && isset($timer->gif_url) && $timer->gif_url)
                                     <img src="{{ $timer->gif_url_with_cache_bust ? url($timer->gif_url_with_cache_bust) : url($timer->gif_url) }}" class="img-fluid" style="max-height: 400px; object-fit: contain;" alt="Timer preview" id="preview_gif">
                                 @else
@@ -164,28 +166,18 @@
                     </div>
                 </div>
 
+                <!-- Actions -->
+                <div class="col-12">
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button id="save_btn" type="button" class="btn btn-primary">Save</button>
+                        {{-- <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary">{{ $isEdit ? 'Back' : 'Cancel' }}</a> --}}
+                    </div>
+                </div>
+
             </div>
         </form>
     </div>
 </div>
-
-<!-- Skin Selection Modal (Bootstrap) -->
-<div class="modal fade" id="skinSelectModal" tabindex="-1" aria-labelledby="skinSelectModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="skinSelectModalLabel">Choose a Skin</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div id="skin_modal_grid" class="row g-3"></div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
-    </div>
 
 <script>
 // Font Awesome (for the change icon)
