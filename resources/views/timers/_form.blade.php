@@ -37,7 +37,11 @@
                     <div class="d-flex flex-column gap-3 h-100">
                         <!-- General settings -->
                         <div class="card">
-                            <div class="card-body">
+                            <div class="card-header d-flex justify-content-between align-items-center py-2 collapsible-header" data-target="#general_settings_body">
+                                <span class="fw-semibold small text-uppercase text-muted">General settings</span>
+                                <span class="collapse-icon small">−</span>
+                            </div>
+                            <div class="card-body collapsible-body" id="general_settings_body">
                                 <div class="mb-3">
                                     <label class="form-label">Title</label>
                                     <input type="text" name="title" value="{{ old('title', $timer->title ?? '') }}" class="form-control" required>
@@ -113,8 +117,11 @@
 
                         <!-- Customize skin (grouped fields) -->
                         <div class="card flex-grow-1">
-                            <div class="card-body">
-                                <label class="form-label">Customize Skin</label>
+                            <div class="card-header d-flex justify-content-between align-items-center py-2 collapsible-header" data-target="#customize_skin_body">
+                                <span class="fw-semibold small text-uppercase text-muted">Customize skin</span>
+                                <span class="collapse-icon small">−</span>
+                            </div>
+                            <div class="card-body collapsible-body" id="customize_skin_body">
                                 <div id="skin_overrides_section" class="mt-2 d-none">
                                     <div id="skin_fields" class="row g-3"></div>
                                 </div>
@@ -129,7 +136,7 @@
                     <div class="card h-100">
                         <div class="card-body d-flex flex-column">
                             <h3 class="h6 fw-semibold mb-3">Preview</h3>
-                            <div id="timer_preview" class="d-flex align-items-center justify-content-center rounded border bg-light mb-3 flex-grow-1" style="min-height: 400px;">
+                            <div id="timer_preview" class="d-flex align-items-center justify-content-center rounded border bg-light mb-3" style="min-height: 260px;">
                                 @if($isEdit && isset($timer->gif_url) && $timer->gif_url)
                                     <img src="{{ $timer->gif_url_with_cache_bust ? url($timer->gif_url_with_cache_bust) : url($timer->gif_url) }}" class="img-fluid" style="max-height: 400px; object-fit: contain;" alt="Timer preview" id="preview_gif">
                                 @else
@@ -363,10 +370,13 @@ function renderFields(metadata, savedOverrides = {}) {
     const card = document.createElement('div');
     card.className = 'card border shadow-sm mb-3';
     const header = document.createElement('div');
-    header.className = 'card-header bg-light py-2';
-    header.innerHTML = `<span class="text-uppercase text-muted fw-semibold small">${group.title}</span>`;
+    const bodyId = `skin_group_${group.key}`;
+    header.className = 'card-header bg-light py-2 collapsible-header';
+    header.dataset.target = `#${bodyId}`;
+    header.innerHTML = `<span class="text-uppercase text-muted fw-semibold small">${group.title}</span><span class="collapse-icon small float-end">−</span>`;
     const body = document.createElement('div');
-    body.className = 'card-body';
+    body.className = 'card-body collapsible-body';
+    body.id = bodyId;
     const row = document.createElement('div');
     row.className = 'row g-3';
     group.fields.forEach(({ field, value }) => {
@@ -464,15 +474,32 @@ document.addEventListener('DOMContentLoaded', () => {
           prevEl.classList.remove('d-none');
         }
       }
-      // Load skins when modal is shown
-      const modalEl = document.getElementById('skinSelectModal');
-      if (modalEl) {
-        modalEl.addEventListener('shown.bs.modal', loadSkinsIntoModal);
+      // Populate top horizontal skin bar
+      if (typeof loadSkinsIntoScrollBar === 'function') {
+        await loadSkinsIntoScrollBar();
       }
     } catch (e) {
       // swallow to avoid noisy console during navigation
     }
   })();
+});
+
+// Collapsible sections (general + customize + skin groups)
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.collapsible-header').forEach(header => {
+    const targetSelector = header.dataset.target;
+    const body = targetSelector ? document.querySelector(targetSelector) : header.nextElementSibling;
+    if (!body) return;
+    const icon = header.querySelector('.collapse-icon');
+
+    header.style.cursor = 'pointer';
+    header.addEventListener('click', () => {
+      const isHidden = body.classList.toggle('d-none');
+      if (icon) {
+        icon.textContent = isHidden ? '+' : '−';
+      }
+    });
+  });
 });
 
 // AJAX save + preview polling
