@@ -126,7 +126,19 @@
     scrollbar-width: none;     /* Firefox */
 }
 .scrollbar-hide::-webkit-scrollbar {
-    display: none;             /* Chrome, Safari, Opera */
+    width: 0;
+    height: 0;                 /* Chrome, Safari, Opera */
+}
+
+/* Extra specificity for the skin selector bar to ensure scrollbars are hidden */
+#skin_scroll_bar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;     /* Firefox */
+}
+#skin_scroll_bar::-webkit-scrollbar {
+    width: 0;
+    height: 0;                 /* Chrome, Safari, Opera */
+    background: transparent;
 }
 
 /* Dark mode text visibility */
