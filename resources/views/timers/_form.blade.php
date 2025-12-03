@@ -27,7 +27,7 @@
                             <div id="skin_scroll_bar" class="d-flex gap-3 overflow-auto py-1">
                                 <!-- Skins will be injected here -->
                             </div>
-                            <small class="text-muted d-block mt-2">Scroll horizontally to see more skins, then select one with the radio button.</small>
+                            
                         </div>
                     </div>
                 </div>
