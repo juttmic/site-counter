@@ -43,11 +43,10 @@
                                     <!-- Preview -->
                                     <div class="mt-3 position-relative border rounded overflow-hidden bg-light" style="height: 160px;">
                                       @if($timer->gif_url)
-                                        <img src="{{ url($timer->gif_url) }}" alt="Timer Preview" class="img-fluid w-100 h-100 object-fit-contain">
+                                        <img src="{{ url($timer->gif_url_with_cache_bust ?? $timer->gif_url) }}" alt="Timer Preview" class="img-fluid w-100 h-100 object-fit-contain">
                                       @else
                                         <div class="d-flex flex-column align-items-center justify-content-center h-100 text-muted">
-                                          <div class="spinner-border text-primary mb-2" role="status"></div>
-                                          <small>Generating Preview...</small>
+                                          <small>No GIF generated</small>
                                         </div>
                                       @endif
                                     </div>
@@ -67,6 +66,14 @@
                                         <a href="{{ route('timers.edit', $timer) }}" class="btn btn-outline-primary btn-sm" title="Edit" style="margin-left: 2px;">
                                           <i class="bi bi-pencil"></i>
                                         </a>
+                                        @if($timer->needsGifRegeneration())
+                                          <form action="{{ route('timers.generate-gif', $timer) }}" method="POST" class="d-inline" style="margin-left: 2px;">
+                                            @csrf
+                                            <button type="submit" class="btn btn-outline-warning btn-sm" title="{{ $timer->gif_url ? 'Regenerate GIF' : 'Generate GIF' }}">
+                                              <i class="bi bi-play-circle"></i>
+                                            </button>
+                                          </form>
+                                        @endif
                                         <form action="{{ route('timers.destroy', $timer) }}" method="POST" data-confirm="Delete this timer?" class="d-inline">
                                           @csrf
                                           @method('DELETE')

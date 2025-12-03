@@ -94,6 +94,33 @@ class Timer extends Model
         $separator = str_contains($this->gif_url, '?') ? '&' : '?';
         return $this->gif_url . $separator . 'v=' . urlencode($cacheToken);
     }
+
+    /**
+     * Determine if this timer's GIF is missing or out-of-date compared to the saved settings.
+     */
+    public function needsGifRegeneration(): bool
+    {
+        // No GIF at all
+        if (empty($this->gif_url)) {
+            return true;
+        }
+
+        // If we don't have a gif_* cache key, assume legacy behavior and treat as up-to-date
+        $cacheKey = (string) ($this->cache_key ?? '');
+        if (!str_starts_with($cacheKey, 'gif_')) {
+            return false;
+        }
+
+        // cache_key is like gif_{id}_{timestamp}
+        $parts = explode('_', $cacheKey);
+        $ts = (int) end($parts);
+        if (!$ts || !$this->updated_at) {
+            return false;
+        }
+
+        // If timer was updated after GIF generation, it needs regeneration
+        return $this->updated_at->getTimestamp() > $ts;
+    }
 }
 
 

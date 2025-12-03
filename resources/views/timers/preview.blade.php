@@ -12,7 +12,7 @@
                     @if($timer->gif_url)
                         <div class="d-flex justify-content-center mb-3">
                             <div class="d-flex align-items-center justify-content-center overflow-hidden bg-light border rounded" style="min-height: 260px;">
-                                <img src="{{ url($timer->gif_url) }}" class="img-fluid" style="max-height: 360px; object-fit: contain;" alt="preview">
+                                <img src="{{ url($timer->gif_url_with_cache_bust ?? $timer->gif_url) }}" class="img-fluid" style="max-height: 360px; object-fit: contain;" alt="preview">
                             </div>
                         </div>
                         @if($timer->status === 'active')
@@ -30,8 +30,16 @@
                     @else
                         <div class="alert alert-warning text-center mb-0">No GIF generated yet.</div>
                     @endif
-                    <div class="d-flex justify-content-center mt-4">
+                    <div class="d-flex justify-content-center mt-4 gap-2">
                         <a href="{{ route('timers.edit', $timer) }}" class="btn btn-outline-secondary">Edit</a>
+                        @if($timer->needsGifRegeneration())
+                            <form action="{{ route('timers.generate-gif', $timer) }}" method="POST">
+                                @csrf
+                                <button type="submit" class="btn btn-primary">
+                                    {{ $timer->gif_url ? 'Regenerate GIF' : 'Generate GIF' }}
+                                </button>
+                            </form>
+                        @endif
                     </div>
                 </div>
             </div>

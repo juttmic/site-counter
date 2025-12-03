@@ -101,6 +101,7 @@ class TimerController extends Controller
             'gif_url_with_cache_bust' => $timer->gif_url_with_cache_bust,
             'status' => $timer->status,
             'share_available' => $timer->isActive() && !empty($timer->gif_url),
+            'needs_regen' => $timer->needsGifRegeneration(),
         ]);
     }
 
@@ -150,6 +151,33 @@ class TimerController extends Controller
             ->header('Pragma', 'no-cache')
             ->header('Expires', '0')
             ->header('X-Timer-Id', (string) $timer->id);
+    }
+
+    public function generateGif(Timer $timer)
+    {
+        $this->authorizeOwner($timer);
+
+        // If GIF is already up-to-date, no need to regenerate
+        if (!$timer->needsGifRegeneration() && !empty($timer->gif_url)) {
+            if (request()->expectsJson()) {
+                return response()->json(['ok' => true, 'message' => 'GIF is already up to date.']);
+            }
+            return back()->with('status', 'GIF is already up to date.');
+        }
+
+        // Generate or regenerate the GIF synchronously for now
+        $job = new GenerateTimerGif($timer);
+        $job->handle();
+
+        if (request()->expectsJson()) {
+            return response()->json([
+                'ok' => true,
+                'gif_url' => $timer->fresh()->gif_url_with_cache_bust,
+                'message' => 'GIF generated successfully.',
+            ]);
+        }
+
+        return back()->with('status', 'GIF generated successfully.');
     }
 
     private function validateTimer(Request $request): array

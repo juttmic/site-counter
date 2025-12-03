@@ -320,6 +320,8 @@ async function loadSkinsIntoScrollBar() {
 let currentSkinMetadata = null;
 let currentHiddenOverrides = {};
 let lastSkinOverrides = {};
+let gifDirty = false;              // true = changes exist that are NOT in the latest GIF
+let suppressNextDirtyFlag = false; // used for initial auto-preview so it doesn't mark dirty
 
 function setupCollapsibles(root) {
   const scope = root || document;
@@ -590,6 +592,12 @@ async function generatePreviewFrame() {
       loader.classList.add('d-none');
       frameImg.src = url;
       frameImg.classList.remove('d-none');
+
+      // Mark GIF as out-of-date, unless this was the initial suppressed preview
+      if (!suppressNextDirtyFlag) {
+        gifDirty = true;
+      }
+      suppressNextDirtyFlag = false;
     } catch (e) {
       console.error('Preview generation error:', e);
       loader.classList.add('d-none');
@@ -670,11 +678,13 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       
       // Generate initial preview
+      suppressNextDirtyFlag = true;
       generatePreviewFrame();
     } catch (e) {
       // swallow to avoid noisy console during navigation
     }
   })();
+
 });
 
 // AJAX save + preview polling
@@ -754,6 +764,7 @@ async function ajaxSaveAndPoll() {
           timer: 1500,
           showConfirmButton: false
         }).then(() => {
+          gifDirty = false; // avoid leave warning when redirecting after successful create
           window.location.href = `/dashboard`;
         });
         return;
@@ -859,6 +870,8 @@ function startPreviewPolling(timerId) {
           }
           embedSection.classList.toggle('d-none', !json.share_available);
         }
+        // GIF is now up to date with latest changes
+        gifDirty = false;
       } else if (attempts >= maxAttempts) {
         clearInterval(interval);
         if (Swal.isVisible()) {
