@@ -580,8 +580,11 @@ async function generatePreviewFrame() {
         form.dataset.timerId = newTimerId;
       }
 
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
+      // Response body is plain text containing the URL to the saved PNG.
+      // On local, PHP warnings may be printed before the URL, so take the last non-empty line.
+      const text = await response.text();
+      const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+      const url = lines[lines.length - 1];
 
       // Hide loader, show frame
       loader.classList.add('d-none');

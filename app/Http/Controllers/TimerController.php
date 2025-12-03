@@ -9,6 +9,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 
 class TimerController extends Controller
 {
@@ -135,8 +136,15 @@ class TimerController extends Controller
         // Render a single PNG frame that matches the saved timer state
         $pngData = $generator->renderPngFrame($remaining, $skin, $timer->custom_text, $timer->text_position);
 
-        return response($pngData)
-            ->header('Content-Type', 'image/png')
+        // Save to a web-accessible location and return the URL as plain text.
+        // This avoids sending binary image data in the response, so any PHP warnings
+        // printed before output won't corrupt the PNG stream.
+        $path = "timer-frames/{$timer->id}.png";
+        Storage::disk('public')->put($path, $pngData);
+        $url = Storage::url($path);
+
+        return response(rtrim($url) . "\n")
+            ->header('Content-Type', 'text/plain')
             ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
             ->header('Pragma', 'no-cache')
             ->header('Expires', '0')
