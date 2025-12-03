@@ -5,8 +5,9 @@
 @endphp
 
 @if(isset($timer))
-<div class="py-1" style="border: 0px solid red; display: flex; justify-content: flex-end;">
-  <a href="{{ route('timers.preview', $timer) }}" class="btn btn-primary border rounded">Preview Timer</a>
+<div class="py-1" style="border: 0px solid red; display: flex; justify-content: flex-end; gap: 0.5rem;">
+  <a href="{{ route('timers.preview', $timer) }}" class="btn btn-outline-secondary border rounded">Preview Timer</a>
+  <button id="save_btn" type="button" class="btn btn-primary">Generate GIF</button>
 </div>
 @endif
 <div class="py-4 py-md-3">
@@ -175,7 +176,9 @@
                 <!-- Actions -->
                 <div class="col-12">
                     <div class="d-flex gap-2 flex-wrap">
-                        <button id="save_btn" type="button" class="btn btn-primary">Generate GIF</button>
+                        @unless($isEdit)
+                            <button id="save_btn" type="button" class="btn btn-primary">Generate GIF</button>
+                        @endunless
                         {{-- <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary">{{ $isEdit ? 'Back' : 'Cancel' }}</a> --}}
                     </div>
                 </div>
