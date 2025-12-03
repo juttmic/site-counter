@@ -25,10 +25,41 @@
                         <div class="card-body">
                             <label class="form-label d-block mb-2">Choose a Skin</label>
                             <input type="hidden" name="skin" id="skin_key" value="{{ $isEdit ? $timer->skin : '' }}" />
-                            <div id="skin_scroll_bar" class="d-flex gap-3 overflow-auto py-1">
-                                <!-- Skins will be injected here -->
+                            <div class="d-flex align-items-center gap-2">
+                                <button type="button" id="skin_scroll_prev" style="
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    /* color: red; */
+    font-weight: bolder;
+    font-size: xx-large;
+    border: unset !important;
+    padding: 0;
+    border: 0px solid red !important;
+" class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-chevron-left me-1"></i>
+                                </button>
+                                <div class="flex-grow-1 overflow-hidden">
+                                    <div id="skin_scroll_bar" class="d-flex gap-3 flex-nowrap overflow-auto scrollbar-hide py-1 w-100">
+                                        <!-- Skins will be injected here -->
+                                    </div>
+                                </div>
+                                <button type="button" id="skin_scroll_next" style="
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    /* color: red; */
+    font-weight: bolder;
+    font-size: xx-large;
+    border: unset !important;
+    padding: 0;
+    border: 0px solid red !important;
+" class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-chevron-right ms-1"></i>
+                                </button>
                             </div>
-                            
                         </div>
                     </div>
                 </div>
@@ -315,6 +346,37 @@ async function loadSkinsIntoScrollBar() {
 
       bar.appendChild(wrapper);
     });
+
+    // Wire up left/right arrow buttons to scroll the skin list
+    const prevBtn = document.getElementById('skin_scroll_prev');
+    const nextBtn = document.getElementById('skin_scroll_next');
+    const scrollAmount = 260; // approx width of one card including gap
+
+    const updateArrowState = () => {
+      if (!bar) return;
+      const maxScrollLeft = bar.scrollWidth - bar.clientWidth - 4; // small tolerance
+      const atStart = bar.scrollLeft <= 0;
+      const atEnd = bar.scrollLeft >= maxScrollLeft;
+      if (prevBtn) prevBtn.disabled = atStart;
+      if (nextBtn) nextBtn.disabled = atEnd;
+    };
+
+    if (prevBtn) {
+      prevBtn.addEventListener('click', () => {
+        bar.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+        setTimeout(updateArrowState, 300);
+      });
+    }
+    if (nextBtn) {
+      nextBtn.addEventListener('click', () => {
+        bar.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+        setTimeout(updateArrowState, 300);
+      });
+    }
+
+    bar.addEventListener('scroll', updateArrowState);
+    // Initialize arrow state
+    updateArrowState();
   } catch (e) {
     bar.innerHTML = '<span class="text-danger small">Failed to load skins</span>';
   }
