@@ -141,7 +141,8 @@ class TimerController extends Controller
         // printed before output won't corrupt the PNG stream.
         $path = "timer-frames/{$timer->id}.png";
         Storage::disk('public')->put($path, $pngData);
-        $url = Storage::url($path);
+        // Add cache-busting query to ensure browser loads the latest frame
+        $url = Storage::url($path) . '?v=' . time();
 
         return response(rtrim($url) . "\n")
             ->header('Content-Type', 'text/plain')
