@@ -319,6 +319,7 @@ async function loadSkinsIntoScrollBar() {
 
 let currentSkinMetadata = null;
 let currentHiddenOverrides = {};
+let lastSkinOverrides = {};
 
 function setupCollapsibles(root) {
   const scope = root || document;
@@ -521,6 +522,8 @@ function syncOverrides() {
   });
   
   document.getElementById('skin_overrides_input').value = JSON.stringify(data);
+  // Remember latest overrides so switching skins applies current user settings
+  lastSkinOverrides = data;
   // Generate preview when overrides change
   generatePreviewFrame();
 }
@@ -572,6 +575,11 @@ async function generatePreviewFrame() {
         throw new Error('Failed to generate preview');
       }
 
+      const newTimerId = response.headers.get('X-Timer-Id');
+      if (newTimerId) {
+        form.dataset.timerId = newTimerId;
+      }
+
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
 
@@ -592,8 +600,9 @@ async function selectSkin(key) {
   document.getElementById('selected_skin_label').textContent = key;
   try {
     const meta = await fetchJson(`/skins/${encodeURIComponent(key)}`);
-    // When changing skin, reset to new skin's defaults (overrides were for old skin)
-    renderFields(meta, {});
+    // When changing skin, apply the latest user overrides (carry settings across skins)
+    const baseOverrides = lastSkinOverrides || {};
+    renderFields(meta, baseOverrides);
     const prevEl = document.getElementById('selected_skin_preview');
     if (meta && meta.preview_url) {
       prevEl.src = meta.preview_url;
@@ -643,6 +652,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Edit mode: load existing skin with saved overrides
         const meta = await fetchJson(`/skins/${encodeURIComponent(current)}`);
         renderFields(meta, savedOverrides);
+        // Seed last overrides with saved values so switching skins keeps the user's base settings
+        lastSkinOverrides = savedOverrides;
         document.getElementById('selected_skin_label').textContent = current;
         if (meta && meta.preview_url) {
           const prevEl = document.getElementById('selected_skin_preview');
