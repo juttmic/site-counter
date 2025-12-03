@@ -137,22 +137,21 @@
                         <div class="card-body d-flex flex-column">
                             <h3 class="h6 fw-semibold mb-3">Preview</h3>
                             <div id="timer_preview" class="d-flex align-items-center justify-content-center rounded border bg-light mb-3" style="min-height: 260px;">
-                                @if($isEdit && isset($timer->gif_url) && $timer->gif_url)
-                                    <img src="{{ $timer->gif_url_with_cache_bust ? url($timer->gif_url_with_cache_bust) : url($timer->gif_url) }}" class="img-fluid" style="max-height: 400px; object-fit: contain;" alt="Timer preview" id="preview_gif">
-                                @else
-                                    <div class="text-center text-muted">
-                                        @if($isEdit)
-                                            <div class="spinner-border spinner-border-sm text-primary mb-2" role="status"><span class="visually-hidden">Loading...</span></div>
-                                            <p class="small mb-0">Generating GIF...</p>
-                                        @else
-                                            <svg class="mb-2" width="48" height="48" fill="currentColor" viewBox="0 0 16 16">
-                                                <path d="M8 3.993c-2.21 0-4 1.79-4 4 0 .705.183 1.368.504 1.944l-.837.837A5.002 5.002 0 1 1 13 8a4.978 4.978 0 0 1-1.944.504l-.837-.837c.576-.321 1.239-.504 1.944-.504 2.21 0 4 1.79 4 4s-1.79 4-4 4-4-1.79-4-4c0-.705.183-1.368.504-1.944l-.837-.837A3.993 3.993 0 0 0 8 3.993z"/>
-                                            </svg>
-                                            <p class="small mb-0">Timer preview will appear here</p>
-                                            <p class="text-muted small">Configure your timer settings to see the preview</p>
-                                        @endif
+                                <div id="preview_loader" class="text-center text-muted d-none">
+                                    <div class="spinner-border text-primary mb-2" role="status" style="width: 3rem; height: 3rem;">
+                                        <span class="visually-hidden">Loading...</span>
                                     </div>
-                                @endif
+                                    <p class="small mb-0">Generating preview...</p>
+                                </div>
+                                <img id="preview_frame" src="" class="img-fluid d-none" style="max-height: 400px; object-fit: contain;" alt="Timer preview">
+                                <img id="preview_gif" src="" class="img-fluid d-none" style="max-height: 400px; object-fit: contain;" alt="Timer GIF">
+                                <div id="preview_placeholder" class="text-center text-muted">
+                                    <svg class="mb-2" width="48" height="48" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M8 3.993c-2.21 0-4 1.79-4 4 0 .705.183 1.368.504 1.944l-.837.837A5.002 5.002 0 1 1 13 8a4.978 4.978 0 0 1-1.944.504l-.837-.837c.576-.321 1.239-.504 1.944-.504 2.21 0 4 1.79 4 4s-1.79 4-4 4-4-1.79-4-4c0-.705.183-1.368.504-1.944l-.837-.837A3.993 3.993 0 0 0 8 3.993z"/>
+                                    </svg>
+                                    <p class="small mb-0">Timer preview will appear here</p>
+                                    <p class="text-muted small">Configure your timer settings to see the preview</p>
+                                </div>
                             </div>
                             <div id="embed_section" class="mt-3 {{ $isEdit && isset($timer->gif_url) && $timer->gif_url && $timer->status === 'active' ? '' : 'd-none' }}">
                                 <h4 class="h6 fw-semibold mb-2">Embed Code</h4>
@@ -522,6 +521,70 @@ function syncOverrides() {
   });
   
   document.getElementById('skin_overrides_input').value = JSON.stringify(data);
+  // Generate preview when overrides change
+  generatePreviewFrame();
+}
+
+let previewTimeout = null;
+
+async function generatePreviewFrame() {
+  const form = document.getElementById('timer_form');
+  if (!form) return;
+
+  // Clear any pending preview generation
+  if (previewTimeout) {
+    clearTimeout(previewTimeout);
+  }
+
+  // Debounce: wait 300ms after last change before generating preview
+  previewTimeout = setTimeout(async () => {
+    const previewWrap = document.getElementById('timer_preview');
+    const loader = document.getElementById('preview_loader');
+    const frameImg = document.getElementById('preview_frame');
+    const gifImg = document.getElementById('preview_gif');
+    const placeholder = document.getElementById('preview_placeholder');
+
+    // Hide all, show loader
+    frameImg.classList.add('d-none');
+    gifImg.classList.add('d-none');
+    placeholder.classList.add('d-none');
+    loader.classList.remove('d-none');
+
+    try {
+      const formData = new FormData(form);
+      formData.append('skin', document.getElementById('skin_key').value || '');
+      formData.append('skin_overrides', document.getElementById('skin_overrides_input').value || '{}');
+
+      // Build URL with optional timer ID
+      const timerId = form.dataset.timerId;
+      const previewUrl = timerId ? `/timers/${timerId}/preview-frame` : '/timers/preview-frame';
+
+      const response = await fetch(previewUrl, {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || formData.get('_token')
+        },
+        body: formData
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate preview');
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+
+      // Hide loader, show frame
+      loader.classList.add('d-none');
+      frameImg.src = url;
+      frameImg.classList.remove('d-none');
+    } catch (e) {
+      console.error('Preview generation error:', e);
+      loader.classList.add('d-none');
+      placeholder.classList.remove('d-none');
+    }
+  }, 300);
 }
 
 async function selectSkin(key) {
@@ -536,6 +599,8 @@ async function selectSkin(key) {
       prevEl.src = meta.preview_url;
       prevEl.classList.remove('d-none');
     }
+    // Generate preview frame after skin change
+    generatePreviewFrame();
   } catch (e) {
     console.error(e);
   }
@@ -544,6 +609,23 @@ async function selectSkin(key) {
 document.addEventListener('DOMContentLoaded', () => {
   // Initial collapsible setup for static headers (general/customize cards)
   setupCollapsibles(document);
+
+  // Wire up form fields to trigger preview generation
+  const form = document.getElementById('timer_form');
+  if (form) {
+    const previewTriggerFields = [
+      'title', 'text_position', 'custom_text', 'status', 'timer_type',
+      'target_datetime', 'duration_seconds', 'animation_frame_limit'
+    ];
+    
+    previewTriggerFields.forEach(fieldName => {
+      const field = form.querySelector(`[name="${fieldName}"]`);
+      if (field) {
+        field.addEventListener('change', generatePreviewFrame);
+        field.addEventListener('input', generatePreviewFrame);
+      }
+    });
+  }
 
   (async () => {
     try {
@@ -572,6 +654,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (typeof loadSkinsIntoScrollBar === 'function') {
         await loadSkinsIntoScrollBar();
       }
+      
+      // Generate initial preview
+      generatePreviewFrame();
     } catch (e) {
       // swallow to avoid noisy console during navigation
     }
@@ -676,9 +761,16 @@ async function ajaxSaveAndPoll() {
 
 function startPreviewPolling(timerId) {
   const previewWrap = document.getElementById('timer_preview');
-  if (previewWrap) {
-    previewWrap.innerHTML = '<div class="text-center text-gray-500"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-2"></div><p class="text-sm">Generating GIF...</p></div>';
-  }
+  const loader = document.getElementById('preview_loader');
+  const frameImg = document.getElementById('preview_frame');
+  const gifImg = document.getElementById('preview_gif');
+  const placeholder = document.getElementById('preview_placeholder');
+  
+  // Hide frame, show loader
+  if (frameImg) frameImg.classList.add('d-none');
+  if (gifImg) gifImg.classList.add('d-none');
+  if (placeholder) placeholder.classList.add('d-none');
+  if (loader) loader.classList.remove('d-none');
   
   // Update Swal loading message if Swal is already open
   if (Swal.isVisible()) {
@@ -723,9 +815,14 @@ function startPreviewPolling(timerId) {
         const saveBtn = document.getElementById('save_btn');
         if (saveBtn) saveBtn.disabled = false;
         
-        if (previewWrap) {
+        // Hide loader and frame, show GIF
+        if (loader) loader.classList.add('d-none');
+        if (frameImg) frameImg.classList.add('d-none');
+        if (placeholder) placeholder.classList.add('d-none');
+        if (gifImg) {
           const previewSrc = json.gif_url_with_cache_bust || json.gif_url;
-          previewWrap.innerHTML = `<img src="${previewSrc}" class="max-w-full max-h-[400px] object-contain" alt="Timer preview" />`;
+          gifImg.src = previewSrc;
+          gifImg.classList.remove('d-none');
         }
         // update embed section
         if (embedInput) {

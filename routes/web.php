@@ -28,10 +28,13 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // Timers CRUD and preview
-    Route::resource('timers', TimerController::class)->except(['store','index', 'show']);
+    // Define specific routes before resource route to avoid conflicts
+    Route::post('timers/preview-frame', [TimerController::class, 'previewFrame'])->name('timers.preview-frame');
+    Route::put('timers/{timer}/preview-frame', [TimerController::class, 'previewFrame'])->name('timers.preview-frame-with-id');
     Route::post('timerss', [TimerController::class, 'store'])->name('timers.store');
     Route::get('timers/{timer}/preview', [TimerController::class, 'preview'])->name('timers.preview');
     Route::get('timers/{timer}/status', [TimerController::class, 'status'])->name('timers.status');
+    Route::resource('timers', TimerController::class)->except(['store','index', 'show']);
 
     // Skins gallery page (HTML)
     Route::get('/skins', [SkinController::class, 'gallery'])->name('skins.gallery');

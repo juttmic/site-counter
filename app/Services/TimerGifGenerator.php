@@ -161,7 +161,7 @@ class TimerGifGenerator
         $this->encodeAnimatedGif($frames, $outputPath, $animateFor);
     }
 
-    private function loadSkin(string $skinName): array
+    public function loadSkin(string $skinName): array
     {
         $path = resource_path('timerskins/' . $skinName . '.json');
         if (!file_exists($path)) {
@@ -314,7 +314,7 @@ class TimerGifGenerator
         return $frames;
     }
 
-    private function renderPngFrame(int $secondsRemaining, array $skin, ?string $customText, string $textPosition): string
+    public function renderPngFrame(int $secondsRemaining, array $skin, ?string $customText, string $textPosition): string
     {
         // Base timer dimensions from skin
         $timerW = max(120, (int) ($skin['width'] ?? 400));

@@ -118,6 +118,75 @@ class TimerController extends Controller
         ]);
     }
 
+    public function previewFrame(Request $request, TimerGifGenerator $generator, ?Timer $timer = null)
+    {
+        // If timer is provided, authorize ownership
+        if ($timer) {
+            $this->authorizeOwner($timer);
+        }
+        
+        // Validate required fields
+        $request->validate([
+            'skin' => ['required', 'string'],
+            'timer_type' => ['required', 'in:fixed_date,reload_based'],
+            'target_datetime' => ['nullable', 'date'],
+            'duration_seconds' => ['nullable', 'integer', 'min:1', 'max:604800'],
+            'text_position' => ['required', 'in:top,bottom,none'],
+            'custom_text' => ['nullable', 'string', 'max:255'],
+            'skin_overrides' => ['nullable', 'string'],
+        ]);
+
+        // Calculate remaining seconds
+        $timerType = $request->input('timer_type');
+        $remaining = 0;
+        
+        if ($timerType === 'fixed_date') {
+            $targetDatetime = $request->input('target_datetime');
+            if ($targetDatetime) {
+                $target = \Carbon\Carbon::parse($targetDatetime);
+                $remaining = max(0, $target->diffInSeconds(\Carbon\Carbon::now(), false));
+            } else {
+                // Default to 1 day for preview if no date set
+                $remaining = 86400;
+            }
+        } else {
+            // reload_based
+            $duration = (int) $request->input('duration_seconds', 3600);
+            $remaining = max(1, $duration);
+        }
+
+        // Load skin and apply overrides
+        $skinName = $request->input('skin');
+        $overridesRaw = $request->input('skin_overrides');
+        $overrides = [];
+        if (is_string($overridesRaw) && $overridesRaw !== '') {
+            try {
+                $decoded = json_decode($overridesRaw, true, 512, JSON_THROW_ON_ERROR);
+                if (is_array($decoded)) {
+                    $overrides = $decoded;
+                }
+            } catch (\Throwable $e) {
+                // Ignore malformed overrides
+            }
+        }
+
+        $skin = $generator->loadSkin($skinName);
+        if (!empty($overrides)) {
+            $skin = array_replace_recursive($skin, $overrides);
+        }
+
+        // Render single frame
+        $customText = $request->input('custom_text');
+        $textPosition = $request->input('text_position', 'none');
+        $pngData = $generator->renderPngFrame($remaining, $skin, $customText, $textPosition);
+
+        return response($pngData)
+            ->header('Content-Type', 'image/png')
+            ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
+            ->header('Pragma', 'no-cache')
+            ->header('Expires', '0');
+    }
+
     private function validateTimer(Request $request): array
     {
         $rules = [
