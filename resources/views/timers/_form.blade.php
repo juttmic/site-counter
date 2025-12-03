@@ -175,7 +175,7 @@
                 <!-- Actions -->
                 <div class="col-12">
                     <div class="d-flex gap-2 flex-wrap">
-                        <button id="save_btn" type="button" class="btn btn-primary">Save</button>
+                        <button id="save_btn" type="button" class="btn btn-primary">Generate GIF</button>
                         {{-- <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary">{{ $isEdit ? 'Back' : 'Cancel' }}</a> --}}
                     </div>
                 </div>
@@ -697,8 +697,10 @@ async function ajaxSaveAndPoll() {
     
     // Show confirmation dialog
     const confirmResult = await Swal.fire({
-      title: 'Save Timer?',
-      text: isEdit ? 'This will update your timer and regenerate the GIF.' : 'This will create a new timer.',
+      title: 'Generate GIF?',
+      text: isEdit
+        ? 'This will save your timer changes and generate a new GIF.'
+        : 'This will create a new timer and generate its GIF.',
       icon: 'question',
       showCancelButton: true,
       confirmButtonText: 'Yes, save it',
@@ -723,6 +725,8 @@ async function ajaxSaveAndPoll() {
     
     saveBtn.disabled = true;
     const formData = new FormData(form);
+    // Instruct the backend to generate the GIF as part of save
+    formData.append('generate_gif', '1');
     // Ensure _method is present for PUT
     const methodOverride = form.querySelector('input[name="_method"]');
     const isPut = methodOverride && methodOverride.value.toUpperCase() === 'PUT';
@@ -755,23 +759,71 @@ async function ajaxSaveAndPoll() {
       }
       form.dataset.timerId = timerId;
       
+      const previewWrap = document.getElementById('timer_preview');
+      const loader = document.getElementById('preview_loader');
+      const frameImg = document.getElementById('preview_frame');
+      const gifImg = document.getElementById('preview_gif');
+      const placeholder = document.getElementById('preview_placeholder');
+
+      // If we have a GIF URL, show it immediately in the preview
+      const gifUrl = json.gif_url_with_cache_bust || json.gif_url;
+      if (gifUrl && gifImg && loader && frameImg && placeholder) {
+        loader.classList.add('d-none');
+        frameImg.classList.add('d-none');
+        placeholder.classList.add('d-none');
+        gifImg.src = gifUrl;
+        gifImg.classList.remove('d-none');
+      }
+
+      // Update embed section visibility and value based on share availability
+      const embedSection = document.getElementById('embed_section');
+      const embedInput = document.getElementById('embed_input');
+      const embedNotice = document.getElementById('embed_notice');
+      if (embedSection && embedInput) {
+        if (json.share_available && gifUrl) {
+          const match = (gifUrl || '').match(/\/timers\/(\d+)\/([^\/]+)\.gif/);
+          if (match) {
+            const userId = match[1];
+            const filename = match[2];
+            const gettimerUrl = `${window.location.origin}/gettimer/${userId}/${filename}.gif`;
+            embedInput.value = `<img src="${gettimerUrl}" alt="Countdown Timer">`;
+          } else {
+            embedInput.value = `<img src="${gifUrl}" alt="Countdown Timer">`;
+          }
+          embedSection.classList.remove('d-none');
+          if (embedNotice) embedNotice.classList.add('d-none');
+        } else {
+          embedSection.classList.add('d-none');
+          if (embedNotice) embedNotice.classList.remove('d-none');
+        }
+      }
+
+      // Mark GIF as up to date
+      gifDirty = false;
+
       // For create mode: redirect after save
       if (form.dataset.isEdit !== '1') {
         Swal.fire({
           icon: 'success',
-          title: 'Timer Created!',
-          text: 'Redirecting to dashboard...',
+          title: 'Timer Created',
+          text: 'Your timer and GIF have been created.',
           timer: 1500,
           showConfirmButton: false
         }).then(() => {
-          gifDirty = false; // avoid leave warning when redirecting after successful create
           window.location.href = `/dashboard`;
         });
         return;
       }
       
-      // For edit mode: continue with polling (loader stays open)
-      startPreviewPolling(timerId);
+      // For edit mode: show success toast, keep user on page with updated GIF
+      Swal.fire({
+        icon: 'success',
+        title: 'GIF Generated',
+        text: 'Your timer has been saved and the GIF has been updated.',
+        timer: 1500,
+        showConfirmButton: false
+      });
+      saveBtn.disabled = false;
     } catch (e) {
       console.error(e);
       Swal.fire({

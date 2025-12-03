@@ -40,15 +40,23 @@ class TimerController extends Controller
         $timer->cache_key = 'timer_' . $timer->id . '_' . bin2hex(random_bytes(3));
         $timer->save();
 
+        // Optionally generate GIF immediately when requested (e.g. from Generate GIF button)
+        if ($request->boolean('generate_gif')) {
+            $job = new GenerateTimerGif($timer);
+            $job->handle();
+        }
+
         if ($request->expectsJson()) {
             return response()->json([
                 'id' => $timer->id,
                 'gif_url' => $timer->gif_url,
-                'message' => 'Timer created.'
+                'gif_url_with_cache_bust' => $timer->gif_url_with_cache_bust,
+                'share_available' => $timer->isActive() && !empty($timer->gif_url),
+                'message' => 'Timer created.',
             ]);
         }
 
-        return redirect()->route('timers.edit', $timer)->with('status', 'Timer created! GIF is being generated in the background.');
+        return redirect()->route('timers.edit', $timer)->with('status', 'Timer created!');
     }
 
     public function edit(Timer $timer)
@@ -65,15 +73,23 @@ class TimerController extends Controller
         $timer->fill($data);
         $timer->save();
 
+        // Optionally generate GIF immediately when requested (e.g. from Generate GIF button)
+        if ($request->boolean('generate_gif')) {
+            $job = new GenerateTimerGif($timer);
+            $job->handle();
+        }
+
         if ($request->expectsJson()) {
             return response()->json([
                 'id' => $timer->id,
                 'gif_url' => $timer->gif_url,
-                'message' => 'Timer updated.'
+                'gif_url_with_cache_bust' => $timer->gif_url_with_cache_bust,
+                'share_available' => $timer->isActive() && !empty($timer->gif_url),
+                'message' => 'Timer updated.',
             ]);
         }
 
-        return redirect()->route('timers.edit', $timer)->with('status', 'Timer updated! GIF is being regenerated in the background.');
+        return redirect()->route('timers.edit', $timer)->with('status', 'Timer updated!');
     }
 
     public function destroy(Timer $timer): RedirectResponse
