@@ -626,6 +626,7 @@ async function generatePreviewFrame() {
       const timerId = form.dataset.timerId;
       const previewUrl = timerId ? `/timers/${timerId}/preview-frame` : '/timers/preview-frame';
 console.log(formData);
+formData.set('_method', 'POST');
       const response = await fetch(previewUrl, {
         method: 'POST',
         headers: {
