@@ -79,21 +79,6 @@
                                     <input type="text" name="title" value="{{ old('title', $timer->title ?? '') }}" class="form-control" required>
                                 </div>
 
-                                <div class="row g-3">
-                                    <div class="col-12 col-sm-6">
-                                        <label class="form-label">Text Position</label>
-                                        <select name="text_position" class="form-select">
-                                            <option value="none" {{ ($isEdit && $timer->text_position === 'none') || !$isEdit ? 'selected' : '' }}>None</option>
-                                            <option value="top" {{ $isEdit && $timer->text_position === 'top' ? 'selected' : '' }}>Top</option>
-                                            <option value="bottom" {{ $isEdit && $timer->text_position === 'bottom' ? 'selected' : '' }}>Bottom</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-12 col-sm-6">
-                                        <label class="form-label">Custom Text {{ !$isEdit ? '(optional)' : '' }}</label>
-                                        <input type="text" name="custom_text" class="form-control" maxlength="255" value="{{ old('custom_text', $timer->custom_text ?? '') }}">
-                                    </div>
-                                </div>
-
                                 <div class="row g-3 mt-1">
                                     <div class="col-12 col-sm-6">
                                         <label class="form-label">Status</label>
@@ -108,19 +93,6 @@
                                             <option value="fixed_date" {{ ($isEdit && $timer->timer_type === 'fixed_date') || !$isEdit ? 'selected' : '' }}>Fixed Date</option>
                                             <option value="reload_based" {{ $isEdit && $timer->timer_type === 'reload_based' ? 'selected' : '' }}>Reload Based</option>
                                         </select>
-                                    </div>
-                                </div>
-
-                                <div class="row g-3 mt-1">
-                                    <div class="col-12 col-sm-6">
-                                        <label class="form-label">Animated Seconds</label>
-                                        <input type="number"
-                                               name="animation_frame_limit"
-                                               class="form-control"
-                                               min="10"
-                                               max="60"
-                                               value="{{ old('animation_frame_limit', $timer->animation_frame_limit ?? 20) }}">
-                                        <div class="form-text">Animated duration for generated GIF (10-60 seconds).</div>
                                     </div>
                                 </div>
 
@@ -154,6 +126,41 @@
                                 <span class="collapse-icon small">−</span>
                             </div>
                             <div class="card-body collapsible-body" id="customize_skin_body">
+                                <!-- Static customization fields (timer-level but displayed here) -->
+                                <div class="card border shadow-sm mb-3">
+                                    <div class="card-header bg-light py-2 collapsible-header" data-target="#skin_custom_text_group">
+                                        <span class="text-uppercase text-muted fw-semibold small">Text & Animation</span>
+                                        <span class="collapse-icon small float-end">−</span>
+                                    </div>
+                                    <div class="card-body collapsible-body" id="skin_custom_text_group">
+                                        <div class="row g-3">
+                                            <div class="col-12 col-sm-6">
+                                                <label class="form-label small mb-1">Text Position</label>
+                                                <select name="text_position" class="form-select">
+                                                    <option value="none" {{ ($isEdit && $timer->text_position === 'none') || !$isEdit ? 'selected' : '' }}>None</option>
+                                                    <option value="top" {{ $isEdit && $timer->text_position === 'top' ? 'selected' : '' }}>Top</option>
+                                                    <option value="bottom" {{ $isEdit && $timer->text_position === 'bottom' ? 'selected' : '' }}>Bottom</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-12 col-sm-6">
+                                                <label class="form-label small mb-1">Custom Text {{ !$isEdit ? '(optional)' : '' }}</label>
+                                                <input type="text" name="custom_text" class="form-control" maxlength="255" value="{{ old('custom_text', $timer->custom_text ?? '') }}">
+                                            </div>
+                                            <div class="col-12 col-sm-6">
+                                                <label class="form-label small mb-1">Animated Seconds</label>
+                                                <input type="number"
+                                                       name="animation_frame_limit"
+                                                       class="form-control"
+                                                       min="10"
+                                                       max="60"
+                                                       value="{{ old('animation_frame_limit', $timer->animation_frame_limit ?? 20) }}">
+                                                <div class="form-text small">Animated duration for generated GIF (10-60 seconds).</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Dynamic skin customization fields -->
                                 <div id="skin_overrides_section" class="mt-2 d-none">
                                     <div id="skin_fields" class="row g-3"></div>
                                 </div>
