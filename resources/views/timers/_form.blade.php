@@ -15,7 +15,7 @@
         <form id="timer_form" method="POST" action="{{ $formAction }}" data-timer-id="{{ $isEdit ? $timer->id : '' }}" data-is-edit="{{ $isEdit ? '1' : '0' }}" data-has-gif="{{ $isEdit && !empty($timer->gif_url) ? '1' : '0' }}" data-timer-status="{{ $isEdit ? $timer->status : 'active' }}">
             @csrf
             @if($isEdit)
-                {{-- @method('PUT') --}}
+                @method('PUT')
             @endif
 
             <div class="row g-3">
@@ -625,7 +625,7 @@ async function generatePreviewFrame() {
       // Build URL with optional timer ID
       const timerId = form.dataset.timerId;
       const previewUrl = timerId ? `/timers/${timerId}/preview-frame` : '/timers/preview-frame';
-
+console.log(formData);
       const response = await fetch(previewUrl, {
         method: 'POST',
         headers: {
