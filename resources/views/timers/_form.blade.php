@@ -15,7 +15,7 @@
         <form id="timer_form" method="POST" action="{{ $formAction }}" data-timer-id="{{ $isEdit ? $timer->id : '' }}" data-is-edit="{{ $isEdit ? '1' : '0' }}" data-has-gif="{{ $isEdit && !empty($timer->gif_url) ? '1' : '0' }}" data-timer-status="{{ $isEdit ? $timer->status : 'active' }}">
             @csrf
             @if($isEdit)
-                @method('PUT')
+                {{-- @method('PUT') --}}
             @endif
 
             <div class="row g-3">
