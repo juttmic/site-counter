@@ -4,12 +4,12 @@
     $formMethod = $isEdit ? 'PUT' : 'POST';
 @endphp
 
-@if(isset($timer))
 <div class="py-1" style="border: 0px solid red; display: flex; justify-content: flex-end; gap: 0.5rem;">
-  <a href="{{ route('timers.preview', $timer) }}" class="btn btn-outline-secondary border rounded">Preview Timer</a>
+  @if(isset($timer))
+    <a href="{{ route('timers.preview', $timer) }}" class="btn btn-outline-secondary border rounded">Preview Timer</a>
+  @endif
   <button id="save_btn" type="button" class="btn btn-primary">Generate GIF</button>
 </div>
-@endif
 <div class="py-4 py-md-3">
     <div class="container-fluid">
         <form id="timer_form" method="POST" action="{{ $formAction }}" data-timer-id="{{ $isEdit ? $timer->id : '' }}" data-is-edit="{{ $isEdit ? '1' : '0' }}" data-has-gif="{{ $isEdit && !empty($timer->gif_url) ? '1' : '0' }}" data-timer-status="{{ $isEdit ? $timer->status : 'active' }}">
@@ -207,10 +207,7 @@
                 <!-- Actions -->
                 <div class="col-12">
                     <div class="d-flex gap-2 flex-wrap">
-                        @unless($isEdit)
-                            <button id="save_btn" type="button" class="btn btn-primary">Generate GIF</button>
-                        @endunless
-                        {{-- <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary">{{ $isEdit ? 'Back' : 'Cancel' }}</a> --}}
+                        {{-- Additional actions can go here if needed; primary Generate GIF button is in the top header --}}
                     </div>
                 </div>
 

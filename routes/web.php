@@ -30,7 +30,7 @@ Route::middleware(['auth', 'active'])->group(function () {
     // Timers CRUD and preview
     // Define specific routes before resource route to avoid conflicts
     Route::post('timers/preview-frame', [TimerController::class, 'previewFrame'])->name('timers.preview-frame');
-    Route::put('timers/{timer}/preview-frame', [TimerController::class, 'previewFrame'])->name('timers.preview-frame-with-id');
+    Route::post('timers/{timer}/preview-frame', [TimerController::class, 'previewFrame'])->name('timers.preview-frame-with-id');
     Route::post('timers/{timer}/generate-gif', [TimerController::class, 'generateGif'])->name('timers.generate-gif');
     Route::post('timerss', [TimerController::class, 'store'])->name('timers.store');
     Route::get('timers/{timer}/preview', [TimerController::class, 'preview'])->name('timers.preview');
