@@ -165,7 +165,7 @@
 
                 <!-- Right column: live preview -->
                 <div class="col-12 col-md-6">
-                    <div class="card h-100">
+                    <div class="card">
                         <div class="card-body d-flex flex-column">
                             <h3 class="h6 fw-semibold mb-3">Preview</h3>
                             <div id="timer_preview" class="d-flex align-items-center justify-content-center rounded border bg-light mb-3" style="min-height: 260px;">
