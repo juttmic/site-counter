@@ -157,7 +157,7 @@
                                 <div id="fixed_date_input" class="mt-3 {{ $isEdit && $timer->timer_type !== 'fixed_date' ? 'd-none' : '' }}">
                                     <label class="form-label">Target DateTime</label>
                                     <input type="datetime-local" name="target_datetime" class="form-control"
-                                           value="{{ old('target_datetime', $isEdit && $timer->target_datetime ? $timer->target_datetime->format('Y-m-d\\TH:i') : '') }}">
+                                           value="{{ old('target_datetime', $isEdit && $timer->target_datetime ? $timer->target_datetime->format('Y-m-d\\TH:i') : ($isEdit ? '' : now()->addDays(3)->format('Y-m-d\\TH:i'))) }}">
                                 </div>
 
                                 <div id="duration_input" class="mt-3 {{ ($isEdit && $timer->timer_type !== 'reload_based') || !$isEdit ? 'd-none' : '' }}">

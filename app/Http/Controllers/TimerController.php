@@ -35,6 +35,16 @@ class TimerController extends Controller
         $data = $this->validateTimer($request);
         $data['user_id'] = Auth::id();
 
+        // Set defaults for new timers
+        if (!isset($data['timer_type']) || empty($data['timer_type'])) {
+            $data['timer_type'] = 'fixed_date';
+        }
+        
+        if ($data['timer_type'] === 'fixed_date' && empty($data['target_datetime'])) {
+            // Set target date to 3 days in the future
+            $data['target_datetime'] = now()->addDays(3)->format('Y-m-d\TH:i');
+        }
+
         $timer = new Timer($data);
         $timer->gif_url = '';
         $timer->cache_key = 'timer_' . $timer->id . '_' . bin2hex(random_bytes(3));
@@ -200,7 +210,7 @@ class TimerController extends Controller
     {
         $rules = [
             'title' => ['required', 'string', 'max:255'],
-            'timer_type' => ['required', 'in:fixed_date,reload_based'],
+            'timer_type' => ['nullable', 'in:fixed_date,reload_based'], // Made nullable to allow defaults
             'target_datetime' => ['nullable', 'date'],
             'duration_seconds' => ['nullable', 'integer', 'min:1', 'max:604800'],
             'skin' => ['required', 'string'],
@@ -212,6 +222,11 @@ class TimerController extends Controller
         ];
 
         $data = $request->validate($rules);
+        
+        // Set default timer_type if not provided
+        if (empty($data['timer_type'])) {
+            $data['timer_type'] = 'fixed_date';
+        }
 
         if ($data['timer_type'] === 'fixed_date') {
             $data['duration_seconds'] = null;
