@@ -41,6 +41,64 @@
   .mine.selected-skin .skin-checkmark:not(.selected-checkmark) {
     opacity: 0;
   }
+  #skin_scroll_bar {
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+  .skin-card {
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  #skin_scroll_prev,
+  #skin_scroll_next {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    padding: 0;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+    position: absolute;
+    bottom: 10px;
+    z-index: 10;
+  }
+  #skin_scroll_prev {
+    background-color: #e9ecef;
+    color: #495057;
+    left: 10px;
+  }
+  #skin_scroll_prev:hover:not(:disabled) {
+    background-color: #dee2e6;
+  }
+  #skin_scroll_next {
+    background-color: #000000;
+    color: #ffffff;
+    right: 10px;
+  }
+  #skin_scroll_next:hover:not(:disabled) {
+    background-color: #333333;
+  }
+  #skin_scroll_prev:disabled,
+  #skin_scroll_next:disabled {
+    opacity: 0.3;
+    cursor: not-allowed !important;
+  }
+  #skin_scroll_prev i,
+  #skin_scroll_next i {
+    font-size: 1.2rem;
+    margin: 0;
+  }
 </style>
 <div class="py-1" style="border: 0px solid red; display: flex; justify-content: flex-end; gap: 0.5rem;">
   @if(isset($timer))
@@ -63,41 +121,23 @@
                         <div class="card-body">
                             <label class="form-label d-block mb-2">Choose a Skin</label>
                             <input type="hidden" name="skin" id="skin_key" value="{{ $isEdit ? $timer->skin : '' }}" />
-                            <div class="d-flex align-items-center gap-2">
-                                <button type="button" id="skin_scroll_prev" style="
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-    /* color: red; */
-    font-weight: bolder;
-    font-size: xx-large;
-    border: unset !important;
-    padding: 0;
-    border: 0px solid red !important;
-" class="btn btn-sm btn-outline-secondary">
-                                    <i class="bi bi-chevron-left me-1"></i>
-                                </button>
-                                <div class="flex-grow-1 overflow-hidden">
+                            <div class="position-relative" style="min-height: 120px;">
+                                <div class="overflow-hidden">
                                     <div id="skin_scroll_bar" class="d-flex gap-3 flex-nowrap overflow-auto scrollbar-hide py-1 w-100">
                                         <!-- Skins will be injected here -->
                                     </div>
                                 </div>
-                                <button type="button" id="skin_scroll_next" style="
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-    /* color: red; */
-    font-weight: bolder;
-    font-size: xx-large;
-    border: unset !important;
-    padding: 0;
-    border: 0px solid red !important;
-" class="btn btn-sm btn-outline-secondary">
-                                    <i class="bi bi-chevron-right ms-1"></i>
+                                <button type="button" id="skin_scroll_prev" class="btn">
+                                    <i class="bi bi-chevron-left"></i>
+                                </button>
+                                <button type="button" id="skin_scroll_next" class="btn">
+                                    <i class="bi bi-chevron-right"></i>
                                 </button>
                             </div>
+                            <div class="owl-nav">
+                              <div class="owl-prev disabled">
+                                <i class="fa fa-arrow-circle-o-left" aria-hidden="true"></i> Prev</div>
+                                <div class="owl-next">Next <i class="fa fa-arrow-circle-o-right" aria-hidden="true"></i></div></div>
                         </div>
                     </div>
                 </div>
@@ -335,6 +375,19 @@ async function loadSkinsIntoScrollBar() {
     const current = document.getElementById('skin_key').value;
     bar.innerHTML = '';
 
+    // Define helper functions before creating cards
+    const getCardWidth = () => {
+      const firstCard = bar.querySelector('.skin-card');
+      if (!firstCard) return 296; // fallback: 280px card + 16px gap
+      // Get actual rendered width including padding and border
+      const cardRect = firstCard.getBoundingClientRect();
+      const cardWidth = cardRect.width;
+      // Get gap from computed style of the container (gap-3 = 1rem = 16px in Bootstrap 5)
+      const barStyle = window.getComputedStyle(bar);
+      const gap = parseFloat(barStyle.gap) || 16; // fallback to 16px if not found
+      return cardWidth + gap;
+    };
+
     skins.forEach(s => {
       const wrapper = document.createElement('div');
       wrapper.className = 'skin-card mine d-flex flex-column align-items-center text-center rounded bg-white flex-shrink-0';
@@ -386,6 +439,28 @@ async function loadSkinsIntoScrollBar() {
         if (checkmark) {
           checkmark.classList.add('selected-checkmark');
         }
+        
+        // Scroll selected card into view
+        setTimeout(() => {
+          const cardRect = wrapper.getBoundingClientRect();
+          const barRect = bar.getBoundingClientRect();
+          const containerWidth = bar.clientWidth;
+          
+          // Check if card is fully visible
+          const cardLeft = cardRect.left - barRect.left;
+          const cardRight = cardLeft + cardRect.width;
+          
+          if (cardLeft < 0) {
+            // Card is cut off on the left, scroll to show it
+            const targetScroll = bar.scrollLeft + cardLeft - 12;
+            bar.scrollTo({ left: Math.max(0, targetScroll), behavior: 'smooth' });
+          } else if (cardRight > containerWidth) {
+            // Card is cut off on the right, scroll to show it
+            const targetScroll = bar.scrollLeft + (cardRight - containerWidth) + 12;
+            bar.scrollTo({ left: Math.min(targetScroll, bar.scrollWidth - containerWidth), behavior: 'smooth' });
+          }
+        }, 100);
+        
         await selectSkin(s.key);
       });
 
@@ -394,36 +469,133 @@ async function loadSkinsIntoScrollBar() {
       bar.appendChild(wrapper);
     });
 
-    // Wire up left/right arrow buttons to scroll the skin list
+    // Wire up left/right arrow buttons to scroll the skin list with snap
     const prevBtn = document.getElementById('skin_scroll_prev');
     const nextBtn = document.getElementById('skin_scroll_next');
-    const scrollAmount = 260; // approx width of one card including gap
+
+    const scrollToCard = (direction) => {
+      if (!bar || bar.children.length === 0) return;
+      
+      const cardWidth = getCardWidth();
+      const containerWidth = bar.clientWidth;
+      const currentScroll = bar.scrollLeft;
+      
+      // Calculate how many complete cards fit in the viewport
+      const cardsPerView = Math.floor(containerWidth / cardWidth);
+      
+      let targetScroll;
+      if (direction === 'next') {
+        // Scroll forward by one card width to show next card(s)
+        targetScroll = currentScroll + cardWidth;
+      } else {
+        // Scroll backward by one card width to show previous card(s)
+        targetScroll = currentScroll - cardWidth;
+      }
+      
+      // Snap to card boundary
+      targetScroll = Math.round(targetScroll / cardWidth) * cardWidth;
+      
+      // Ensure we don't scroll beyond boundaries
+      const maxScroll = Math.max(0, bar.scrollWidth - containerWidth);
+      targetScroll = Math.max(0, Math.min(targetScroll, maxScroll));
+      
+      bar.scrollTo({ left: targetScroll, behavior: 'smooth' });
+    };
+
+    const scrollToSelectedCard = () => {
+      const selectedCard = bar.querySelector('.skin-card.selected-skin');
+      if (!selectedCard) return;
+      
+      const cardWidth = getCardWidth();
+      const containerWidth = bar.clientWidth;
+      const cardRect = selectedCard.getBoundingClientRect();
+      const barRect = bar.getBoundingClientRect();
+      
+      // Check if card is already fully visible
+      const cardLeft = cardRect.left - barRect.left + bar.scrollLeft;
+      const cardRight = cardLeft + cardRect.width;
+      const visibleLeft = bar.scrollLeft;
+      const visibleRight = bar.scrollLeft + containerWidth;
+      
+      // If card is not fully visible, scroll to show it
+      if (cardLeft < visibleLeft) {
+        // Card is cut off on the left, scroll to show it
+        bar.scrollTo({ left: Math.max(0, cardLeft - 12), behavior: 'smooth' });
+      } else if (cardRight > visibleRight) {
+        // Card is cut off on the right, scroll to show it
+        const targetScroll = cardRight - containerWidth + 12;
+        bar.scrollTo({ left: Math.min(targetScroll, bar.scrollWidth - containerWidth), behavior: 'smooth' });
+      }
+    };
 
     const updateArrowState = () => {
       if (!bar) return;
-      const maxScrollLeft = bar.scrollWidth - bar.clientWidth - 4; // small tolerance
-      const atStart = bar.scrollLeft <= 0;
-      const atEnd = bar.scrollLeft >= maxScrollLeft;
-      if (prevBtn) prevBtn.disabled = atStart;
-      if (nextBtn) nextBtn.disabled = atEnd;
+      const containerWidth = bar.clientWidth;
+      const maxScrollLeft = bar.scrollWidth - containerWidth;
+      const atStart = bar.scrollLeft <= 1; // small tolerance
+      const atEnd = bar.scrollLeft >= maxScrollLeft - 1; // small tolerance
+      
+      if (prevBtn) {
+        prevBtn.disabled = atStart;
+        prevBtn.style.opacity = atStart ? '0.5' : '1';
+        prevBtn.style.cursor = atStart ? 'not-allowed' : 'pointer';
+      }
+      if (nextBtn) {
+        nextBtn.disabled = atEnd;
+        nextBtn.style.opacity = atEnd ? '0.5' : '1';
+        nextBtn.style.cursor = atEnd ? 'not-allowed' : 'pointer';
+      }
     };
+
+    // Handle snap scrolling after manual scroll (touch/mouse drag)
+    let scrollTimeout;
+    let isScrolling = false;
+    
+    bar.addEventListener('scroll', () => {
+      clearTimeout(scrollTimeout);
+      updateArrowState();
+      
+      // Only snap if user manually scrolled (not programmatic scroll)
+      if (!isScrolling) {
+        scrollTimeout = setTimeout(() => {
+          // Snap to nearest card boundary
+          const cardWidth = getCardWidth();
+          const currentScroll = bar.scrollLeft;
+          const snappedScroll = Math.round(currentScroll / cardWidth) * cardWidth;
+          
+          isScrolling = true;
+          bar.scrollTo({ left: snappedScroll, behavior: 'smooth' });
+          setTimeout(() => { isScrolling = false; }, 300);
+        }, 150);
+      }
+    });
 
     if (prevBtn) {
       prevBtn.addEventListener('click', () => {
-        bar.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
-        setTimeout(updateArrowState, 300);
+        isScrolling = true;
+        scrollToCard('prev');
+        setTimeout(() => { isScrolling = false; }, 300);
       });
     }
     if (nextBtn) {
       nextBtn.addEventListener('click', () => {
-        bar.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-        setTimeout(updateArrowState, 300);
+        isScrolling = true;
+        scrollToCard('next');
+        setTimeout(() => { isScrolling = false; }, 300);
       });
     }
 
-    bar.addEventListener('scroll', updateArrowState);
-    // Initialize arrow state
-    updateArrowState();
+    // Initialize arrow state and scroll to selected card
+    setTimeout(() => {
+      updateArrowState();
+      scrollToSelectedCard();
+    }, 200);
+    
+    // Update on window resize
+    window.addEventListener('resize', () => {
+      updateArrowState();
+      scrollToSelectedCard();
+    });
   } catch (e) {
     bar.innerHTML = '<span class="text-danger small">Failed to load skins</span>';
   }
