@@ -57,47 +57,30 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
-  #skin_scroll_prev,
-  #skin_scroll_next {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    display: flex;
+  .owl-nav {
+    user-select: none;
+  }
+  .owl-prev,
+  .owl-next {
+    display: inline-flex;
     align-items: center;
-    justify-content: center;
-    border: none;
-    padding: 0;
-    flex-shrink: 0;
-    transition: all 0.2s ease;
-    position: absolute;
-    bottom: 10px;
-    z-index: 10;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    transition: opacity 0.2s ease;
   }
-  #skin_scroll_prev {
-    background-color: #e9ecef;
-    color: #495057;
-    left: 10px;
-  }
-  #skin_scroll_prev:hover:not(:disabled) {
-    background-color: #dee2e6;
-  }
-  #skin_scroll_next {
-    background-color: #000000;
-    color: #ffffff;
-    right: 10px;
-  }
-  #skin_scroll_next:hover:not(:disabled) {
-    background-color: #333333;
-  }
-  #skin_scroll_prev:disabled,
-  #skin_scroll_next:disabled {
+  .owl-prev.disabled,
+  .owl-next.disabled {
     opacity: 0.3;
     cursor: not-allowed !important;
+    pointer-events: none;
   }
-  #skin_scroll_prev i,
-  #skin_scroll_next i {
+  .owl-prev:not(.disabled):hover,
+  .owl-next:not(.disabled):hover {
+    opacity: 0.8;
+  }
+  .owl-prev i,
+  .owl-next i {
     font-size: 1.2rem;
-    margin: 0;
   }
 </style>
 <div class="py-1" style="border: 0px solid red; display: flex; justify-content: flex-end; gap: 0.5rem;">
@@ -127,17 +110,14 @@
                                         <!-- Skins will be injected here -->
                                     </div>
                                 </div>
-                                <button type="button" id="skin_scroll_prev" class="btn">
-                                    <i class="bi bi-chevron-left"></i>
-                                </button>
-                                <button type="button" id="skin_scroll_next" class="btn">
-                                    <i class="bi bi-chevron-right"></i>
-                                </button>
                             </div>
-                            <div class="owl-nav">
-                              <div class="owl-prev disabled">
-                                <i class="fa fa-arrow-circle-o-left" aria-hidden="true"></i> Prev</div>
-                                <div class="owl-next">Next <i class="fa fa-arrow-circle-o-right" aria-hidden="true"></i></div></div>
+                            <div class="owl-nav d-flex justify-content-between align-items-center mt-2">
+                              <div class="owl-prev" style="cursor: pointer;">
+                                <i class="fa fa-arrow-circle-o-left" aria-hidden="true"></i> Prev
+                              </div>
+                              <div class="owl-next" style="cursor: pointer;">Next <i class="fa fa-arrow-circle-o-right" aria-hidden="true"></i>
+                              </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -470,8 +450,8 @@ async function loadSkinsIntoScrollBar() {
     });
 
     // Wire up left/right arrow buttons to scroll the skin list with snap
-    const prevBtn = document.getElementById('skin_scroll_prev');
-    const nextBtn = document.getElementById('skin_scroll_next');
+    const prevBtn = document.querySelector('.owl-prev');
+    const nextBtn = document.querySelector('.owl-next');
 
     const scrollToCard = (direction) => {
       if (!bar || bar.children.length === 0) return;
@@ -536,14 +516,18 @@ async function loadSkinsIntoScrollBar() {
       const atEnd = bar.scrollLeft >= maxScrollLeft - 1; // small tolerance
       
       if (prevBtn) {
-        prevBtn.disabled = atStart;
-        prevBtn.style.opacity = atStart ? '0.5' : '1';
-        prevBtn.style.cursor = atStart ? 'not-allowed' : 'pointer';
+        if (atStart) {
+          prevBtn.classList.add('disabled');
+        } else {
+          prevBtn.classList.remove('disabled');
+        }
       }
       if (nextBtn) {
-        nextBtn.disabled = atEnd;
-        nextBtn.style.opacity = atEnd ? '0.5' : '1';
-        nextBtn.style.cursor = atEnd ? 'not-allowed' : 'pointer';
+        if (atEnd) {
+          nextBtn.classList.add('disabled');
+        } else {
+          nextBtn.classList.remove('disabled');
+        }
       }
     };
 
