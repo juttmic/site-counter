@@ -6,11 +6,40 @@
 <style>
   .mine {
     padding: 3px !important;
+    position: relative;
+    border: 2px solid transparent;
   }
   .mine:hover {
     border: 2px solid #29b672 !important;
     transition: border 0.3s ease;
     border-radius: 25px !important;
+  }
+  .mine.selected-skin {
+    border: 2px solid #29b672 !important;
+    border-radius: 25px !important;
+  }
+  .skin-checkmark {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+    pointer-events: none;
+    transition: opacity 0.3s ease, filter 0.3s ease;
+    font-size: 3rem;
+    color: #29b672;
+    opacity: 0;
+  }
+  .mine:hover .skin-checkmark:not(.selected-checkmark) {
+    opacity: 0.4;
+    filter: blur(2px);
+  }
+  .mine.selected-skin .skin-checkmark.selected-checkmark {
+    opacity: 1;
+    filter: none;
+  }
+  .mine.selected-skin .skin-checkmark:not(.selected-checkmark) {
+    opacity: 0;
   }
 </style>
 <div class="py-1" style="border: 0px solid red; display: flex; justify-content: flex-end; gap: 0.5rem;">
@@ -311,10 +340,12 @@ async function loadSkinsIntoScrollBar() {
       wrapper.className = 'skin-card mine d-flex flex-column align-items-center text-center rounded bg-white flex-shrink-0';
       wrapper.style.width = '280px';
       wrapper.style.cursor = 'pointer';
+      wrapper.dataset.skinKey = s.key;
 
       const preview = document.createElement('div');
       preview.className = 'd-flex align-items-center justify-content-center rounded w-100';
       preview.style.height = '96px';
+      preview.style.position = 'relative';
 
       const img = document.createElement('img');
       img.src = s.preview_url;
@@ -324,6 +355,15 @@ async function loadSkinsIntoScrollBar() {
       img.style.objectFit = 'contain';
       preview.appendChild(img);
 
+      // Create checkmark icon
+      const checkmark = document.createElement('i');
+      checkmark.className = 'bi bi-check-circle-fill skin-checkmark';
+      if (s.key === current) {
+        checkmark.classList.add('selected-checkmark');
+        wrapper.classList.add('selected-skin');
+      }
+      preview.appendChild(checkmark);
+
       // const name = document.createElement('div');
       // name.className = 'small text-truncate w-100';
       // name.textContent = s.name;
@@ -331,31 +371,25 @@ async function loadSkinsIntoScrollBar() {
       wrapper.appendChild(preview);
       // wrapper.appendChild(name);
 
-      if (s.key === current) {
-        wrapper.classList.add('border-primary', 'selected-skin');
-      }
-
       wrapper.addEventListener('click', async () => {
         // Clear previous selection
         bar.querySelectorAll('.skin-card.selected-skin').forEach(el => {
-          el.classList.remove('selected-skin', 'border-primary');
+          el.classList.remove('selected-skin');
+          const prevCheckmark = el.querySelector('.skin-checkmark');
+          if (prevCheckmark) {
+            prevCheckmark.classList.remove('selected-checkmark');
+          }
         });
 
-        wrapper.classList.add('selected-skin', 'border-primary');
+        wrapper.classList.add('selected-skin');
+        const checkmark = wrapper.querySelector('.skin-checkmark');
+        if (checkmark) {
+          checkmark.classList.add('selected-checkmark');
+        }
         await selectSkin(s.key);
       });
 
-      wrapper.addEventListener('mouseenter', () => {
-        if (!wrapper.classList.contains('selected-skin')) {
-          wrapper.classList.add('border-primary');
-        }
-      });
-
-      wrapper.addEventListener('mouseleave', () => {
-        if (!wrapper.classList.contains('selected-skin')) {
-          wrapper.classList.remove('border-primary');
-        }
-      });
+      // Hover effect is handled by CSS
 
       bar.appendChild(wrapper);
     });
@@ -688,6 +722,26 @@ formData.set('_method', 'POST');
 async function selectSkin(key) {
   document.getElementById('skin_key').value = key;
   document.getElementById('selected_skin_label').textContent = key;
+  
+  // Update visual selection in scroll bar
+  const bar = document.getElementById('skin_scroll_bar');
+  if (bar) {
+    bar.querySelectorAll('.skin-card').forEach(card => {
+      const checkmark = card.querySelector('.skin-checkmark');
+      if (card.dataset.skinKey === key) {
+        card.classList.add('selected-skin');
+        if (checkmark) {
+          checkmark.classList.add('selected-checkmark');
+        }
+      } else {
+        card.classList.remove('selected-skin');
+        if (checkmark) {
+          checkmark.classList.remove('selected-checkmark');
+        }
+      }
+    });
+  }
+  
   try {
     const meta = await fetchJson(`/skins/${encodeURIComponent(key)}`);
     // When changing skin, apply the latest user overrides (carry settings across skins)
