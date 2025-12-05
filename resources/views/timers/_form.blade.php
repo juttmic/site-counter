@@ -3,7 +3,16 @@
     $formAction = $isEdit ? route('timers.update', $timer) : route('timers.store');
     $formMethod = $isEdit ? 'PUT' : 'POST';
 @endphp
-
+<style>
+  .mine {
+    padding: 3px !important;
+  }
+  .mine:hover {
+    border: 2px solid #29b672 !important;
+    transition: border 0.3s ease;
+    border-radius: 25px !important;
+  }
+</style>
 <div class="py-1" style="border: 0px solid red; display: flex; justify-content: flex-end; gap: 0.5rem;">
   @if(isset($timer))
     <a href="{{ route('timers.preview', $timer) }}" class="btn btn-outline-secondary border rounded">Preview Timer</a>
@@ -299,12 +308,12 @@ async function loadSkinsIntoScrollBar() {
 
     skins.forEach(s => {
       const wrapper = document.createElement('div');
-      wrapper.className = 'skin-card d-flex flex-column align-items-center text-center border rounded p-2 bg-white flex-shrink-0';
-      wrapper.style.width = '220px';
+      wrapper.className = 'skin-card mine d-flex flex-column align-items-center text-center rounded bg-white flex-shrink-0';
+      wrapper.style.width = '280px';
       wrapper.style.cursor = 'pointer';
 
       const preview = document.createElement('div');
-      preview.className = 'd-flex align-items-center justify-content-center bg-light border rounded w-100 mb-2';
+      preview.className = 'd-flex align-items-center justify-content-center rounded w-100';
       preview.style.height = '96px';
 
       const img = document.createElement('img');
@@ -315,12 +324,12 @@ async function loadSkinsIntoScrollBar() {
       img.style.objectFit = 'contain';
       preview.appendChild(img);
 
-      const name = document.createElement('div');
-      name.className = 'small text-truncate w-100';
-      name.textContent = s.name;
+      // const name = document.createElement('div');
+      // name.className = 'small text-truncate w-100';
+      // name.textContent = s.name;
 
       wrapper.appendChild(preview);
-      wrapper.appendChild(name);
+      // wrapper.appendChild(name);
 
       if (s.key === current) {
         wrapper.classList.add('border-primary', 'selected-skin');
