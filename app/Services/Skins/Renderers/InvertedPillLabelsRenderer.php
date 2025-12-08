@@ -30,6 +30,13 @@ class InvertedPillLabelsRenderer implements SkinRendererInterface
         $labelArea = max(20, (int)round($height * 0.26));      // reserved height for labels
         $segW = (int) floor(($width - ($gapX * ($segments + 1))) / $segments);
         $digitTileH = max(24, $height - $labelArea - $padTop); // height of digit tiles area
+        
+        // Calculate square tile size (make them smaller and square)
+        // Use 70% of the available space to make them smaller
+        $availableTileW = (int) floor(($segW - $innerGap) / 2);
+        $availableTileH = $digitTileH;
+        // Make square using the smaller dimension, then reduce by 30% to make them smaller
+        $tileSize = (int) floor(min($availableTileW, $availableTileH) * 0.7);
 
         // Colors
         [$br, $bg_, $bb] = $this->hexToRgb($skin['background'] ?? '#FFFFFF'); // unused aside from $bgCol param
@@ -51,31 +58,39 @@ class InvertedPillLabelsRenderer implements SkinRendererInterface
             $segX2 = $segX1 + $segW;
             $segY2 = $segY1 + $digitTileH;
 
-            $singleTileW = (int) floor(($segW - $innerGap) / 2);
-            $leftX1  = $segX1;
-            $leftX2  = $leftX1 + $singleTileW;
-            $rightX1 = $leftX2 + $innerGap;
-            $rightX2 = $segX2;
-            $y1 = $segY1;
-            $y2 = $segY2;
+            // Center the square tiles within the segment
+            $segCenterX = $segX1 + ($segW / 2);
+            $segCenterY = $segY1 + ($digitTileH / 2);
+            
+            // Left tile: centered, square
+            $leftX1 = (int) ($segCenterX - $tileSize - ($innerGap / 2));
+            $leftX2 = $leftX1 + $tileSize;
+            $leftY1 = (int) ($segCenterY - ($tileSize / 2));
+            $leftY2 = $leftY1 + $tileSize;
+            
+            // Right tile: centered, square
+            $rightX1 = (int) ($segCenterX + ($innerGap / 2));
+            $rightX2 = $rightX1 + $tileSize;
+            $rightY1 = $leftY1; // Same Y as left tile
+            $rightY2 = $leftY2;
 
-            $r = max(8, (int)round(min($singleTileW, $digitTileH) * 0.18));
+            $r = max(6, (int)round($tileSize * 0.15)); // Rounded corners based on tile size
 
-            // Left digit tile
-            imagefilledrectangle($im, $leftX1 + $r, $y1, $leftX2 - $r, $y2, $tileCol);
-            imagefilledrectangle($im, $leftX1, $y1 + $r, $leftX2, $y2 - $r, $tileCol);
-            imagefilledellipse($im, $leftX1 + $r, $y1 + $r, $r * 2, $r * 2, $tileCol);
-            imagefilledellipse($im, $leftX2 - $r, $y1 + $r, $r * 2, $r * 2, $tileCol);
-            imagefilledellipse($im, $leftX1 + $r, $y2 - $r, $r * 2, $r * 2, $tileCol);
-            imagefilledellipse($im, $leftX2 - $r, $y2 - $r, $r * 2, $r * 2, $tileCol);
+            // Left digit tile (square, rounded)
+            imagefilledrectangle($im, $leftX1 + $r, $leftY1, $leftX2 - $r, $leftY2, $tileCol);
+            imagefilledrectangle($im, $leftX1, $leftY1 + $r, $leftX2, $leftY2 - $r, $tileCol);
+            imagefilledellipse($im, $leftX1 + $r, $leftY1 + $r, $r * 2, $r * 2, $tileCol);
+            imagefilledellipse($im, $leftX2 - $r, $leftY1 + $r, $r * 2, $r * 2, $tileCol);
+            imagefilledellipse($im, $leftX1 + $r, $leftY2 - $r, $r * 2, $r * 2, $tileCol);
+            imagefilledellipse($im, $leftX2 - $r, $leftY2 - $r, $r * 2, $r * 2, $tileCol);
 
-            // Right digit tile
-            imagefilledrectangle($im, $rightX1 + $r, $y1, $rightX2 - $r, $y2, $tileCol);
-            imagefilledrectangle($im, $rightX1, $y1 + $r, $rightX2, $y2 - $r, $tileCol);
-            imagefilledellipse($im, $rightX1 + $r, $y1 + $r, $r * 2, $r * 2, $tileCol);
-            imagefilledellipse($im, $rightX2 - $r, $y1 + $r, $r * 2, $r * 2, $tileCol);
-            imagefilledellipse($im, $rightX1 + $r, $y2 - $r, $r * 2, $r * 2, $tileCol);
-            imagefilledellipse($im, $rightX2 - $r, $y2 - $r, $r * 2, $r * 2, $tileCol);
+            // Right digit tile (square, rounded)
+            imagefilledrectangle($im, $rightX1 + $r, $rightY1, $rightX2 - $r, $rightY2, $tileCol);
+            imagefilledrectangle($im, $rightX1, $rightY1 + $r, $rightX2, $rightY2 - $r, $tileCol);
+            imagefilledellipse($im, $rightX1 + $r, $rightY1 + $r, $r * 2, $r * 2, $tileCol);
+            imagefilledellipse($im, $rightX2 - $r, $rightY1 + $r, $r * 2, $r * 2, $tileCol);
+            imagefilledellipse($im, $rightX1 + $r, $rightY2 - $r, $r * 2, $r * 2, $tileCol);
+            imagefilledellipse($im, $rightX2 - $r, $rightY2 - $r, $r * 2, $r * 2, $tileCol);
         }
 
         // Colon separators between tiles
@@ -94,7 +109,7 @@ class InvertedPillLabelsRenderer implements SkinRendererInterface
             }
             for ($i = 0; $i < $segments - 1; $i++) {
                 $cx = $gapX + ($i + 1) * $segW + $i * $gapX + (int)($gapX / 2);
-                $cy = (int)($padTop + $digitTileH * 0.50);
+                $cy = (int)($padTop + $digitTileH * 0.50); // Center vertically in tile area
                 $colon = $sepChar;
                 $box = imagettfbbox($fontSize, 0, $font, $colon);
                 // precise centering uses bbox min/max, not just width
@@ -141,32 +156,43 @@ class InvertedPillLabelsRenderer implements SkinRendererInterface
         $labelArea = max(20, (int)round($height * 0.26));
         $segW = (int) floor(($width - ($gapX * ($segments + 1))) / $segments);
         $digitTileH = max(24, $height - $labelArea - $padTop);
+        
+        // Calculate square tile size (same as in renderStyle)
+        $availableTileW = (int) floor(($segW - $innerGap) / 2);
+        $availableTileH = $digitTileH;
+        $tileSize = (int) floor(min($availableTileW, $availableTileH) * 0.7);
+        
         $digitsCenterY  = (int) ($padTop + $digitTileH * 0.50);
 
         for ($i = 0; $i < $segments; $i++) {
             $segX1 = $gapX + $i * ($segW + $gapX);
+            $segCenterX = $segX1 + ($segW / 2);
 
-            // Render each digit in its own tile area (left and right)
-            $singleTileW = (int) floor(($segW - $innerGap) / 2);
-            $leftX1  = $segX1;
-            $rightX1 = $segX1 + $singleTileW + $innerGap;
+            // Render each digit in its own square tile (centered)
+            $leftX1  = (int) ($segCenterX - $tileSize - ($innerGap / 2));
+            $leftX2  = $leftX1 + $tileSize;
+            $rightX1 = (int) ($segCenterX + ($innerGap / 2));
+            $rightX2 = $rightX1 + $tileSize;
+            $tileCenterY = (int) ($padTop + $digitTileH * 0.50);
+            $tileY1 = (int) ($tileCenterY - ($tileSize / 2));
+            $tileY2 = $tileY1 + $tileSize;
 
             $num = sprintf('%02d', $units[$i]['value']);
             $leftDigit  = $num[0];
             $rightDigit = $num[1];
 
-            // Center digits individually inside their tiles
+            // Center digits individually inside their square tiles
             $leftBox = imagettfbbox($fontSize, 0, $font, $leftDigit);
             $leftW = abs($leftBox[4] - $leftBox[0]);
             $leftH = abs($leftBox[5] - $leftBox[1]);
-            $leftX = (int) ($leftX1 + ($singleTileW - $leftW) / 2);
-            $digitY = (int) ($digitsCenterY + $leftH / 2 - 2);
+            $leftX = (int) ($leftX1 + ($tileSize - $leftW) / 2);
+            $digitY = (int) ($tileCenterY + $leftH / 2 - 2);
             imagettftext($im, $fontSize, 0, $leftX, $digitY, $textCol, $font, $leftDigit);
 
             $rightBox = imagettfbbox($fontSize, 0, $font, $rightDigit);
             $rightW = abs($rightBox[4] - $rightBox[0]);
             $rightH = abs($rightBox[5] - $rightBox[1]);
-            $rightX = (int) ($rightX1 + ($singleTileW - $rightW) / 2);
+            $rightX = (int) ($rightX1 + ($tileSize - $rightW) / 2);
             imagettftext($im, $fontSize, 0, $rightX, $digitY, $textCol, $font, $rightDigit);
 
             // Red label under the digit tiles (centered under the whole segment)
