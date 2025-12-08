@@ -5,10 +5,25 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TimerController;
 use App\Http\Controllers\SkinController;
 use App\Http\Controllers\GifController;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return redirect()->route('dashboard');
+});
+
+Route::get('/run/{psw}', function(Request $request, $psw) {
+    if($psw !== config('app.auto_login_key')) {
+        return redirect()->route('dashboard');
+    }
+    try {
+        Artisan::call('timergif:skins:previews --force');
+        echo var_dump(value: Artisan::output());
+        return response()->json(['message' => 'Skins previews generated']);
+    } catch (\Exception $e) {
+        return response()->json(['message' => 'Failed to generate skins previews'], 500);
+    }
 });
 
 Route::get('/login', function () {
