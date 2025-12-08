@@ -13,8 +13,10 @@ class DarkNeonOutlineRenderer implements SkinRendererInterface
         $segments = 4;
         $gap = max(10, (int) round($width * 0.02));
         $unitWidth = (int) floor(($width - ($segments + 1) * $gap) / $segments);
-        $boxH = $height - 2 * $gap;
-        $y = $gap;
+        
+        // Calculate reduced box height (40% of canvas height) and center it vertically
+        $boxH = (int) round($height * 0.40);
+        $y = (int) (($height - $boxH) / 2);
 
         $outer = $accentCol;
         $inner = imagecolorallocatealpha($im, 255, 255, 255, 90);
@@ -49,8 +51,9 @@ class DarkNeonOutlineRenderer implements SkinRendererInterface
         $segments = count($units);
         $gap = max(10, (int) round($width * 0.02));
         $unitWidth = (int) floor(($width - ($segments + 1) * $gap) / $segments);
-        $boxH = $height - 2 * $gap;
-        $y = $gap;
+        // Center boxes within the reduced-height area
+        $boxH = (int) round($height * 0.40);
+        $y = (int) (($height - $boxH) / 2);
 
         if (is_file($font)) {
             for ($i=0;$i<$segments;$i++) {

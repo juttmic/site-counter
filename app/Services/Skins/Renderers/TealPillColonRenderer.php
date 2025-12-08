@@ -8,8 +8,18 @@ class TealPillColonRenderer implements SkinRendererInterface
 {
     public function renderStyle($im, array $skin, int $width, int $height, int $bgCol, int $textCol, int $accentCol, int $secondsRemaining): void
     {
+        // Fill background first
+        imagefilledrectangle($im, 0, 0, $width, $height, $bgCol);
+        
+        // Calculate reduced pill height (40% of canvas height) and center it vertically
+        $pillHeight = (int) round($height * 0.40);
+        $pillY = (int) (($height - $pillHeight) / 2);
+        $pillPaddingX = 6;
+        $pillWidth = $width - (2 * $pillPaddingX);
+        $radius = max(10, (int) round($pillHeight / 2.5));
+        
         // Background is the accent (teal) color as a large rounded pill
-        $this->fillRoundedRect($im, 0, 0, $width, $height, max(10, (int) round($height / 2.5)), $accentCol);
+        $this->fillRoundedRect($im, $pillPaddingX, $pillY, $pillWidth, $pillHeight, $radius, $accentCol);
         // Add a subtle inner highlight line using text color at low alpha to mimic glossy look (optional)
     }
 
@@ -39,7 +49,10 @@ class TealPillColonRenderer implements SkinRendererInterface
 
         $segments = count($units);
         $unitWidth = $width / max(1, $segments);
-        $centerY = (int) round($height / 2);
+        // Center text within the reduced-height pill
+        $pillHeight = (int) round($height * 0.40);
+        $pillY = (int) (($height - $pillHeight) / 2);
+        $centerY = (int) ($pillY + ($pillHeight / 2));
 
         // Foreground (numbers/labels) use text color; separators prefer separatorColor if provided
         if (is_file($font)) {
