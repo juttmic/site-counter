@@ -82,6 +82,112 @@
   .owl-next i {
     font-size: 1.2rem;
   }
+  
+  /* Enhanced Form Styling */
+  .form-label {
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: #374151;
+    margin-bottom: 0.5rem;
+    letter-spacing: 0.01em;
+    font-family: 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  
+  .form-control,
+  .form-select {
+    border: 1.5px solid #e5e7eb;
+    border-radius: 0.5rem;
+    padding: 0.625rem 0.875rem;
+    font-size: 0.9375rem;
+    transition: all 0.2s ease;
+    background-color: #ffffff;
+    color: #111827;
+    font-family: 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  
+  .form-control:focus,
+  .form-select:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    outline: none;
+    background-color: #ffffff;
+  }
+  
+  .form-control:hover:not(:disabled):not(:focus),
+  .form-select:hover:not(:disabled):not(:focus) {
+    border-color: #d1d5db;
+  }
+  
+  .form-control::placeholder {
+    color: #9ca3af;
+    opacity: 1;
+  }
+  
+  .form-select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px 12px;
+    padding-right: 2.5rem;
+  }
+  
+  .form-control:disabled,
+  .form-select:disabled {
+    background-color: #f9fafb;
+    color: #6b7280;
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+  
+  .form-text {
+    font-size: 0.8125rem;
+    color: #6b7280;
+    margin-top: 0.375rem;
+    font-family: 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  
+  /* Small form labels */
+  .form-label.small {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #4b5563;
+  }
+  
+  /* Input group enhancements */
+  .card-body .form-label:first-child {
+    margin-top: 0;
+  }
+  
+  /* Better spacing for form groups */
+  .mb-3 {
+    margin-bottom: 1.25rem !important;
+  }
+  
+  /* Enhanced datetime input */
+  input[type="datetime-local"] {
+    position: relative;
+  }
+  
+  input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.2s ease;
+  }
+  
+  input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+  }
+  
+  /* Number input styling */
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
+  
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    opacity: 1;
+    cursor: pointer;
+  }
 </style>
 <div class="py-1" style="border: 0px solid red; display: flex; justify-content: flex-end; gap: 0.5rem;">
   @if(isset($timer))
