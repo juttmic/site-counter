@@ -728,7 +728,8 @@ function renderFields(metadata, savedOverrides = {}) {
   fieldsWrap.innerHTML = '';
   
   // Fields to hide but use defaults for
-  const hiddenFields = new Set(['fontPath', 'font', 'showDays', 'showHours', 'showMinutes', 'showSeconds', 'layout', 'animation', 'accentColor']);
+  // Note: accentColor is NOT hidden - it's needed for controlling tile/box/ring colors
+  const hiddenFields = new Set(['fontPath', 'font', 'showDays', 'showHours', 'showMinutes', 'showSeconds', 'layout', 'animation']);
   hiddenFields.forEach(key => {
     if (savedOverrides[key] !== undefined) {
       currentHiddenOverrides[key] = savedOverrides[key];
@@ -869,7 +870,8 @@ function syncOverrides() {
   const defaults = currentSkinMetadata?.defaults || {};
   
   // Fields that are hidden but should always use defaults
-  const hiddenFields = new Set(['fontPath', 'font', 'showDays', 'showHours', 'showMinutes', 'showSeconds', 'layout', 'animation', 'accentColor']);
+  // Note: accentColor is NOT hidden - it's needed for controlling tile/box/ring colors
+  const hiddenFields = new Set(['fontPath', 'font', 'showDays', 'showHours', 'showMinutes', 'showSeconds', 'layout', 'animation']);
   
   // For hidden fields:
   // - Font fields: don't store (use skin default)
