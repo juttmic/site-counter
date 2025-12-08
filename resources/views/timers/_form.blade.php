@@ -113,9 +113,9 @@
                             </div>
                             <div class="owl-nav d-flex justify-content-between align-items-center mt-2">
                               <div class="owl-prev" style="cursor: pointer;">
-                                <i class="fa fa-arrow-circle-o-left" aria-hidden="true"></i> Prev
+                                <i class="bi bi-arrow-left-circle me-1"></i> Prev
                               </div>
-                              <div class="owl-next" style="cursor: pointer;">Next <i class="fa fa-arrow-circle-o-right" aria-hidden="true"></i>
+                              <div class="owl-next" style="cursor: pointer;">Next <i class="bi bi-arrow-right-circle ms-1"></i>
                               </div>
                             </div>
                         </div>
