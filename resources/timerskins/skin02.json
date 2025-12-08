@@ -1,169 +1,46 @@
 {
-    "name": "Full Word Label Timer",
-    "width": 480,
-    "height": 180,
-    "background": "#FFFFFF",
-    "textColor": "#000000",
-    "separatorColor": "#000000",
-    "accentColor": "#000000",
-    "fontSize": 48,
-    "fontPath": "resources/fonts/dejavu-sans.book.ttf",
-    "style": "full_word_label",
-    "showDays": true,
-    "showHours": true,
-    "showMinutes": true,
-    "showSeconds": true,
-    "separator": ":",
-    "layout": "horizontal",
-    "animation": "none",
-    "finalMessage": "Final Message",
-    "finalBackground": "#000000",
-    "finalTextColor": "#FFFFFF",
-    "borderWidth": 7,
-    "borderColor": "#FFFFFF",
-    "fields": [
-        {
-            "key": "width",
-            "label": "Width",
-            "type": "number",
-            "min": 100,
-            "max": 2000,
-            "step": 10,
-            "group": "overall"
-        },
-        {
-            "key": "height",
-            "label": "Height",
-            "type": "number",
-            "min": 50,
-            "max": 1000,
-            "step": 5,
-            "group": "overall"
-        },
-        {
-            "key": "background",
-            "label": "Background Color",
-            "type": "color",
-            "group": "overall"
-        },
-        {
-            "key": "textColor",
-            "label": "Text Color",
-            "type": "color",
-            "group": "custom"
-        },
-        {
-            "key": "separatorColor",
-            "label": "Separator Color",
-            "type": "color",
-            "group": "timer"
-        },
-        {
-            "key": "accentColor",
-            "label": "Accent Color",
-            "type": "color",
-            "group": "overall"
-        },
-        {
-            "key": "fontSize",
-            "label": "Font Size",
-            "type": "number",
-            "min": 8,
-            "max": 200,
-            "step": 1,
-            "group": "custom"
-        },
-        {
-            "key": "fontPath",
-            "label": "Font",
-            "type": "font",
-            "group": "overall"
-        },
-        {
-            "key": "showDays",
-            "label": "Show Days",
-            "type": "boolean",
-            "group": "timer"
-        },
-        {
-            "key": "showHours",
-            "label": "Show Hours",
-            "type": "boolean",
-            "group": "timer"
-        },
-        {
-            "key": "showMinutes",
-            "label": "Show Minutes",
-            "type": "boolean",
-            "group": "timer"
-        },
-        {
-            "key": "showSeconds",
-            "label": "Show Seconds",
-            "type": "boolean",
-            "group": "timer"
-        },
-        {
-            "key": "separator",
-            "label": "Separator",
-            "type": "text",
-            "maxLength": 5,
-            "group": "timer"
-        },
-        {
-            "key": "layout",
-            "label": "Layout",
-            "type": "select",
-            "options": [
-                "horizontal",
-                "vertical"
-            ],
-            "group": "timer"
-        },
-        {
-            "key": "animation",
-            "label": "Animation",
-            "type": "select",
-            "options": [
-                "none",
-                "fade",
-                "slide"
-            ],
-            "group": "timer"
-        },
-        {
-            "key": "finalMessage",
-            "label": "Final Message",
-            "type": "text",
-            "maxLength": 64,
-            "group": "final"
-        },
-        {
-            "key": "finalBackground",
-            "label": "Final Background",
-            "type": "color",
-            "group": "final"
-        },
-        {
-            "key": "finalTextColor",
-            "label": "Final Text Color",
-            "type": "color",
-            "group": "final"
-        },
-        {
-            "key": "borderWidth",
-            "label": "Border Width",
-            "type": "number",
-            "min": 0,
-            "max": 50,
-            "step": 1,
-            "group": "overall"
-        },
-        {
-            "key": "borderColor",
-            "label": "Border Color",
-            "type": "color",
-            "group": "overall"
-        }
-    ]
+  "name": "Full Word Label Timer",
+  "width": 480,
+  "height": 180,
+  "background": "#ffffff",
+  "textColor": "#000000",
+  "separatorColor": "#000000",
+  "accentColor": "#000000",
+  "fontSize": 48,
+  "fontPath": "resources/fonts/dejavu-sans.book.ttf",
+  "style": "full_word_label",
+  "showDays": true,
+  "showHours": true,
+  "showMinutes": true,
+  "showSeconds": true,
+  "separator": ":",
+  "layout": "horizontal",
+  "animation": "none",
+  "finalMessage": "Final Message",
+  "finalBackground": "#000000",
+  "finalTextColor": "#FFFFFF",
+  "borderWidth": 7,
+  "borderColor": "#FFFFFF",
+  "fields": [
+    { "key": "width", "label": "Width", "type": "number", "min": 100, "max": 2000, "step": 10, "group": "overall" },
+    { "key": "height", "label": "Height", "type": "number", "min": 50, "max": 1000, "step": 5, "group": "overall" },
+    { "key": "background", "label": "Background Color", "type": "color", "group": "overall" },
+    { "key": "textColor", "label": "Text Color", "type": "color", "group": "custom" },
+    { "key": "separatorColor", "label": "Separator Color", "type": "color", "group": "timer" },
+    { "key": "accentColor", "label": "Accent Color", "type": "color", "group": "overall" },
+    { "key": "fontSize", "label": "Font Size", "type": "number", "min": 8, "max": 200, "step": 1, "group": "custom" },
+    { "key": "fontPath", "label": "Font", "type": "font", "group": "overall" },
+    { "key": "showDays", "label": "Show Days", "type": "boolean", "group": "timer" },
+    { "key": "showHours", "label": "Show Hours", "type": "boolean", "group": "timer" },
+    { "key": "showMinutes", "label": "Show Minutes", "type": "boolean", "group": "timer" },
+    { "key": "showSeconds", "label": "Show Seconds", "type": "boolean", "group": "timer" },
+    { "key": "separator", "label": "Separator", "type": "text", "maxLength": 5, "group": "timer" },
+    { "key": "layout", "label": "Layout", "type": "select", "options": ["horizontal", "vertical"], "group": "timer" },
+    { "key": "animation", "label": "Animation", "type": "select", "options": ["none", "fade", "slide"], "group": "timer" },
+    { "key": "finalMessage", "label": "Final Message", "type": "text", "maxLength": 64, "group": "final" },
+    { "key": "finalBackground", "label": "Final Background", "type": "color", "group": "final" },
+    { "key": "finalTextColor", "label": "Final Text Color", "type": "color", "group": "final" },
+    { "key": "borderWidth", "label": "Border Width", "type": "number", "min": 0, "max": 50, "step": 1, "group": "overall" },
+    { "key": "borderColor", "label": "Border Color", "type": "color", "group": "overall" }
+  ]
 }

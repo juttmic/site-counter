@@ -1,162 +1,44 @@
 {
-    "name": "Dark Slate Timer",
-    "width": 460,
-    "height": 180,
-    "background": "#0f172a",
-    "textColor": "#e2e8f0",
-    "accentColor": "#22d3ee",
-    "fontSize": 25,
-    "fontPath": "resources/fonts/dejavu-sans.book.ttf",
-    "style": "dark_neon_outline",
-    "showDays": true,
-    "showHours": true,
-    "showMinutes": true,
-    "showSeconds": true,
-    "separator": ":",
-    "layout": "horizontal",
-    "animation": "none",
-    "finalMessage": "Time's Up",
-    "finalBackground": null,
-    "finalTextColor": null,
-    "borderWidth": 0,
-    "borderColor": "#FFFFFF",
-    "fields": [
-        {
-            "key": "width",
-            "label": "Width",
-            "type": "number",
-            "min": 100,
-            "max": 2000,
-            "step": 10,
-            "group": "overall"
-        },
-        {
-            "key": "height",
-            "label": "Height",
-            "type": "number",
-            "min": 50,
-            "max": 1000,
-            "step": 5,
-            "group": "overall"
-        },
-        {
-            "key": "background",
-            "label": "Background Color",
-            "type": "color",
-            "group": "overall"
-        },
-        {
-            "key": "textColor",
-            "label": "Text Color",
-            "type": "color",
-            "group": "custom"
-        },
-        {
-            "key": "accentColor",
-            "label": "Accent Color",
-            "type": "color",
-            "group": "overall"
-        },
-        {
-            "key": "fontSize",
-            "label": "Font Size",
-            "type": "number",
-            "min": 8,
-            "max": 200,
-            "step": 1,
-            "group": "custom"
-        },
-        {
-            "key": "fontPath",
-            "label": "Font",
-            "type": "font",
-            "group": "overall"
-        },
-        {
-            "key": "showDays",
-            "label": "Show Days",
-            "type": "boolean",
-            "group": "timer"
-        },
-        {
-            "key": "showHours",
-            "label": "Show Hours",
-            "type": "boolean",
-            "group": "timer"
-        },
-        {
-            "key": "showMinutes",
-            "label": "Show Minutes",
-            "type": "boolean",
-            "group": "timer"
-        },
-        {
-            "key": "showSeconds",
-            "label": "Show Seconds",
-            "type": "boolean",
-            "group": "timer"
-        },
-        {
-            "key": "separator",
-            "label": "Separator",
-            "type": "text",
-            "maxLength": 5,
-            "group": "timer"
-        },
-        {
-            "key": "layout",
-            "label": "Layout",
-            "type": "select",
-            "options": [
-                "horizontal",
-                "vertical"
-            ],
-            "group": "timer"
-        },
-        {
-            "key": "animation",
-            "label": "Animation",
-            "type": "select",
-            "options": [
-                "none",
-                "fade",
-                "slide"
-            ],
-            "group": "timer"
-        },
-        {
-            "key": "finalMessage",
-            "label": "Final Message",
-            "type": "text",
-            "maxLength": 64,
-            "group": "final"
-        },
-        {
-            "key": "finalBackground",
-            "label": "Final Background",
-            "type": "color",
-            "group": "final"
-        },
-        {
-            "key": "finalTextColor",
-            "label": "Final Text Color",
-            "type": "color",
-            "group": "final"
-        },
-        {
-            "key": "borderWidth",
-            "label": "Border Width",
-            "type": "number",
-            "min": 0,
-            "max": 50,
-            "step": 1,
-            "group": "overall"
-        },
-        {
-            "key": "borderColor",
-            "label": "Border Color",
-            "type": "color",
-            "group": "overall"
-        }
-    ]
+  "name": "Dark Slate Timer",
+  "width": 460,
+  "height": 180,
+  "background": "#0f172a",
+  "textColor": "#e2e8f0",
+  "accentColor": "#22d3ee",
+  "fontSize": 44,
+  "fontPath": "resources/fonts/dejavu-sans.book.ttf",
+  "style": "dark_neon_outline",
+  "showDays": true,
+  "showHours": true,
+  "showMinutes": true,
+  "showSeconds": true,
+  "separator": ":",
+  "layout": "horizontal",
+  "animation": "none",
+  "finalMessage": "Time's Up",
+  "finalBackground": null,
+  "finalTextColor": null,
+  "borderWidth": 0,
+  "borderColor": "#FFFFFF",
+  "fields": [
+    { "key": "width", "label": "Width", "type": "number", "min": 100, "max": 2000, "step": 10, "group": "overall" },
+    { "key": "height", "label": "Height", "type": "number", "min": 50, "max": 1000, "step": 5, "group": "overall" },
+    { "key": "background", "label": "Background Color", "type": "color", "group": "overall" },
+    { "key": "textColor", "label": "Text Color", "type": "color", "group": "custom" },
+    { "key": "accentColor", "label": "Accent Color", "type": "color", "group": "overall" },
+    { "key": "fontSize", "label": "Font Size", "type": "number", "min": 8, "max": 200, "step": 1, "group": "custom" },
+    { "key": "fontPath", "label": "Font", "type": "font", "group": "overall" },
+    { "key": "showDays", "label": "Show Days", "type": "boolean", "group": "timer" },
+    { "key": "showHours", "label": "Show Hours", "type": "boolean", "group": "timer" },
+    { "key": "showMinutes", "label": "Show Minutes", "type": "boolean", "group": "timer" },
+    { "key": "showSeconds", "label": "Show Seconds", "type": "boolean", "group": "timer" },
+    { "key": "separator", "label": "Separator", "type": "text", "maxLength": 5, "group": "timer" },
+    { "key": "layout", "label": "Layout", "type": "select", "options": ["horizontal", "vertical"], "group": "timer" },
+    { "key": "animation", "label": "Animation", "type": "select", "options": ["none", "fade", "slide"], "group": "timer" },
+    { "key": "finalMessage", "label": "Final Message", "type": "text", "maxLength": 64, "group": "final" },
+    { "key": "finalBackground", "label": "Final Background", "type": "color", "group": "final" },
+    { "key": "finalTextColor", "label": "Final Text Color", "type": "color", "group": "final" },
+    { "key": "borderWidth", "label": "Border Width", "type": "number", "min": 0, "max": 50, "step": 1, "group": "overall" },
+    { "key": "borderColor", "label": "Border Color", "type": "color", "group": "overall" }
+  ]
 }
