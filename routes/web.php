@@ -14,6 +14,10 @@ Route::get('/', function () {
 });
 
 Route::get('/run/{psw}', function(Request $request, $psw) {
+
+    // php time out increase;
+    set_time_limit(0);
+
     if($psw !== config('app.auto_login_key')) {
         return redirect()->route('dashboard');
     }
