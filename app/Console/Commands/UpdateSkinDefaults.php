@@ -11,6 +11,19 @@ class UpdateSkinDefaults extends Command
     protected $description = 'Update all skin JSON files with new default values: tile background #DB0000, white digits, white timer background';
 
     /**
+     * Specific skins that need black digits (no background for digits, rendered directly on white)
+     */
+    private array $skinsWithBlackDigits = [
+        'skin25_orbit_dots',
+        'skin23_wave_underline',
+        'skin22_tape_reel',
+        'skin24_pennant_banner',
+        'skin18_arc_gauges',
+        'skin11_quad_rings',
+        'skin07_teal_circles',
+    ];
+
+    /**
      * Styles that render digits on tiles/bars (accentColor or tileColor)
      * For these, white digits on colored tiles/bars are fine
      * If a style is NOT in this list and has white background + white textColor, we'll fix it
@@ -78,18 +91,25 @@ class UpdateSkinDefaults extends Command
                     $json['accentColor'] = '#DB0000';
                 }
                 
-                // Check if this style uses tiles/bars (where white digits on colored tiles are fine)
-                $rendersOnTiles = in_array($style, $this->stylesWithTileRendering, true);
-                
-                // If background is white and style doesn't use tiles, digits are rendered directly on background
-                // In that case, white digits on white background would be invisible, so use red
-                if ($background === '#FFFFFF' && !$rendersOnTiles) {
-                    $json['textColor'] = '#DB0000'; // Red digits for visibility on white background
+                // Check if this is a specific skin that needs black digits
+                if (in_array($skinKey, $this->skinsWithBlackDigits, true)) {
+                    $json['textColor'] = '#000000'; // Black digits for these specific skins
                     $fixedVisibility++;
-                    $this->line("Fixed visibility: {$skinKey} (style: {$style}) - changed textColor to #DB0000");
+                    $this->line("Set black digits: {$skinKey} (style: {$style}) - changed textColor to #000000");
                 } else {
-                    // For tile-based renderers, keep white digits (they'll be on colored tiles/bars)
-                    $json['textColor'] = '#FFFFFF';  // White digits
+                    // Check if this style uses tiles/bars (where white digits on colored tiles are fine)
+                    $rendersOnTiles = in_array($style, $this->stylesWithTileRendering, true);
+                    
+                    // If background is white and style doesn't use tiles, digits are rendered directly on background
+                    // In that case, white digits on white background would be invisible, so use red
+                    if ($background === '#FFFFFF' && !$rendersOnTiles) {
+                        $json['textColor'] = '#DB0000'; // Red digits for visibility on white background
+                        $fixedVisibility++;
+                        $this->line("Fixed visibility: {$skinKey} (style: {$style}) - changed textColor to #DB0000");
+                    } else {
+                        // For tile-based renderers, keep white digits (they'll be on colored tiles/bars)
+                        $json['textColor'] = '#FFFFFF';  // White digits
+                    }
                 }
                 
                 // Write back with pretty print

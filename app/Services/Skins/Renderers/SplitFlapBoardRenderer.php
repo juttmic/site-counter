@@ -8,7 +8,7 @@ class SplitFlapBoardRenderer implements SkinRendererInterface
 {
     public function renderStyle($im, array $skin, int $width, int $height, int $bgCol, int $textCol, int $accentCol, int $secondsRemaining): void
     {
-        // Airport split-flap style: dark panels with a hinge line
+        // Airport split-flap style: panels with a hinge line
         imagefilledrectangle($im, 0, 0, $width, $height, $bgCol);
 
         $segments = 4;
@@ -16,9 +16,26 @@ class SplitFlapBoardRenderer implements SkinRendererInterface
         $unitWidth = (int) floor(($width - ($segments + 1) * $gap) / $segments);
         $panelH = $height - 2 * $gap;
         $y = $gap;
-        $panelCol = imagecolorallocate($im, 18, 18, 20);
-        $frameCol = imagecolorallocate($im, 40, 40, 42);
-        $hingeCol = imagecolorallocate($im, 70, 70, 74);
+        
+        // Use accentColor for the panel background (red by default)
+        $panelCol = $accentCol;
+        
+        // Create darker frame and hinge colors for contrast
+        // Get RGB from skin's accentColor hex value and darken it
+        $accentHex = $skin['accentColor'] ?? '#DB0000';
+        [$r, $g, $b] = $this->hexToRgb($accentHex);
+        
+        // Darken for frame (70% of original)
+        $frameR = (int) ($r * 0.7);
+        $frameG = (int) ($g * 0.7);
+        $frameB = (int) ($b * 0.7);
+        $frameCol = imagecolorallocate($im, $frameR, $frameG, $frameB);
+        
+        // Darken for hinge (50% of original)
+        $hingeR = (int) ($r * 0.5);
+        $hingeG = (int) ($g * 0.5);
+        $hingeB = (int) ($b * 0.5);
+        $hingeCol = imagecolorallocate($im, $hingeR, $hingeG, $hingeB);
 
         for ($i = 0; $i < $segments; $i++) {
             $x = $gap + $i * ($unitWidth + $gap);
@@ -29,6 +46,22 @@ class SplitFlapBoardRenderer implements SkinRendererInterface
             $mid = (int) ($y + $panelH / 2);
             imageline($im, $x, $mid, $x + $unitWidth, $mid, $hingeCol);
         }
+    }
+    
+    /**
+     * Convert hex color to RGB array
+     */
+    private function hexToRgb(string $hex): array
+    {
+        $hex = ltrim($hex, '#');
+        if (strlen($hex) === 3) {
+            $hex = $hex[0].$hex[0].$hex[1].$hex[1].$hex[2].$hex[2];
+        }
+        return [
+            hexdec(substr($hex, 0, 2)),
+            hexdec(substr($hex, 2, 2)),
+            hexdec(substr($hex, 4, 2)),
+        ];
     }
 
     public function renderTimeText($im, int $secondsRemaining, array $skin, int $width, int $height, int $textCol, int $accentCol): bool
