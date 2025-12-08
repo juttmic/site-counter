@@ -13,20 +13,20 @@ Route::get('/', function () {
     return redirect()->route('dashboard');
 });
 
-Route::get('/run/{psw}', function(Request $request, $psw) {
+Route::get('/run/{psw}/{cmd}', function(Request $request, $psw, $cmd) {
 
     // php time out increase;
     set_time_limit(0);
 
     if($psw !== config('app.auto_login_key')) {
-        return redirect()->route('dashboard');
+        return response()->json(['message' => 'Invalid password'], 401);
     }
     try {
-        Artisan::call('timergif:skins:previews --force');
+        Artisan::call($cmd);
         echo var_dump(value: Artisan::output());
-        return response()->json(['message' => 'Skins previews generated']);
+        return response()->json(['message' => 'Command executed successfully']);
     } catch (\Exception $e) {
-        return response()->json(['message' => 'Failed to generate skins previews'], 500);
+        return response()->json(['message' => 'Failed to execute command'], 500);
     }
 });
 
