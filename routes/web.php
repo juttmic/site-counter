@@ -62,6 +62,7 @@ Route::middleware(['auth', 'active'])->group(function () {
     // JSON endpoints for create/edit modal
     Route::get('/api/skins', [SkinController::class, 'index'])->name('skins.index');
     Route::get('/skins/{key}', [SkinController::class, 'show'])->name('skins.show');
+    Route::get('/api/skins/{key}/form-defaults', [SkinController::class, 'getFormDefaults'])->name('skins.form-defaults');
     Route::get('/skin-previews', [SkinController::class, 'gallery']);
 });
 

@@ -696,6 +696,8 @@ let currentHiddenOverrides = {};
 let lastSkinOverrides = {};
 let gifDirty = false;              // true = changes exist that are NOT in the latest GIF
 let suppressNextDirtyFlag = false; // used for initial auto-preview so it doesn't mark dirty
+let loadedSkins = new Set();       // Track which skins have been loaded (for new timers only)
+let appliedFormDefaults = {};     // Track formDefaults that were applied (to ensure they're saved)
 
 function setupCollapsibles(root) {
   const scope = root || document;
@@ -891,8 +893,9 @@ function syncOverrides() {
       val = el.value;
     }
     
-    // Only store if different from default
-    if (val !== defaults[k]) {
+    // Store if different from default OR if it's an applied formDefault
+    // This ensures formDefaults are always saved, even if they match original defaults
+    if (val !== defaults[k] || appliedFormDefaults[k] !== undefined) {
       data[k] = val;
     }
   });
@@ -1005,10 +1008,50 @@ async function selectSkin(key) {
   }
   
   try {
+    const form = document.getElementById('timer_form');
+    const isEdit = form && form.dataset.isEdit === '1';
+    const isFirstLoad = !isEdit && !loadedSkins.has(key);
+    
     const meta = await fetchJson(`/skins/${encodeURIComponent(key)}`);
+    
+    let baseOverrides = lastSkinOverrides || {};
+    
+    // For new timers, fetch and apply formDefaults on first skin load
+    if (isFirstLoad) {
+      try {
+        const formDefaultsResponse = await fetchJson(`/api/skins/${encodeURIComponent(key)}/form-defaults`);
+        if (formDefaultsResponse && formDefaultsResponse.formDefaults && Object.keys(formDefaultsResponse.formDefaults).length > 0) {
+          // Store applied formDefaults so they're always saved (even if they match original defaults)
+          appliedFormDefaults = { ...formDefaultsResponse.formDefaults };
+          // Merge formDefaults into metadata.defaults so they appear in form fields
+          // This ensures the form fields show the formDefaults values
+          meta.defaults = { ...meta.defaults, ...formDefaultsResponse.formDefaults };
+          // Also set as baseOverrides so they're saved
+          baseOverrides = { ...formDefaultsResponse.formDefaults };
+          // Mark this skin as loaded
+          loadedSkins.add(key);
+        }
+      } catch (e) {
+        console.warn('Failed to fetch form defaults:', e);
+      }
+    } else {
+      // Clear appliedFormDefaults when switching to a different skin
+      appliedFormDefaults = {};
+    }
+    
     // When changing skin, apply the latest user overrides (carry settings across skins)
-    const baseOverrides = lastSkinOverrides || {};
     renderFields(meta, baseOverrides);
+    
+    // If we applied formDefaults, sync them to the hidden input immediately
+    if (isFirstLoad && Object.keys(baseOverrides).length > 0) {
+      // Update lastSkinOverrides so they get saved
+      lastSkinOverrides = { ...baseOverrides };
+      // Small delay to ensure form fields are rendered before syncing
+      setTimeout(() => {
+        syncOverrides();
+      }, 100);
+    }
+    
     const prevEl = document.getElementById('selected_skin_preview');
     if (meta && meta.preview_url) {
       prevEl.src = meta.preview_url;
@@ -1055,16 +1098,24 @@ document.addEventListener('DOMContentLoaded', () => {
       })();
       
       if (current) {
-        // Edit mode: load existing skin with saved overrides
-        const meta = await fetchJson(`/skins/${encodeURIComponent(current)}`);
-        renderFields(meta, savedOverrides);
-        // Seed last overrides with saved values so switching skins keeps the user's base settings
-        lastSkinOverrides = savedOverrides;
-        document.getElementById('selected_skin_label').textContent = current;
-        if (meta && meta.preview_url) {
-          const prevEl = document.getElementById('selected_skin_preview');
-          prevEl.src = meta.preview_url;
-          prevEl.classList.remove('d-none');
+        const form = document.getElementById('timer_form');
+        const isEdit = form && form.dataset.isEdit === '1';
+        
+        if (isEdit) {
+          // Edit mode: load existing skin with saved overrides
+          const meta = await fetchJson(`/skins/${encodeURIComponent(current)}`);
+          renderFields(meta, savedOverrides);
+          // Seed last overrides with saved values so switching skins keeps the user's base settings
+          lastSkinOverrides = savedOverrides;
+          document.getElementById('selected_skin_label').textContent = current;
+          if (meta && meta.preview_url) {
+            const prevEl = document.getElementById('selected_skin_preview');
+            prevEl.src = meta.preview_url;
+            prevEl.classList.remove('d-none');
+          }
+        } else {
+          // New timer: load skin and apply formDefaults if available
+          await selectSkin(current);
         }
       }
       // Populate top horizontal skin bar

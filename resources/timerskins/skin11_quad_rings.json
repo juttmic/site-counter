@@ -20,7 +20,7 @@
   "borderColor": "#FFFFFF",
   "formDefaults": {
         "background": "#FFFFFF",
-        "textColor": "#FFFFFF",
+        "textColor": "#DB0000",
         "accentColor": "#DB0000"
     },
   "fields": [

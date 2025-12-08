@@ -33,47 +33,54 @@ class SkinController extends Controller
         }
         $json = json_decode(File::get($path), true) ?: [];
         
-        // Apply form defaults if they exist (these override regular defaults for form loading)
-        // Form defaults are fields prefixed with "form" (e.g., formBackground, formAccentColor, formTextColor, formTileColor)
-        // or a "formDefaults" object
-        $defaults = $json;
-        if (isset($json['formDefaults']) && is_array($json['formDefaults'])) {
-            // Merge formDefaults into defaults
-            $defaults = array_merge($defaults, $json['formDefaults']);
-        }
-        
-        // Also check for individual form* fields and apply them
-        foreach ($json as $keyName => $value) {
-            if (strpos($keyName, 'form') === 0 && $keyName !== 'formDefaults') {
-                // Remove "form" prefix and apply to defaults
-                $targetKey = lcfirst(substr($keyName, 4)); // Remove "form" prefix
-                if ($targetKey) {
-                    $defaults[$targetKey] = $value;
-                }
-            }
-        }
-        
-        // Remove form* fields from defaults so they don't appear as editable fields
-        $cleanedDefaults = [];
-        foreach ($defaults as $keyName => $value) {
-            if (strpos($keyName, 'form') !== 0) {
-                $cleanedDefaults[$keyName] = $value;
-            }
-        }
-        $defaults = $cleanedDefaults;
-        
         $fields = $json['fields'] ?? $this->inferFieldsFromSkin($json);
         // Ensure new optional fields (e.g., separatorColor) are exposed when present but missing in provided fields
         $fields = $this->ensureExtraFields($json, $fields);
-        // Only expose editable parts and defaults
+        // Only expose editable parts and defaults (without formDefaults applied)
         $exposed = [
             'key' => $key,
             'name' => $json['name'] ?? $key,
-            'defaults' => $defaults,
+            'defaults' => $json,
             'fields' => $fields,
             'preview_url' => url('/skin-previews/' . $key . '.gif'),
         ];
         return response()->json($exposed);
+    }
+
+    /**
+     * Get form defaults for a skin (formDefaults object)
+     * This is called when a skin is first loaded on a new timer
+     */
+    public function getFormDefaults(string $key)
+    {
+        $path = resource_path('timerskins/' . $key . '.json');
+        if (!File::exists($path)) {
+            return response()->json(['message' => 'Skin not found'], 404);
+        }
+        
+        $json = json_decode(File::get($path), true) ?: [];
+        $formDefaults = [];
+        
+        // Extract formDefaults object if it exists
+        if (isset($json['formDefaults']) && is_array($json['formDefaults'])) {
+            $formDefaults = $json['formDefaults'];
+        }
+        
+        // Also check for individual form* fields
+        foreach ($json as $keyName => $value) {
+            if (strpos($keyName, 'form') === 0 && $keyName !== 'formDefaults') {
+                // Remove "form" prefix and add to formDefaults
+                $targetKey = lcfirst(substr($keyName, 4)); // Remove "form" prefix
+                if ($targetKey) {
+                    $formDefaults[$targetKey] = $value;
+                }
+            }
+        }
+        
+        return response()->json([
+            'key' => $key,
+            'formDefaults' => $formDefaults,
+        ]);
     }
 
     public function gallery()
@@ -178,5 +185,6 @@ class SkinController extends Controller
         return $fields;
     }
 }
+
 
 
