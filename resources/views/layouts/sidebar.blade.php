@@ -34,14 +34,14 @@
                     <span class="sidebar-text">Create Timer</span>
                 </a>
             </li>
-            <li class="mb-1">
+            {{-- <li class="mb-1">
                 <a href="{{ url('/skins') }}" 
                    class="d-flex align-items-center px-3 py-2 rounded text-decoration-none {{ request()->is('skins') ? 'bg-light text-dark fw-medium' : 'text-dark' }}"
                    title="Skin Gallery">
                     <i class="bi bi-images me-3"></i>
                     <span class="sidebar-text">Skin Gallery</span>
                 </a>
-            </li>
+            </li> --}}
         </ul>
     </nav>
 
@@ -96,14 +96,14 @@
                         Create Timer
                     </a>
                 </li>
-                <li class="mb-2">
+                {{-- <li class="mb-2">
                     <a href="{{ url('/skins') }}" 
                        class="d-flex align-items-center px-3 py-2 rounded text-decoration-none {{ request()->is('skins') ? 'bg-light text-dark fw-medium' : 'text-dark' }}"
                        data-bs-dismiss="offcanvas">
                         <i class="bi bi-images me-3"></i>
                         Skin Gallery
                     </a>
-                </li>
+                </li> --}}
             </ul>
         </nav>
         <div class="border-top pt-3">
