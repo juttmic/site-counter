@@ -235,7 +235,7 @@ class InvertedPillLabelsRenderer implements SkinRendererInterface
                 $lblX = (int) ($segX1 + ($segW - $lblW) / 2);
                 // Position label baseline just below the tiles with minimal gap (4 pixels)
                 // $tileY2 is the bottom of the tiles
-                $lblY = (int) ($tileY2 + 4);
+                $lblY = (int) ($tileY2 + 20);
                 imagettftext($im, $labelSize, 0, $lblX, $lblY, $accentCol, $font, $label);
             }
         }
