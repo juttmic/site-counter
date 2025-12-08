@@ -17,6 +17,11 @@
   "finalTextColor": null,
   "borderWidth": 0,
   "borderColor": "#FFFFFF",
+  "formDefaults": {
+        "background": "#FFFFFF",
+        "textColor": "#DB0000",
+        "accentColor": "#DB0000"
+    },
   "fields": [
     { "key": "width", "label": "Width", "type": "number", "min": 100, "max": 2000, "step": 10, "group": "overall" },
     { "key": "height", "label": "Height", "type": "number", "min": 80, "max": 1000, "step": 5, "group": "overall" },

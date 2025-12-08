@@ -21,6 +21,10 @@
     "finalTextColor": null,
     "borderWidth": 0,
     "borderColor": "#FFFFFF",
+    "formDefaults": {
+        "background": "#FFFFFF",
+        "textColor": "#DB0000"
+    },
     "fields": [
         {
             "key": "width",

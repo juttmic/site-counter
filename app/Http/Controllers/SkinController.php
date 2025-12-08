@@ -32,6 +32,36 @@ class SkinController extends Controller
             return response()->json(['message' => 'Skin not found'], 404);
         }
         $json = json_decode(File::get($path), true) ?: [];
+        
+        // Apply form defaults if they exist (these override regular defaults for form loading)
+        // Form defaults are fields prefixed with "form" (e.g., formBackground, formAccentColor, formTextColor, formTileColor)
+        // or a "formDefaults" object
+        $defaults = $json;
+        if (isset($json['formDefaults']) && is_array($json['formDefaults'])) {
+            // Merge formDefaults into defaults
+            $defaults = array_merge($defaults, $json['formDefaults']);
+        }
+        
+        // Also check for individual form* fields and apply them
+        foreach ($json as $keyName => $value) {
+            if (strpos($keyName, 'form') === 0 && $keyName !== 'formDefaults') {
+                // Remove "form" prefix and apply to defaults
+                $targetKey = lcfirst(substr($keyName, 4)); // Remove "form" prefix
+                if ($targetKey) {
+                    $defaults[$targetKey] = $value;
+                }
+            }
+        }
+        
+        // Remove form* fields from defaults so they don't appear as editable fields
+        $cleanedDefaults = [];
+        foreach ($defaults as $keyName => $value) {
+            if (strpos($keyName, 'form') !== 0) {
+                $cleanedDefaults[$keyName] = $value;
+            }
+        }
+        $defaults = $cleanedDefaults;
+        
         $fields = $json['fields'] ?? $this->inferFieldsFromSkin($json);
         // Ensure new optional fields (e.g., separatorColor) are exposed when present but missing in provided fields
         $fields = $this->ensureExtraFields($json, $fields);
@@ -39,7 +69,7 @@ class SkinController extends Controller
         $exposed = [
             'key' => $key,
             'name' => $json['name'] ?? $key,
-            'defaults' => $json,
+            'defaults' => $defaults,
             'fields' => $fields,
             'preview_url' => url('/skin-previews/' . $key . '.gif'),
         ];
