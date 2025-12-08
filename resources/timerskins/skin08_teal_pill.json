@@ -6,7 +6,7 @@
   "textColor": "#ECF0F1",
   "separatorColor": "#FFFFFF",
   "accentColor": "#0F7892",
-  "fontSize": 36,
+  "fontSize": 19,
   "fontPath": "resources/fonts/dejavu-sans.bold.ttf",
   "style": "teal_pill_colon",
   "showDays": true,

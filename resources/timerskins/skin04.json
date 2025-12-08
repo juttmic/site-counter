@@ -6,7 +6,7 @@
   "textColor": "#FFFFFF",
   "separatorColor": "#FFFFFF",
   "accentColor": "#FF3B30",
-  "fontSize": 44,
+  "fontSize": 25,
   "fontPath": "resources/fonts/dejavu-sans.book.ttf",
   "style": "inverted_pill_labels",
   "tileColor": "#000000",
