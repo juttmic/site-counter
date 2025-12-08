@@ -182,26 +182,62 @@ class InvertedPillLabelsRenderer implements SkinRendererInterface
             $rightDigit = $num[1];
 
             // Center digits individually inside their square tiles
+            // Calculate tile centers
+            $leftTileCenterX = $leftX1 + ($tileSize / 2);
+            $rightTileCenterX = $rightX1 + ($tileSize / 2);
+            
+            // Left digit centering
             $leftBox = imagettfbbox($fontSize, 0, $font, $leftDigit);
-            $leftW = abs($leftBox[4] - $leftBox[0]);
-            $leftH = abs($leftBox[5] - $leftBox[1]);
-            $leftX = (int) ($leftX1 + ($tileSize - $leftW) / 2);
-            $digitY = (int) ($tileCenterY + $leftH / 2 - 2);
-            imagettftext($im, $fontSize, 0, $leftX, $digitY, $textCol, $font, $leftDigit);
-
+            if ($leftBox !== false) {
+                // Calculate text bounding box dimensions
+                $leftTextWidth = abs($leftBox[4] - $leftBox[0]);
+                $leftTextHeight = abs($leftBox[1] - $leftBox[7]); // Top to bottom
+                $leftTextTop = min($leftBox[1], $leftBox[3], $leftBox[5], $leftBox[7]);
+                $leftTextBottom = max($leftBox[1], $leftBox[3], $leftBox[5], $leftBox[7]);
+                
+                // Center horizontally: adjust X so text center aligns with tile center
+                // imagettftext uses baseline at Y, so we need to account for the offset
+                $leftX = (int) ($leftTileCenterX - ($leftBox[0] + $leftBox[4]) / 2);
+                
+                // Center vertically: place baseline so visual center of text aligns with tile center
+                // The visual center is at (top + bottom) / 2, but baseline is at Y=0 in bbox
+                $leftTextVisualCenter = ($leftTextTop + $leftTextBottom) / 2;
+                $leftBaselineY = (int) ($tileCenterY - $leftTextVisualCenter);
+                
+                imagettftext($im, $fontSize, 0, $leftX, $leftBaselineY, $textCol, $font, $leftDigit);
+            }
+            
+            // Right digit centering
             $rightBox = imagettfbbox($fontSize, 0, $font, $rightDigit);
-            $rightW = abs($rightBox[4] - $rightBox[0]);
-            $rightH = abs($rightBox[5] - $rightBox[1]);
-            $rightX = (int) ($rightX1 + ($tileSize - $rightW) / 2);
-            imagettftext($im, $fontSize, 0, $rightX, $digitY, $textCol, $font, $rightDigit);
+            if ($rightBox !== false) {
+                // Calculate text bounding box dimensions
+                $rightTextWidth = abs($rightBox[4] - $rightBox[0]);
+                $rightTextHeight = abs($rightBox[1] - $rightBox[7]);
+                $rightTextTop = min($rightBox[1], $rightBox[3], $rightBox[5], $rightBox[7]);
+                $rightTextBottom = max($rightBox[1], $rightBox[3], $rightBox[5], $rightBox[7]);
+                
+                // Center horizontally
+                $rightX = (int) ($rightTileCenterX - ($rightBox[0] + $rightBox[4]) / 2);
+                
+                // Center vertically
+                $rightTextVisualCenter = ($rightTextTop + $rightTextBottom) / 2;
+                $rightBaselineY = (int) ($tileCenterY - $rightTextVisualCenter);
+                
+                imagettftext($im, $fontSize, 0, $rightX, $rightBaselineY, $textCol, $font, $rightDigit);
+            }
 
             // Red label under the digit tiles (centered under the whole segment)
+            // Position label based on actual bottom of tiles plus small gap
             $label = (string)$units[$i]['label'];
             $lblBox = imagettfbbox($labelSize, 0, $font, $label);
-            $lblW = abs($lblBox[4] - $lblBox[0]);
-            $lblX = (int) ($segX1 + ($segW - $lblW) / 2);
-            $lblY = (int) ($padTop + $digitTileH + $labelSize + 6);
-            imagettftext($im, $labelSize, 0, $lblX, $lblY, $accentCol, $font, $label);
+            if ($lblBox !== false) {
+                $lblW = abs($lblBox[4] - $lblBox[0]);
+                $lblX = (int) ($segX1 + ($segW - $lblW) / 2);
+                // Position label baseline just below the tiles with minimal gap (4 pixels)
+                // $tileY2 is the bottom of the tiles
+                $lblY = (int) ($tileY2 + 4);
+                imagettftext($im, $labelSize, 0, $lblX, $lblY, $accentCol, $font, $label);
+            }
         }
 
         return true;
