@@ -74,7 +74,7 @@ class InvertedPillLabelsRenderer implements SkinRendererInterface
             $rightY1 = $leftY1; // Same Y as left tile
             $rightY2 = $leftY2;
 
-            $r = max(6, (int)round($tileSize * 0.15)); // Rounded corners based on tile size
+            $r = max(6, (int)round($tileSize * 0.02)); // Rounded corners based on tile size
 
             // Left digit tile (square, rounded)
             imagefilledrectangle($im, $leftX1 + $r, $leftY1, $leftX2 - $r, $leftY2, $tileCol);
