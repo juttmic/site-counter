@@ -10,24 +10,32 @@ class SlateRoundedBarRenderer implements SkinRendererInterface
     {
         // Single rounded bar across with vertical dividers
         imagefilledrectangle($im, 0, 0, $width, $height, $bgCol);
-        $radius = (int) max(10, round($height / 2.8));
+        
+        // Calculate reduced bar height (60% of canvas height) and center it vertically
+        $barHeight = (int) round($height * 0.40);
+        $barY = (int) (($height - $barHeight) / 2);
+        $barPaddingX = 6;
+        $barWidth = $width - (2 * $barPaddingX);
+        
+        $radius = (int) max(10, round($barHeight / 2.8));
         $barCol = $accentCol;
-        $this->fillRoundedRect($im, 6, 6, $width - 12, $height - 12, $radius, $barCol);
+        $this->fillRoundedRect($im, $barPaddingX, $barY, $barWidth, $barHeight, $radius, $barCol);
 
-        // Vertical separators between segments
+        // Vertical separators between segments (within the bar)
         $segments = 4;
         $unitWidth = $width / $segments;
         $sepCol = imagecolorallocatealpha($im, 255, 255, 255, 70);
         for ($i = 1; $i < $segments; $i++) {
             $x = (int) round($unitWidth * $i);
-            imageline($im, $x, 10, $x, $height - 10, $sepCol);
+            imageline($im, $x, $barY + 4, $x, $barY + $barHeight - 4, $sepCol);
         }
     }
 
     public function renderTimeText($im, int $secondsRemaining, array $skin, int $width, int $height, int $textCol, int $accentCol): bool
     {
         $font = (string) ($skin['fontPath'] ?? '');
-        $fontSize = (int) ($skin['fontSize'] ?? 36);
+        // Reduce font size by 25% (from original)
+        $fontSize = (int) round(($skin['fontSize'] ?? 25));
         $labelSize = max(10, (int) round($fontSize * 0.32));
 
         $days = intdiv($secondsRemaining, 86400);
@@ -44,7 +52,10 @@ class SlateRoundedBarRenderer implements SkinRendererInterface
 
         $segments = count($units);
         $unitWidth = $width / $segments;
-        $centerY = (int) ($height / 2);
+        // Center text within the reduced-height bar
+        $barHeight = (int) round($height * 0.40);
+        $barY = (int) (($height - $barHeight) / 2);
+        $centerY = (int) ($barY + ($barHeight / 2));
 
         if (is_file($font)) {
             for ($i=0;$i<$segments;$i++) {
