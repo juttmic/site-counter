@@ -70,18 +70,22 @@ class GenerateSkinPreviews extends Command
                 continue;
             }
             try {
-                // Determine duration
+                // Determine starting countdown time and animation duration
                 $secondsOpt = $this->option('seconds');
-                // Backward compatibility: allow --time=NN or --time=NN (legacy array) to specify seconds
+                // Backward compatibility: allow --time=NN or --time=NN (legacy array) to specify starting time
                 $legacyTime = $this->option('time');
                 if (is_array($legacyTime) && count($legacyTime) > 0) {
-                    $seconds = (int) ($legacyTime[0] ?? rand(90000, 111111));
+                    $startTime = (int) ($legacyTime[0] ?? rand(90000, 111111));
                 } else if (is_string($legacyTime) && $legacyTime !== '') {
-                    $seconds = (int) $legacyTime;
-                } else if ($secondsOpt !== null && $secondsOpt !== false) {
-                    $seconds = (int) $secondsOpt;
+                    $startTime = (int) $legacyTime;
                 } else {
-                    $seconds = rand(90000, 111111);
+                    $startTime = rand(90000, 111111);
+                }
+                
+                // Animation duration: use --seconds option if provided, otherwise default to 30
+                $animateDuration = null;
+                if ($secondsOpt !== null && $secondsOpt !== false && $secondsOpt !== '') {
+                    $animateDuration = (int) $secondsOpt;
                 }
 
                 $text = $this->option('text');
@@ -101,7 +105,8 @@ class GenerateSkinPreviews extends Command
                 if ($outH !== null && $outH !== '') { $overrides['outputHeight'] = (int) $outH; }
 
                 // Generate animated GIF preview using the skin renderer (with optional custom text)
-                $generator->renderSkinGifPreview($skinKey, $outPath, max(1, $seconds), $text ?: null, $textPos, $textColor ?: null, $overrides);
+                // Pass startTime as starting countdown, and animateDuration for animation length
+                $generator->renderSkinGifPreview($skinKey, $outPath, max(1, $startTime), $text ?: null, $textPos, $textColor ?: null, $overrides, $animateDuration);
                 $this->info("Generated preview: {$skinKey}");
                 $count++;
             } catch (\Throwable $e) {

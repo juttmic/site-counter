@@ -57,7 +57,7 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::resource('timers', TimerController::class)->except(['store','index', 'show']);
 
     // Skins gallery page (HTML)
-    // Route::get('/skins', [SkinController::class, 'gallery'])->name('skins.gallery');
+    Route::get('/skins', [SkinController::class, 'gallery'])->name('skins.gallery');
     Route::post('/skins/{key}/regenerate', [SkinController::class, 'regenerate'])->name('skins.regenerate');
     // JSON endpoints for create/edit modal
     Route::get('/api/skins', [SkinController::class, 'index'])->name('skins.index');

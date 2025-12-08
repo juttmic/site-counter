@@ -137,10 +137,13 @@ class TimerGifGenerator
 
     /**
      * Render a short animated GIF preview for a given skin.
-     * Generates a countdown of $seconds length (default 6s) using the skin's renderer.
-     * Always includes the final "Time's Up" frame to show end screen customization.
+     * Generates a looping countdown preview that restarts after the animation duration.
+     * Never shows "Time's Up" - instead loops continuously by counting down and restarting.
+     * 
+     * @param int $seconds Starting countdown time in seconds (e.g., 90000 for ~25 hours)
+     * @param int $animateFor Duration to animate in seconds (default 30, max 60)
      */
-    public function renderSkinGifPreview(string $skinName, string $outputPath, int $seconds = 6, ?string $customText = null, string $textPosition = 'none', ?string $customTextColor = null, array $overrides = []): void
+    public function renderSkinGifPreview(string $skinName, string $outputPath, int $seconds = 6, ?string $customText = null, string $textPosition = 'none', ?string $customTextColor = null, array $overrides = [], ?int $animateFor = null): void
     {
         $skin = $this->loadSkin($skinName);
         if ($customTextColor) {
@@ -149,16 +152,32 @@ class TimerGifGenerator
         if (!empty($overrides)) {
             $skin = array_replace_recursive($skin, $overrides);
         }
-        $start = max(1, $seconds);
-        $animateFor = min(60, $start);
-        $frames = $this->buildFramesCapped($start, $animateFor, $skin, $customText, $textPosition);
         
-        // Always append final frame for previews to show end screen customization
-        // This ensures users can see the final message, colors, and borders in gallery previews
-        $frames[] = $this->renderFinalFrame($skin, $customText, $textPosition);
+        // Use provided seconds as starting countdown time
+        $start = max(1, $seconds);
+        
+        // Use provided animateFor or default to 30 seconds (max 60 for previews)
+        $animationDuration = $animateFor ?? 30;
+        $animationDuration = min(60, max(1, $animationDuration));
+        
+        // Build frames counting down from start for animationDuration seconds
+        $frames = [];
+        $step = 1; // 1 second per frame for smooth preview
+        
+        // Count down from start for animationDuration seconds
+        // This will show: start, start-1, start-2, ..., start-animationDuration
+        // The GIF will loop naturally back to the first frame (start value)
+        for ($elapsed = 0; $elapsed <= $animationDuration; $elapsed += $step) {
+            $remaining = max(0, $start - $elapsed);
+            // Never show "Time's Up" - just show the countdown, even if it reaches 0
+            $frames[] = $this->renderPngFrame($remaining, $skin, $customText, $textPosition);
+        }
+        
+        // The GIF will loop naturally back to the first frame (start value)
+        // This creates a continuous countdown that restarts seamlessly
         
         \Illuminate\Support\Facades\File::ensureDirectoryExists(dirname($outputPath));
-        $this->encodeAnimatedGif($frames, $outputPath, $animateFor);
+        $this->encodeAnimatedGif($frames, $outputPath, $animationDuration);
     }
 
     public function loadSkin(string $skinName): array
