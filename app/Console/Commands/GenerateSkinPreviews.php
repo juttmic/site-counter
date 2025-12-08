@@ -75,13 +75,13 @@ class GenerateSkinPreviews extends Command
                 // Backward compatibility: allow --time=NN or --time=NN (legacy array) to specify seconds
                 $legacyTime = $this->option('time');
                 if (is_array($legacyTime) && count($legacyTime) > 0) {
-                    $seconds = (int) ($legacyTime[0] ?? 15);
+                    $seconds = (int) ($legacyTime[0] ?? rand(90000, 111111));
                 } else if (is_string($legacyTime) && $legacyTime !== '') {
                     $seconds = (int) $legacyTime;
                 } else if ($secondsOpt !== null && $secondsOpt !== false) {
                     $seconds = (int) $secondsOpt;
                 } else {
-                    $seconds = 15;
+                    $seconds = rand(90000, 111111);
                 }
 
                 $text = $this->option('text');
