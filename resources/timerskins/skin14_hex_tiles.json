@@ -25,10 +25,10 @@
   "fields": [
     { "key": "width", "label": "Width", "type": "number", "min": 100, "max": 2000, "step": 10, "group": "overall" },
     { "key": "height", "label": "Height", "type": "number", "min": 80, "max": 1000, "step": 5, "group": "overall" },
-    { "key": "textColor", "label": "Text Color", "type": "color", "group": "custom" },
+    { "key": "textColor", "label": "Text Color", "type": "color", "group": "timer" },
     { "key": "accentColor", "label": "Tile Color", "type": "color", "group": "overall" },
     { "key": "background", "label": "Background Color", "type": "color", "group": "overall" },
-    { "key": "fontSize", "label": "Font Size", "type": "number", "min": 8, "max": 200, "step": 1, "group": "custom" },
+    { "key": "fontSize", "label": "Font Size", "type": "number", "min": 8, "max": 200, "step": 1, "group": "timer" },
     { "key": "fontPath", "label": "Font", "type": "font", "group": "overall" },
     { "key": "showDays", "label": "Show Days", "type": "boolean", "group": "timer" },
     { "key": "showHours", "label": "Show Hours", "type": "boolean", "group": "timer" },

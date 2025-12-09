@@ -51,7 +51,7 @@ class ArcGaugeRenderer implements SkinRendererInterface
                 imagettftext($im,$fontSize,0,(int)($cx-$nW/2),(int)($baseline-10),$textCol,$font,$num);
                 $lab=$u[$i]['label'];
                 $lW=$this->w($lab,$font,$labelSize);
-                imagettftext($im,$labelSize,0,(int)($cx-$lW/2),(int)($baseline+ (int)round($fontSize*0.9)),$accentCol,$font,$lab);
+                imagettftext($im,$labelSize,0,(int)($cx-$lW/2),(int)($baseline+ (int)round($fontSize*0.9)),$textCol,$font,$lab);
             }
         } else {
             $b=5;$l=3;
@@ -60,7 +60,7 @@ class ArcGaugeRenderer implements SkinRendererInterface
                 $num=sprintf('%02d',$u[$i]['value']); $nW=imagefontwidth($b)*strlen($num);
                 imagestring($im,$b,(int)($cx-$nW/2),(int)($baseline-14),$num,$textCol);
                 $lab=$u[$i]['label']; $lW=imagefontwidth($l)*strlen($lab);
-                imagestring($im,$l,(int)($cx-$lW/2),(int)($baseline+8),$lab,$accentCol);
+                imagestring($im,$l,(int)($cx-$lW/2),(int)($baseline+8),$lab,$textCol);
             }
         }
 
