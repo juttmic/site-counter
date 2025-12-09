@@ -196,9 +196,11 @@ class TimerController extends Controller
         $job->handle();
 
         if (request()->expectsJson()) {
+            $freshTimer = $timer->fresh();
+            $gifUrl = $freshTimer->gif_url_with_cache_bust ?? $freshTimer->gif_url;
             return response()->json([
                 'ok' => true,
-                'gif_url' => $timer->fresh()->gif_url_with_cache_bust,
+                'gif_url' => $gifUrl ? url($gifUrl) : null,
                 'message' => 'GIF generated successfully.',
             ]);
         }
