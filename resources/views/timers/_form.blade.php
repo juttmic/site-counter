@@ -83,6 +83,40 @@
     font-size: 1.2rem;
   }
   
+  /* Sticky Preview Section */
+  .sticky-preview {
+    position: sticky;
+    top: 30vh;
+    align-self: flex-start;
+    max-height: calc(100vh - 40px);
+    z-index: 10;
+  }
+  
+  /* Smooth scrolling for preview container if content overflows */
+  .sticky-preview .card-body {
+    overflow-y: auto;
+    max-height: calc(100vh - 120px);
+  }
+  
+  /* Hide scrollbar for cleaner look (optional) */
+  .sticky-preview .card-body::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .sticky-preview .card-body::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+  }
+  
+  .sticky-preview .card-body::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 3px;
+  }
+  
+  .sticky-preview .card-body::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }
+  
   /* Enhanced Form Styling */
   .form-label {
     font-weight: 600;
@@ -336,7 +370,7 @@
 
                 <!-- Right column: live preview -->
                 <div class="col-12 col-md-6">
-                    <div class="card">
+                    <div class="card sticky-preview">
                         <div class="card-body d-flex flex-column">
                             <h3 class="h6 fw-semibold mb-3">Preview</h3>
                             <div id="timer_preview" class="d-flex align-items-center justify-content-center rounded border bg-light mb-3" style="min-height: 260px;">
