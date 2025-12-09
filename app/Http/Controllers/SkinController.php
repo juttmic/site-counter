@@ -189,8 +189,8 @@ class SkinController extends Controller
             $fields[] = ['key' => 'customTextColor', 'label' => 'Custom Text Color', 'type' => 'color'];
         }
         // Custom text margins (top/bottom only)
-        if (!isset($have['customTextMarginTop']))    { $fields[] = ['key' => 'customTextMarginTop',    'label' => 'Text Margin Top',    'type' => 'number', 'min' => 0, 'max' => 200, 'step' => 1]; }
-        if (!isset($have['customTextMarginBottom'])) { $fields[] = ['key' => 'customTextMarginBottom', 'label' => 'Text Margin Bottom', 'type' => 'number', 'min' => 0, 'max' => 200, 'step' => 1]; }
+        if (!isset($have['customTextMarginTop']))    { $fields[] = ['key' => 'customTextMarginTop',    'label' => 'Margin Top',    'type' => 'number', 'min' => 0, 'max' => 200, 'step' => 1]; }
+        if (!isset($have['customTextMarginBottom'])) { $fields[] = ['key' => 'customTextMarginBottom', 'label' => 'Margin Bottom', 'type' => 'number', 'min' => 0, 'max' => 200, 'step' => 1]; }
         // Output canvas width/height (overall GIF)
         if (!isset($have['outputWidth']))  { $fields[] = ['key' => 'outputWidth',  'label' => 'Output Width (GIF)',  'type' => 'number', 'min' => 50, 'max' => 3000, 'step' => 1]; }
         if (!isset($have['outputHeight'])) { $fields[] = ['key' => 'outputHeight', 'label' => 'Output Height (GIF)', 'type' => 'number', 'min' => 50, 'max' => 3000, 'step' => 1]; }

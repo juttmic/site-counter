@@ -466,11 +466,11 @@
                                                 </div>
                                             </div>
                                             <div class="col-12 col-sm-4 col-md-3">
-                                                <label class="form-label small mb-1">Text Margin Top</label>
+                                                <label class="form-label small mb-1">Margin Top</label>
                                                 <input type="number" name="customTextMarginTop" class="form-control form-control-sm" min="0" max="200" step="1" value="{{ old('customTextMarginTop', ($isEdit && is_array($timer->skin_overrides) && isset($timer->skin_overrides['customTextMarginTop'])) ? $timer->skin_overrides['customTextMarginTop'] : '10') }}">
                                             </div>
                                             <div class="col-12 col-sm-4 col-md-3">
-                                                <label class="form-label small mb-1">Text Margin Bottom</label>
+                                                <label class="form-label small mb-1">Margin Bottom</label>
                                                 <input type="number" name="customTextMarginBottom" class="form-control form-control-sm" min="0" max="200" step="1" value="{{ old('customTextMarginBottom', ($isEdit && is_array($timer->skin_overrides) && isset($timer->skin_overrides['customTextMarginBottom'])) ? $timer->skin_overrides['customTextMarginBottom'] : '10') }}">
                                             </div>
                                         </div>
