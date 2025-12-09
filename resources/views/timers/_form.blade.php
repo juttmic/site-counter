@@ -352,7 +352,7 @@
   @if(isset($timer))
     <a href="{{ route('timers.preview', $timer) }}" class="btn btn-outline-secondary border rounded">Preview Timer</a>
   @endif
-  <button id="save_btn" type="button" class="btn btn-primary">Generate GIF</button>
+  
 </div>
 <div class="py-4 py-md-3">
     <div class="container-fluid">
@@ -532,6 +532,18 @@
                 <div class="col-12 col-md-6">
                     <div class="card sticky-preview">
                         <div class="card-body d-flex flex-column">
+                          <div id="embed_section" class="mt-3 {{ $isEdit && isset($timer->gif_url) && $timer->gif_url && $timer->status === 'active' ? '' : 'd-none' }}">
+                            <h4 class="h6 fw-semibold mb-2">Embed Code</h4>
+                            <div class="d-flex gap-2">
+                                @if($isEdit && isset($timer->gif_url) && $timer->gif_url && $timer->status === 'active')
+                                    @php($embedUrl = url('/gettimer/'.$timer->user_id.'/'.pathinfo($timer->gif_url, PATHINFO_FILENAME)).'.gif')
+                                    <input id="embed_input" type="text" class="form-control form-control-sm" value='<img src="{{ $embedUrl }}" alt="Countdown Timer">' readonly>
+                                @else
+                                    <input id="embed_input" type="text" class="form-control form-control-sm" value="" readonly>
+                                @endif
+                                <button id="embed_copy_btn" type="button" class="btn btn-outline-secondary btn-sm">Copy</button>
+                            </div>
+                        </div>
                             <h3 class="h6 fw-semibold mb-3">Preview</h3>
                             <div id="timer_preview" class="d-flex align-items-center justify-content-center rounded border bg-light mb-3" style="min-height: 260px;">
                                 <div id="preview_loader" class="text-center text-muted d-none">
@@ -550,18 +562,10 @@
                                     <p class="text-muted small">Configure your timer settings to see the preview</p>
                                 </div>
                             </div>
-                            <div id="embed_section" class="mt-3 {{ $isEdit && isset($timer->gif_url) && $timer->gif_url && $timer->status === 'active' ? '' : 'd-none' }}">
-                                <h4 class="h6 fw-semibold mb-2">Embed Code</h4>
-                                <div class="d-flex gap-2">
-                                    @if($isEdit && isset($timer->gif_url) && $timer->gif_url && $timer->status === 'active')
-                                        @php($embedUrl = url('/gettimer/'.$timer->user_id.'/'.pathinfo($timer->gif_url, PATHINFO_FILENAME)).'.gif')
-                                        <input id="embed_input" type="text" class="form-control form-control-sm" value='<img src="{{ $embedUrl }}" alt="Countdown Timer">' readonly>
-                                    @else
-                                        <input id="embed_input" type="text" class="form-control form-control-sm" value="" readonly>
-                                    @endif
-                                    <button id="embed_copy_btn" type="button" class="btn btn-outline-secondary btn-sm">Copy</button>
-                                </div>
+                            <div>
+                              <button id="save_btn" type="button" class="btn btn-primary">Generate GIF</button>
                             </div>
+                            
                             <div id="embed_notice" class="mt-3 alert alert-warning py-2 px-3 small {{ $isEdit && isset($timer->status) && $timer->status !== 'active' ? '' : 'd-none' }}">
                                 Activate this timer to generate a shareable embed code.
                             </div>
