@@ -272,7 +272,7 @@
                                            value="{{ old('duration_seconds', $timer->duration_seconds ?? '') }}">
                                 </div>
 
-                                <div class="mt-3">
+                                <div class="mt-3 d-none">
                                     <label class="form-label">Selected Skin</label>
                                     <div class="mt-2 position-relative d-inline-flex align-items-center gap-2 border rounded p-2 bg-light">
                                         <img id="selected_skin_preview" alt="Selected skin preview" class="border rounded bg-white d-none" style="height: 40px; width: auto;" />
