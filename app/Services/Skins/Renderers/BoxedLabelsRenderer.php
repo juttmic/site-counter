@@ -39,10 +39,10 @@ class BoxedLabelsRenderer implements SkinRendererInterface
             imagefilledellipse($im, $x1 + $r, $y2 - $r, $r * 2, $r * 2, $bgCol);
             imagefilledellipse($im, $x2 - $r, $y2 - $r, $r * 2, $r * 2, $bgCol);
 
-        	// Outline
-            imagerectangle($im, $x1-5, $y1-5, $x2+5, $y2+5, $textCol);
+        	// Outline - use accent color for box borders
+            imagerectangle($im, $x1-5, $y1-5, $x2+5, $y2+5, $accentCol);
 
-            // Thin divider line ~62% from top
+            // Thin divider line ~62% from top - also use accent color
             $divY = (int) ($y1 + $segH * 0.62);
             imageline($im, $x1 + 2, $divY, $x2 - 2, $divY, $accentCol);
         }
