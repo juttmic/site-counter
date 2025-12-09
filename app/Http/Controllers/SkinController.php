@@ -14,8 +14,17 @@ class SkinController extends Controller
         $skins = [];
         foreach (File::files($dir) as $file) {
             if (strtolower($file->getExtension()) !== 'json') continue;
+            
+            // Only include skins that have valid JSON files
             $key = pathinfo($file->getFilename(), PATHINFO_FILENAME);
-            $json = json_decode(File::get($file->getPathname()), true) ?: [];
+            $jsonPath = $file->getPathname();
+            
+            // Double-check file exists (should always be true, but safety check)
+            if (!File::exists($jsonPath)) continue;
+            
+            $json = json_decode(File::get($jsonPath), true);
+            if ($json === null) continue; // Skip invalid JSON
+            
             $skins[] = [
                 'key' => $key,
                 'name' => $json['name'] ?? $key,
@@ -86,15 +95,25 @@ class SkinController extends Controller
     public function gallery()
     {
         $dir = public_path('skin-previews');
+        $jsonDir = resource_path('timerskins');
         $files = collect(glob($dir . DIRECTORY_SEPARATOR . '*.gif'));
-        $items = $files->map(function ($path) {
+        
+        $items = $files->map(function ($path) use ($jsonDir) {
             $file = pathinfo($path, PATHINFO_BASENAME);
             $key = pathinfo($path, PATHINFO_FILENAME);
+            
+            // Only include if corresponding JSON file exists
+            $jsonPath = $jsonDir . DIRECTORY_SEPARATOR . $key . '.json';
+            if (!File::exists($jsonPath)) {
+                return null; // Filter out skins without JSON files
+            }
+            
             return [
                 'key' => $key,
                 'url' => url('skin-previews/' . $file),
             ];
-        });
+        })->filter(); // Remove null entries
+        
         return view('skins.gallery', ['items' => $items]);
     }
 
