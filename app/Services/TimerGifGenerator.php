@@ -56,6 +56,7 @@ class TimerGifGenerator
 
         $skin = $this->loadSkin($timer->skin);
         // Apply per-timer overrides if present (preferred source for width/height and other settings)
+        // customTextColor, customTextMarginTop, customTextMarginBottom are stored in skin_overrides
         if (is_array($timer->skin_overrides) && !empty($timer->skin_overrides)) {
             $skin = array_replace_recursive($skin, $timer->skin_overrides);
         }
@@ -91,9 +92,11 @@ class TimerGifGenerator
             $durationForGif = max(1, $remaining);
         }
         $skin = $this->loadSkin($timer->skin);
+        // Apply per-timer overrides if present (customTextColor, margins are in skin_overrides)
         if (is_array($timer->skin_overrides) && !empty($timer->skin_overrides)) {
             $skin = array_replace_recursive($skin, $timer->skin_overrides);
         }
+        
         $frameLimit = $this->resolveFrameLimit($timer);
         $animateFor = min($frameLimit, $maxAnimateFor, max(0, $durationForGif));
         $frames = $this->buildFramesCapped($remaining, $animateFor, $skin, $timer->custom_text, $timer->text_position);

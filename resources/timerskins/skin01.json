@@ -13,7 +13,7 @@
     "showHours": true,
     "showMinutes": true,
     "showSeconds": true,
-    "separator": " : ",
+    "separator": ":",
     "layout": "horizontal",
     "animation": "none",
     "finalMessage": "Time's Up",
@@ -60,7 +60,7 @@
             "key": "textColor",
             "label": "Text Color",
             "type": "color",
-            "group": "custom"
+            "group": "timer"
         },
         {
             "key": "accentColor",
@@ -75,7 +75,7 @@
             "min": 8,
             "max": 200,
             "step": 1,
-            "group": "custom"
+            "group": "timer"
         },
         {
             "key": "fontPath",

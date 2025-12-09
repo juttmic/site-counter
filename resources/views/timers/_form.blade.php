@@ -453,7 +453,7 @@
                                             </div>
                                             <div class="col-12 col-sm-6">
                                                 <label class="form-label small mb-1">Custom Text Color</label>
-                                                @php($customTextColor = old('customTextColor', $timer->customTextColor ?? '#000000'))
+                                                @php($customTextColor = old('customTextColor', ($isEdit && is_array($timer->skin_overrides) && isset($timer->skin_overrides['customTextColor'])) ? $timer->skin_overrides['customTextColor'] : '#000000'))
                                                 <div class="modern-color-picker">
                                                     <div class="color-picker-swatch" style="--swatch-color: {{ $customTextColor }};"></div>
                                                     <div class="color-picker-input-wrapper">
@@ -461,17 +461,17 @@
                                                             <span class="color-picker-hex">{{ strtoupper($customTextColor) }}</span>
                                                             <i class="bi bi-palette color-picker-icon"></i>
                                                         </div>
-                                                        <input type="color" name="customTextColor" class="color-picker-native" value="{{ $customTextColor }}" data-key="customTextColor">
+                                                        <input type="color" name="customTextColor" class="color-picker-native" value="{{ $customTextColor }}">
                                                     </div>
                                                 </div>
                                             </div>
                                             <div class="col-12 col-sm-4 col-md-3">
-                                                <label class="form-label small mb-1">Margin Top</label>
-                                                <input type="number" name="customTextMarginTop" class="form-control form-control-sm" min="0" max="200" step="1" value="{{ old('customTextMarginTop', $timer->customTextMarginTop ?? '') }}">
+                                                <label class="form-label small mb-1">Text Margin Top</label>
+                                                <input type="number" name="customTextMarginTop" class="form-control form-control-sm" min="0" max="200" step="1" value="{{ old('customTextMarginTop', ($isEdit && is_array($timer->skin_overrides) && isset($timer->skin_overrides['customTextMarginTop'])) ? $timer->skin_overrides['customTextMarginTop'] : '10') }}">
                                             </div>
                                             <div class="col-12 col-sm-4 col-md-3">
-                                                <label class="form-label small mb-1">Margin Bottom</label>
-                                                <input type="number" name="customTextMarginBottom" class="form-control form-control-sm" min="0" max="200" step="1" value="{{ old('customTextMarginBottom', $timer->customTextMarginBottom ?? '') }}">
+                                                <label class="form-label small mb-1">Text Margin Bottom</label>
+                                                <input type="number" name="customTextMarginBottom" class="form-control form-control-sm" min="0" max="200" step="1" value="{{ old('customTextMarginBottom', ($isEdit && is_array($timer->skin_overrides) && isset($timer->skin_overrides['customTextMarginBottom'])) ? $timer->skin_overrides['customTextMarginBottom'] : '10') }}">
                                             </div>
                                         </div>
                                     </div>
@@ -598,7 +598,7 @@ function toggleInputs() {
 }
 document.addEventListener('DOMContentLoaded', toggleInputs);
 
-// Initialize static color picker for customTextColor
+// Initialize static color picker for customTextColor and sync to skin_overrides
 document.addEventListener('DOMContentLoaded', function() {
   const customTextColorInput = document.querySelector('input[name="customTextColor"].color-picker-native');
   if (customTextColorInput) {
@@ -611,12 +611,26 @@ document.addEventListener('DOMContentLoaded', function() {
       const newColor = customTextColorInput.value;
       swatch.style.setProperty('--swatch-color', newColor);
       hexSpan.textContent = newColor.toUpperCase();
+      // Sync to skin_overrides when changed
+      syncOverrides();
     };
     
     customTextColorInput.addEventListener('input', updateDisplay);
     customTextColorInput.addEventListener('change', updateDisplay);
     display.addEventListener('click', () => customTextColorInput.click());
     swatch.addEventListener('click', () => customTextColorInput.click());
+  }
+  
+  // Sync margin fields to skin_overrides when changed
+  const marginTopInput = document.querySelector('input[name="customTextMarginTop"]');
+  const marginBottomInput = document.querySelector('input[name="customTextMarginBottom"]');
+  if (marginTopInput) {
+    marginTopInput.addEventListener('change', syncOverrides);
+    marginTopInput.addEventListener('input', syncOverrides);
+  }
+  if (marginBottomInput) {
+    marginBottomInput.addEventListener('change', syncOverrides);
+    marginBottomInput.addEventListener('input', syncOverrides);
   }
 });
 
@@ -1188,6 +1202,32 @@ function syncOverrides() {
     }
   });
   
+  // Include static custom text fields from General settings (these are stored in skin_overrides)
+  // Always save these values so they persist across skin changes
+  const customTextColorInput = document.querySelector('input[name="customTextColor"]');
+  if (customTextColorInput) {
+    const colorVal = customTextColorInput.value;
+    if (colorVal) {
+      data['customTextColor'] = colorVal;
+    }
+  }
+  
+  const customTextMarginTopInput = document.querySelector('input[name="customTextMarginTop"]');
+  if (customTextMarginTopInput && customTextMarginTopInput.value !== '') {
+    const marginTop = Number(customTextMarginTopInput.value);
+    if (!isNaN(marginTop)) {
+      data['customTextMarginTop'] = marginTop;
+    }
+  }
+  
+  const customTextMarginBottomInput = document.querySelector('input[name="customTextMarginBottom"]');
+  if (customTextMarginBottomInput && customTextMarginBottomInput.value !== '') {
+    const marginBottom = Number(customTextMarginBottomInput.value);
+    if (!isNaN(marginBottom)) {
+      data['customTextMarginBottom'] = marginBottom;
+    }
+  }
+  
   document.getElementById('skin_overrides_input').value = JSON.stringify(data);
   // Remember latest overrides so switching skins applies current user settings
   lastSkinOverrides = data;
@@ -1395,6 +1435,31 @@ document.addEventListener('DOMContentLoaded', () => {
         renderFields(meta, savedOverrides);
         // Seed last overrides with saved values so switching skins keeps the user's base settings
         lastSkinOverrides = savedOverrides;
+        
+        // Load custom text fields from savedOverrides into the static form fields
+        if (savedOverrides.customTextColor) {
+          const colorInput = document.querySelector('input[name="customTextColor"]');
+          if (colorInput) {
+            colorInput.value = savedOverrides.customTextColor;
+            // Update the display
+            const wrapper = colorInput.closest('.modern-color-picker');
+            if (wrapper) {
+              const swatch = wrapper.querySelector('.color-picker-swatch');
+              const hexSpan = wrapper.querySelector('.color-picker-hex');
+              if (swatch) swatch.style.setProperty('--swatch-color', savedOverrides.customTextColor);
+              if (hexSpan) hexSpan.textContent = savedOverrides.customTextColor.toUpperCase();
+            }
+          }
+        }
+        if (savedOverrides.customTextMarginTop !== undefined) {
+          const marginTopInput = document.querySelector('input[name="customTextMarginTop"]');
+          if (marginTopInput) marginTopInput.value = savedOverrides.customTextMarginTop;
+        }
+        if (savedOverrides.customTextMarginBottom !== undefined) {
+          const marginBottomInput = document.querySelector('input[name="customTextMarginBottom"]');
+          if (marginBottomInput) marginBottomInput.value = savedOverrides.customTextMarginBottom;
+        }
+        
         document.getElementById('selected_skin_label').textContent = current;
         if (meta && meta.preview_url) {
           const prevEl = document.getElementById('selected_skin_preview');
