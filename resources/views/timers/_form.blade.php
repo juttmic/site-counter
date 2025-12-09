@@ -86,7 +86,7 @@
   /* Sticky Preview Section */
   .sticky-preview {
     position: sticky;
-    top: 30vh;
+    top: 20px;
     align-self: flex-start;
     max-height: calc(100vh - 40px);
     z-index: 10;
@@ -115,6 +115,118 @@
   
   .sticky-preview .card-body::-webkit-scrollbar-thumb:hover {
     background: #555;
+  }
+  
+  /* Modern Color Picker */
+  .modern-color-picker {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  
+  .color-picker-swatch {
+    position: relative;
+    width: 48px;
+    height: 48px;
+    border-radius: 0.5rem;
+    border: 2px solid #e5e7eb;
+    background: #fff;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  
+  .color-picker-swatch:hover {
+    border-color: #3b82f6;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
+  }
+  
+  .color-picker-swatch::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, #ccc 25%, transparent 25%), 
+                linear-gradient(-45deg, #ccc 25%, transparent 25%), 
+                linear-gradient(45deg, transparent 75%, #ccc 75%), 
+                linear-gradient(-45deg, transparent 75%, #ccc 75%);
+    background-size: 8px 8px;
+    background-position: 0 0, 0 4px, 4px -4px, -4px 0px;
+    z-index: 0;
+  }
+  
+  .color-picker-swatch::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--swatch-color, #000);
+    z-index: 1;
+  }
+  
+  .color-picker-input-wrapper {
+    flex: 1;
+    position: relative;
+  }
+  
+  .color-picker-input-wrapper input[type="color"] {
+    position: absolute;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+    z-index: 2;
+  }
+  
+  .color-picker-display {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 0.875rem;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 0.5rem;
+    background: #fff;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.875rem;
+    color: #374151;
+    min-height: 48px;
+  }
+  
+  .color-picker-display:hover {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+  
+  .color-picker-display:focus-within {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    outline: none;
+  }
+  
+  .color-picker-hex {
+    flex: 1;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+  }
+  
+  .color-picker-icon {
+    color: #6b7280;
+    font-size: 1rem;
+    transition: color 0.2s ease;
+  }
+  
+  .color-picker-display:hover .color-picker-icon {
+    color: #3b82f6;
   }
   
   /* Enhanced Form Styling */
@@ -822,10 +934,67 @@ function renderFields(metadata, savedOverrides = {}) {
     container.innerHTML = `<label class="form-label small mb-1">${label}</label>`;
     let input;
     if (type === 'color') {
+      // Create modern color picker wrapper
+      const colorWrapper = document.createElement('div');
+      colorWrapper.className = 'modern-color-picker';
+      
+      // Color swatch
+      const swatch = document.createElement('div');
+      swatch.className = 'color-picker-swatch';
+      const colorValue = /^#/.test(value) ? value : (defaults[key] || '#000000');
+      swatch.style.setProperty('--swatch-color', colorValue);
+      
+      // Hidden native color input
       input = document.createElement('input');
       input.type = 'color';
-      input.value = /^#/.test(value) ? value : (defaults[key] || '#000000');
-      input.className = 'form-control form-control-color';
+      input.value = colorValue;
+      input.className = 'color-picker-native';
+      input.setAttribute('data-key', key);
+      
+      // Display wrapper
+      const displayWrapper = document.createElement('div');
+      displayWrapper.className = 'color-picker-input-wrapper';
+      
+      const display = document.createElement('div');
+      display.className = 'color-picker-display';
+      
+      const hexSpan = document.createElement('span');
+      hexSpan.className = 'color-picker-hex';
+      hexSpan.textContent = colorValue.toUpperCase();
+      
+      const icon = document.createElement('i');
+      icon.className = 'bi bi-palette color-picker-icon';
+      
+      display.appendChild(hexSpan);
+      display.appendChild(icon);
+      displayWrapper.appendChild(display);
+      displayWrapper.appendChild(input);
+      
+      // Update display when color changes
+      const updateDisplay = () => {
+        const newColor = input.value;
+        swatch.style.setProperty('--swatch-color', newColor);
+        hexSpan.textContent = newColor.toUpperCase();
+      };
+      
+      input.addEventListener('input', updateDisplay);
+      input.addEventListener('change', updateDisplay);
+      
+      // Make display clickable
+      display.addEventListener('click', () => input.click());
+      swatch.addEventListener('click', () => input.click());
+      
+      colorWrapper.appendChild(swatch);
+      colorWrapper.appendChild(displayWrapper);
+      
+      // Replace container content
+      container.innerHTML = `<label class="form-label small mb-1">${label}</label>`;
+      container.appendChild(colorWrapper);
+      
+      // Store reference for sync and add event listener
+      input.dataset.key = key;
+      input.addEventListener('change', syncOverrides);
+      return container;
     } else if (type === 'number') {
       input = document.createElement('input');
       input.type = 'number';
