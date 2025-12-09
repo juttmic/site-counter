@@ -69,7 +69,109 @@ class ArcGaugeRenderer implements SkinRendererInterface
 
     private function thickArc($im, int $cx, int $cy, int $r, int $start, int $end, int $color, int $thickness): void
     {
-        for ($t=0;$t<$thickness;$t++) imagearc($im,$cx,$cy,($r*2)-$t,($r*2)-$t,$start,$end,$color);
+        // Use ImagickDraw for vector-style smooth arcs if available
+        if (class_exists(\Imagick::class) && class_exists(\ImagickDraw::class)) {
+            $this->thickArcImagick($im, $cx, $cy, $r, $start, $end, $color, $thickness);
+            return;
+        }
+        
+        // Fallback to GD for compatibility
+        $this->thickArcGD($im, $cx, $cy, $r, $start, $end, $color, $thickness);
+    }
+
+    /**
+     * Draw smooth vector-style arc using ImagickDraw
+     * @param resource $im GD image resource
+     * @param int $cx Center X coordinate
+     * @param int $cy Center Y coordinate
+     * @param int $r Radius
+     * @param int $start Start angle in degrees (0 = 3 o'clock, counter-clockwise)
+     * @param int $end End angle in degrees
+     * @param int $color GD color index
+     * @param int $thickness Stroke width in pixels
+     */
+    private function thickArcImagick($im, int $cx, int $cy, int $r, int $start, int $end, int $color, int $thickness): void
+    {
+        // Get image dimensions
+        $width = imagesx($im);
+        $height = imagesy($im);
+        
+        // Extract RGB from GD color index
+        $rgb = @imagecolorsforindex($im, $color);
+        if ($rgb === false) {
+            // Fallback to GD if color extraction fails
+            $this->thickArcGD($im, $cx, $cy, $r, $start, $end, $color, $thickness);
+            return;
+        }
+        $colorHex = sprintf('#%02x%02x%02x', $rgb['red'], $rgb['green'], $rgb['blue']);
+        
+        // Convert GD image to Imagick
+        ob_start();
+        imagepng($im);
+        $pngData = ob_get_clean();
+        /** @var \Imagick $imagick */
+        $imagick = new \Imagick();
+        $imagick->readImageBlob($pngData);
+        $imagick->setImageFormat('png');
+        
+        // Create ImagickDraw for vector-style arc
+        /** @var \ImagickDraw $draw */
+        $draw = new \ImagickDraw();
+        $draw->setStrokeColor($colorHex);
+        $draw->setFillColor('none');
+        $draw->setStrokeWidth((float)$thickness);
+        $draw->setStrokeLinecap(\Imagick::LINECAP_ROUND);
+        $draw->setStrokeLinejoin(\Imagick::LINEJOIN_ROUND);
+        
+        // Normalize angles: both GD and Imagick use degrees, 0° = 3 o'clock, counter-clockwise
+        $startAngle = (float)$start;
+        $endAngle = (float)$end;
+        
+        // Calculate bounding box for the arc (ellipse bounding rectangle)
+        $sx = (float)($cx - $r);
+        $sy = (float)($cy - $r);
+        $ex = (float)($cx + $r);
+        $ey = (float)($cy + $r);
+        
+        // Handle full circle (360 degrees or more)
+        $angleDiff = abs($endAngle - $startAngle);
+        if ($angleDiff >= 360 || $angleDiff <= -360) {
+            // Draw full circle as two semicircles for clean rendering
+            $draw->arc($sx, $sy, $ex, $ey, 0.0, 180.0);
+            $draw->arc($sx, $sy, $ex, $ey, 180.0, 360.0);
+        } else {
+            // Normalize angles to 0-360 range for consistency
+            $startAngle = fmod($startAngle + 360.0, 360.0);
+            $endAngle = fmod($endAngle + 360.0, 360.0);
+            
+            // Draw the arc segment
+            $draw->arc($sx, $sy, $ex, $ey, $startAngle, $endAngle);
+        }
+        
+        // Draw the arc onto the Imagick image
+        $imagick->drawImage($draw);
+        
+        // Convert back to GD format
+        $imagick->setImageFormat('png');
+        $newPngData = $imagick->getImageBlob();
+        $newIm = imagecreatefromstring($newPngData);
+        
+        if ($newIm !== false) {
+            // Copy the result back to original image
+            imagecopy($im, $newIm, 0, 0, 0, 0, $width, $height);
+            imagedestroy($newIm);
+        }
+        
+        $imagick->destroy();
+        $draw->destroy();
+    }
+
+    private function thickArcGD($im, int $cx, int $cy, int $r, int $start, int $end, int $color, int $thickness): void
+    {
+        // Fallback GD implementation for compatibility
+        for ($t = 0; $t < $thickness; $t++) {
+            imagearc($im, $cx, $cy, ($r * 2) - $t, ($r * 2) - $t, $start, $end, $color);
+        }
     }
     private function w(string $t, string $f, int $s): int
     { $b=imagettfbbox($s,0,$f,$t)?:[0,0,0,0,0,0,0,0]; return (int)(max($b[0],$b[2],$b[4],$b[6]) - min($b[0],$b[2],$b[4],$b[6])); }

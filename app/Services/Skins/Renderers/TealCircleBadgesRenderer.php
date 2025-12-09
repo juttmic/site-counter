@@ -22,10 +22,8 @@ class TealCircleBadgesRenderer implements SkinRendererInterface
             $centerX = (int) round($unitWidth * $i + $unitWidth / 2);
             // White (or bg) circle fill
             imagefilledellipse($im, $centerX, $centerY, $radius * 2, $radius * 2, imagecolorallocatealpha($im, 255, 255, 255, 0));
-            // Draw border by multiple concentric ellipses for a thicker stroke
-            for ($s = 0; $s < $stroke; $s++) {
-                imageellipse($im, $centerX, $centerY, $radius * 2 - $s, $radius * 2 - $s, $accentCol);
-            }
+            // Draw border using smooth vector-style circle if Imagick available
+            $this->drawCircle($im, $centerX, $centerY, $radius, $accentCol, $stroke);
         }
     }
 
@@ -88,6 +86,97 @@ class TealCircleBadgesRenderer implements SkinRendererInterface
         }
 
         return true;
+    }
+
+    private function drawCircle($im, int $cx, int $cy, int $r, int $color, int $thickness): void
+    {
+        // Use ImagickDraw for vector-style smooth circles if available
+        if (class_exists(\Imagick::class) && class_exists(\ImagickDraw::class)) {
+            $this->drawCircleImagick($im, $cx, $cy, $r, $color, $thickness);
+            return;
+        }
+        
+        // Fallback to GD for compatibility
+        $this->drawCircleGD($im, $cx, $cy, $r, $color, $thickness);
+    }
+
+    /**
+     * Draw smooth vector-style circle using ImagickDraw
+     * @param resource $im GD image resource
+     * @param int $cx Center X coordinate
+     * @param int $cy Center Y coordinate
+     * @param int $r Radius
+     * @param int $color GD color index
+     * @param int $thickness Stroke width in pixels
+     */
+    private function drawCircleImagick($im, int $cx, int $cy, int $r, int $color, int $thickness): void
+    {
+        // Get image dimensions
+        $width = imagesx($im);
+        $height = imagesy($im);
+        
+        // Extract RGB from GD color index
+        $rgb = @imagecolorsforindex($im, $color);
+        if ($rgb === false) {
+            // Fallback to GD if color extraction fails
+            $this->drawCircleGD($im, $cx, $cy, $r, $color, $thickness);
+            return;
+        }
+        $colorHex = sprintf('#%02x%02x%02x', $rgb['red'], $rgb['green'], $rgb['blue']);
+        
+        // Convert GD image to Imagick
+        ob_start();
+        imagepng($im);
+        $pngData = ob_get_clean();
+        /** @var \Imagick $imagick */
+        $imagick = new \Imagick();
+        $imagick->readImageBlob($pngData);
+        $imagick->setImageFormat('png');
+        
+        // Create ImagickDraw for vector-style circle
+        /** @var \ImagickDraw $draw */
+        $draw = new \ImagickDraw();
+        $draw->setStrokeColor($colorHex);
+        $draw->setFillColor('none');
+        $draw->setStrokeWidth((float)$thickness);
+        $draw->setStrokeLinecap(\Imagick::LINECAP_ROUND);
+        $draw->setStrokeLinejoin(\Imagick::LINEJOIN_ROUND);
+        
+        // Calculate bounding box for the circle
+        $sx = (float)($cx - $r);
+        $sy = (float)($cy - $r);
+        $ex = (float)($cx + $r);
+        $ey = (float)($cy + $r);
+        
+        // Draw full circle as two semicircles for clean rendering
+        $draw->arc($sx, $sy, $ex, $ey, 0.0, 180.0);
+        $draw->arc($sx, $sy, $ex, $ey, 180.0, 360.0);
+        
+        // Draw the circle onto the Imagick image
+        $imagick->drawImage($draw);
+        
+        // Convert back to GD format
+        $imagick->setImageFormat('png');
+        $newPngData = $imagick->getImageBlob();
+        $newIm = imagecreatefromstring($newPngData);
+        
+        if ($newIm !== false) {
+            // Copy the result back to original image
+            imagecopy($im, $newIm, 0, 0, 0, 0, $width, $height);
+            imagedestroy($newIm);
+        }
+        
+        $imagick->destroy();
+        $draw->destroy();
+    }
+
+    private function drawCircleGD($im, int $cx, int $cy, int $r, int $color, int $thickness): void
+    {
+        // Fallback GD implementation for compatibility
+        // Draw border by multiple concentric ellipses for a thicker stroke
+        for ($s = 0; $s < $thickness; $s++) {
+            imageellipse($im, $cx, $cy, $r * 2 - $s, $r * 2 - $s, $color);
+        }
     }
 
     private function textBoxWidth(string $text, string $fontPath, int $fontSize): int

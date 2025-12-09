@@ -8,7 +8,7 @@
   "fontSize": 28,
   "fontPath": "resources/fonts/dejavu-sans.book.ttf",
   "style": "quad_ring_progress",
-  "ringThickness": 12,
+  "ringThickness": 5,
   "showDays": true,
   "showHours": true,
   "showMinutes": true,
