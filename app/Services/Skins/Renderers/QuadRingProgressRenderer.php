@@ -61,7 +61,7 @@ class QuadRingProgressRenderer implements SkinRendererInterface
                 imagettftext($im, $fontSize, 0, (int)($cx - $nW / 2), (int)($centerY - 4), $textCol, $font, $numberText);
                 $label = $units[$i]['label'];
                 $lW = $this->textBoxWidth($label, $font, $labelSize);
-                imagettftext($im, $labelSize, 0, (int)($cx - $lW / 2), (int)($centerY + (int) round($fontSize * 0.9)), $accentCol, $font, $label);
+                imagettftext($im, $labelSize, 0, (int)($cx - $lW / 2), (int)($centerY + (int) round($fontSize * 0.9)), $textCol, $font, $label);
             }
         } else {
             $built = 5; $lbl = 3;
@@ -72,7 +72,7 @@ class QuadRingProgressRenderer implements SkinRendererInterface
                 imagestring($im, $built, (int)($cx - $nW / 2), (int)($centerY - 8), $numberText, $textCol);
                 $label = $units[$i]['label'];
                 $lW = imagefontwidth($lbl) * strlen($label);
-                imagestring($im, $lbl, (int)($cx - $lW / 2), (int)($centerY + 10), $label, $accentCol);
+                imagestring($im, $lbl, (int)($cx - $lW / 2), (int)($centerY + 10), $label, $textCol);
             }
         }
 
