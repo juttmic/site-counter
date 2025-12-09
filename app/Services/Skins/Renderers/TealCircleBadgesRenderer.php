@@ -67,7 +67,7 @@ class TealCircleBadgesRenderer implements SkinRendererInterface
                 $labelWidth = $this->textBoxWidth($label, $font, $labelSize);
                 $labelX = (int) ($unitX - $labelWidth / 2);
                 $labelY = (int) ($centerY + (int) round($fontSize * 0.9));
-                imagettftext($im, $labelSize, 0, $labelX, $labelY, $accentCol, $font, $label);
+                imagettftext($im, $labelSize, 0, $labelX, $labelY, $textCol, $font, $label);
             }
         } else {
             $builtIn = 5; // bigger
@@ -81,7 +81,7 @@ class TealCircleBadgesRenderer implements SkinRendererInterface
 
                 $label = $units[$i]['label'];
                 $lW = imagefontwidth($labelBuiltIn) * strlen($label);
-                imagestring($im, $labelBuiltIn, (int)($unitX - $lW / 2), (int)($centerY + 14), $label, $accentCol);
+                imagestring($im, $labelBuiltIn, (int)($unitX - $lW / 2), (int)($centerY + 14), $label, $textCol);
             }
         }
 

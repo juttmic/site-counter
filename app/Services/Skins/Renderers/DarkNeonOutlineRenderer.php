@@ -65,7 +65,7 @@ class DarkNeonOutlineRenderer implements SkinRendererInterface
                 imagettftext($im, $fontSize, 0, (int)($cx - $nW/2), (int)($cy - 6), $textCol, $font, $num);
                 $lab = $units[$i]['label'];
                 $lW = $this->textBoxWidth($lab, $font, $labelSize);
-                imagettftext($im, $labelSize, 0, (int)($cx - $lW/2), (int)($cy + (int) round($fontSize*0.85)), $accentCol, $font, $lab);
+                imagettftext($im, $labelSize, 0, (int)($cx - $lW/2), (int)($cy + (int) round($fontSize*0.85)), $textCol, $font, $lab);
             }
         } else {
             $built=5;$lbl=3;
@@ -78,7 +78,7 @@ class DarkNeonOutlineRenderer implements SkinRendererInterface
                 imagestring($im,$built,(int)($cx-$nW/2),(int)($cy-10),$num,$textCol);
                 $lab=$units[$i]['label'];
                 $lW=imagefontwidth($lbl)*strlen($lab);
-                imagestring($im,$lbl,(int)($cx-$lW/2),(int)($cy+8),$lab,$accentCol);
+                imagestring($im,$lbl,(int)($cx-$lW/2),(int)($cy+8),$lab,$textCol);
             }
         }
 
