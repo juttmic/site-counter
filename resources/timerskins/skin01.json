@@ -5,7 +5,6 @@
     "background": "#FFFFFF",
     "textColor": "#000000",
     "separatorColor": "#000000",
-    "accentColor": "#000000",
     "fontSize": 30,
     "fontPath": "resources/fonts/dejavu-sans.book.ttf",
     "style": "minimal_black_countdown",
@@ -61,12 +60,6 @@
             "label": "Text Color",
             "type": "color",
             "group": "timer"
-        },
-        {
-            "key": "accentColor",
-            "label": "Accent Color",
-            "type": "color",
-            "group": "overall"
         },
         {
             "key": "fontSize",
