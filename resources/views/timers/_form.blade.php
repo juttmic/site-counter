@@ -86,7 +86,7 @@
   /* Sticky Preview Section */
   .sticky-preview {
     position: sticky;
-    top: 20px;
+    top: 30vh;
     align-self: flex-start;
     max-height: calc(100vh - 40px);
     z-index: 10;
@@ -115,6 +115,19 @@
   
   .sticky-preview .card-body::-webkit-scrollbar-thumb:hover {
     background: #555;
+  }
+  
+  /* Collapse Icon Styling */
+  .collapse-icon {
+    font-size: 1rem;
+    color: #6b7280;
+    transition: transform 0.2s ease, color 0.2s ease;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  
+  .collapsible-header:hover .collapse-icon {
+    color: #374151;
   }
   
   /* Modern Color Picker */
@@ -381,7 +394,7 @@
                         <div class="card">
                             <div class="card-header d-flex justify-content-between align-items-center py-2 collapsible-header" data-target="#general_settings_body">
                                 <span class="fw-semibold small text-uppercase text-muted">General settings</span>
-                                <span class="collapse-icon small">−</span>
+                                <i class="bi bi-chevron-down collapse-icon"></i>
                             </div>
                             <div class="card-body collapsible-body" id="general_settings_body">
                                 <div class="mb-3">
@@ -433,14 +446,14 @@
                         <div class="card flex-grow-1">
                             <div class="card-header d-flex justify-content-between align-items-center py-2 collapsible-header" data-target="#customize_skin_body">
                                 <span class="fw-semibold small text-uppercase text-muted">Customize skin</span>
-                                <span class="collapse-icon small">−</span>
+                                <i class="bi bi-chevron-down collapse-icon"></i>
                             </div>
                             <div class="card-body collapsible-body" id="customize_skin_body">
                                 <!-- Static customization fields (timer-level but displayed here) -->
                                 <div class="card border shadow-sm mb-3">
                                     <div class="card-header bg-light py-2 collapsible-header" data-target="#skin_custom_text_group">
                                         <span class="text-uppercase text-muted fw-semibold small">Text & Animation</span>
-                                        <span class="collapse-icon small float-end">−</span>
+                                        <i class="bi bi-chevron-down collapse-icon float-end"></i>
                                     </div>
                                     <div class="card-body collapsible-body" id="skin_custom_text_group">
                                         <div class="row g-3">
@@ -823,7 +836,7 @@ async function loadSkinsIntoScrollBar() {
 
     // Initialize arrow state and scroll to selected card
     setTimeout(() => {
-      updateArrowState();
+    updateArrowState();
       scrollToSelectedCard();
     }, 200);
     
@@ -854,11 +867,20 @@ function setupCollapsibles(root) {
     if (!body) return;
     const icon = header.querySelector('.collapse-icon');
 
+    // Set initial icon state based on whether body is hidden
+    if (icon) {
+      const isHidden = body.classList.contains('d-none');
+      icon.classList.remove('bi-chevron-down', 'bi-chevron-right');
+      icon.classList.add(isHidden ? 'bi-chevron-right' : 'bi-chevron-down');
+    }
+
     header.style.cursor = 'pointer';
     header.addEventListener('click', () => {
       const isHidden = body.classList.toggle('d-none');
       if (icon) {
-        icon.textContent = isHidden ? '+' : '−';
+        // Toggle between chevron-right (collapsed) and chevron-down (expanded)
+        icon.classList.remove('bi-chevron-down', 'bi-chevron-right');
+        icon.classList.add(isHidden ? 'bi-chevron-right' : 'bi-chevron-down');
       }
     });
     header.dataset.collapsibleBound = '1';
@@ -1307,16 +1329,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const isEdit = form && form.dataset.isEdit === '1';
         
         if (isEdit) {
-          // Edit mode: load existing skin with saved overrides
-          const meta = await fetchJson(`/skins/${encodeURIComponent(current)}`);
-          renderFields(meta, savedOverrides);
-          // Seed last overrides with saved values so switching skins keeps the user's base settings
-          lastSkinOverrides = savedOverrides;
-          document.getElementById('selected_skin_label').textContent = current;
-          if (meta && meta.preview_url) {
-            const prevEl = document.getElementById('selected_skin_preview');
-            prevEl.src = meta.preview_url;
-            prevEl.classList.remove('d-none');
+        // Edit mode: load existing skin with saved overrides
+        const meta = await fetchJson(`/skins/${encodeURIComponent(current)}`);
+        renderFields(meta, savedOverrides);
+        // Seed last overrides with saved values so switching skins keeps the user's base settings
+        lastSkinOverrides = savedOverrides;
+        document.getElementById('selected_skin_label').textContent = current;
+        if (meta && meta.preview_url) {
+          const prevEl = document.getElementById('selected_skin_preview');
+          prevEl.src = meta.preview_url;
+          prevEl.classList.remove('d-none');
           }
         } else {
           // New timer: load skin and apply formDefaults if available
