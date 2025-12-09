@@ -61,6 +61,11 @@ class TealPillColonRenderer implements SkinRendererInterface
                 [$sr,$sg,$sb] = $this->textToRgb($skin['separatorColor']);
                 $sepCol = imagecolorallocate($im, $sr, $sg, $sb);
             }
+            // Get separator from skin config, default to colon
+            $separator = (string)($skin['separator'] ?? ':');
+            if ($separator === '') { $separator = ':'; }
+            $sepChar = mb_substr($separator, 0, 1); // Use first character if multiple provided
+            
             for ($i = 0; $i < $segments; $i++) {
                 $unitX = (int) round($unitWidth * $i + $unitWidth / 2);
                 $numberText = sprintf('%02d', $units[$i]['value']);
@@ -76,7 +81,7 @@ class TealPillColonRenderer implements SkinRendererInterface
                 imagettftext($im, $labelSize, 0, $labelX, $labelY, $textCol, $font, $label);
 
                 if ($i < $segments - 1) {
-                    $sep = ":";
+                    $sep = $sepChar;
                     $sepWidth = $this->textBoxWidth($sep, $font, $fontSize);
                     $sepX = (int) ($unitX + $unitWidth / 2 - $sepWidth / 2);
                     $sepY = (int) ($centerY - 6);
@@ -86,6 +91,11 @@ class TealPillColonRenderer implements SkinRendererInterface
         } else {
             $builtIn = 5;
             $labelBuiltIn = 3;
+            // Get separator from skin config, default to colon
+            $separator = (string)($skin['separator'] ?? ':');
+            if ($separator === '') { $separator = ':'; }
+            $sepChar = mb_substr($separator, 0, 1); // Use first character if multiple provided
+            
             for ($i = 0; $i < $segments; $i++) {
                 $unitX = (int) round($unitWidth * $i + $unitWidth / 2);
                 $numberText = sprintf('%02d', $units[$i]['value']);
@@ -98,7 +108,7 @@ class TealPillColonRenderer implements SkinRendererInterface
                 imagestring($im, $labelBuiltIn, (int)($unitX - $lW / 2), (int)($centerY + 14), $label, $textCol);
 
                 if ($i < $segments - 1) {
-                    $sep = ":";
+                    $sep = $sepChar;
                     $sW = imagefontwidth($builtIn) * strlen($sep);
                     $sepColor = $textCol;
                     imagestring($im, $builtIn, (int)($unitX + $unitWidth / 2 - $sW / 2), (int)($centerY - $nH / 2), $sep, $sepColor);
