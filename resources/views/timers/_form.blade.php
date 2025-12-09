@@ -431,6 +431,52 @@
                                            value="{{ old('duration_seconds', $timer->duration_seconds ?? '') }}">
                                 </div>
 
+                                <!-- Custom Text Settings (nested group within General settings) -->
+                                <div class="card border shadow-sm mt-3">
+                                    <div class="card-header bg-light py-2 collapsible-header" data-target="#custom_text_settings_body">
+                                        <span class="text-uppercase text-muted fw-semibold small">Custom text settings</span>
+                                        <i class="bi bi-chevron-down collapse-icon float-end"></i>
+                                    </div>
+                                    <div class="card-body collapsible-body" id="custom_text_settings_body">
+                                        <div class="row g-3">
+                                            <div class="col-12 col-sm-6">
+                                                <label class="form-label small mb-1">Text Position</label>
+                                                <select name="text_position" class="form-select">
+                                                    <option value="none" {{ ($isEdit && $timer->text_position === 'none') || !$isEdit ? 'selected' : '' }}>None</option>
+                                                    <option value="top" {{ $isEdit && $timer->text_position === 'top' ? 'selected' : '' }}>Top</option>
+                                                    <option value="bottom" {{ $isEdit && $timer->text_position === 'bottom' ? 'selected' : '' }}>Bottom</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-12 col-sm-6">
+                                                <label class="form-label small mb-1">Custom Text {{ !$isEdit ? '(optional)' : '' }}</label>
+                                                <input type="text" name="custom_text" class="form-control" maxlength="255" value="{{ old('custom_text', $timer->custom_text ?? '') }}">
+                                            </div>
+                                            <div class="col-12 col-sm-6">
+                                                <label class="form-label small mb-1">Custom Text Color</label>
+                                                @php($customTextColor = old('customTextColor', $timer->customTextColor ?? '#000000'))
+                                                <div class="modern-color-picker">
+                                                    <div class="color-picker-swatch" style="--swatch-color: {{ $customTextColor }};"></div>
+                                                    <div class="color-picker-input-wrapper">
+                                                        <div class="color-picker-display">
+                                                            <span class="color-picker-hex">{{ strtoupper($customTextColor) }}</span>
+                                                            <i class="bi bi-palette color-picker-icon"></i>
+                                                        </div>
+                                                        <input type="color" name="customTextColor" class="color-picker-native" value="{{ $customTextColor }}" data-key="customTextColor">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-12 col-sm-4 col-md-3">
+                                                <label class="form-label small mb-1">Margin Top</label>
+                                                <input type="number" name="customTextMarginTop" class="form-control form-control-sm" min="0" max="200" step="1" value="{{ old('customTextMarginTop', $timer->customTextMarginTop ?? '') }}">
+                                            </div>
+                                            <div class="col-12 col-sm-4 col-md-3">
+                                                <label class="form-label small mb-1">Margin Bottom</label>
+                                                <input type="number" name="customTextMarginBottom" class="form-control form-control-sm" min="0" max="200" step="1" value="{{ old('customTextMarginBottom', $timer->customTextMarginBottom ?? '') }}">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div class="mt-3 d-none">
                                     <label class="form-label">Selected Skin</label>
                                     <div class="mt-2 position-relative d-inline-flex align-items-center gap-2 border rounded p-2 bg-light">
@@ -449,26 +495,20 @@
                                 <i class="bi bi-chevron-down collapse-icon"></i>
                             </div>
                             <div class="card-body collapsible-body" id="customize_skin_body">
+                                <!-- Dynamic skin customization fields (rendered first, Overall settings will be first) -->
+                                <div id="skin_overrides_section" class="d-none">
+                                    <div id="skin_fields" class="row g-3"></div>
+                                </div>
+
                                 <!-- Static customization fields (timer-level but displayed here) -->
+                                <!-- Text & Animation (only animation-related) -->
                                 <div class="card border shadow-sm mb-3">
-                                    <div class="card-header bg-light py-2 collapsible-header" data-target="#skin_custom_text_group">
+                                    <div class="card-header bg-light py-2 collapsible-header" data-target="#skin_animation_group">
                                         <span class="text-uppercase text-muted fw-semibold small">Text & Animation</span>
                                         <i class="bi bi-chevron-down collapse-icon float-end"></i>
                                     </div>
-                                    <div class="card-body collapsible-body" id="skin_custom_text_group">
+                                    <div class="card-body collapsible-body" id="skin_animation_group">
                                         <div class="row g-3">
-                                            <div class="col-12 col-sm-6">
-                                                <label class="form-label small mb-1">Text Position</label>
-                                                <select name="text_position" class="form-select">
-                                                    <option value="none" {{ ($isEdit && $timer->text_position === 'none') || !$isEdit ? 'selected' : '' }}>None</option>
-                                                    <option value="top" {{ $isEdit && $timer->text_position === 'top' ? 'selected' : '' }}>Top</option>
-                                                    <option value="bottom" {{ $isEdit && $timer->text_position === 'bottom' ? 'selected' : '' }}>Bottom</option>
-                                                </select>
-                                            </div>
-                                            <div class="col-12 col-sm-6">
-                                                <label class="form-label small mb-1">Custom Text {{ !$isEdit ? '(optional)' : '' }}</label>
-                                                <input type="text" name="custom_text" class="form-control" maxlength="255" value="{{ old('custom_text', $timer->custom_text ?? '') }}">
-                                            </div>
                                             <div class="col-12 col-sm-6">
                                                 <label class="form-label small mb-1">Animated Seconds</label>
                                                 <input type="number"
@@ -481,11 +521,6 @@
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-
-                                <!-- Dynamic skin customization fields -->
-                                <div id="skin_overrides_section" class="mt-2 d-none">
-                                    <div id="skin_fields" class="row g-3"></div>
                                 </div>
                                 <input type="hidden" name="skin_overrides" id="skin_overrides_input" value="{{ $isEdit ? json_encode($timer->skin_overrides ?? []) : '' }}" />
                             </div>
@@ -562,6 +597,28 @@ function toggleInputs() {
   document.getElementById('duration_input').classList.toggle('d-none', type !== 'reload_based');
 }
 document.addEventListener('DOMContentLoaded', toggleInputs);
+
+// Initialize static color picker for customTextColor
+document.addEventListener('DOMContentLoaded', function() {
+  const customTextColorInput = document.querySelector('input[name="customTextColor"].color-picker-native');
+  if (customTextColorInput) {
+    const wrapper = customTextColorInput.closest('.modern-color-picker');
+    const swatch = wrapper.querySelector('.color-picker-swatch');
+    const hexSpan = wrapper.querySelector('.color-picker-hex');
+    const display = wrapper.querySelector('.color-picker-display');
+    
+    const updateDisplay = () => {
+      const newColor = customTextColorInput.value;
+      swatch.style.setProperty('--swatch-color', newColor);
+      hexSpan.textContent = newColor.toUpperCase();
+    };
+    
+    customTextColorInput.addEventListener('input', updateDisplay);
+    customTextColorInput.addEventListener('change', updateDisplay);
+    display.addEventListener('click', () => customTextColorInput.click());
+    swatch.addEventListener('click', () => customTextColorInput.click());
+  }
+});
 
 // Skins loading and dynamic form
 async function fetchJson(url) {
@@ -897,7 +954,8 @@ function renderFields(metadata, savedOverrides = {}) {
   
   // Fields to hide but use defaults for
   // Note: accentColor is NOT hidden - it's needed for controlling tile/box/ring colors
-  const hiddenFields = new Set(['fontPath', 'font', 'showDays', 'showHours', 'showMinutes', 'showSeconds', 'layout', 'animation']);
+  // Custom text fields are static in General settings, not from skin JSON
+  const hiddenFields = new Set(['fontPath', 'font', 'showDays', 'showHours', 'showMinutes', 'showSeconds', 'layout', 'animation', 'customTextColor', 'customTextMarginTop', 'customTextMarginBottom', 'custom_text', 'text_position']);
   hiddenFields.forEach(key => {
     if (savedOverrides[key] !== undefined) {
       currentHiddenOverrides[key] = savedOverrides[key];
@@ -909,6 +967,7 @@ function renderFields(metadata, savedOverrides = {}) {
   
   document.getElementById('skin_overrides_section').classList.toggle('d-none', visibleFields.length === 0);
 
+  // Order matters: Overall settings first, then others
   const grouped = [
     { key: 'overall', title: 'Overall settings', fields: [] },
     { key: 'timer', title: 'Timer settings', fields: [] },
@@ -923,7 +982,9 @@ function renderFields(metadata, savedOverrides = {}) {
 
   const smallKeys = new Set(['fontSize','separator','layout','animation','showDays','showHours','showMinutes','showSeconds','width','height','outputWidth','outputHeight']);
   const marginKeys = new Set(['customTextMarginTop','customTextMarginBottom','textMarginTop','textMarginBottom','marginTop','marginBottom','labelMarginTop','labelMarginBottom']);
-  const customKeys = new Set(['customtext','custom_text','textposition','text_position','customtextcolor','customtextmargintop','customtextmarginbottom']);
+  // Custom text fields are now in General settings, not in dynamic groups
+  // Exclude them from dynamic grouping so they don't appear in skin fields
+  const customKeys = new Set([]); // Empty - custom text fields are static in General settings
   const timerKeys = new Set(['showdays','showhours','showminutes','showseconds','separator','layout','animation','digitspacing','countdirection','refreshrate','pulsespeed']);
   const finalKeys = new Set(['finalmessage','finalbackground','finaltextcolor','finalscreentext','finalscreencolor']);
   const extraKeys = new Set(['shadowcolor','glowcolor','blurstrength','outlinecolor','outlinewidth']);
@@ -1066,7 +1127,7 @@ function renderFields(metadata, savedOverrides = {}) {
     const bodyId = `skin_group_${group.key}`;
     header.className = 'card-header bg-light py-2 collapsible-header';
     header.dataset.target = `#${bodyId}`;
-    header.innerHTML = `<span class="text-uppercase text-muted fw-semibold small">${group.title}</span><span class="collapse-icon small float-end">−</span>`;
+    header.innerHTML = `<span class="text-uppercase text-muted fw-semibold small">${group.title}</span><i class="bi bi-chevron-down collapse-icon float-end"></i>`;
     const body = document.createElement('div');
     body.className = 'card-body collapsible-body';
     body.id = bodyId;
