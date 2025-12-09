@@ -396,15 +396,20 @@ class TimerGifGenerator
         $hasText = ($customText !== null && $customText !== '' && $textPosition !== 'none');
         $padX = 10; // horizontal padding when text is wider than timer
         $textW = 0; $textH = 0; $textSize = max(12, (int) round($fontSize * 0.5));
+        $textHeightFromBaseline = 0; // Height from baseline to top of text
         if ($hasText) {
             if (is_file($font)) {
                 $box = imagettfbbox($textSize, 0, $font, $customText);
                 $textW = abs($box[4] - $box[0]);
                 $textH = abs($box[5] - $box[1]);
+                // Get the actual text height from baseline to top (for positioning)
+                // box[1] is typically negative, representing distance from baseline to top
+                $textHeightFromBaseline = abs($box[7] - $box[1]); // Distance from baseline to top
             } else {
                 $bi = 3;
                 $textW = imagefontwidth($bi) * strlen($customText);
                 $textH = imagefontheight($bi);
+                $textHeightFromBaseline = $textH;
             }
         }
 
@@ -442,14 +447,27 @@ class TimerGifGenerator
         if ($hasText) {
             if (is_file($font)) {
                 $tx = (int) (($canvasW - $textW) / 2);
-                $ty = ($textPosition === 'top')
-                    ? (int) max($textSize, $marginTop + $textSize)
-                    : (int) ($offsetY + $timerH + max($textSize, $marginBottom + $textSize));
+                if ($textPosition === 'top') {
+                    // Text at top: marginTop is space from top, then position text baseline
+                    // Y coordinate in imagettftext is the baseline, so we add textHeightFromBaseline
+                    $ty = (int) ($marginTop + $textHeightFromBaseline);
+                } else {
+                    // Text at bottom: timer ends at offsetY + timerH, then marginBottom space, then text
+                    // Y coordinate in imagettftext is the baseline
+                    $ty = (int) ($offsetY + $timerH + $marginBottom + $textHeightFromBaseline);
+                }
                 imagettftext($im, $textSize, 0, $tx, $ty, $customTxtCol, $font, $customText);
             } else {
                 $bi2 = 3;
+                $builtInTextH = imagefontheight($bi2);
                 $tx = (int) (($canvasW - $textW) / 2);
-                $ty = ($textPosition === 'top') ? max(0, $marginTop) : (int) ($offsetY + $timerH + max(0, $marginBottom));
+                if ($textPosition === 'top') {
+                    // Text at top: marginTop is space from top, then text
+                    $ty = (int) ($marginTop + $builtInTextH);
+                } else {
+                    // Text at bottom: timer ends at offsetY + timerH, then marginBottom space, then text
+                    $ty = (int) ($offsetY + $timerH + $marginBottom + $builtInTextH);
+                }
                 imagestring($im, $bi2, $tx, $ty, $customText, $customTxtCol);
             }
         }
