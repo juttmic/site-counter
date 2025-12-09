@@ -356,7 +356,7 @@
 </div>
 <div class="py-4 py-md-3">
     <div class="container-fluid">
-        <form id="timer_form" method="POST" action="{{ $formAction }}" data-timer-id="{{ $isEdit ? $timer->id : '' }}" data-is-edit="{{ $isEdit ? '1' : '0' }}" data-has-gif="{{ $isEdit && !empty($timer->gif_url) ? '1' : '0' }}" data-timer-status="{{ $isEdit ? $timer->status : 'active' }}">
+        <form id="timer_form" method="POST" action="{{ $formAction }}" data-timer-id="{{ $isEdit ? $timer->id : '' }}" data-is-edit="{{ $isEdit ? '1' : '0' }}" data-has-gif="{{ $isEdit && !empty($timer->gif_url) ? '1' : '0' }}" data-timer-status="{{ $isEdit ? $timer->status : 'active' }}" data-user-id="{{ $isEdit ? $timer->user_id : Auth::id() }}" data-gif-url="{{ $isEdit && !empty($timer->gif_url) ? $timer->gif_url : '' }}">
             @csrf
             @if($isEdit)
                 @method('PUT')
@@ -544,6 +544,9 @@
                                 <button id="embed_copy_btn" type="button" class="btn btn-outline-secondary btn-sm">Copy</button>
                             </div>
                         </div>
+                        <div id="embed_notice" class="mt-3 alert alert-warning py-2 px-3 small {{ $isEdit && isset($timer->status) && $timer->status !== 'active' ? '' : 'd-none' }}">
+                          Activate this timer to generate a shareable embed code.
+                      </div>
                             <h3 class="h6 fw-semibold mb-3">Preview</h3>
                             <div id="timer_preview" class="d-flex align-items-center justify-content-center rounded border bg-light mb-3" style="min-height: 260px;">
                                 <div id="preview_loader" class="text-center text-muted d-none">
@@ -566,9 +569,7 @@
                               <button id="save_btn" type="button" class="btn btn-primary">Generate GIF</button>
                             </div>
                             
-                            <div id="embed_notice" class="mt-3 alert alert-warning py-2 px-3 small {{ $isEdit && isset($timer->status) && $timer->status !== 'active' ? '' : 'd-none' }}">
-                                Activate this timer to generate a shareable embed code.
-                            </div>
+                            
                         </div>
                     </div>
                 </div>
@@ -1578,12 +1579,23 @@ async function ajaxSaveAndPoll() {
         gifImg.classList.remove('d-none');
       }
 
-      // Update embed section visibility and value based on share availability
+      // Update embed section visibility and value based on share availability and status
       const embedSection = document.getElementById('embed_section');
       const embedInput = document.getElementById('embed_input');
       const embedNotice = document.getElementById('embed_notice');
+      const statusSelect = document.querySelector('select[name="status"]');
+      const isActive = statusSelect ? statusSelect.value === 'active' : false;
+      const form = document.getElementById('timer_form');
+      
+      // Store GIF URL in form data attribute for later use
+      if (form && json.gif_url) {
+        form.dataset.gifUrl = json.gif_url;
+        form.dataset.hasGif = '1';
+      }
+      
       if (embedSection && embedInput) {
-        if (json.share_available && gifUrl) {
+        // Show embed section only if timer is active AND has a GIF URL
+        if (json.share_available && gifUrl && isActive) {
           const match = (gifUrl || '').match(/\/timers\/(\d+)\/([^\/]+)\.gif/);
           if (match) {
             const userId = match[1];
@@ -1597,7 +1609,16 @@ async function ajaxSaveAndPoll() {
           if (embedNotice) embedNotice.classList.add('d-none');
         } else {
           embedSection.classList.add('d-none');
-          if (embedNotice) embedNotice.classList.remove('d-none');
+          // Show notice if timer is inactive or has no GIF
+          if (embedNotice) {
+            if (!isActive) {
+              embedNotice.classList.remove('d-none');
+            } else if (!gifUrl) {
+              embedNotice.classList.remove('d-none');
+            } else {
+              embedNotice.classList.add('d-none');
+            }
+          }
         }
       }
 
@@ -1704,26 +1725,49 @@ function startPreviewPolling(timerId) {
           gifImg.src = previewSrc;
           gifImg.classList.remove('d-none');
         }
+        
+        // Update form hasGif attribute
+        if (form && json.gif_url) {
+          form.dataset.hasGif = '1';
+        }
+        
         // update embed section
+        const statusSelect = document.querySelector('select[name="status"]');
+        const isActive = statusSelect ? statusSelect.value === 'active' : false;
+        
         if (embedInput) {
-          if (!json.share_available) {
+          if (!json.share_available || !isActive) {
             embedInput.value = '';
           }
         }
-        if (embedSection && embedInput) {
+        if (embedSection && embedInput && embedNotice) {
           // Extract user_id and filename from gif_url to build gettimer URL
           const gifUrl = json.gif_url || '';
-          const match = gifUrl.match(/\/timers\/(\d+)\/([^\/]+)\.gif/);
-          if (match) {
-            const userId = match[1];
-            const filename = match[2];
-            const gettimerUrl = `${window.location.origin}/gettimer/${userId}/${filename}.gif`;
-            embedInput.value = `<img src="${gettimerUrl}" alt="Countdown Timer">`;
+          if (json.share_available && isActive && gifUrl) {
+            const match = gifUrl.match(/\/timers\/(\d+)\/([^\/]+)\.gif/);
+            if (match) {
+              const userId = match[1];
+              const filename = match[2];
+              const gettimerUrl = `${window.location.origin}/gettimer/${userId}/${filename}.gif`;
+              embedInput.value = `<img src="${gettimerUrl}" alt="Countdown Timer">`;
+            } else {
+              const absUrl = new URL(gifUrl, window.location.origin).href;
+              embedInput.value = `<img src="${absUrl}" alt="Countdown Timer">`;
+            }
+            embedSection.classList.remove('d-none');
+            embedNotice.classList.add('d-none');
           } else {
-            const absUrl = new URL(gifUrl, window.location.origin).href;
-            embedInput.value = `<img src="${absUrl}" alt="Countdown Timer">`;
+            embedSection.classList.add('d-none');
+            if (!isActive) {
+              embedNotice.textContent = 'Activate this timer to generate a shareable embed code.';
+              embedNotice.classList.remove('d-none');
+            } else if (!gifUrl) {
+              embedNotice.textContent = 'Generate a GIF to get the embed code.';
+              embedNotice.classList.remove('d-none');
+            } else {
+              embedNotice.classList.add('d-none');
+            }
           }
-          embedSection.classList.toggle('d-none', !json.share_available);
         }
         // GIF is now up to date with latest changes
         gifDirty = false;
@@ -1780,6 +1824,113 @@ document.addEventListener('DOMContentLoaded', function(){
         }
       });
     };
+  }
+
+  // Update embed section visibility when status changes
+  const statusSelect = document.querySelector('select[name="status"]');
+  if (statusSelect) {
+    const updateEmbedVisibility = () => {
+      const embedSection = document.getElementById('embed_section');
+      const embedNotice = document.getElementById('embed_notice');
+      const embedInput = document.getElementById('embed_input');
+      const form = document.getElementById('timer_form');
+      // Check if timer has GIF by checking if embed input has a value or if form has hasGif attribute
+      const hasGif = (form && form.dataset.hasGif === '1') || (embedInput && embedInput.value && embedInput.value.trim() !== '');
+      const isActive = statusSelect.value === 'active';
+      
+      if (embedSection && embedNotice) {
+        // Show embed section only if timer is active AND has a GIF
+        if (isActive && hasGif) {
+          embedSection.classList.remove('d-none');
+          embedNotice.classList.add('d-none');
+          
+          // If embed input is empty but we have a GIF, populate it
+          if (embedInput && (!embedInput.value || embedInput.value.trim() === '')) {
+            // Try to get GIF URL from form data attribute first
+            let gifUrl = form ? form.dataset.gifUrl : '';
+            
+            // If not in form data, try preview image
+            if (!gifUrl) {
+              const previewGif = document.getElementById('preview_gif');
+              if (previewGif && previewGif.src && !previewGif.classList.contains('d-none')) {
+                gifUrl = previewGif.src;
+              }
+            }
+            
+            // If still no GIF URL, fetch from server if we have timer ID
+            if (!gifUrl && form && form.dataset.timerId) {
+              const timerId = form.dataset.timerId;
+              fetch(`/timers/${timerId}/status`, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+              })
+              .then(res => res.json())
+              .then(data => {
+                if (data.gif_url && embedInput) {
+                  // Update form data attribute
+                  if (form) {
+                    form.dataset.gifUrl = data.gif_url;
+                    form.dataset.hasGif = '1';
+                  }
+                  // Build embed code
+                  const match = data.gif_url.match(/\/timers\/(\d+)\/([^\/]+)\.gif/);
+                  if (match) {
+                    const userId = match[1];
+                    const filename = match[2];
+                    const gettimerUrl = `${window.location.origin}/gettimer/${userId}/${filename}.gif`;
+                    embedInput.value = `<img src="${gettimerUrl}" alt="Countdown Timer">`;
+                  } else {
+                    const absUrl = new URL(data.gif_url, window.location.origin).href;
+                    embedInput.value = `<img src="${absUrl}" alt="Countdown Timer">`;
+                  }
+                }
+              })
+              .catch(err => console.error('Failed to fetch timer status:', err));
+            } else if (gifUrl) {
+              // Build embed code from GIF URL
+              const match = gifUrl.match(/\/timers\/(\d+)\/([^\/]+)\.gif/);
+              if (match) {
+                const userId = match[1];
+                const filename = match[2];
+                const gettimerUrl = `${window.location.origin}/gettimer/${userId}/${filename}.gif`;
+                embedInput.value = `<img src="${gettimerUrl}" alt="Countdown Timer">`;
+              } else {
+                // Try to extract from full URL
+                try {
+                  const urlObj = new URL(gifUrl);
+                  const pathParts = urlObj.pathname.split('/');
+                  if (pathParts.length >= 4 && pathParts[1] === 'timers') {
+                    const userId = pathParts[2];
+                    const filename = pathParts[3].replace('.gif', '');
+                    const gettimerUrl = `${window.location.origin}/gettimer/${userId}/${filename}.gif`;
+                    embedInput.value = `<img src="${gettimerUrl}" alt="Countdown Timer">`;
+                  } else {
+                    embedInput.value = `<img src="${gifUrl}" alt="Countdown Timer">`;
+                  }
+                } catch (e) {
+                  embedInput.value = `<img src="${gifUrl}" alt="Countdown Timer">`;
+                }
+              }
+            }
+          }
+        } else {
+          embedSection.classList.add('d-none');
+          // Show notice if inactive or no GIF
+          if (!isActive) {
+            embedNotice.textContent = 'Activate this timer to generate a shareable embed code.';
+            embedNotice.classList.remove('d-none');
+          } else if (!hasGif) {
+            embedNotice.textContent = 'Generate a GIF to get the embed code.';
+            embedNotice.classList.remove('d-none');
+          } else {
+            embedNotice.classList.add('d-none');
+          }
+        }
+      }
+    };
+    
+    statusSelect.addEventListener('change', updateEmbedVisibility);
+    // Also update on initial load
+    updateEmbedVisibility();
   }
 
   var btn = document.getElementById('embed_copy_btn');
