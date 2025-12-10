@@ -1585,7 +1585,7 @@ async function ajaxSaveAndPoll() {
       const embedNotice = document.getElementById('embed_notice');
       const statusSelect = document.querySelector('select[name="status"]');
       const isActive = statusSelect ? statusSelect.value === 'active' : false;
-      const form = document.getElementById('timer_form');
+      // form is already declared at the top of ajaxSaveAndPoll function (line 1496)
       
       // Store GIF URL in form data attribute for later use
       if (form && json.gif_url) {
