@@ -38,11 +38,11 @@ class TimerGifGenerator
 
         $remaining = $timer->remainingSecondsFromNow();
         
-        // For fixed-date timers: if expired, show only "Time's Up"; otherwise countdown from remaining time
+        // For fixed-date timers: if expired, show only "Time's Up" or 0 seconds based on setting; otherwise countdown from remaining time
         // For reload-based timers: always show full countdown from duration
         if ($timer->isFixedDate()) {
             if ($remaining <= 0) {
-                // Timer expired - show only "Time's Up" frame
+                // Timer expired - show final frame or 0 seconds based on show_final_message setting
                 $durationForGif = 0;
             } else {
                 // For fixed-date timers, limit GIF to 5 minutes max for performance
@@ -56,7 +56,7 @@ class TimerGifGenerator
 
         $skin = $this->loadSkin($timer->skin);
         // Apply per-timer overrides if present (preferred source for width/height and other settings)
-        // customTextColor, customTextMarginTop, customTextMarginBottom are stored in skin_overrides
+        // customTextColor, customTextMarginTop, customTextMarginBottom, show_final_message are stored in skin_overrides
         if (is_array($timer->skin_overrides) && !empty($timer->skin_overrides)) {
             $skin = array_replace_recursive($skin, $timer->skin_overrides);
         }
@@ -76,11 +76,11 @@ class TimerGifGenerator
     {
         $remaining = $timer->remainingSecondsFromNow();
         
-        // For fixed-date timers: if expired, show only "Time's Up"; otherwise countdown from remaining time
+        // For fixed-date timers: if expired, show only "Time's Up" or 0 seconds based on setting; otherwise countdown from remaining time
         // For reload-based timers: always show full countdown from duration
         if ($timer->isFixedDate()) {
             if ($remaining <= 0) {
-                // Timer expired - show only "Time's Up" frame
+                // Timer expired - show final frame or 0 seconds based on show_final_message setting
                 $durationForGif = 0;
             } else {
                 // For fixed-date timers, limit GIF to 5 minutes max for performance
@@ -92,7 +92,7 @@ class TimerGifGenerator
             $durationForGif = max(1, $remaining);
         }
         $skin = $this->loadSkin($timer->skin);
-        // Apply per-timer overrides if present (customTextColor, margins are in skin_overrides)
+        // Apply per-timer overrides if present (customTextColor, margins, show_final_message are in skin_overrides)
         if (is_array($timer->skin_overrides) && !empty($timer->skin_overrides)) {
             $skin = array_replace_recursive($skin, $timer->skin_overrides);
         }
@@ -300,9 +300,16 @@ class TimerGifGenerator
     private function buildFramesCapped(int $startingRemaining, int $animateSeconds, array $skin, ?string $customText, string $textPosition): array
     {
         $frames = [];
+        $showFinalMessage = (bool) ($skin['show_final_message'] ?? false);
+        
         // If nothing to animate, show final state(s)
         if ($startingRemaining <= 0) {
-            $frames[] = $this->renderFinalFrame($skin, $customText, $textPosition);
+            if ($showFinalMessage) {
+                $frames[] = $this->renderFinalFrame($skin, $customText, $textPosition);
+            } else {
+                // Show 0 seconds instead of final message
+                $frames[] = $this->renderPngFrame(0, $skin, $customText, $textPosition);
+            }
             return $frames;
         }
         $animateSeconds = max(0, min(60, $animateSeconds));
@@ -329,8 +336,11 @@ class TimerGifGenerator
         // Always include the last animated second frame
         $lastRemaining = max(0, $startingRemaining - $animateSeconds);
         $frames[] = $this->renderPngFrame($lastRemaining, $skin, $customText, $textPosition);
-        if ($lastRemaining === 0) {
-            // If we reached zero, also include the Time's Up frame
+        
+        // Only add final frame if show_final_message is enabled
+        // If disabled: reload-based timers will loop naturally, fixed-date will show 0 seconds
+        if ($lastRemaining === 0 && $showFinalMessage) {
+            // If we reached zero and final message is enabled, include the Time's Up frame
             $frames[] = $this->renderFinalFrame($skin, $customText, $textPosition);
         }
         return $frames;

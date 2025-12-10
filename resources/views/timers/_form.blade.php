@@ -1137,7 +1137,9 @@ function renderFields(metadata, savedOverrides = {}) {
   });
 
   grouped.forEach(group => {
-    if (!group.fields.length) return;
+    // For final group, always show it (even if no fields) to include the toggle
+    if (!group.fields.length && group.key !== 'final') return;
+    
     const col = document.createElement('div');
     col.className = 'col-12';
     const card = document.createElement('div');
@@ -1155,6 +1157,31 @@ function renderFields(metadata, savedOverrides = {}) {
     group.fields.forEach(({ field, value }) => {
       row.appendChild(createFieldInput(field, value));
     });
+    
+    // Add show_final_message toggle to final group
+    if (group.key === 'final') {
+      const toggleCol = document.createElement('div');
+      toggleCol.className = 'col-12';
+      const savedOverrides = JSON.parse(document.getElementById('skin_overrides_input').value || '{}');
+      const showFinalMessage = savedOverrides.show_final_message || false;
+      
+      toggleCol.innerHTML = `
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" name="show_final_message" id="show_final_message" value="1" ${showFinalMessage ? 'checked' : ''} data-key="show_final_message">
+          <label class="form-check-label" for="show_final_message">
+            <strong>Toggle Time's Up Screen</strong>
+          </label>
+        </div>
+      `;
+      row.appendChild(toggleCol);
+      
+      // Add event listener to the toggle
+      const toggleInput = toggleCol.querySelector('#show_final_message');
+      if (toggleInput) {
+        toggleInput.addEventListener('change', syncOverrides);
+      }
+    }
+    
     body.appendChild(row);
     card.appendChild(header);
     card.appendChild(body);
@@ -1231,6 +1258,12 @@ function syncOverrides() {
     if (!isNaN(marginBottom)) {
       data['customTextMarginBottom'] = marginBottom;
     }
+  }
+  
+  // Include show_final_message toggle
+  const showFinalMessageInput = document.querySelector('input[name="show_final_message"]');
+  if (showFinalMessageInput) {
+    data['show_final_message'] = showFinalMessageInput.checked;
   }
   
   document.getElementById('skin_overrides_input').value = JSON.stringify(data);
