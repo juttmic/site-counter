@@ -1324,6 +1324,26 @@ formData.set('_method', 'POST');
       const newTimerId = response.headers.get('X-Timer-Id');
       if (newTimerId) {
         form.dataset.timerId = newTimerId;
+
+        // If we just created a timer via preview on the create page, switch the form into edit mode
+        if (form.dataset.isEdit !== '1') {
+          form.dataset.isEdit = '1';
+          form.action = `/timers/${newTimerId}`;
+          let methodOverrideInput = form.querySelector('input[name="_method"]');
+          if (!methodOverrideInput) {
+            methodOverrideInput = document.createElement('input');
+            methodOverrideInput.type = 'hidden';
+            methodOverrideInput.name = '_method';
+            form.appendChild(methodOverrideInput);
+          }
+          methodOverrideInput.value = 'PUT';
+
+          // Reveal the Generate GIF button now that we have a real timer
+          const saveBtn = document.getElementById('save_btn');
+          if (saveBtn) {
+            saveBtn.classList.remove('d-none');
+          }
+        }
       }
 
       // Response body is plain text containing the URL to the saved PNG.
@@ -1528,7 +1548,12 @@ document.addEventListener('DOMContentLoaded', () => {
 async function ajaxSaveAndPoll() {
   const form = document.getElementById('timer_form');
   const saveBtn = document.getElementById('save_btn');
-  if (!form) return;
+  if (!form || !saveBtn) return;
+
+  // On create page (no timer id yet), hide the Generate GIF button until we have a timer ID
+  if (!form.dataset.timerId && form.dataset.isEdit !== '1') {
+    saveBtn.classList.add('d-none');
+  }
   saveBtn.addEventListener('click', async () => {
     const isEdit = form.dataset.isEdit === '1';
     
@@ -1595,6 +1620,23 @@ async function ajaxSaveAndPoll() {
         return;
       }
       form.dataset.timerId = timerId;
+
+      // Once we have a timer ID, ensure form uses the update route (PUT) instead of create (POST)
+      if (form.dataset.isEdit !== '1') {
+        form.dataset.isEdit = '1';
+        form.action = `/timers/${timerId}`;
+        let methodOverrideInput = form.querySelector('input[name="_method"]');
+        if (!methodOverrideInput) {
+          methodOverrideInput = document.createElement('input');
+          methodOverrideInput.type = 'hidden';
+          methodOverrideInput.name = '_method';
+          form.appendChild(methodOverrideInput);
+        }
+        methodOverrideInput.value = 'PUT';
+      }
+
+      // Now that timer exists, show the Generate GIF button
+      saveBtn.classList.remove('d-none');
       
       const previewWrap = document.getElementById('timer_preview');
       const loader = document.getElementById('preview_loader');
