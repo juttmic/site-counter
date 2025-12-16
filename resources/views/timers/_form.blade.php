@@ -1274,6 +1274,7 @@ function syncOverrides() {
 }
 
 let previewTimeout = null;
+let createPreviewInFlight = false; // prevent multiple draft timers on create page
 
 async function generatePreviewFrame() {
   const form = document.getElementById('timer_form');
@@ -1304,10 +1305,27 @@ async function generatePreviewFrame() {
       formData.append('skin_overrides', document.getElementById('skin_overrides_input').value || '{}');
 
       // Build URL with optional timer ID
-      const timerId = form.dataset.timerId;
-      const previewUrl = timerId ? `/timers/${timerId}/preview-frame` : '/timers/preview-frame';
-console.log(formData);
-formData.set('_method', 'POST');
+      let timerId = form.dataset.timerId;
+      let previewUrl;
+
+      if (timerId) {
+        // Existing timer: always hit the per-timer endpoint
+        previewUrl = `/timers/${timerId}/preview-frame`;
+      } else {
+        // Create page without a timer yet
+        if (createPreviewInFlight) {
+          // Another create-preview request is already in flight; skip this one to avoid
+          // creating multiple draft timers with partial titles.
+          loader.classList.add('d-none');
+          placeholder.classList.remove('d-none');
+          return;
+        }
+        createPreviewInFlight = true;
+        previewUrl = '/timers/preview-frame';
+      }
+
+      // Explicitly ensure POST method
+      formData.set('_method', 'POST');
       const response = await fetch(previewUrl, {
         method: 'POST',
         headers: {
@@ -1366,6 +1384,9 @@ formData.set('_method', 'POST');
       console.error('Preview generation error:', e);
       loader.classList.add('d-none');
       placeholder.classList.remove('d-none');
+    } finally {
+      // Allow another create-preview attempt if needed
+      createPreviewInFlight = false;
     }
   }, 300);
 }
