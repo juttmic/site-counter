@@ -25,8 +25,7 @@
                                     <!-- Metadata -->
                                     <div class="small text-muted mb-3">
                                       <div class="mb-1">
-                                        Type:
-                                        <span class="badge bg-secondary">{{ $timer->timer_type }}</span>
+                                        <span class="badge bg-secondary">{{ ucwords( str_replace('_', ' ', $timer->timer_type)) }}</span>
                                       </div>
                                       <div class="mb-1">
                                         Skin:
