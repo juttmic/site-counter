@@ -67,28 +67,31 @@
                 <!-- Header -->
                 <header class="bg-white border-bottom shadow-sm sticky-top" style="z-index: 999;">
                     <div class="container-fluid">
-                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 py-3 px-3 px-md-4">
-                            <div class="d-flex align-items-center gap-3 flex-wrap">
+                        <div class="d-flex align-items-center justify-content-between gap-3 py-3 px-3 px-md-4 flex-nowrap">
+                            <div class="d-flex align-items-center gap-3 flex-nowrap">
                                 <a href="{{ route('dashboard') }}" class="d-flex align-items-center text-decoration-none text-dark">
                                     <x-application-logo class="d-block" style="height: 32px; width: auto;" />
                                 </a>
-                                <nav class="d-flex align-items-center gap-3 flex-wrap">
+                                <nav class="d-none d-md-flex align-items-center gap-3">
                                     <a href="{{ route('dashboard') }}" class="text-decoration-none fw-semibold {{ request()->routeIs('dashboard') ? 'text-primary' : 'text-dark' }}">Dashboard</a>
-                                    <a href="{{ route('timers.create') }}" class="text-decoration-none fw-semibold {{ request()->routeIs('timers.create') ? 'text-primary' : 'text-dark' }}">Create Timer</a>
+                                    <a href="{{ route('timers.create') }}" class="text-decoration-none fw-semibold {{ request()->routeIs('timers.create') ? 'text-primary' : 'text-dark' }}">Create New Counter</a>
                                 </nav>
-                                <div class="flex-grow-1">
+                                <div class="flex-grow-1 d-none d-md-block">
                                     {{ $header ?? '' }}
                                 </div>
                             </div>
                             <div class="d-flex align-items-center gap-2 ms-auto">
+                                <button class="btn btn-outline-secondary btn-sm d-md-none" type="button" data-bs-toggle="collapse" data-bs-target="#mobileHeaderNav" aria-expanded="false" aria-controls="mobileHeaderNav" aria-label="Toggle navigation">
+                                    <i class="bi bi-list"></i>
+                                </button>
                                 <button onclick="toggleTheme()" 
                                         type="button" 
-                                        class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center justify-content-center"
+                                        class="btn btn-outline-secondary btn-sm d-none d-md-inline-flex align-items-center justify-content-center"
                                         aria-label="Toggle theme">
                                     <i class="bi bi-sun light-mode-icon"></i>
                                     <i class="bi bi-moon-stars dark-mode-icon"></i>
                                 </button>
-                                <div class="dropdown">
+                                <div class="dropdown d-none d-md-block">
                                     <button class="btn btn-outline-secondary btn-sm d-flex align-items-center justify-content-center rounded-circle p-0" type="button" id="userMenuDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="width: 38px; height: 38px;">
                                         <span class="fw-semibold text-uppercase small d-flex align-items-center justify-content-center" style="width: 100%; height: 100%;">{{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}</span>
                                     </button>
@@ -108,6 +111,43 @@
                                             </form>
                                         </li>
                                     </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Mobile collapse menu -->
+                        <div class="collapse d-md-none border-top" id="mobileHeaderNav">
+                            <div class="px-3 py-2 d-flex flex-column gap-2">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-light border" style="width: 36px; height: 36px;">
+                                            <span class="fw-semibold text-uppercase small">{{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}</span>
+                                        </span>
+                                        <span class="fw-semibold text-dark">{{ Auth::user()->name }}</span>
+                                    </div>
+                                    <button onclick="toggleTheme()" 
+                                            type="button" 
+                                            class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center justify-content-center"
+                                            aria-label="Toggle theme">
+                                        <i class="bi bi-sun light-mode-icon"></i>
+                                        <i class="bi bi-moon-stars dark-mode-icon"></i>
+                                    </button>
+                                </div>
+                                <nav class="d-flex flex-column gap-2">
+                                    <a href="{{ route('dashboard') }}" class="d-flex align-items-center text-decoration-none {{ request()->routeIs('dashboard') ? 'text-primary fw-semibold' : 'text-dark' }}">
+                                        <i class="bi bi-speedometer2 me-2"></i> Dashboard
+                                    </a>
+                                    <a href="{{ route('timers.create') }}" class="d-flex align-items-center text-decoration-none {{ request()->routeIs('timers.create') ? 'text-primary fw-semibold' : 'text-dark' }}">
+                                        <i class="bi bi-plus-square me-2"></i> Create New Counter
+                                    </a>
+                                </nav>
+                                <div class="border-top pt-2">
+                                    <form method="POST" action="{{ route('logout') }}">
+                                        @csrf
+                                        <button type="submit" class="btn btn-light btn-sm w-100 d-flex align-items-center justify-content-center gap-2">
+                                            <i class="bi bi-box-arrow-right"></i>
+                                            Logout
+                                        </button>
+                                    </form>
                                 </div>
                             </div>
                         </div>
