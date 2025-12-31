@@ -422,6 +422,7 @@
                                 <div id="fixed_date_input" class="mt-3 {{ $isEdit && $timer->timer_type !== 'fixed_date' ? 'd-none' : '' }}">
                                     <label class="form-label">Target DateTime</label>
                                     <input type="datetime-local" name="target_datetime" class="form-control"
+                                           min="{{ now()->format('Y-m-d\\TH:i') }}"
                                            value="{{ old('target_datetime', $isEdit && $timer->target_datetime ? $timer->target_datetime->format('Y-m-d\\TH:i') : ($isEdit ? '' : now()->addDays(3)->format('Y-m-d\\TH:i'))) }}">
                                 </div>
 
@@ -602,6 +603,25 @@ function toggleInputs() {
   document.getElementById('duration_input').classList.toggle('d-none', type !== 'reload_based');
 }
 document.addEventListener('DOMContentLoaded', toggleInputs);
+
+function enforceMinTargetDateTime() {
+  const input = document.querySelector('input[name="target_datetime"]');
+  if (!input) return;
+  const now = new Date();
+  const pad = (n) => n.toString().padStart(2, '0');
+  const minVal = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  input.min = minVal;
+  if (input.value && input.value < minVal) {
+    input.value = minVal;
+  }
+}
+document.addEventListener('DOMContentLoaded', () => {
+  enforceMinTargetDateTime();
+  const targetInput = document.querySelector('input[name="target_datetime"]');
+  if (targetInput) {
+    targetInput.addEventListener('change', enforceMinTargetDateTime);
+  }
+});
 
 // Initialize static color picker for customTextColor and sync to skin_overrides
 document.addEventListener('DOMContentLoaded', function() {

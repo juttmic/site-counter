@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
+use Carbon\Carbon;
 
 class TimerController extends Controller
 {
@@ -214,7 +215,7 @@ class TimerController extends Controller
         $rules = [
             'title' => ['required', 'string', 'max:255'],
             'timer_type' => ['nullable', 'in:fixed_date,reload_based'], // Made nullable to allow defaults
-            'target_datetime' => ['nullable', 'date'],
+            'target_datetime' => ['nullable', 'date', 'after_or_equal:now'],
             'duration_seconds' => ['nullable', 'integer', 'min:1', 'max:604800'],
             'skin' => ['required', 'string'],
             'text_position' => ['required', 'in:top,bottom,none'],
@@ -233,6 +234,14 @@ class TimerController extends Controller
 
         if ($data['timer_type'] === 'fixed_date') {
             $data['duration_seconds'] = null;
+            if (!empty($data['target_datetime'])) {
+                $target = Carbon::parse($data['target_datetime']);
+                if ($target->lt(now())) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'target_datetime' => 'The target date and time must be in the future.',
+                    ]);
+                }
+            }
         } else {
             $data['target_datetime'] = null;
         }
@@ -272,5 +281,3 @@ class TimerController extends Controller
         }, $files));
     }
 }
-
-
