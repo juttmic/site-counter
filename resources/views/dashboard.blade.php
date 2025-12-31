@@ -1,10 +1,10 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="d-flex justify-content-between align-items-center">
+        {{-- <div class="d-flex justify-content-between align-items-center">
             <h2 class="fw-semibold mb-0">
                 {{ __('Your Timers') }}
             </h2>
-        </div>
+        </div> --}}
     </x-slot>
 
     <div class="py-4 py-md-5">

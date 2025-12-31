@@ -54,33 +54,61 @@
                 }
             })();
         </script>
+        <style>
+            .dark-mode-icon { display: none !important; }
+            .dark .dark-mode-icon { display: inline-block !important; }
+            .dark .light-mode-icon { display: none !important; }
+        </style>
     </head>
     <body class="bg-light">
         <div class="min-vh-100">
-            @include('layouts.sidebar')
-            
             <!-- Main Content Area -->
             <div class="main-content" style="min-height: 100vh;">
                 <!-- Header -->
                 <header class="bg-white border-bottom shadow-sm sticky-top" style="z-index: 999;">
                     <div class="container-fluid">
-                        <div class="d-flex align-items-center justify-content-between py-3 px-3 px-md-4">
-                            <div class="flex-grow-1">
-                                
-                                {{ $header ?? '' }}
-                            </div>
-                            <div class="d-flex align-items-center gap-2">
-                                
-                                <a href="{{ route('timers.create') }}" class="btn btn-primary btn-sm d-none d-sm-inline-flex">
-                                    <i class="bi bi-plus-square me-1"></i>
-                                    Create Timer
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 py-3 px-3 px-md-4">
+                            <div class="d-flex align-items-center gap-3 flex-wrap">
+                                <a href="{{ route('dashboard') }}" class="d-flex align-items-center text-decoration-none text-dark">
+                                    <x-application-logo class="d-block" style="height: 32px; width: auto;" />
                                 </a>
+                                <nav class="d-flex align-items-center gap-3 flex-wrap">
+                                    <a href="{{ route('dashboard') }}" class="text-decoration-none fw-semibold {{ request()->routeIs('dashboard') ? 'text-primary' : 'text-dark' }}">Dashboard</a>
+                                    <a href="{{ route('timers.create') }}" class="text-decoration-none fw-semibold {{ request()->routeIs('timers.create') ? 'text-primary' : 'text-dark' }}">Create Timer</a>
+                                </nav>
+                                <div class="flex-grow-1">
+                                    {{ $header ?? '' }}
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center gap-2 ms-auto">
                                 <button onclick="toggleTheme()" 
                                         type="button" 
-                                        class="btn btn-outline-secondary btn-sm d-none d-md-inline-flex">
-                                    <span class="d-none dark-mode-text">Light Mode</span>
-                                    <span class="light-mode-text">Dark Mode</span>
+                                        class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center justify-content-center"
+                                        aria-label="Toggle theme">
+                                    <i class="bi bi-sun light-mode-icon"></i>
+                                    <i class="bi bi-moon-stars dark-mode-icon"></i>
                                 </button>
+                                <div class="dropdown">
+                                    <button class="btn btn-outline-secondary btn-sm d-flex align-items-center justify-content-center rounded-circle p-0" type="button" id="userMenuDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="width: 38px; height: 38px;">
+                                        <span class="fw-semibold text-uppercase small d-flex align-items-center justify-content-center" style="width: 100%; height: 100%;">{{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}</span>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenuDropdown">
+                                        <li class="dropdown-header d-flex align-items-center gap-2">
+                                            <i class="bi bi-person-circle"></i>
+                                            <span>{{ Auth::user()->name }}</span>
+                                        </li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <form method="POST" action="{{ route('logout') }}">
+                                                @csrf
+                                                <button type="submit" class="dropdown-item d-flex align-items-center gap-2">
+                                                    <i class="bi bi-box-arrow-right"></i>
+                                                    Logout
+                                                </button>
+                                            </form>
+                                        </li>
+                                    </ul>
+                                </div>
                             </div>
                         </div>
                     </div>
