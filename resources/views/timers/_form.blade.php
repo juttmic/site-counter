@@ -431,52 +431,6 @@
                                            value="{{ old('duration_seconds', $timer->duration_seconds ?? '') }}">
                                 </div>
 
-                                <!-- Custom Text Settings (nested group within General settings) -->
-                                <div class="card border shadow-sm mt-3">
-                                    <div class="card-header bg-light py-2 collapsible-header" data-target="#custom_text_settings_body">
-                                        <span class="text-uppercase text-muted fw-semibold small">Custom text settings</span>
-                                        <i class="bi bi-chevron-down collapse-icon float-end"></i>
-                                    </div>
-                                    <div class="card-body collapsible-body" id="custom_text_settings_body">
-                                        <div class="row g-3">
-                                            <div class="col-12 col-sm-6">
-                                                <label class="form-label small mb-1">Text Position</label>
-                                                <select name="text_position" class="form-select">
-                                                    <option value="none" {{ ($isEdit && $timer->text_position === 'none') || !$isEdit ? 'selected' : '' }}>None</option>
-                                                    <option value="top" {{ $isEdit && $timer->text_position === 'top' ? 'selected' : '' }}>Top</option>
-                                                    <option value="bottom" {{ $isEdit && $timer->text_position === 'bottom' ? 'selected' : '' }}>Bottom</option>
-                                                </select>
-                                            </div>
-                                            <div class="col-12 col-sm-6">
-                                                <label class="form-label small mb-1">Custom Text {{ !$isEdit ? '(optional)' : '' }}</label>
-                                                <input type="text" name="custom_text" class="form-control" maxlength="255" value="{{ old('custom_text', $timer->custom_text ?? '') }}">
-                                            </div>
-                                            <div class="col-12 col-sm-6">
-                                                <label class="form-label small mb-1">Custom Text Color</label>
-                                                @php($customTextColor = old('customTextColor', ($isEdit && is_array($timer->skin_overrides) && isset($timer->skin_overrides['customTextColor'])) ? $timer->skin_overrides['customTextColor'] : '#000000'))
-                                                <div class="modern-color-picker">
-                                                    <div class="color-picker-swatch" style="--swatch-color: {{ $customTextColor }};"></div>
-                                                    <div class="color-picker-input-wrapper">
-                                                        <div class="color-picker-display">
-                                                            <span class="color-picker-hex">{{ strtoupper($customTextColor) }}</span>
-                                                            <i class="bi bi-palette color-picker-icon"></i>
-                                                        </div>
-                                                        <input type="color" name="customTextColor" class="color-picker-native" value="{{ $customTextColor }}">
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="col-12 col-sm-4 col-md-3">
-                                                <label class="form-label small mb-1">Margin Top</label>
-                                                <input type="number" name="customTextMarginTop" class="form-control form-control-sm" min="0" max="200" step="1" value="{{ old('customTextMarginTop', ($isEdit && is_array($timer->skin_overrides) && isset($timer->skin_overrides['customTextMarginTop'])) ? $timer->skin_overrides['customTextMarginTop'] : '10') }}">
-                                            </div>
-                                            <div class="col-12 col-sm-4 col-md-3">
-                                                <label class="form-label small mb-1">Margin Bottom</label>
-                                                <input type="number" name="customTextMarginBottom" class="form-control form-control-sm" min="0" max="200" step="1" value="{{ old('customTextMarginBottom', ($isEdit && is_array($timer->skin_overrides) && isset($timer->skin_overrides['customTextMarginBottom'])) ? $timer->skin_overrides['customTextMarginBottom'] : '10') }}">
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
                                 <div class="mt-3 d-none">
                                     <label class="form-label">Selected Skin</label>
                                     <div class="mt-2 position-relative d-inline-flex align-items-center gap-2 border rounded p-2 bg-light">
@@ -484,6 +438,52 @@
                                         <span id="selected_skin_label" class="small"></span>
                                     </div>
                                     <p class="form-text mb-0">Use the skin bar above to change the selected skin.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Custom text settings -->
+                        <div class="card border shadow-sm">
+                            <div class="card-header bg-light py-2 collapsible-header" data-target="#custom_text_settings_body">
+                                <span class="text-uppercase text-muted fw-semibold small">Custom text settings</span>
+                                <i class="bi bi-chevron-down collapse-icon float-end"></i>
+                            </div>
+                            <div class="card-body collapsible-body" id="custom_text_settings_body">
+                                <div class="row g-3">
+                                    <div class="col-12 col-sm-6">
+                                        <label class="form-label small mb-1">Text Position</label>
+                                        <select name="text_position" class="form-select">
+                                            <option value="none" {{ ($isEdit && $timer->text_position === 'none') || !$isEdit ? 'selected' : '' }}>None</option>
+                                            <option value="top" {{ $isEdit && $timer->text_position === 'top' ? 'selected' : '' }}>Top</option>
+                                            <option value="bottom" {{ $isEdit && $timer->text_position === 'bottom' ? 'selected' : '' }}>Bottom</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-12 col-sm-6">
+                                        <label class="form-label small mb-1">Custom Text {{ !$isEdit ? '(optional)' : '' }}</label>
+                                        <input type="text" name="custom_text" class="form-control" maxlength="255" value="{{ old('custom_text', $timer->custom_text ?? '') }}">
+                                    </div>
+                                    <div class="col-12 col-sm-6">
+                                        <label class="form-label small mb-1">Custom Text Color</label>
+                                        @php($customTextColor = old('customTextColor', ($isEdit && is_array($timer->skin_overrides) && isset($timer->skin_overrides['customTextColor'])) ? $timer->skin_overrides['customTextColor'] : '#000000'))
+                                        <div class="modern-color-picker">
+                                            <div class="color-picker-swatch" style="--swatch-color: {{ $customTextColor }};"></div>
+                                            <div class="color-picker-input-wrapper">
+                                                <div class="color-picker-display">
+                                                    <span class="color-picker-hex">{{ strtoupper($customTextColor) }}</span>
+                                                    <i class="bi bi-palette color-picker-icon"></i>
+                                                </div>
+                                                <input type="color" name="customTextColor" class="color-picker-native" value="{{ $customTextColor }}">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 col-sm-4 col-md-3">
+                                        <label class="form-label small mb-1">Margin Top</label>
+                                        <input type="number" name="customTextMarginTop" class="form-control form-control-sm" min="0" max="200" step="1" value="{{ old('customTextMarginTop', ($isEdit && is_array($timer->skin_overrides) && isset($timer->skin_overrides['customTextMarginTop'])) ? $timer->skin_overrides['customTextMarginTop'] : '10') }}">
+                                    </div>
+                                    <div class="col-12 col-sm-4 col-md-3">
+                                        <label class="form-label small mb-1">Margin Bottom</label>
+                                        <input type="number" name="customTextMarginBottom" class="form-control form-control-sm" min="0" max="200" step="1" value="{{ old('customTextMarginBottom', ($isEdit && is_array($timer->skin_overrides) && isset($timer->skin_overrides['customTextMarginBottom'])) ? $timer->skin_overrides['customTextMarginBottom'] : '10') }}">
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -973,7 +973,7 @@ function renderFields(metadata, savedOverrides = {}) {
   
   // Fields to hide but use defaults for
   // Note: accentColor is NOT hidden - it's needed for controlling tile/box/ring colors
-  // Custom text fields are static in General settings, not from skin JSON
+  // Custom text fields live in the dedicated Custom Text settings card, not from skin JSON
   const hiddenFields = new Set(['fontPath', 'font', 'showDays', 'showHours', 'showMinutes', 'showSeconds', 'layout', 'animation', 'customTextColor', 'customTextMarginTop', 'customTextMarginBottom', 'custom_text', 'text_position']);
   hiddenFields.forEach(key => {
     if (savedOverrides[key] !== undefined) {
@@ -1001,9 +1001,9 @@ function renderFields(metadata, savedOverrides = {}) {
 
   const smallKeys = new Set(['fontSize','separator','layout','animation','showDays','showHours','showMinutes','showSeconds','width','height','outputWidth','outputHeight']);
   const marginKeys = new Set(['customTextMarginTop','customTextMarginBottom','textMarginTop','textMarginBottom','marginTop','marginBottom','labelMarginTop','labelMarginBottom']);
-  // Custom text fields are now in General settings, not in dynamic groups
+  // Custom text fields are handled in their own section, not in dynamic groups
   // Exclude them from dynamic grouping so they don't appear in skin fields
-  const customKeys = new Set([]); // Empty - custom text fields are static in General settings
+  const customKeys = new Set([]); // Empty - custom text fields are handled in the Custom Text settings card
   const timerKeys = new Set(['showdays','showhours','showminutes','showseconds','separator','layout','animation','digitspacing','countdirection','refreshrate','pulsespeed']);
   const finalKeys = new Set(['finalmessage','finalbackground','finaltextcolor','finalscreentext','finalscreencolor']);
   const extraKeys = new Set(['shadowcolor','glowcolor','blurstrength','outlinecolor','outlinewidth']);
@@ -1234,7 +1234,7 @@ function syncOverrides() {
     }
   });
   
-  // Include static custom text fields from General settings (these are stored in skin_overrides)
+  // Include static custom text fields from the Custom Text settings card (stored in skin_overrides)
   // Always save these values so they persist across skin changes
   const customTextColorInput = document.querySelector('input[name="customTextColor"]');
   if (customTextColorInput) {
@@ -2042,4 +2042,3 @@ document.addEventListener('DOMContentLoaded', function(){
   });
 });
 </script>
-
