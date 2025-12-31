@@ -445,7 +445,7 @@
                         <!-- Custom text settings -->
                         <div class="card border shadow-sm">
                             <div class="card-header bg-light py-2 collapsible-header" data-target="#custom_text_settings_body">
-                                <span class="text-uppercase text-muted fw-semibold small">Custom text settings</span>
+                                <span class="text-uppercase text-muted fw-semibold small">Custom text settings ( Optional )</span>
                                 <i class="bi bi-chevron-down collapse-icon float-end"></i>
                             </div>
                             <div class="card-body collapsible-body" id="custom_text_settings_body">
@@ -459,7 +459,7 @@
                                         </select>
                                     </div>
                                     <div class="col-12 col-sm-6">
-                                        <label class="form-label small mb-1">Custom Text {{ !$isEdit ? '(optional)' : '' }}</label>
+                                        <label class="form-label small mb-1">Custom Text</label>
                                         <input type="text" name="custom_text" class="form-control" maxlength="255" value="{{ old('custom_text', $timer->custom_text ?? '') }}">
                                     </div>
                                     <div class="col-12 col-sm-6">
@@ -495,14 +495,14 @@
                                 <i class="bi bi-chevron-down collapse-icon"></i>
                             </div>
                             <div class="card-body collapsible-body" id="customize_skin_body">
-                                <!-- Dynamic skin customization fields (rendered first, Overall settings will be first) -->
+                                <!-- Dynamic skin customization fields (rendered first, Dimensions will be first) -->
                                 <div id="skin_overrides_section" class="d-none">
                                     <div id="skin_fields" class="row g-3"></div>
                                 </div>
 
                                 <!-- Static customization fields (timer-level but displayed here) -->
                                 <!-- Text & Animation (only animation-related) -->
-                                <div class="card border shadow-sm mb-3">
+                                <div class="card border shadow-sm mb-3 d-none">
                                     <div class="card-header bg-light py-2 collapsible-header" data-target="#skin_animation_group">
                                         <span class="text-uppercase text-muted fw-semibold small">Text & Animation</span>
                                         <i class="bi bi-chevron-down collapse-icon float-end"></i>
@@ -514,9 +514,9 @@
                                                 <input type="number"
                                                        name="animation_frame_limit"
                                                        class="form-control"
-                                                       min="10"
+                                                       min="60"
                                                        max="60"
-                                                       value="{{ old('animation_frame_limit', $timer->animation_frame_limit ?? 20) }}">
+                                                       value="{{ old('animation_frame_limit', $timer->animation_frame_limit ?? 60) }}">
                                                 <div class="form-text small">Animated duration for generated GIF (10-60 seconds).</div>
                                             </div>
                                         </div>
@@ -986,9 +986,9 @@ function renderFields(metadata, savedOverrides = {}) {
   
   document.getElementById('skin_overrides_section').classList.toggle('d-none', visibleFields.length === 0);
 
-  // Order matters: Overall settings first, then others
+  // Order matters: Dimensions first, then others
   const grouped = [
-    { key: 'overall', title: 'Overall settings', fields: [] },
+    { key: 'overall', title: 'Dimensions', fields: [] },
     { key: 'timer', title: 'Timer settings', fields: [] },
     { key: 'custom', title: 'Custom text', fields: [] },
     { key: 'final', title: 'Final screen', fields: [] },
