@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use App\Services\Skins\SkinRendererFactory;
 use App\Services\Skins\SkinRendererInterface;
+use Illuminate\Support\Facades\Log;
 
 class TimerGifGenerator
 {
@@ -460,7 +461,8 @@ class TimerGifGenerator
 
         // Base height: use requested output height if provided, otherwise grow to fit content
         $contentHeight = $timerH + ($hasText ? ($textH + $distance) : 0);
-        $baseHeight = ($requestedH && $requestedH > 0) ? $requestedH : max($timerH, $contentHeight);
+        // Always center within the largest of: explicit output height, content height, timer height
+        $baseHeight = max($timerH, $contentHeight, $requestedH && $requestedH > 0 ? $requestedH : 0);
 
         // Clamp distance so text + timer fit inside the base height
         $effectiveDistance = $distance;
@@ -496,6 +498,9 @@ class TimerGifGenerator
 
         $offsetX = (int) (($canvasW - $timerW) / 2);
         imagecopy($im, $timerIm, $offsetX, $offsetY, 0, 0, $timerW, $timerH);
+        // Add a 1px border around the counter area for visual separation
+        $timerBorderCol = imagecolorallocate($im, $tr, $tg, $tb);
+        imagerectangle($im, $offsetX, $offsetY, $offsetX + $timerW - 1, $offsetY + $timerH - 1, $timerBorderCol);
         imagedestroy($timerIm);
 
         if ($hasText) {
@@ -503,7 +508,8 @@ class TimerGifGenerator
                 $tx = (int) (($canvasW - $textW) / 2);
                 if ($textPosition === 'top') {
                     // Text sits at the top of the canvas; distance just adds space to keep it off the timer
-                    $ty = (int) ($textHeightFromBaseline);
+                    $ty = (int) ( $offsetY-$effectiveDistance);//$offsetY-($textHeightFromBaseline);
+                    Log::info(json_encode([$canvasH, $ty,$textHeightFromBaseline, $offsetY , $timerH , $effectiveDistance , $textHeightFromBaseline]));
                 } else {
                     // Text beneath the timer separated by the effective distance (clamped to output height)
                     $ty = (int) ($offsetY + $timerH + $effectiveDistance + $textHeightFromBaseline);
