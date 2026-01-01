@@ -994,7 +994,7 @@ function renderFields(metadata, savedOverrides = {}) {
   // Fields to hide but use defaults for
   // Note: accentColor is NOT hidden - it's needed for controlling tile/box/ring colors
   // Custom text fields live in the dedicated Custom Text settings card, not from skin JSON
-  const hiddenFields = new Set(['fontPath', 'font', 'showDays', 'showHours', 'showMinutes', 'showSeconds', 'layout', 'animation', 'customTextColor', 'customTextMarginTop', 'customTextMarginBottom', 'custom_text', 'text_position']);
+  const hiddenFields = new Set(['fontPath', 'font', 'showDays', 'showHours', 'showMinutes', 'showSeconds', 'layout', 'animation', 'customTextColor', 'customTextMarginTop', 'customTextMarginBottom', 'custom_text', 'text_position', 'finalBackground', 'finalTextColor']);
   hiddenFields.forEach(key => {
     if (savedOverrides[key] !== undefined) {
       currentHiddenOverrides[key] = savedOverrides[key];
@@ -1156,6 +1156,17 @@ function renderFields(metadata, savedOverrides = {}) {
     group.fields.push({ field, value });
   });
 
+  // Read saved overrides to determine initial toggle state for final screen
+  const savedOverridesForFinal = (() => {
+    try {
+      return JSON.parse(document.getElementById('skin_overrides_input').value || '{}');
+    } catch (e) {
+      return {};
+    }
+  })();
+  const showFinalMessage = !!savedOverridesForFinal.show_final_message;
+  let finalCardRef = null;
+
   grouped.forEach(group => {
     // For final group, always show it (even if no fields) to include the toggle
     if (!group.fields.length && group.key !== 'final') return;
@@ -1177,35 +1188,43 @@ function renderFields(metadata, savedOverrides = {}) {
     group.fields.forEach(({ field, value }) => {
       row.appendChild(createFieldInput(field, value));
     });
-    
-    // Add show_final_message toggle to final group
-    if (group.key === 'final') {
-      const toggleCol = document.createElement('div');
-      toggleCol.className = 'col-12';
-      const savedOverrides = JSON.parse(document.getElementById('skin_overrides_input').value || '{}');
-      const showFinalMessage = savedOverrides.show_final_message || false;
-      
-      toggleCol.innerHTML = `
-        <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" name="show_final_message" id="show_final_message" value="1" ${showFinalMessage ? 'checked' : ''} data-key="show_final_message">
-          <label class="form-check-label" for="show_final_message">
-            <strong>Toggle Time's Up Screen</strong>
-          </label>
-        </div>
-      `;
-      row.appendChild(toggleCol);
-      
-      // Add event listener to the toggle
-      const toggleInput = toggleCol.querySelector('#show_final_message');
-      if (toggleInput) {
-        toggleInput.addEventListener('change', syncOverrides);
-      }
-    }
-    
+
     body.appendChild(row);
     card.appendChild(header);
     card.appendChild(body);
     col.appendChild(card);
+
+    // Insert the toggle just before the final card and control visibility
+    if (group.key === 'final') {
+      const toggleCol = document.createElement('div');
+      toggleCol.className = 'col-12 mb-0';
+      toggleCol.innerHTML = `
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" name="show_final_message" id="show_final_message" value="1" ${showFinalMessage ? 'checked' : ''} data-key="show_final_message">
+          <label class="form-check-label" for="show_final_message">
+            <strong>Show Time's Up Screen</strong>
+          </label>
+        </div>
+      `;
+      fieldsWrap.appendChild(toggleCol);
+
+      const toggleInput = toggleCol.querySelector('#show_final_message');
+      if (toggleInput) {
+        toggleInput.addEventListener('change', () => {
+          if (finalCardRef) {
+            finalCardRef.classList.toggle('d-none', !toggleInput.checked);
+            finalCardRef.querySelector('.card')?.classList.toggle('d-none', !toggleInput.checked);
+          }
+          syncOverrides();
+        });
+      }
+
+      // Hide the final section when toggle is off
+      col.classList.toggle('d-none', !showFinalMessage);
+      card.classList.toggle('d-none', !showFinalMessage);
+      finalCardRef = col;
+    }
+
     fieldsWrap.appendChild(col);
   });
 
@@ -1253,6 +1272,16 @@ function syncOverrides() {
       data[k] = val;
     }
   });
+
+  // Ensure final screen colors mirror primary timer colors
+  const resolvedBackground = data.background ?? defaults.background;
+  const resolvedTextColor = data.textColor ?? defaults.textColor ?? '#000000';
+  if (resolvedBackground) {
+    data.finalBackground = resolvedBackground;
+  }
+  if (resolvedTextColor) {
+    data.finalTextColor = resolvedTextColor;
+  }
   
   // Include static custom text fields from the Custom Text settings card (stored in skin_overrides)
   // Always save these values so they persist across skin changes

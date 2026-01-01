@@ -155,6 +155,12 @@ class TimerController extends Controller
         if (is_array($workingTimer->skin_overrides) && !empty($workingTimer->skin_overrides)) {
             $skin = array_replace_recursive($skin, $workingTimer->skin_overrides);
         }
+        if (empty($skin['finalBackground']) && !empty($skin['background'])) {
+            $skin['finalBackground'] = $skin['background'];
+        }
+        if (empty($skin['finalTextColor']) && !empty($skin['textColor'])) {
+            $skin['finalTextColor'] = $skin['textColor'];
+        }
 
         // Render a single PNG frame that matches the saved timer state
         $pngData = $generator->renderPngFrame($remaining, $skin, $workingTimer->custom_text, $workingTimer->text_position);

@@ -60,6 +60,7 @@ class TimerGifGenerator
         if (is_array($timer->skin_overrides) && !empty($timer->skin_overrides)) {
             $skin = array_replace_recursive($skin, $timer->skin_overrides);
         }
+        $skin = $this->applyFinalColorDefaults($skin);
 
         $frameLimit = $this->resolveFrameLimit($timer);
         // Cap animation length to configured limit but start from actual remaining
@@ -96,6 +97,7 @@ class TimerGifGenerator
         if (is_array($timer->skin_overrides) && !empty($timer->skin_overrides)) {
             $skin = array_replace_recursive($skin, $timer->skin_overrides);
         }
+        $skin = $this->applyFinalColorDefaults($skin);
         
         $frameLimit = $this->resolveFrameLimit($timer);
         $animateFor = min($frameLimit, $maxAnimateFor, max(0, $durationForGif));
@@ -115,6 +117,7 @@ class TimerGifGenerator
         if (!empty($overrides)) {
             $skin = array_replace_recursive($skin, $overrides);
         }
+        $skin = $this->applyFinalColorDefaults($skin);
         // Use an illustrative sample remaining time (12h 34m 56s)
         $sampleSeconds = (12 * 3600) + (34 * 60) + 56;
         $png = $this->renderPngFrame($sampleSeconds, $skin, $customText, $textPosition);
@@ -344,6 +347,19 @@ class TimerGifGenerator
             $frames[] = $this->renderFinalFrame($skin, $customText, $textPosition);
         }
         return $frames;
+    }
+
+    private function applyFinalColorDefaults(array $skin): array
+    {
+        $bg = (string) ($skin['background'] ?? '#000000');
+        $txt = (string) ($skin['textColor'] ?? '#FFFFFF');
+        if (empty($skin['finalBackground'])) {
+            $skin['finalBackground'] = $bg;
+        }
+        if (empty($skin['finalTextColor'])) {
+            $skin['finalTextColor'] = $txt;
+        }
+        return $skin;
     }
 
     public function renderPngFrame(int $secondsRemaining, array $skin, ?string $customText, string $textPosition): string
@@ -1019,5 +1035,3 @@ class TimerGifGenerator
 
     // (no-op helpers removed)
 }
-
-
