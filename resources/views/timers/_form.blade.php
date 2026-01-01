@@ -1294,7 +1294,7 @@ function syncOverrides() {
 }
 
 let previewTimeout = null;
-let createPreviewInFlight = false; // prevent multiple draft timers on create page
+let createPreviewInFlight = false; // prevent overlapping preview requests
 
 async function generatePreviewFrame() {
   const form = document.getElementById('timer_form');
@@ -1332,10 +1332,8 @@ async function generatePreviewFrame() {
         // Existing timer: always hit the per-timer endpoint
         previewUrl = `/timers/${timerId}/preview-frame`;
       } else {
-        // Create page without a timer yet
+        // Create page without a saved counter yet
         if (createPreviewInFlight) {
-          // Another create-preview request is already in flight; skip this one to avoid
-          // creating multiple draft timers with partial titles.
           loader.classList.add('d-none');
           placeholder.classList.remove('d-none');
           return;
@@ -1357,31 +1355,6 @@ async function generatePreviewFrame() {
 
       if (!response.ok) {
         throw new Error('Failed to generate preview');
-      }
-
-      const newTimerId = response.headers.get('X-Timer-Id');
-      if (newTimerId) {
-        form.dataset.timerId = newTimerId;
-
-        // If we just created a timer via preview on the create page, switch the form into edit mode
-        if (form.dataset.isEdit !== '1') {
-          form.dataset.isEdit = '1';
-          form.action = `/timers/${newTimerId}`;
-          let methodOverrideInput = form.querySelector('input[name="_method"]');
-          if (!methodOverrideInput) {
-            methodOverrideInput = document.createElement('input');
-            methodOverrideInput.type = 'hidden';
-            methodOverrideInput.name = '_method';
-            form.appendChild(methodOverrideInput);
-          }
-          methodOverrideInput.value = 'PUT';
-
-          // Reveal the Generate GIF button now that we have a real timer
-          const saveBtn = document.getElementById('save_btn');
-          if (saveBtn) {
-            saveBtn.classList.remove('d-none');
-          }
-        }
       }
 
       // Response body is plain text containing the URL to the saved PNG.
@@ -1591,10 +1564,6 @@ async function ajaxSaveAndPoll() {
   const saveBtn = document.getElementById('save_btn');
   if (!form || !saveBtn) return;
 
-  // On create page (no timer id yet), hide the Generate GIF button until we have a timer ID
-  if (!form.dataset.timerId && form.dataset.isEdit !== '1') {
-    saveBtn.classList.add('d-none');
-  }
   saveBtn.addEventListener('click', async () => {
     const isEdit = form.dataset.isEdit === '1';
     

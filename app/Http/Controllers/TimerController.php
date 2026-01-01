@@ -139,36 +139,32 @@ class TimerController extends Controller
             $this->authorizeOwner($timer);
         }
 
-        // Reuse full validation logic so this saves exactly what Save would save
-        $data = $this->validateTimer($request);
+        // Preview uses relaxed validation so we can render without persisting a counter
+        $data = $this->validateTimerPreview($request, $timer);
 
-        if ($timer) {
-            $timer->fill($data);
-        } else {
-            $data['user_id'] = Auth::id();
-            $timer = new Timer($data);
-            $timer->gif_url = $timer->gif_url ?? '';
-            $timer->cache_key = 'timer_' . $timer->id . '_' . bin2hex(random_bytes(3));
-        }
-
-        // Do NOT touch gif_url here – this is an auto-save without GIF regeneration
-        $timer->save();
+        $baseAttributes = $timer ? $timer->getAttributes() : [];
+        $workingTimer = new Timer($baseAttributes);
+        $workingTimer->fill($data);
+        $workingTimer->user_id = $timer?->user_id ?? Auth::id();
+        $workingTimer->exists = false;
 
         // Build skin config exactly as GIF generation would
-        $remaining = $timer->remainingSecondsFromNow();
-        $skin = $generator->loadSkin($timer->skin);
+        $remaining = $workingTimer->remainingSecondsFromNow();
+        $skin = $generator->loadSkin($workingTimer->skin);
         // customTextColor, customTextMarginTop, customTextMarginBottom are stored in skin_overrides
-        if (is_array($timer->skin_overrides) && !empty($timer->skin_overrides)) {
-            $skin = array_replace_recursive($skin, $timer->skin_overrides);
+        if (is_array($workingTimer->skin_overrides) && !empty($workingTimer->skin_overrides)) {
+            $skin = array_replace_recursive($skin, $workingTimer->skin_overrides);
         }
 
         // Render a single PNG frame that matches the saved timer state
-        $pngData = $generator->renderPngFrame($remaining, $skin, $timer->custom_text, $timer->text_position);
+        $pngData = $generator->renderPngFrame($remaining, $skin, $workingTimer->custom_text, $workingTimer->text_position);
 
         // Save to a web-accessible location and return the URL as plain text.
         // This avoids sending binary image data in the response, so any PHP warnings
         // printed before output won't corrupt the PNG stream.
-        $path = "timer-frames/{$timer->id}.png";
+        $previewOwnerId = $workingTimer->user_id ?? Auth::id() ?? 'preview';
+        $previewKey = $timer ? "timer-{$timer->id}" : "user-{$previewOwnerId}";
+        $path = "timer-frames/previews/{$previewKey}.png";
         Storage::disk('public')->put($path, $pngData);
         // Add cache-busting query to ensure browser loads the latest frame
         $url = Storage::url($path) . '?v=' . time();
@@ -177,8 +173,7 @@ class TimerController extends Controller
             ->header('Content-Type', 'text/plain')
             ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
             ->header('Pragma', 'no-cache')
-            ->header('Expires', '0')
-            ->header('X-Timer-Id', (string) $timer->id);
+            ->header('Expires', '0');
     }
 
     public function generateGif(Timer $timer)
@@ -208,6 +203,70 @@ class TimerController extends Controller
         }
 
         return back()->with('status', 'GIF generated successfully.');
+    }
+
+    private function validateTimerPreview(Request $request, ?Timer $timer = null): array
+    {
+        $rules = [
+            'title' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'timer_type' => ['sometimes', 'nullable', 'in:fixed_date,reload_based'],
+            'target_datetime' => ['sometimes', 'nullable', 'date', 'after_or_equal:now'],
+            'duration_seconds' => ['sometimes', 'nullable', 'integer', 'min:1', 'max:604800'],
+            'skin' => ['sometimes', 'string'],
+            'text_position' => ['sometimes', 'in:top,bottom,none'],
+            'custom_text' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'status' => ['sometimes', 'in:active,inactive'],
+            'skin_overrides' => ['sometimes', 'nullable', 'string'],
+            'animation_frame_limit' => ['sometimes', 'nullable', 'integer', 'min:10', 'max:60'],
+        ];
+
+        $data = $request->validate($rules);
+
+        $data['title'] = $data['title'] ?? ($timer->title ?? 'Preview Counter');
+        $data['timer_type'] = $data['timer_type'] ?? ($timer->timer_type ?? 'fixed_date');
+
+        if ($data['timer_type'] === 'fixed_date') {
+            $data['duration_seconds'] = null;
+            if (!empty($data['target_datetime'])) {
+                $target = Carbon::parse($data['target_datetime']);
+                $data['target_datetime'] = $target->lt(now()) ? now()->addDays(3) : $target;
+            } elseif ($timer && $timer->target_datetime) {
+                $data['target_datetime'] = $timer->target_datetime;
+            } else {
+                $data['target_datetime'] = now()->addDays(3);
+            }
+        } else {
+            $duration = $data['duration_seconds'] ?? ($timer->duration_seconds ?? null);
+            $data['duration_seconds'] = $duration ? max(1, min((int) $duration, 604800)) : 60;
+            $data['target_datetime'] = null;
+        }
+
+        $data['skin'] = $data['skin'] ?? ($timer->skin ?? null);
+        if (empty($data['skin'])) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'skin' => 'A skin is required to preview the counter.',
+            ]);
+        }
+
+        $data['text_position'] = $data['text_position'] ?? ($timer->text_position ?? 'bottom');
+        $data['status'] = $data['status'] ?? ($timer->status ?? 'active');
+        $data['animation_frame_limit'] = (int) ($data['animation_frame_limit'] ?? ($timer->animation_frame_limit ?? 20));
+
+        $overridesRaw = $request->input('skin_overrides');
+        if (is_string($overridesRaw) && $overridesRaw !== '') {
+            try {
+                $decoded = json_decode($overridesRaw, true, 512, JSON_THROW_ON_ERROR);
+                if (is_array($decoded)) {
+                    $data['skin_overrides'] = $decoded;
+                }
+            } catch (\Throwable $e) {
+                // Ignore malformed overrides in preview validation
+            }
+        } elseif ($timer && is_array($timer->skin_overrides)) {
+            $data['skin_overrides'] = $timer->skin_overrides;
+        }
+
+        return $data;
     }
 
     private function validateTimer(Request $request): array
