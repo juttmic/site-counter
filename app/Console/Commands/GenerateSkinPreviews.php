@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\File;
 
 class GenerateSkinPreviews extends Command
 {
-    protected $signature = 'timergif:skins:previews {skin? : Optional single skin key to generate (e.g. skin07_teal_circles)} {--force : Regenerate even if files exist} {--all : Include skins without a registered renderer} {--skin=* : (Optional, legacy) Additional skin keys, comma-separated} {--seconds= : Override preview duration in seconds (default: 15)} {--text= : Optional custom text to render} {--text-position= : Text position: top|bottom|none} {--text-color= : Hex color for custom text (e.g. #FFFFFF)} {--text-mt= : Text margin-top (px)} {--text-mr= : Text margin-right (px)} {--text-mb= : Text margin-bottom (px)} {--text-ml= : Text margin-left (px)} {--out-width= : Output GIF width} {--out-height= : Output GIF height} {--time=* : (Deprecated)}';
+    protected $signature = 'timergif:skins:previews {skin? : Optional single skin key to generate (e.g. skin07_teal_circles)} {--force : Regenerate even if files exist} {--all : Include skins without a registered renderer} {--skin=* : (Optional, legacy) Additional skin keys, comma-separated} {--seconds= : Override preview duration in seconds (default: 15)} {--text= : Optional custom text to render} {--text-position= : Text position: top|bottom|none} {--text-color= : Hex color for custom text (e.g. #FFFFFF)} {--text-distance= : Distance between custom text and counter (px)} {--text-mt= : Text margin-top (px)} {--text-mr= : Text margin-right (px)} {--text-mb= : Text margin-bottom (px)} {--text-ml= : Text margin-left (px)} {--out-width= : Output GIF width} {--out-height= : Output GIF height} {--time=* : (Deprecated)}';
     protected $description = 'Generate animated GIF previews for skins. If a skin key is provided, only that one is generated.';
 
     public function handle(TimerGifGenerator $generator): int
@@ -95,9 +95,14 @@ class GenerateSkinPreviews extends Command
 
                 // Collect optional overrides
                 $overrides = [];
-                foreach ([['customTextMarginTop','text-mt'],['customTextMarginRight','text-mr'],['customTextMarginBottom','text-mb'],['customTextMarginLeft','text-ml']] as [$key,$opt]) {
-                    $val = $this->option($opt);
-                    if ($val !== null && $val !== '') { $overrides[$key] = (int) $val; }
+                $distance = $this->option('text-distance');
+                if ($distance !== null && $distance !== '') {
+                    $overrides['customTextDistance'] = (int) $distance;
+                } else {
+                    foreach ([['customTextMarginTop','text-mt'],['customTextMarginRight','text-mr'],['customTextMarginBottom','text-mb'],['customTextMarginLeft','text-ml']] as [$key,$opt]) {
+                        $val = $this->option($opt);
+                        if ($val !== null && $val !== '') { $overrides[$key] = (int) $val; }
+                    }
                 }
                 $outW = $this->option('out-width');
                 $outH = $this->option('out-height');
@@ -118,5 +123,3 @@ class GenerateSkinPreviews extends Command
         return self::SUCCESS;
     }
 }
-
-

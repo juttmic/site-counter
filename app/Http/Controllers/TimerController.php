@@ -151,7 +151,7 @@ class TimerController extends Controller
         // Build skin config exactly as GIF generation would
         $remaining = $workingTimer->remainingSecondsFromNow();
         $skin = $generator->loadSkin($workingTimer->skin);
-        // customTextColor, customTextMarginTop, customTextMarginBottom are stored in skin_overrides
+        // customTextColor, customTextDistance are stored in skin_overrides
         if (is_array($workingTimer->skin_overrides) && !empty($workingTimer->skin_overrides)) {
             $skin = array_replace_recursive($skin, $workingTimer->skin_overrides);
         }

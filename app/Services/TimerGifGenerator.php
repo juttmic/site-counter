@@ -56,7 +56,7 @@ class TimerGifGenerator
 
         $skin = $this->loadSkin($timer->skin);
         // Apply per-timer overrides if present (preferred source for width/height and other settings)
-        // customTextColor, customTextMarginTop, customTextMarginBottom, show_final_message are stored in skin_overrides
+        // customTextColor, customTextDistance (or legacy margins), show_final_message are stored in skin_overrides
         if (is_array($timer->skin_overrides) && !empty($timer->skin_overrides)) {
             $skin = array_replace_recursive($skin, $timer->skin_overrides);
         }
@@ -442,16 +442,45 @@ class TimerGifGenerator
         // Read optional overall output size overrides
         $requestedW = isset($skin['outputWidth']) ? (int) $skin['outputWidth'] : null;
         $requestedH = isset($skin['outputHeight']) ? (int) $skin['outputHeight'] : null;
-        // Read optional top/bottom margins for custom text
-        $marginTop = isset($skin['customTextMarginTop']) ? max(0, (int)$skin['customTextMarginTop']) : 10;
-        $marginBottom = isset($skin['customTextMarginBottom']) ? max(0, (int)$skin['customTextMarginBottom']) : 10;
+        // Distance between timer and custom text (applies above or below)
+        $distance = null;
+        if (isset($skin['customTextDistance'])) {
+            $distance = max(0, (int) $skin['customTextDistance']);
+        } elseif (isset($skin['customTextMarginTop']) || isset($skin['customTextMarginBottom'])) {
+            // Backward compatibility: use the larger of legacy margins
+            $legacyTop = isset($skin['customTextMarginTop']) ? max(0, (int) $skin['customTextMarginTop']) : 0;
+            $legacyBottom = isset($skin['customTextMarginBottom']) ? max(0, (int) $skin['customTextMarginBottom']) : 0;
+            $distance = max($legacyTop, $legacyBottom);
+        }
+        if ($distance === null) {
+            $distance = 0;
+        }
 
         $canvasW = max($timerW, $hasText ? ($textW + 2 * $padX) : $timerW);
-        $extraTop = ($hasText && $textPosition === 'top') ? ($textH + $marginTop) : 0;
-        $extraBottom = ($hasText && $textPosition === 'bottom') ? ($textH + $marginBottom) : 0;
-        $canvasH = $extraTop + $timerH + $extraBottom;
+
+        // Base height: use requested output height if provided, otherwise grow to fit content
+        $contentHeight = $timerH + ($hasText ? ($textH + $distance) : 0);
+        $baseHeight = ($requestedH && $requestedH > 0) ? $requestedH : max($timerH, $contentHeight);
+
+        // Clamp distance so text + timer fit inside the base height
+        $effectiveDistance = $distance;
+        if ($hasText) {
+            $available = $baseHeight - $timerH - $textH;
+            if ($available < 0) { $available = 0; }
+            $effectiveDistance = min($distance, $available);
+        }
+
+        // Center the combined block (text + timer) within the base height
+        $combinedHeight = $timerH + ($hasText ? ($textH + $effectiveDistance) : 0);
+        $topPadding = max(0, (int) floor(($baseHeight - $combinedHeight) / 2));
+
+        $offsetY = $topPadding;
+        if ($hasText && $textPosition === 'top') {
+            $offsetY += $textH + $effectiveDistance;
+        }
+        // For bottom position, timer stays at topPadding; text is drawn after timer using effectiveDistance
+        $canvasH = $baseHeight;
         if ($requestedW && $requestedW > 0) { $canvasW = max($canvasW, $requestedW); }
-        if ($requestedH && $requestedH > 0) { $canvasH = max($canvasH, $requestedH); }
 
         // Compose final image
         $im = imagecreatetruecolor($canvasW, $canvasH);
@@ -466,7 +495,6 @@ class TimerGifGenerator
         imagefilledrectangle($im, 0, 0, $canvasW, $canvasH, $bgCol);
 
         $offsetX = (int) (($canvasW - $timerW) / 2);
-        $offsetY = $extraTop;
         imagecopy($im, $timerIm, $offsetX, $offsetY, 0, 0, $timerW, $timerH);
         imagedestroy($timerIm);
 
@@ -474,13 +502,11 @@ class TimerGifGenerator
             if (is_file($font)) {
                 $tx = (int) (($canvasW - $textW) / 2);
                 if ($textPosition === 'top') {
-                    // Text at top: marginTop is space from top, then position text baseline
-                    // Y coordinate in imagettftext is the baseline, so we add textHeightFromBaseline
-                    $ty = (int) ($marginTop + $textHeightFromBaseline);
+                    // Text sits at the top of the canvas; distance just adds space to keep it off the timer
+                    $ty = (int) ($textHeightFromBaseline);
                 } else {
-                    // Text at bottom: timer ends at offsetY + timerH, then marginBottom space, then text
-                    // Y coordinate in imagettftext is the baseline
-                    $ty = (int) ($offsetY + $timerH + $marginBottom + $textHeightFromBaseline);
+                    // Text beneath the timer separated by the effective distance (clamped to output height)
+                    $ty = (int) ($offsetY + $timerH + $effectiveDistance + $textHeightFromBaseline);
                 }
                 imagettftext($im, $textSize, 0, $tx, $ty, $customTxtCol, $font, $customText);
             } else {
@@ -488,11 +514,9 @@ class TimerGifGenerator
                 $builtInTextH = imagefontheight($bi2);
                 $tx = (int) (($canvasW - $textW) / 2);
                 if ($textPosition === 'top') {
-                    // Text at top: marginTop is space from top, then text
-                    $ty = (int) ($marginTop + $builtInTextH);
+                    $ty = (int) ($builtInTextH);
                 } else {
-                    // Text at bottom: timer ends at offsetY + timerH, then marginBottom space, then text
-                    $ty = (int) ($offsetY + $timerH + $marginBottom + $builtInTextH);
+                    $ty = (int) ($offsetY + $timerH + $effectiveDistance + $builtInTextH);
                 }
                 imagestring($im, $bi2, $tx, $ty, $customText, $customTxtCol);
             }

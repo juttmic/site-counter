@@ -464,8 +464,15 @@
                                         <input type="text" name="custom_text" class="form-control" maxlength="255" value="{{ old('custom_text', $timer->custom_text ?? '') }}">
                                     </div>
                                     <div class="col-12 col-sm-6">
+                                        @php
+                                            $customTextColor = old(
+                                                'customTextColor',
+                                                ($isEdit && is_array($timer->skin_overrides) && isset($timer->skin_overrides['customTextColor']))
+                                                    ? $timer->skin_overrides['customTextColor']
+                                                    : '#000000'
+                                            );
+                                        @endphp
                                         <label class="form-label small mb-1">Custom Text Color</label>
-                                        @php($customTextColor = old('customTextColor', ($isEdit && is_array($timer->skin_overrides) && isset($timer->skin_overrides['customTextColor'])) ? $timer->skin_overrides['customTextColor'] : '#000000'))
                                         <div class="modern-color-picker">
                                             <div class="color-picker-swatch" style="--swatch-color: {{ $customTextColor }};"></div>
                                             <div class="color-picker-input-wrapper">
@@ -478,12 +485,14 @@
                                         </div>
                                     </div>
                                     <div class="col-12 col-sm-4 col-md-3">
-                                        <label class="form-label small mb-1">Margin Top</label>
-                                        <input type="number" name="customTextMarginTop" class="form-control form-control-sm" min="0" max="200" step="1" value="{{ old('customTextMarginTop', ($isEdit && is_array($timer->skin_overrides) && isset($timer->skin_overrides['customTextMarginTop'])) ? $timer->skin_overrides['customTextMarginTop'] : '10') }}">
-                                    </div>
-                                    <div class="col-12 col-sm-4 col-md-3">
-                                        <label class="form-label small mb-1">Margin Bottom</label>
-                                        <input type="number" name="customTextMarginBottom" class="form-control form-control-sm" min="0" max="200" step="1" value="{{ old('customTextMarginBottom', ($isEdit && is_array($timer->skin_overrides) && isset($timer->skin_overrides['customTextMarginBottom'])) ? $timer->skin_overrides['customTextMarginBottom'] : '10') }}">
+                                        @php
+                                            $overrides = ($isEdit && isset($timer) && is_array($timer->skin_overrides ?? null)) ? $timer->skin_overrides : [];
+                                            $legacyMargin = $overrides['customTextMarginTop'] ?? 0;
+                                            $distanceValue = old('customTextDistance', $overrides['customTextDistance'] ?? $legacyMargin ?? 0);
+                                        @endphp
+                                        <label class="form-label small mb-1">Distance from Counter</label>
+                                        <input type="number" name="customTextDistance" class="form-control form-control-sm" min="0" max="400" step="1" value="{{ $distanceValue }}">
+                                        <div class="form-text small">Space between the custom text and the counter.</div>
                                     </div>
                                 </div>
                             </div>
@@ -615,6 +624,78 @@ function enforceMinTargetDateTime() {
     input.value = minVal;
   }
 }
+
+function clampCustomTextDistance() {
+  const distanceInput = document.querySelector('input[name="customTextDistance"]');
+  if (!distanceInput) return;
+  const heightInput = document.querySelector('input[name="height"]');
+  const outputHeightInput = document.querySelector('input[name="outputHeight"]');
+  const parseHeight = (inputEl, fallback) => {
+    const val = parseInt(inputEl?.value, 10);
+    if (!isNaN(val)) return val;
+    if (fallback && !isNaN(fallback)) return fallback;
+    return NaN;
+  };
+
+  // Fallback to hidden skin_overrides JSON if direct inputs are missing
+  let overrides = {};
+  try {
+    overrides = JSON.parse(document.getElementById('skin_overrides_input')?.value || '{}');
+  } catch (e) {
+    overrides = {};
+  }
+
+  let timerHeight = parseHeight(heightInput, overrides.height ?? currentSkinMetadata?.defaults?.height);
+  let outputHeight = parseHeight(outputHeightInput, overrides.outputHeight ?? currentSkinMetadata?.defaults?.outputHeight);
+
+  // If output height missing, treat it as timer height so we don't silently expand GIF
+  if (isNaN(outputHeight) && !isNaN(timerHeight)) {
+    outputHeight = timerHeight;
+  }
+
+  // If we still don't have heights, show a gentle warning once and exit
+  if (isNaN(timerHeight) || isNaN(outputHeight)) {
+    if (!window.__clampWarnedOnce) {
+      window.__clampWarnedOnce = true;
+      if (window.showToast) {
+        window.showToast('Set counter height/output height to control text distance.', 'warning');
+      } else {
+        console.warn('Set counter height/output height to control text distance.');
+      }
+    }
+    return;
+  }
+
+  // Only enforce when an outputHeight greater than timer height is provided
+  if (!isNaN(timerHeight) && !isNaN(outputHeight)) {
+    const maxDistance = Math.max(0, outputHeight - timerHeight);
+    let dist = parseInt(distanceInput.value, 10);
+    if (isNaN(dist)) dist = 0;
+    if (dist > maxDistance) {
+      distanceInput.value = maxDistance;
+      if (window.showToast) {
+        window.showToast('Distance exceeds available height. Increase GIF height or reduce distance.', 'warning');
+      } else {
+        alert('Distance exceeds available height. Increase GIF height or reduce distance.');
+      }
+    }
+  } else {
+    // Heights unknown: do nothing beyond optional warning above
+    return;
+  }
+    const maxDistance = Math.max(0, outputHeight - timerHeight);
+    let dist = parseInt(distanceInput.value, 10);
+    if (isNaN(dist)) dist = 0;
+    if (dist > maxDistance) {
+      distanceInput.value = maxDistance;
+      if (window.showToast) {
+        window.showToast('Distance exceeds available height. Increase GIF height or reduce distance.', 'warning');
+      } else {
+        alert('Distance exceeds available height. Increase GIF height or reduce distance.');
+      }
+    }
+  }
+
 document.addEventListener('DOMContentLoaded', () => {
   enforceMinTargetDateTime();
   const targetInput = document.querySelector('input[name="target_datetime"]');
@@ -646,17 +727,25 @@ document.addEventListener('DOMContentLoaded', function() {
     swatch.addEventListener('click', () => customTextColorInput.click());
   }
   
-  // Sync margin fields to skin_overrides when changed
-  const marginTopInput = document.querySelector('input[name="customTextMarginTop"]');
-  const marginBottomInput = document.querySelector('input[name="customTextMarginBottom"]');
-  if (marginTopInput) {
-    marginTopInput.addEventListener('change', syncOverrides);
-    marginTopInput.addEventListener('input', syncOverrides);
+  // Sync distance field to skin_overrides when changed
+  const distanceInput = document.querySelector('input[name=\"customTextDistance\"]');
+  if (distanceInput) {
+    const handleDistanceChange = () => {
+      clampCustomTextDistance();
+      syncOverrides();
+    };
+    distanceInput.addEventListener('change', handleDistanceChange);
+    distanceInput.addEventListener('input', handleDistanceChange);
   }
-  if (marginBottomInput) {
-    marginBottomInput.addEventListener('change', syncOverrides);
-    marginBottomInput.addEventListener('input', syncOverrides);
-  }
+
+  // If height or outputHeight changes, re-clamp distance
+  ['height','outputHeight'].forEach(name => {
+    const el = document.querySelector(`input[name="${name}"]`);
+    if (el) {
+      el.addEventListener('change', clampCustomTextDistance);
+      el.addEventListener('input', clampCustomTextDistance);
+    }
+  });
 });
 
 // Skins loading and dynamic form
@@ -994,7 +1083,7 @@ function renderFields(metadata, savedOverrides = {}) {
   // Fields to hide but use defaults for
   // Note: accentColor is NOT hidden - it's needed for controlling tile/box/ring colors
   // Custom text fields live in the dedicated Custom Text settings card, not from skin JSON
-  const hiddenFields = new Set(['fontPath', 'font', 'showDays', 'showHours', 'showMinutes', 'showSeconds', 'layout', 'animation', 'customTextColor', 'customTextMarginTop', 'customTextMarginBottom', 'custom_text', 'text_position', 'finalBackground', 'finalTextColor']);
+  const hiddenFields = new Set(['fontPath', 'font', 'showDays', 'showHours', 'showMinutes', 'showSeconds', 'layout', 'animation', 'customTextColor', 'customTextDistance', 'custom_text', 'text_position', 'finalBackground', 'finalTextColor']);
   hiddenFields.forEach(key => {
     if (savedOverrides[key] !== undefined) {
       currentHiddenOverrides[key] = savedOverrides[key];
@@ -1020,7 +1109,7 @@ function renderFields(metadata, savedOverrides = {}) {
   }, {});
 
   const smallKeys = new Set(['fontSize','separator','layout','animation','showDays','showHours','showMinutes','showSeconds','width','height','outputWidth','outputHeight']);
-  const marginKeys = new Set(['customTextMarginTop','customTextMarginBottom','textMarginTop','textMarginBottom','marginTop','marginBottom','labelMarginTop','labelMarginBottom']);
+  const marginKeys = new Set(['customTextDistance','textMarginTop','textMarginBottom','marginTop','marginBottom','labelMarginTop','labelMarginBottom']);
   // Custom text fields are handled in their own section, not in dynamic groups
   // Exclude them from dynamic grouping so they don't appear in skin fields
   const customKeys = new Set([]); // Empty - custom text fields are handled in the Custom Text settings card
@@ -1293,19 +1382,11 @@ function syncOverrides() {
     }
   }
   
-  const customTextMarginTopInput = document.querySelector('input[name="customTextMarginTop"]');
-  if (customTextMarginTopInput && customTextMarginTopInput.value !== '') {
-    const marginTop = Number(customTextMarginTopInput.value);
-    if (!isNaN(marginTop)) {
-      data['customTextMarginTop'] = marginTop;
-    }
-  }
-  
-  const customTextMarginBottomInput = document.querySelector('input[name="customTextMarginBottom"]');
-  if (customTextMarginBottomInput && customTextMarginBottomInput.value !== '') {
-    const marginBottom = Number(customTextMarginBottomInput.value);
-    if (!isNaN(marginBottom)) {
-      data['customTextMarginBottom'] = marginBottom;
+  const customTextDistanceInput = document.querySelector('input[name="customTextDistance"]');
+  if (customTextDistanceInput && customTextDistanceInput.value !== '') {
+    const dist = Number(customTextDistanceInput.value);
+    if (!isNaN(dist)) {
+      data['customTextDistance'] = dist;
     }
   }
   
@@ -1552,13 +1633,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
           }
         }
-        if (savedOverrides.customTextMarginTop !== undefined) {
-          const marginTopInput = document.querySelector('input[name="customTextMarginTop"]');
-          if (marginTopInput) marginTopInput.value = savedOverrides.customTextMarginTop;
-        }
-        if (savedOverrides.customTextMarginBottom !== undefined) {
-          const marginBottomInput = document.querySelector('input[name="customTextMarginBottom"]');
-          if (marginBottomInput) marginBottomInput.value = savedOverrides.customTextMarginBottom;
+        if (savedOverrides.customTextDistance !== undefined) {
+          const distanceInput = document.querySelector('input[name="customTextDistance"]');
+          if (distanceInput) distanceInput.value = savedOverrides.customTextDistance;
         }
         
         document.getElementById('selected_skin_label').textContent = current;
