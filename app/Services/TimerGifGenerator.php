@@ -506,24 +506,17 @@ class TimerGifGenerator
         if ($hasText) {
             if (is_file($font)) {
                 $tx = (int) (($canvasW - $textW) / 2);
-                if ($textPosition === 'top') {
-                    // Text sits at the top of the canvas; distance just adds space to keep it off the timer
-                    $ty = (int) ( $offsetY-$effectiveDistance);//$offsetY-($textHeightFromBaseline);
-                    Log::info(json_encode([$canvasH, $ty,$textHeightFromBaseline, $offsetY , $timerH , $effectiveDistance , $textHeightFromBaseline]));
-                } else {
-                    // Text beneath the timer separated by the effective distance (clamped to output height)
-                    $ty = (int) ($offsetY + $timerH + $effectiveDistance + $textHeightFromBaseline);
-                }
+                $ty = ($textPosition === 'top')
+                    ? (int) ($topPadding + $textHeightFromBaseline)
+                    : (int) ($offsetY + $timerH + $effectiveDistance + $textHeightFromBaseline);
                 imagettftext($im, $textSize, 0, $tx, $ty, $customTxtCol, $font, $customText);
             } else {
                 $bi2 = 3;
                 $builtInTextH = imagefontheight($bi2);
                 $tx = (int) (($canvasW - $textW) / 2);
-                if ($textPosition === 'top') {
-                    $ty = (int) ($builtInTextH);
-                } else {
-                    $ty = (int) ($offsetY + $timerH + $effectiveDistance + $builtInTextH);
-                }
+                $ty = ($textPosition === 'top')
+                    ? (int) ($topPadding)
+                    : (int) ($offsetY + $timerH + $effectiveDistance);
                 imagestring($im, $bi2, $tx, $ty, $customText, $customTxtCol);
             }
         }
