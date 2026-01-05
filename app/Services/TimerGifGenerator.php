@@ -459,29 +459,38 @@ class TimerGifGenerator
 
         $canvasW = max($timerW, $hasText ? ($textW + 2 * $padX) : $timerW);
 
-        // Base height: use requested output height if provided, otherwise grow to fit content
+        // Base height for layout: always based on the timer height (not the output/GIF height)
+        // so vertical spacing for custom text is measured relative to the timer itself.
         $contentHeight = $timerH + ($hasText ? ($textH + $distance) : 0);
-        // Always center within the largest of: explicit output height, content height, timer height
-        $baseHeight = max($timerH, $contentHeight, $requestedH && $requestedH > 0 ? $requestedH : 0);
+        $layoutHeight = max($timerH, $contentHeight);
 
-        // Clamp distance so text + timer fit inside the base height
+        // Clamp distance so text + timer fit inside the layout height
         $effectiveDistance = $distance;
         if ($hasText) {
-            $available = $baseHeight - $timerH - $textH;
+            $available = $layoutHeight - $timerH - $textH;
             if ($available < 0) { $available = 0; }
             $effectiveDistance = min($distance, $available);
         }
 
-        // Center the combined block (text + timer) within the base height
+        // Center the combined block (text + timer) within the layout height (timer-based)
         $combinedHeight = $timerH + ($hasText ? ($textH + $effectiveDistance) : 0);
-        $topPadding = max(0, (int) floor(($baseHeight - $combinedHeight) / 2));
+        $innerTopPadding = max(0, (int) floor(($layoutHeight - $combinedHeight) / 2));
+
+        // If an explicit output height is provided, add outer padding without changing the spacing math
+        $canvasH = $layoutHeight;
+        $outerTopPadding = 0;
+        if ($requestedH && $requestedH > 0) {
+            $canvasH = max($layoutHeight, $requestedH);
+            $outerTopPadding = max(0, (int) floor(($canvasH - $layoutHeight) / 2));
+        }
+
+        $topPadding = $outerTopPadding + $innerTopPadding;
 
         $offsetY = $topPadding;
         if ($hasText && $textPosition === 'top') {
             $offsetY += $textH + $effectiveDistance;
         }
         // For bottom position, timer stays at topPadding; text is drawn after timer using effectiveDistance
-        $canvasH = $baseHeight;
         if ($requestedW && $requestedW > 0) { $canvasW = max($canvasW, $requestedW); }
 
         // Compose final image

@@ -1,14 +1,17 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="d-flex justify-content-center">
+        {{-- <div class="d-flex justify-content-center">
             <h2 class="fw-semibold mb-0">Preview: {{ $timer->title }}</h2>
-        </div>
+        </div> --}}
     </x-slot>
 
     <div class="py-4 py-md-5">
         <div class="container" style="max-width: 860px;">
             <div class="card">
                 <div class="card-body">
+                    <div class="d-flex justify-content-start mb-3">
+                        <h2 class="fw-semibold mb-0">Preview: {{ $timer->title }}</h2>
+                    </div>
                     @if($timer->gif_url)
                         <div class="d-flex justify-content-center mb-3">
                             <div class="d-flex align-items-center justify-content-center overflow-hidden bg-light border rounded" style="min-height: 260px;">

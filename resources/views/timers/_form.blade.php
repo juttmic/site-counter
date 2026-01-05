@@ -631,8 +631,7 @@ function enforceMinTargetDateTime() {
 function clampCustomTextDistance() {
   const distanceInput = document.querySelector('input[name="customTextDistance"]');
   if (!distanceInput) return;
-  const heightInput = document.querySelector('input[name="height"]');
-  const outputHeightInput = document.querySelector('input[name="outputHeight"]');
+  const outputHeightInput = document.querySelector('input[name="outputHeight"]') || document.querySelector('input[name="height"]');
   const parseHeight = (inputEl, fallback) => {
     const val = parseInt(inputEl?.value, 10);
     if (!isNaN(val)) return val;
@@ -648,56 +647,23 @@ function clampCustomTextDistance() {
     overrides = {};
   }
 
-  let timerHeight = parseHeight(heightInput, overrides.height ?? currentSkinMetadata?.defaults?.height);
-  let outputHeight = parseHeight(outputHeightInput, overrides.outputHeight ?? currentSkinMetadata?.defaults?.outputHeight);
-
-  // If output height missing, treat it as timer height so we don't silently expand GIF
-  if (isNaN(outputHeight) && !isNaN(timerHeight)) {
-    outputHeight = timerHeight;
-  }
+  let timerHeight = parseHeight(outputHeightInput, overrides.height ?? overrides.outputHeight ?? currentSkinMetadata?.defaults?.height ?? currentSkinMetadata?.defaults?.outputHeight);
 
   // If we still don't have heights, show a gentle warning once and exit
-  if (isNaN(timerHeight) || isNaN(outputHeight)) {
+  if (isNaN(timerHeight)) {
     if (!window.__clampWarnedOnce) {
       window.__clampWarnedOnce = true;
       if (window.showToast) {
-        window.showToast('Set counter height/output height to control text distance.', 'warning');
+        window.showToast('Set timer height to control text distance.', 'warning');
       } else {
-        console.warn('Set counter height/output height to control text distance.');
+        console.warn('Set timer height to control text distance.');
       }
     }
     return;
   }
 
-  // Only enforce when an outputHeight greater than timer height is provided
-  if (!isNaN(timerHeight) && !isNaN(outputHeight)) {
-    const maxDistance = Math.max(0, outputHeight - timerHeight);
-    let dist = parseInt(distanceInput.value, 10);
-    if (isNaN(dist)) dist = 0;
-    if (dist > maxDistance) {
-      distanceInput.value = maxDistance;
-      if (window.showToast) {
-        window.showToast('Distance exceeds available height. Increase GIF height or reduce distance.', 'warning');
-      } else {
-        alert('Distance exceeds available height. Increase GIF height or reduce distance.');
-      }
-    }
-  } else {
-    // Heights unknown: do nothing beyond optional warning above
-    return;
-  }
-    const maxDistance = Math.max(0, outputHeight - timerHeight);
-    let dist = parseInt(distanceInput.value, 10);
-    if (isNaN(dist)) dist = 0;
-    if (dist > maxDistance) {
-      distanceInput.value = maxDistance;
-      if (window.showToast) {
-        window.showToast('Distance exceeds available height. Increase GIF height or reduce distance.', 'warning');
-      } else {
-        alert('Distance exceeds available height. Increase GIF height or reduce distance.');
-      }
-    }
-  }
+  // Single height: no max-distance clamp needed since the GIF grows with content
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   enforceMinTargetDateTime();
@@ -731,7 +697,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   
   // Sync distance field to skin_overrides when changed
-  const distanceInput = document.querySelector('input[name=\"customTextDistance\"]');
+  const distanceInput = document.querySelector('input[name="customTextDistance"]');
   if (distanceInput) {
     const handleDistanceChange = () => {
       clampCustomTextDistance();
@@ -741,8 +707,8 @@ document.addEventListener('DOMContentLoaded', function() {
     distanceInput.addEventListener('input', handleDistanceChange);
   }
 
-  // If height or outputHeight changes, re-clamp distance
-  ['height','outputHeight'].forEach(name => {
+  // If timer height changes, re-clamp distance
+  ['outputHeight'].forEach(name => {
     const el = document.querySelector(`input[name="${name}"]`);
     if (el) {
       el.addEventListener('change', clampCustomTextDistance);
@@ -1086,7 +1052,7 @@ function renderFields(metadata, savedOverrides = {}) {
   // Fields to hide but use defaults for
   // Note: accentColor is NOT hidden - it's needed for controlling tile/box/ring colors
   // Custom text fields live in the dedicated Custom Text settings card, not from skin JSON
-  const hiddenFields = new Set(['fontPath', 'font', 'showDays', 'showHours', 'showMinutes', 'showSeconds', 'layout', 'animation', 'customTextColor', 'customTextDistance', 'custom_text', 'text_position', 'finalBackground', 'finalTextColor']);
+  const hiddenFields = new Set(['fontPath', 'font', 'showDays', 'showHours', 'showMinutes', 'showSeconds', 'layout', 'animation', 'customTextColor', 'customTextDistance', 'custom_text', 'text_position', 'finalBackground', 'finalTextColor', 'height']);
   hiddenFields.forEach(key => {
     if (savedOverrides[key] !== undefined) {
       currentHiddenOverrides[key] = savedOverrides[key];
@@ -1135,7 +1101,10 @@ function renderFields(metadata, savedOverrides = {}) {
 
   const createFieldInput = (field, value) => {
     const key = field.key;
-    const label = field.label || key;
+    let label = field.label || key;
+    if (key === 'outputHeight') {
+      label = 'Timer height';
+    }
     const type = field.type || 'text';
     const container = document.createElement('div');
     const isSmall = type === 'color' || type === 'boolean' || smallKeys.has(key);
@@ -1242,9 +1211,20 @@ function renderFields(metadata, savedOverrides = {}) {
     return container;
   };
 
+  const resolveFieldValue = (field) => {
+    const key = field.key;
+    if (key === 'outputHeight') {
+      if (savedOverrides.height !== undefined) return savedOverrides.height;
+      if (defaults.height !== undefined) return defaults.height;
+      if (savedOverrides[key] !== undefined) return savedOverrides[key];
+      if (defaults[key] !== undefined) return defaults[key];
+    }
+    return (savedOverrides[key] !== undefined) ? savedOverrides[key] : defaults[key];
+  };
+
   visibleFields.forEach(field => {
     const group = determineGroup(field) || groupMap.overall;
-    const value = (savedOverrides[field.key] !== undefined) ? savedOverrides[field.key] : defaults[field.key];
+    const value = resolveFieldValue(field);
     group.fields.push({ field, value });
   });
 
@@ -1364,6 +1344,14 @@ function syncOverrides() {
       data[k] = val;
     }
   });
+
+  // Keep timer height in sync with the visible "Timer height" (outputHeight)
+  if (data.outputHeight !== undefined && data.outputHeight !== null) {
+    const numeric = Number(data.outputHeight);
+    if (!isNaN(numeric)) {
+      data.height = numeric;
+    }
+  }
 
   // Ensure final screen colors mirror primary timer colors
   const resolvedBackground = data.background ?? defaults.background;
