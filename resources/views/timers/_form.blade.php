@@ -1307,7 +1307,7 @@ function renderFields(metadata, savedOverrides = {}) {
     return acc;
   }, {});
 
-  const smallKeys = new Set(['fontSize','separator','layout','animation','showDays','showHours','showMinutes','showSeconds','width','height','outputWidth','outputHeight']);
+  const smallKeys = new Set(['fontSize','separator','layout','animation','showDays','showHours','showMinutes','showSeconds','width','height','outputWidth','outputHeight','borderWidth','borderColor']);
   const marginKeys = new Set(['customTextDistance','textMarginTop','textMarginBottom','marginTop','marginBottom','labelMarginTop','labelMarginBottom']);
   // Custom text fields are handled in their own section, not in dynamic groups
   // Exclude them from dynamic grouping so they don't appear in skin fields
