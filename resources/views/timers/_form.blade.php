@@ -241,6 +241,34 @@
   .color-picker-display:hover .color-picker-icon {
     color: #3b82f6;
   }
+
+  /* Toggle pills */
+  .toggle-pill-group {
+    display: inline-flex;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 999px;
+    overflow: hidden;
+    background: #f9fafb;
+  }
+  .toggle-pill {
+    font-size: 12px;
+    border: none;
+    background: transparent;
+    padding: 5px 5px;
+    font-weight: bold;
+    color: #4b5563;
+    transition: all 0.2s ease;
+  }
+  .toggle-pill:not(:last-child) {
+    border-right: 1px solid #e5e7eb;
+  }
+  .toggle-pill.active {
+    background: #2563eb;
+    color: #fff;
+  }
+  .toggle-pill:focus {
+    outline: none;
+  }
   
   /* Enhanced Form Styling */
   .form-label {
@@ -400,22 +428,32 @@
                                 <i class="bi bi-chevron-down collapse-icon"></i>
                             </div>
                             <div class="card-body collapsible-body" id="general_settings_body">
+                              <div class="col-12" style="
+    display: flex;
+    justify-content: end;
+">
+                                        <div class="toggle-pill-group" data-toggle-select="status">
+                                            <button type="button" class="toggle-pill" data-value="active">Active</button>
+                                            <button type="button" class="toggle-pill" data-value="inactive">Inactive</button>
+                                        </div>
+                                        <select name="status" class="form-select d-none" aria-hidden="true">
+                                            <option value="active" {{ ($isEdit && $timer->status === 'active') || !$isEdit ? 'selected' : '' }}>Active</option>
+                                            <option value="inactive" {{ $isEdit && $timer->status === 'inactive' ? 'selected' : '' }}>Inactive</option>
+                                        </select>
+                                    </div>
                                 <div class="mb-3">
                                     <label class="form-label">Title</label>
                                     <input type="text" name="title" value="{{ old('title', $timer->title ?? '') }}" class="form-control" required>
                                 </div>
 
                                 <div class="row g-3 mt-1">
+                                    
                                     <div class="col-12 col-sm-6">
-                                        <label class="form-label">Status</label>
-                                        <select name="status" class="form-select">
-                                            <option value="active" {{ ($isEdit && $timer->status === 'active') || !$isEdit ? 'selected' : '' }}>Active</option>
-                                            <option value="inactive" {{ $isEdit && $timer->status === 'inactive' ? 'selected' : '' }}>Inactive</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-12 col-sm-6">
-                                        <label class="form-label">Timer Type</label>
-                                        <select name="timer_type" id="timer_type" class="form-select" onchange="toggleInputs()">
+                                        <div class="toggle-pill-group" data-toggle-select="timer_type">
+                                            <button type="button" class="toggle-pill" data-value="fixed_date">FIXED</button>
+                                            <button type="button" class="toggle-pill" data-value="reload_based">RELOAD</button>
+                                        </div>
+                                        <select name="timer_type" id="timer_type" class="form-select d-none" aria-hidden="true" onchange="toggleInputs()">
                                             <option value="fixed_date" {{ ($isEdit && $timer->timer_type === 'fixed_date') || !$isEdit ? 'selected' : '' }}>Fixed Date</option>
                                             <option value="reload_based" {{ $isEdit && $timer->timer_type === 'reload_based' ? 'selected' : '' }}>Reload Based</option>
                                         </select>
@@ -2196,6 +2234,39 @@ ajaxSaveAndPoll();
 
 // Bind copy button to use global toast
 document.addEventListener('DOMContentLoaded', function(){
+  // Toggle pill behavior for select replacements (status, timer_type)
+  (function bindToggleGroups() {
+    const bindToggleGroup = (group) => {
+      const selectName = group.dataset.toggleSelect;
+      if (!selectName) return;
+      const select = document.querySelector(`select[name="${selectName}"]`);
+      if (!select) return;
+      const buttons = Array.from(group.querySelectorAll('.toggle-pill'));
+      const setActive = (value) => {
+        buttons.forEach(btn => btn.classList.toggle('active', btn.dataset.value === value));
+      };
+      const initial = select.value || (buttons[0]?.dataset.value ?? '');
+      select.value = initial;
+      setActive(initial);
+      buttons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const val = btn.dataset.value;
+          select.value = val;
+          setActive(val);
+          select.dispatchEvent(new Event('change', { bubbles: true }));
+          select.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+      });
+      select.addEventListener('change', () => setActive(select.value));
+    };
+    document.querySelectorAll('.toggle-pill-group').forEach(bindToggleGroup);
+    const timerTypeSelect = document.getElementById('timer_type');
+    if (timerTypeSelect) {
+      // Ensure timer type-dependent inputs start in correct visibility
+      timerTypeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+  })();
+
   if (!window.copyToClipboard) {
     window.copyToClipboard = function(text){
       if (navigator.clipboard && navigator.clipboard.writeText) {
