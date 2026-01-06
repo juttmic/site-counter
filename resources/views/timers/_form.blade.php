@@ -628,41 +628,134 @@ function enforceMinTargetDateTime() {
   }
 }
 
+function findFieldByKey(key) {
+  return document.querySelector(`[data-key="${key}"]`) || document.querySelector(`input[name="${key}"]`);
+}
+
+function firstNumber(...vals) {
+  for (const v of vals) {
+    if (v === '' || v === null || v === undefined) continue;
+    const n = Number(v);
+    if (!isNaN(n)) return n;
+  }
+  return NaN;
+}
+
+function parseOverrides() {
+  try {
+    return JSON.parse(document.getElementById('skin_overrides_input')?.value || '{}') || {};
+  } catch (e) {
+    return {};
+  }
+}
+
+function resolveSizingSnapshot() {
+  const overrides = parseOverrides();
+  const defaults = currentSkinMetadata?.defaults || {};
+
+  const gifHeight = firstNumber(
+    findFieldByKey('outputHeight')?.value,
+    overrides.outputHeight,
+    overrides.height,
+    defaults.outputHeight,
+    defaults.height
+  );
+
+  const timerHeight = firstNumber(
+    findFieldByKey('height')?.value,
+    overrides.height,
+    defaults.height
+  );
+
+  const fontSizeRaw = firstNumber(
+    findFieldByKey('fontSize')?.value,
+    overrides.fontSize,
+    defaults.fontSize
+  );
+  const fontSize = isNaN(fontSizeRaw) ? 36 : fontSizeRaw;
+  const textSize = Math.max(12, Math.round(fontSize * 0.5));
+
+  const textVal = (document.querySelector('input[name="custom_text"]')?.value || '').trim();
+  const textPos = document.querySelector('select[name="text_position"]')?.value || 'none';
+  const wantsText = textVal !== '' && textPos !== 'none';
+
+  const distanceRaw = Number(document.querySelector('input[name="customTextDistance"]')?.value);
+  const distance = Math.max(0, isNaN(distanceRaw) ? 0 : distanceRaw);
+
+  const combinedHeight = timerHeight + (wantsText ? (textSize + distance) : 0);
+  const maxDistance = wantsText ? Math.max(0, Math.floor(gifHeight - timerHeight - textSize)) : Math.max(0, Math.floor(gifHeight - timerHeight));
+
+  return {
+    overrides,
+    defaults,
+    gifHeight,
+    timerHeight,
+    fontSize,
+    textSize,
+    wantsText,
+    distance,
+    combinedHeight,
+    maxDistance,
+  };
+}
+
 function clampCustomTextDistance() {
   const distanceInput = document.querySelector('input[name="customTextDistance"]');
   if (!distanceInput) return;
-  const outputHeightInput = document.querySelector('input[name="outputHeight"]') || document.querySelector('input[name="height"]');
-  const parseHeight = (inputEl, fallback) => {
-    const val = parseInt(inputEl?.value, 10);
-    if (!isNaN(val)) return val;
-    if (fallback && !isNaN(fallback)) return fallback;
-    return NaN;
-  };
+  const sizing = resolveSizingSnapshot();
+  const gifHeight = sizing.gifHeight;
+  const timerHeight = sizing.timerHeight;
 
-  // Fallback to hidden skin_overrides JSON if direct inputs are missing
-  let overrides = {};
-  try {
-    overrides = JSON.parse(document.getElementById('skin_overrides_input')?.value || '{}');
-  } catch (e) {
-    overrides = {};
-  }
-
-  let timerHeight = parseHeight(outputHeightInput, overrides.height ?? overrides.outputHeight ?? currentSkinMetadata?.defaults?.height ?? currentSkinMetadata?.defaults?.outputHeight);
-
-  // If we still don't have heights, show a gentle warning once and exit
-  if (isNaN(timerHeight)) {
+  if (isNaN(gifHeight) || isNaN(timerHeight)) {
     if (!window.__clampWarnedOnce) {
       window.__clampWarnedOnce = true;
+      const msg = 'Set GIF height to control text distance.';
       if (window.showToast) {
-        window.showToast('Set timer height to control text distance.', 'warning');
+        window.showToast(msg, 'warning');
       } else {
-        console.warn('Set timer height to control text distance.');
+        console.warn(msg);
       }
     }
     return;
   }
 
-  // Single height: no max-distance clamp needed since the GIF grows with content
+  // Available vertical space for distance, based on GIF (canvas) height
+  const maxDistance = sizing.maxDistance;
+  const desired = Number(distanceInput.value);
+  if (!isNaN(desired) && desired > maxDistance) {
+    distanceInput.value = maxDistance;
+    const msg = `Increase GIF height to add more spacing. Max distance right now is ${maxDistance}px.`;
+    if (window.showToast) {
+      window.showToast(msg, 'warning');
+    } else {
+      console.warn(msg);
+    }
+  }
+}
+
+function enforceGifHeightMinimum() {
+  const heightField = findFieldByKey('outputHeight');
+  if (!heightField) return;
+  const sizing = resolveSizingSnapshot();
+
+  if (isNaN(sizing.gifHeight) || isNaN(sizing.timerHeight)) {
+    return;
+  }
+
+  const required = Math.max(0, Math.ceil(sizing.combinedHeight || 0));
+  if (!isNaN(required) && required > 0 && sizing.gifHeight < required) {
+    heightField.value = required;
+    const msg = `GIF height must be at least ${required}px to fit the timer and text.`;
+    if (window.showToast) {
+      window.showToast(msg, 'warning');
+    } else {
+      console.warn(msg);
+    }
+    // Keep overrides in sync with the adjusted value
+    if (typeof syncOverrides === 'function') {
+      syncOverrides();
+    }
+  }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -701,6 +794,7 @@ document.addEventListener('DOMContentLoaded', function() {
   if (distanceInput) {
     const handleDistanceChange = () => {
       clampCustomTextDistance();
+      enforceGifHeightMinimum();
       syncOverrides();
     };
     distanceInput.addEventListener('change', handleDistanceChange);
@@ -709,12 +803,39 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // If timer height changes, re-clamp distance
   ['outputHeight'].forEach(name => {
-    const el = document.querySelector(`input[name="${name}"]`);
+    const el = document.querySelector(`[data-key="${name}"]`) || document.querySelector(`input[name="${name}"]`);
     if (el) {
-      el.addEventListener('change', clampCustomTextDistance);
-      el.addEventListener('input', clampCustomTextDistance);
+      const handler = () => {
+        clampCustomTextDistance();
+        enforceGifHeightMinimum();
+      };
+      el.addEventListener('change', handler);
+      el.addEventListener('input', handler);
+      el.dataset.boundGifHeight = '1';
     }
   });
+
+  const customTextInput = document.querySelector('input[name="custom_text"]');
+  if (customTextInput) {
+    const handleTextChange = () => {
+      clampCustomTextDistance();
+      enforceGifHeightMinimum();
+    };
+    customTextInput.addEventListener('change', handleTextChange);
+    customTextInput.addEventListener('input', handleTextChange);
+  }
+
+  const textPositionInput = document.querySelector('select[name="text_position"]');
+  if (textPositionInput) {
+    textPositionInput.addEventListener('change', () => {
+      clampCustomTextDistance();
+      enforceGifHeightMinimum();
+    });
+  }
+
+  // Initial pass to ensure spacing/height are consistent on load
+  clampCustomTextDistance();
+  enforceGifHeightMinimum();
 });
 
 // Skins loading and dynamic form
@@ -1103,7 +1224,7 @@ function renderFields(metadata, savedOverrides = {}) {
     const key = field.key;
     let label = field.label || key;
     if (key === 'outputHeight') {
-      label = 'Timer height';
+      label = 'GIF height';
     }
     const type = field.type || 'text';
     const container = document.createElement('div');
@@ -1214,10 +1335,10 @@ function renderFields(metadata, savedOverrides = {}) {
   const resolveFieldValue = (field) => {
     const key = field.key;
     if (key === 'outputHeight') {
-      if (savedOverrides.height !== undefined) return savedOverrides.height;
-      if (defaults.height !== undefined) return defaults.height;
       if (savedOverrides[key] !== undefined) return savedOverrides[key];
+      if (savedOverrides.height !== undefined) return savedOverrides.height;
       if (defaults[key] !== undefined) return defaults[key];
+      if (defaults.height !== undefined) return defaults.height;
     }
     return (savedOverrides[key] !== undefined) ? savedOverrides[key] : defaults[key];
   };
@@ -1300,10 +1421,23 @@ function renderFields(metadata, savedOverrides = {}) {
     fieldsWrap.appendChild(col);
   });
 
+  const outputHeightField = findFieldByKey('outputHeight');
+  if (outputHeightField && !outputHeightField.dataset.boundGifHeight) {
+    const handler = () => {
+      clampCustomTextDistance();
+      enforceGifHeightMinimum();
+    };
+    outputHeightField.addEventListener('change', handler);
+    outputHeightField.addEventListener('input', handler);
+    outputHeightField.dataset.boundGifHeight = '1';
+  }
+
   // Sync initial state to hidden input
   syncOverrides();
   // Enable collapsible behavior for newly rendered groups
   setupCollapsibles(fieldsWrap);
+  clampCustomTextDistance();
+  enforceGifHeightMinimum();
 }
 
 function syncOverrides() {
@@ -1344,14 +1478,6 @@ function syncOverrides() {
       data[k] = val;
     }
   });
-
-  // Keep timer height in sync with the visible "Timer height" (outputHeight)
-  if (data.outputHeight !== undefined && data.outputHeight !== null) {
-    const numeric = Number(data.outputHeight);
-    if (!isNaN(numeric)) {
-      data.height = numeric;
-    }
-  }
 
   // Ensure final screen colors mirror primary timer colors
   const resolvedBackground = data.background ?? defaults.background;
