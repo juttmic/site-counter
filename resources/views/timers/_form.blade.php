@@ -375,6 +375,13 @@
     opacity: 1;
     cursor: pointer;
   }
+
+  @media (max-width:576px){
+    .type-pill {
+        align-items: flex-start !important;
+    }
+
+  }
 </style>
 <div class="py-1" style="border: 0px solid red; display: flex; justify-content: space-between; gap: 0.5rem;">
   @if(isset($timer))
@@ -448,7 +455,7 @@
 
                                 <div class="row g-3 mt-1">
                                     <label class="form-label">Counter Type</label>
-                                    <div class="col-12 col-sm-3" style="
+                                    <div class="col-12 col-sm-3 type-pill" style="
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -1326,7 +1333,7 @@ function renderFields(metadata, savedOverrides = {}) {
     const key = field.key;
     let label = field.label || key;
     if (key === 'outputHeight') {
-      label = 'GIF height';
+      label = 'Timer height';
     } else if (key === 'outputWidth') {
       label = 'Timer Width';
     }
