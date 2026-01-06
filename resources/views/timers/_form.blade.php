@@ -251,7 +251,7 @@
     background: #f9fafb;
   }
   .toggle-pill {
-    font-size: 12px;
+    font-size: 10px;
     border: none;
     background: transparent;
     padding: 5px 5px;
@@ -433,8 +433,8 @@
     justify-content: end;
 ">
                                         <div class="toggle-pill-group" data-toggle-select="status">
-                                            <button type="button" class="toggle-pill" data-value="active">Active</button>
-                                            <button type="button" class="toggle-pill" data-value="inactive">Inactive</button>
+                                            <button type="button" class="toggle-pill" data-value="active">ACTIVE</button>
+                                            <button type="button" class="toggle-pill" data-value="inactive">INACTIVE</button>
                                         </div>
                                         <select name="status" class="form-select d-none" aria-hidden="true">
                                             <option value="active" {{ ($isEdit && $timer->status === 'active') || !$isEdit ? 'selected' : '' }}>Active</option>
@@ -2242,8 +2242,16 @@ document.addEventListener('DOMContentLoaded', function(){
       const select = document.querySelector(`select[name="${selectName}"]`);
       if (!select) return;
       const buttons = Array.from(group.querySelectorAll('.toggle-pill'));
+      const track = group.querySelector('.toggle-pill-track');
       const setActive = (value) => {
         buttons.forEach(btn => btn.classList.toggle('active', btn.dataset.value === value));
+        if (track) {
+          const activeBtn = buttons.find(btn => btn.dataset.value === value) || buttons[0];
+          if (activeBtn) {
+            track.style.width = `${activeBtn.offsetWidth}px`;
+            track.style.transform = `translateX(${activeBtn.offsetLeft}px)`;
+          }
+        }
       };
       const initial = select.value || (buttons[0]?.dataset.value ?? '');
       select.value = initial;
