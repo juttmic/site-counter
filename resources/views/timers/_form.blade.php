@@ -383,12 +383,14 @@
 
   }
 </style>
-<div class="py-1" style="border: 0px solid red; display: flex; justify-content: space-between; gap: 0.5rem;">
+<div class="py-1" style="border: 0px solid red; display: flex; justify-content: space-between; gap: 0.5rem; padding: inherit;">
   @if(isset($timer))
-    <h2 class="font-semibold text-xl text-gray-800 leading-tight">Edit Timer</h2>
-    <a href="{{ route('timers.preview', $timer) }}" class="btn btn-outline-secondary border rounded">Preview Timer</a>
+    <h2 class="font-semibold text-xl text-gray-800 leading-tight" style="font-size: 1.5rem !important">Edit Timer</h2>
+    <a href="{{ route('timers.preview', $timer) }}" class="btn btn-outline-secondary border rounded" style="
+    display: flex;
+    align-items: center;">Preview Timer</a>
   @else
-    <h2 class="font-semibold text-xl text-gray-800 leading-tight">Create New Counter</h2>
+    <h2 class="font-semibold text-xl text-gray-800 leading-tight" style="font-size: 1.5rem !important">Create New Counter</h2>
   @endif
   
 </div>
