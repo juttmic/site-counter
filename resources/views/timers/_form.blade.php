@@ -1952,6 +1952,7 @@ async function ajaxSaveAndPoll() {
     }
     
     // Show loading indicator
+    const pageRole = isEdit;
     Swal.fire({
       title: isEdit ? 'Updating timer...' : 'Creating timer...',
       text: 'Please wait',
@@ -2079,7 +2080,7 @@ async function ajaxSaveAndPoll() {
       gifDirty = false;
 
       // For create mode: redirect after save
-      if (form.dataset.isEdit !== '1') {
+      if (!pageRole) {
         Swal.fire({
           icon: 'success',
           title: 'Timer Created',
@@ -2087,7 +2088,7 @@ async function ajaxSaveAndPoll() {
           timer: 1500,
           showConfirmButton: false
         }).then(() => {
-          window.location.href = `/dashboard`;
+          window.location.href = `/timers/${form.dataset.timerId}/preview`;
         });
         return;
       }
