@@ -1329,46 +1329,7 @@ class TimerGifGenerator
             imagestring($im, $builtIn, $x, $y, $msg, $textCol);
         }
 
-        if ($hasText) {
-            if (is_file($font)) {
-                $smallSize = max(12, (int) round($fontSize * 0.5));
-                $textWidth = $this->textBoxWidth($customText, $font, $smallSize);
-                $tx = max(5, (int) (($canvasW - $textWidth) / 2));
-                $ty = $textPosition === 'top'
-                    ? (int) ($outerTopPadding + $edgePad + $innerTopPadding + $textAscent)
-                    : (int) ($offsetY + $timerH + $effectiveDistance + $textAscent);
-                $this->logDraw('Render final frame custom text (TTF)', [
-                    'shape' => 'text',
-                    'text' => $customText,
-                    'x' => $tx,
-                    'y' => $ty,
-                    'font' => $font,
-                    'font_size' => $smallSize,
-                    'width' => $textWidth,
-                    'height' => $textAscent + $textDescent,
-                    'position' => $textPosition,
-                ]);
-                imagettftext($im, $smallSize, 0, $tx, $ty, $textCol, $font, $customText);
-            } else {
-                $builtIn = 3;
-                $textWidth = imagefontwidth($builtIn) * strlen($customText);
-                $tx = max(5, (int) (($canvasW - $textWidth) / 2));
-                $ty = $textPosition === 'top'
-                    ? (int) ($outerTopPadding + $edgePad + $innerTopPadding)
-                    : (int) ($offsetY + $timerH + $effectiveDistance);
-                $this->logDraw('Render final frame custom text (GD built-in)', [
-                    'shape' => 'text',
-                    'text' => $customText,
-                    'x' => $tx,
-                    'y' => $ty,
-                    'font' => 'built-in-3',
-                    'width' => $textWidth,
-                    'height' => imagefontheight($builtIn),
-                    'position' => $textPosition,
-                ]);
-                imagestring($im, $builtIn, $tx, $ty, $customText, $textCol);
-            }
-        }
+        // Do not render custom text on final screen; spacing already accounted for above
 
         // Optional border on final frame
         if ($borderWidth > 0) {
