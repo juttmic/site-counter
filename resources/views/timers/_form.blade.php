@@ -2027,10 +2027,19 @@ async function ajaxSaveAndPoll() {
       const gifUrl = json.gif_url_with_cache_bust || json.gif_url;
       if (gifUrl && gifImg && loader && frameImg && placeholder) {
         loader.classList.add('d-none');
-        frameImg.classList.add('d-none');
         placeholder.classList.add('d-none');
-        gifImg.src = gifUrl;
-        gifImg.classList.remove('d-none');
+        if (form.dataset.isEdit === '1') {
+          // Keep showing static preview on edit; refresh PNG frame instead of GIF
+          gifImg.classList.add('d-none');
+          frameImg.classList.remove('d-none');
+          if (typeof generatePreviewFrame === 'function') {
+            generatePreviewFrame();
+          }
+        } else {
+          frameImg.classList.add('d-none');
+          gifImg.src = gifUrl;
+          gifImg.classList.remove('d-none');
+        }
       }
 
       // Update embed section visibility and value based on share availability and status
