@@ -1214,24 +1214,92 @@ class TimerGifGenerator
 
     private function renderFinalFrame(array $skin, ?string $customText, string $textPosition): string
     {
-        $width = max(120, (int) $skin['width']);
-        $height = max(80, (int) $skin['height']);
+        $timerW = max(120, (int) ($skin['width'] ?? 400));
+        $timerH = max(80, (int) ($skin['height'] ?? 160));
+        $padX = 10;
+        $font = $skin['fontPath'];
+        $fontSize = (int) ($skin['fontSize'] ?? 36);
+        $msg = (string) ($skin['finalMessage'] ?? "Time's Up");
+        $requestedW = isset($skin['outputWidth']) ? (int) $skin['outputWidth'] : null;
+        $requestedH = isset($skin['outputHeight']) ? (int) $skin['outputHeight'] : null;
+        $borderWidth = (int) ($skin['borderWidth'] ?? 0);
+        $edgePad = max(2, $borderWidth);
 
-        $im = imagecreatetruecolor($width, $height);
-        // Background: allow override via finalBackground
+        // Custom text measurement
+        $hasText = ($customText !== null && $customText !== '' && $textPosition !== 'none');
+        $textW = 0; $textH = 0; $textAscent = 0; $textDescent = 0;
+        $textSize = max(12, (int) round($fontSize * 0.5));
+        if ($hasText) {
+            if (is_file($font)) {
+                $box = imagettfbbox($textSize, 0, $font, $customText);
+                $xCoords = [$box[0], $box[2], $box[4], $box[6]];
+                $yCoords = [$box[1], $box[3], $box[5], $box[7]];
+                $textW = (int) (max($xCoords) - min($xCoords));
+                $textAscent = (int) abs(min($yCoords));
+                $textDescent = (int) max($yCoords);
+                $textH = $textAscent + $textDescent;
+            } else {
+                $bi = 3;
+                $textW = imagefontwidth($bi) * strlen($customText);
+                $textH = imagefontheight($bi);
+                $textAscent = $textH;
+                $textDescent = (int) ceil($textH * 0.25);
+                $textH = $textAscent + $textDescent;
+            }
+        }
+
+        // Distance for custom text
+        $distance = null;
+        if (isset($skin['customTextDistance'])) {
+            $distance = max(0, (int) $skin['customTextDistance']);
+        } elseif (isset($skin['customTextMarginTop']) || isset($skin['customTextMarginBottom'])) {
+            $legacyTop = isset($skin['customTextMarginTop']) ? max(0, (int) $skin['customTextMarginTop']) : 0;
+            $legacyBottom = isset($skin['customTextMarginBottom']) ? max(0, (int) $skin['customTextMarginBottom']) : 0;
+            $distance = max($legacyTop, $legacyBottom);
+        }
+        if ($distance === null) { $distance = 0; }
+
+        $canvasW = max($timerW, $hasText ? ($textW + 2 * $padX) : $timerW);
+        if ($requestedW && $requestedW > 0) {
+            $canvasW = max(1, $requestedW);
+        }
+
+        $contentHeight = $timerH + ($hasText ? ($textH + $distance) : 0);
+        $layoutHeight = max($timerH, $contentHeight) + ($edgePad * 2);
+
+        $effectiveDistance = $distance;
+        if ($hasText) {
+            $available = $layoutHeight - ($edgePad * 2) - $timerH - $textH;
+            if ($available < 0) { $available = 0; }
+            $effectiveDistance = min($distance, $available);
+        }
+
+        $combinedHeight = $timerH + ($hasText ? ($textH + $effectiveDistance) : 0);
+        $innerTopPadding = max(0, (int) floor(($layoutHeight - ($edgePad * 2) - $combinedHeight) / 2));
+        $canvasH = $layoutHeight;
+        $outerTopPadding = 0;
+        if ($requestedH && $requestedH > 0) {
+            $canvasH = max($layoutHeight, $requestedH);
+            $outerTopPadding = max(0, (int) floor(($canvasH - $layoutHeight) / 2));
+        }
+        $topPadding = $outerTopPadding + $innerTopPadding + $edgePad;
+        $offsetY = $topPadding;
+        if ($hasText && $textPosition === 'top') {
+            $offsetY += $textH + $effectiveDistance;
+        }
+
+        $im = imagecreatetruecolor($canvasW, $canvasH);
         $bgHex = (string) ($skin['finalBackground'] ?? $skin['background']);
         [$br, $bg, $bb] = $this->hexToRgb($bgHex);
         [$tr, $tg, $tb] = $this->hexToRgb((string) ($skin['finalTextColor'] ?? $skin['textColor']));
         $bgCol = imagecolorallocate($im, $br, $bg, $bb);
         $textCol = imagecolorallocate($im, $tr, $tg, $tb);
-        $this->drawRoundedRect($im, 0, 0, $width, $height, 12, $bgCol);
+        imagefilledrectangle($im, 0, 0, $canvasW, $canvasH, $bgCol);
+        $this->drawRoundedRect($im, 0, 0, $canvasW, $canvasH, 12, $bgCol);
 
-        $font = $skin['fontPath'];
-        $fontSize = (int) $skin['fontSize'];
-        $msg = (string) ($skin['finalMessage'] ?? "Time's Up");
         if (is_file($font)) {
-            $centerY = (int) ($height / 2 + $fontSize / 2);
-            $centerX = (int) ($width / 2 - $this->textBoxWidth($msg, $font, $fontSize) / 2);
+            $centerY = (int) ($offsetY + $timerH / 2 + $fontSize / 2);
+            $centerX = (int) ($canvasW / 2 - $this->textBoxWidth($msg, $font, $fontSize) / 2);
             $this->logDraw('Render final message (TTF)', [
                 'shape' => 'text',
                 'text' => $msg,
@@ -1247,8 +1315,8 @@ class TimerGifGenerator
             $builtIn = 5;
             $textWidth = imagefontwidth($builtIn) * strlen($msg);
             $textHeight = imagefontheight($builtIn);
-            $x = (int) (($width - $textWidth) / 2);
-            $y = (int) (($height - $textHeight) / 2);
+            $x = (int) (($canvasW - $textWidth) / 2);
+            $y = (int) ($offsetY + ($timerH - $textHeight) / 2);
             $this->logDraw('Render final message (GD built-in)', [
                 'shape' => 'text',
                 'text' => $msg,
@@ -1261,58 +1329,61 @@ class TimerGifGenerator
             imagestring($im, $builtIn, $x, $y, $msg, $textCol);
         }
 
-        if ($customText && $textPosition !== 'none') {
+        if ($hasText) {
             if (is_file($font)) {
                 $smallSize = max(12, (int) round($fontSize * 0.5));
                 $textWidth = $this->textBoxWidth($customText, $font, $smallSize);
-                $x = max(5, (int) (($width - $textWidth) / 2));
-                $y = $textPosition === 'top' ? (int) (10 + $smallSize) : (int) ($height - 10);
+                $tx = max(5, (int) (($canvasW - $textWidth) / 2));
+                $ty = $textPosition === 'top'
+                    ? (int) ($outerTopPadding + $edgePad + $innerTopPadding + $textAscent)
+                    : (int) ($offsetY + $timerH + $effectiveDistance + $textAscent);
                 $this->logDraw('Render final frame custom text (TTF)', [
                     'shape' => 'text',
                     'text' => $customText,
-                    'x' => $x,
-                    'y' => $y,
+                    'x' => $tx,
+                    'y' => $ty,
                     'font' => $font,
                     'font_size' => $smallSize,
                     'width' => $textWidth,
-                    'height' => $smallSize,
+                    'height' => $textAscent + $textDescent,
                     'position' => $textPosition,
                 ]);
-                imagettftext($im, $smallSize, 0, $x, $y, $textCol, $font, $customText);
+                imagettftext($im, $smallSize, 0, $tx, $ty, $textCol, $font, $customText);
             } else {
                 $builtIn = 3;
                 $textWidth = imagefontwidth($builtIn) * strlen($customText);
-                $x = max(5, (int) (($width - $textWidth) / 2));
-                $y = $textPosition === 'top' ? 5 : (int) ($height - imagefontheight($builtIn) - 5);
+                $tx = max(5, (int) (($canvasW - $textWidth) / 2));
+                $ty = $textPosition === 'top'
+                    ? (int) ($outerTopPadding + $edgePad + $innerTopPadding)
+                    : (int) ($offsetY + $timerH + $effectiveDistance);
                 $this->logDraw('Render final frame custom text (GD built-in)', [
                     'shape' => 'text',
                     'text' => $customText,
-                    'x' => $x,
-                    'y' => $y,
+                    'x' => $tx,
+                    'y' => $ty,
                     'font' => 'built-in-3',
                     'width' => $textWidth,
                     'height' => imagefontheight($builtIn),
                     'position' => $textPosition,
                 ]);
-                imagestring($im, $builtIn, $x, $y, $customText, $textCol);
+                imagestring($im, $builtIn, $tx, $ty, $customText, $textCol);
             }
         }
 
         // Optional border on final frame
-        $borderWidth = (int) ($skin['borderWidth'] ?? 0);
         if ($borderWidth > 0) {
             [$brdR, $brdG, $brdB] = $this->hexToRgb((string) ($skin['borderColor'] ?? '#FFFFFF'));
             $brdCol = imagecolorallocate($im, $brdR, $brdG, $brdB);
-            $bw = min($borderWidth, (int) floor(min($width, $height) / 2));
+            $bw = min($borderWidth, (int) floor(min($canvasW, $canvasH) / 2));
             if ($bw > 0) {
                 if (function_exists('imagesetthickness')) { imagesetthickness($im, $bw); }
-                imagerectangle($im, (int) floor($bw/2), (int) floor($bw/2), $width - 1 - (int) floor($bw/2), $height - 1 - (int) floor($bw/2), $brdCol);
+                imagerectangle($im, (int) floor($bw/2), (int) floor($bw/2), $canvasW - 1 - (int) floor($bw/2), $canvasH - 1 - (int) floor($bw/2), $brdCol);
                 $this->logDraw('Final frame border', [
                     'shape' => 'rectangle_border',
                     'x' => (int) floor($bw / 2),
                     'y' => (int) floor($bw / 2),
-                    'width' => $width - (int) floor($bw / 2),
-                    'height' => $height - (int) floor($bw / 2),
+                    'width' => $canvasW - (int) floor($bw / 2),
+                    'height' => $canvasH - (int) floor($bw / 2),
                     'thickness' => $bw,
                     'color' => $skin['borderColor'] ?? '#FFFFFF',
                 ]);
