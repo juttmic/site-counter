@@ -363,6 +363,12 @@ class TimerGifGenerator
         if (empty($skin['finalTextColor'])) {
             $skin['finalTextColor'] = $txt;
         }
+        // Ensure final text is visible: if bg and text are identical, invert the text color
+        $bgNorm = strtolower(ltrim((string) $skin['finalBackground'], '#'));
+        $txtNorm = strtolower(ltrim((string) $skin['finalTextColor'], '#'));
+        if ($bgNorm !== '' && $txtNorm !== '' && $bgNorm === $txtNorm) {
+            $skin['finalTextColor'] = $this->invertHexColor((string) $skin['finalTextColor']);
+        }
         return $skin;
     }
 
@@ -1383,6 +1389,21 @@ class TimerGifGenerator
             hexdec(substr($hex, 2, 2)),
             hexdec(substr($hex, 4, 2)),
         ];
+    }
+
+    private function invertHexColor(string $hex): string
+    {
+        $hex = ltrim($hex, '#');
+        if (strlen($hex) === 3) {
+            $hex = $hex[0].$hex[0].$hex[1].$hex[1].$hex[2].$hex[2];
+        }
+        if (strlen($hex) !== 6) {
+            return '#FFFFFF';
+        }
+        $r = 255 - hexdec(substr($hex, 0, 2));
+        $g = 255 - hexdec(substr($hex, 2, 2));
+        $b = 255 - hexdec(substr($hex, 4, 2));
+        return sprintf('#%02X%02X%02X', $r, $g, $b);
     }
 
     private function textBoxWidth(string $text, string $fontPath, int $fontSize): int
