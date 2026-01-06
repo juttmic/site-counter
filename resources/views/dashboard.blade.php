@@ -2,7 +2,7 @@
     <x-slot name="header">
         {{-- <div class="d-flex justify-content-between align-items-center">
             <h2 class="fw-semibold mb-0">
-                {{ __('Your Timers') }}
+                {{ __('Your Counters') }}
             </h2>
         </div> --}}
     </x-slot>
@@ -86,7 +86,7 @@
                                             </span>
                                           </button>
                                         @endif
-                                        <form action="{{ route('timers.destroy', $timer) }}" method="POST" data-confirm="Delete this timer?" class="d-inline">
+                                        <form action="{{ route('timers.destroy', $timer) }}" method="POST" data-confirm="Delete this counter?" class="d-inline">
                                           @csrf
                                           @method('DELETE')
                                           <button type="submit" class="btn btn-outline-danger btn-sm" title="Delete" style="    border-radius: 0px 5px 5px 0px;
@@ -116,7 +116,7 @@
             <span class="visually-hidden">Loading...</span>
           </div>
           <h5 class="mb-2">Generating GIF...</h5>
-          <p class="text-muted mb-3" id="gif-generation-message">Please wait while we generate your timer GIF.</p>
+          <p class="text-muted mb-3" id="gif-generation-message">Please wait while we generate your counter GIF.</p>
           <div class="alert alert-warning mb-0">
             <i class="bi bi-exclamation-triangle"></i> <strong>Please do not close this page</strong> while generation is in progress.
           </div>
@@ -154,7 +154,7 @@
       if (!btn) return;
       var url = btn.getAttribute('data-embed-url');
       if (!url) return;
-      var code = `<img src="${url}" alt="Countdown Timer">`;
+      var code = `<img src="${url}" alt="Countdown Counter">`;
       window.copyToClipboard(code).then(function(){
         if (window.showToast) window.showToast('Embed code copied', 'success');
       }).catch(function(){

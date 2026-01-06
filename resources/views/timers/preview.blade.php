@@ -23,7 +23,7 @@
                                 <label class="form-label">Embed Code</label>
                                 <div class="d-flex gap-2 justify-content-center">
                                     @php($embedUrl = url('/gettimer/'.$timer->user_id.'/'.pathinfo($timer->gif_url, PATHINFO_FILENAME)).'.gif')
-                                    <input id="preview_embed_input" type="text" class="form-control" style="max-width: 560px;" value='<img src="{{ $embedUrl }}" alt="Countdown Timer">' readonly>
+                                    <input id="preview_embed_input" type="text" class="form-control" style="max-width: 560px;" value='<img src="{{ $embedUrl }}" alt="Countdown Counter">' readonly>
                                     <button id="preview_embed_copy" type="button" class="btn btn-outline-secondary">Copy</button>
                                 </div>
                             </div>

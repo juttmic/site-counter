@@ -1,7 +1,7 @@
 Build a Laravel 10 application (using MySQL) named “TimerGIF App” with the following features and structure:
 
 🧱 1. Overview
-This app allows registered users to create and manage animated countdown timers in GIF format.
+This app allows registered users to create and manage animated Countdown Counters in GIF format.
 
 Each user can embed their generated GIF on their own website using a public <img> URL.
 Users can:
@@ -74,7 +74,7 @@ https://yourdomain.com/timers/12/abc123.gif
 Saves that URL to the database.
 The app displays an embed code for users to copy:
 
-<img src="https://yourdomain.com/timers/12/abc123.gif" alt="Countdown Timer">
+<img src="https://yourdomain.com/timers/12/abc123.gif" alt="Countdown Counter">
 
 💾 7. GIF Storage & Permissions
 Save files under:

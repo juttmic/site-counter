@@ -385,10 +385,10 @@
 </style>
 <div class="py-1" style="border: 0px solid red; display: flex; justify-content: space-between; gap: 0.5rem; padding: inherit;">
   @if(isset($timer))
-    <h2 class="font-semibold text-xl text-gray-800 leading-tight" style="font-size: 1.5rem !important">Edit Timer</h2>
+    <h2 class="font-semibold text-xl text-gray-800 leading-tight" style="font-size: 1.5rem !important">Edit Counter</h2>
     <a href="{{ route('timers.preview', $timer) }}" class="btn btn-outline-secondary border rounded" style="
     display: flex;
-    align-items: center;">Preview Timer</a>
+    align-items: center;">Preview Counter</a>
   @else
     <h2 class="font-semibold text-xl text-gray-800 leading-tight" style="font-size: 1.5rem !important">Create New Counter</h2>
   @endif
@@ -609,7 +609,7 @@
                             <div class="d-flex gap-2">
                                 @if($isEdit && isset($timer->gif_url) && $timer->gif_url && $timer->status === 'active')
                                     @php($embedUrl = url('/gettimer/'.$timer->user_id.'/'.pathinfo($timer->gif_url, PATHINFO_FILENAME)).'.gif')
-                                    <input id="embed_input" type="text" class="form-control form-control-sm" value='<img src="{{ $embedUrl }}" alt="Countdown Timer">' readonly>
+                                    <input id="embed_input" type="text" class="form-control form-control-sm" value='<img src="{{ $embedUrl }}" alt="Countdown Counter">' readonly>
                                 @else
                                     <input id="embed_input" type="text" class="form-control form-control-sm" value="" readonly>
                                 @endif
@@ -634,7 +634,7 @@
                                         <path d="M8 3.993c-2.21 0-4 1.79-4 4 0 .705.183 1.368.504 1.944l-.837.837A5.002 5.002 0 1 1 13 8a4.978 4.978 0 0 1-1.944.504l-.837-.837c.576-.321 1.239-.504 1.944-.504 2.21 0 4 1.79 4 4s-1.79 4-4 4-4-1.79-4-4c0-.705.183-1.368.504-1.944l-.837-.837A3.993 3.993 0 0 0 8 3.993z"/>
                                     </svg>
                                     <p class="small mb-0">Timer preview will appear here</p>
-                                    <p class="text-muted small">Configure your timer settings to see the preview</p>
+                                    <p class="text-muted small">Configure your counter settings to see the preview</p>
                                 </div>
                             </div>
                             <div>
@@ -1299,7 +1299,7 @@ function renderFields(metadata, savedOverrides = {}) {
   // Order matters: Dimensions first, then others
   const grouped = [
     { key: 'overall', title: 'Dimensions', fields: [] },
-    { key: 'timer', title: 'Timer settings', fields: [] },
+    { key: 'timer', title: 'Counter settings', fields: [] },
     { key: 'custom', title: 'Custom text', fields: [] },
     { key: 'final', title: 'Final screen', fields: [] },
     { key: 'extra', title: 'Extra options', fields: [] },
@@ -1335,9 +1335,9 @@ function renderFields(metadata, savedOverrides = {}) {
     const key = field.key;
     let label = field.label || key;
     if (key === 'outputHeight') {
-      label = 'Timer height';
+      label = 'Counter Height';
     } else if (key === 'outputWidth') {
-      label = 'Timer Width';
+      label = 'Counter Width';
     }
     const type = field.type || 'text';
     const container = document.createElement('div');
@@ -1939,8 +1939,8 @@ async function ajaxSaveAndPoll() {
     const confirmResult = await Swal.fire({
       title: 'Generate GIF?',
       text: isEdit
-        ? 'This will save your timer changes and generate a new GIF.'
-        : 'This will create a new timer and generate its GIF.',
+        ? 'This will save your counter changes and generate a new GIF.'
+        : 'This will create a new counter and generate its GIF.',
       icon: 'question',
       showCancelButton: true,
       confirmButtonText: 'Yes, save it',
@@ -1954,7 +1954,7 @@ async function ajaxSaveAndPoll() {
     // Show loading indicator
     const pageRole = isEdit;
     Swal.fire({
-      title: isEdit ? 'Updating timer...' : 'Creating timer...',
+      title: isEdit ? 'Updating counter...' : 'Creating counter...',
       text: 'Please wait',
       allowOutsideClick: false,
       allowEscapeKey: false,
@@ -2055,9 +2055,9 @@ async function ajaxSaveAndPoll() {
             const userId = match[1];
             const filename = match[2];
             const gettimerUrl = `${window.location.origin}/gettimer/${userId}/${filename}.gif`;
-            embedInput.value = `<img src="${gettimerUrl}" alt="Countdown Timer">`;
+            embedInput.value = `<img src="${gettimerUrl}" alt="Countdown Counter">`;
           } else {
-            embedInput.value = `<img src="${gifUrl}" alt="Countdown Timer">`;
+            embedInput.value = `<img src="${gifUrl}" alt="Countdown Counter">`;
           }
           embedSection.classList.remove('d-none');
           if (embedNotice) embedNotice.classList.add('d-none');
@@ -2084,7 +2084,7 @@ async function ajaxSaveAndPoll() {
         Swal.fire({
           icon: 'success',
           title: 'Timer Created',
-          text: 'Your timer and GIF have been created.',
+          text: 'Your counter and GIF have been created.',
           timer: 1500,
           showConfirmButton: false
         }).then(() => {
@@ -2097,7 +2097,7 @@ async function ajaxSaveAndPoll() {
       Swal.fire({
         icon: 'success',
         title: 'GIF Generated',
-        text: 'Your timer has been saved and the GIF has been updated.',
+        text: 'Your counter has been saved and the GIF has been updated.',
         timer: 1500,
         showConfirmButton: false
       });
@@ -2131,7 +2131,7 @@ function startPreviewPolling(timerId) {
   if (Swal.isVisible()) {
     Swal.update({
       title: 'Generating GIF...',
-      text: 'Please wait while your timer GIF is being created'
+      text: 'Please wait while your counter GIF is being created'
     });
   }
   
@@ -2160,7 +2160,7 @@ function startPreviewPolling(timerId) {
           Swal.fire({
             icon: 'success',
             title: 'Timer Updated!',
-            text: 'Your timer GIF has been generated.',
+            text: 'Your counter GIF has been generated.',
             timer: 2000,
             showConfirmButton: false
           });
@@ -2203,10 +2203,10 @@ function startPreviewPolling(timerId) {
               const userId = match[1];
               const filename = match[2];
               const gettimerUrl = `${window.location.origin}/gettimer/${userId}/${filename}.gif`;
-              embedInput.value = `<img src="${gettimerUrl}" alt="Countdown Timer">`;
+              embedInput.value = `<img src="${gettimerUrl}" alt="Countdown Counter">`;
             } else {
               const absUrl = new URL(gifUrl, window.location.origin).href;
-              embedInput.value = `<img src="${absUrl}" alt="Countdown Timer">`;
+              embedInput.value = `<img src="${absUrl}" alt="Countdown Counter">`;
             }
             embedSection.classList.remove('d-none');
             embedNotice.classList.add('d-none');
@@ -2372,10 +2372,10 @@ document.addEventListener('DOMContentLoaded', function(){
                     const userId = match[1];
                     const filename = match[2];
                     const gettimerUrl = `${window.location.origin}/gettimer/${userId}/${filename}.gif`;
-                    embedInput.value = `<img src="${gettimerUrl}" alt="Countdown Timer">`;
+                    embedInput.value = `<img src="${gettimerUrl}" alt="Countdown Counter">`;
                   } else {
                     const absUrl = new URL(data.gif_url, window.location.origin).href;
-                    embedInput.value = `<img src="${absUrl}" alt="Countdown Timer">`;
+                    embedInput.value = `<img src="${absUrl}" alt="Countdown Counter">`;
                   }
                 }
               })
@@ -2387,7 +2387,7 @@ document.addEventListener('DOMContentLoaded', function(){
                 const userId = match[1];
                 const filename = match[2];
                 const gettimerUrl = `${window.location.origin}/gettimer/${userId}/${filename}.gif`;
-                embedInput.value = `<img src="${gettimerUrl}" alt="Countdown Timer">`;
+                embedInput.value = `<img src="${gettimerUrl}" alt="Countdown Counter">`;
               } else {
                 // Try to extract from full URL
                 try {
@@ -2397,12 +2397,12 @@ document.addEventListener('DOMContentLoaded', function(){
                     const userId = pathParts[2];
                     const filename = pathParts[3].replace('.gif', '');
                     const gettimerUrl = `${window.location.origin}/gettimer/${userId}/${filename}.gif`;
-                    embedInput.value = `<img src="${gettimerUrl}" alt="Countdown Timer">`;
+                    embedInput.value = `<img src="${gettimerUrl}" alt="Countdown Counter">`;
                   } else {
-                    embedInput.value = `<img src="${gifUrl}" alt="Countdown Timer">`;
+                    embedInput.value = `<img src="${gifUrl}" alt="Countdown Counter">`;
                   }
                 } catch (e) {
-                  embedInput.value = `<img src="${gifUrl}" alt="Countdown Timer">`;
+                  embedInput.value = `<img src="${gifUrl}" alt="Countdown Counter">`;
                 }
               }
             }
