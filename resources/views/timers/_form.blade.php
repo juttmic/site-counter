@@ -1282,7 +1282,7 @@ function renderFields(metadata, savedOverrides = {}) {
   // Fields to hide but use defaults for
   // Note: accentColor is NOT hidden - it's needed for controlling tile/box/ring colors
   // Custom text fields live in the dedicated Custom Text settings card, not from skin JSON
-  const hiddenFields = new Set(['fontPath', 'font', 'showDays', 'showHours', 'showMinutes', 'showSeconds', 'layout', 'animation', 'customTextColor', 'customTextDistance', 'custom_text', 'text_position', 'finalBackground', 'finalTextColor', 'height']);
+  const hiddenFields = new Set(['fontPath', 'font', 'showDays', 'showHours', 'showMinutes', 'showSeconds', 'layout', 'animation', 'customTextColor', 'customTextDistance', 'custom_text', 'text_position', 'finalBackground', 'finalTextColor', 'height', 'width']);
   hiddenFields.forEach(key => {
     if (savedOverrides[key] !== undefined) {
       currentHiddenOverrides[key] = savedOverrides[key];
