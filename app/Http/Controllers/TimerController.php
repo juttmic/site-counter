@@ -80,8 +80,15 @@ class TimerController extends Controller
     public function update(Request $request, Timer $timer)
     {
         $this->authorizeOwner($timer);
+        $wasActive = $timer->status === 'active';
         $data = $this->validateTimer($request);
         $timer->fill($data);
+        // If switching to inactive, drop existing GIF and cache key so embeds stop working
+        if ($wasActive && ($timer->status ?? 'active') !== 'active') {
+            $this->deleteGifFile($timer);
+            $timer->gif_url = '';
+            $timer->cache_key = null;
+        }
         $timer->save();
 
         // Optionally generate GIF immediately when requested (e.g. from Generate GIF button)
@@ -344,5 +351,16 @@ class TimerController extends Controller
         return array_values(array_map(function ($path) {
             return pathinfo($path, PATHINFO_FILENAME);
         }, $files));
+    }
+
+    private function deleteGifFile(Timer $timer): void
+    {
+        $url = (string) $timer->gif_url;
+        if ($url === '') return;
+        $path = parse_url($url, PHP_URL_PATH) ?: $url;
+        $fullPath = public_path(ltrim($path, '/'));
+        if (File::exists($fullPath)) {
+            @File::delete($fullPath);
+        }
     }
 }
