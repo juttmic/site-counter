@@ -652,6 +652,12 @@ function parseOverrides() {
 function resolveSizingSnapshot() {
   const overrides = parseOverrides();
   const defaults = currentSkinMetadata?.defaults || {};
+  const borderWidth = Math.max(0, firstNumber(
+    findFieldByKey('borderWidth')?.value,
+    overrides.borderWidth,
+    defaults.borderWidth
+  ));
+  const edgePad = Math.max(2, borderWidth);
 
   const gifHeight = firstNumber(
     findFieldByKey('outputHeight')?.value,
@@ -682,12 +688,16 @@ function resolveSizingSnapshot() {
   const distanceRaw = Number(document.querySelector('input[name="customTextDistance"]')?.value);
   const distance = Math.max(0, isNaN(distanceRaw) ? 0 : distanceRaw);
 
-  const combinedHeight = timerHeight + (wantsText ? (textSize + distance) : 0);
-  const maxDistance = wantsText ? Math.max(0, Math.floor(gifHeight - timerHeight - textSize)) : Math.max(0, Math.floor(gifHeight - timerHeight));
+  const combinedHeight = timerHeight + (wantsText ? (textSize + distance) : 0) + (edgePad * 2);
+  const maxDistance = wantsText
+    ? Math.max(0, Math.floor(gifHeight - (edgePad * 2) - timerHeight - textSize))
+    : Math.max(0, Math.floor(gifHeight - (edgePad * 2) - timerHeight));
 
   return {
     overrides,
     defaults,
+    borderWidth,
+    edgePad,
     gifHeight,
     timerHeight,
     fontSize,

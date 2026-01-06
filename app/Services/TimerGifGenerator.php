@@ -463,26 +463,32 @@ class TimerGifGenerator
         $hasText = ($customText !== null && $customText !== '' && $textPosition !== 'none');
         $padX = 10; // horizontal padding when text is wider than timer
         $textW = 0; $textH = 0; $textSize = max(12, (int) round($fontSize * 0.5));
-        $textHeightFromBaseline = 0; // Height from baseline to top of text
+        $textAscent = 0; // Height from baseline to top of text
+        $textDescent = 0; // Height below baseline
         if ($hasText) {
             if (is_file($font)) {
                 $box = imagettfbbox($textSize, 0, $font, $customText);
-                $textW = abs($box[4] - $box[0]);
-                $textH = abs($box[5] - $box[1]);
-                // Get the actual text height from baseline to top (for positioning)
-                // box[1] is typically negative, representing distance from baseline to top
-                $textHeightFromBaseline = abs($box[7] - $box[1]); // Distance from baseline to top
+                $xCoords = [$box[0], $box[2], $box[4], $box[6]];
+                $yCoords = [$box[1], $box[3], $box[5], $box[7]];
+                $textW = (int) (max($xCoords) - min($xCoords));
+                $textAscent = (int) abs(min($yCoords)); // above baseline
+                $textDescent = (int) max($yCoords);     // below baseline
+                $textH = $textAscent + $textDescent;
             } else {
                 $bi = 3;
                 $textW = imagefontwidth($bi) * strlen($customText);
                 $textH = imagefontheight($bi);
-                $textHeightFromBaseline = $textH;
+                $textAscent = $textH;
+                $textDescent = (int) ceil($textH * 0.25); // approximate small descender
+                $textH = $textAscent + $textDescent;
             }
         }
 
         // Read optional overall output size overrides
         $requestedW = isset($skin['outputWidth']) ? (int) $skin['outputWidth'] : null;
         $requestedH = isset($skin['outputHeight']) ? (int) $skin['outputHeight'] : null;
+        $borderWidth = (int) ($skin['borderWidth'] ?? 0);
+        $edgePad = max(2, $borderWidth); // ensure border + a small safety pad
         // Distance between timer and custom text (applies above or below)
         $distance = null;
         if (isset($skin['customTextDistance'])) {
@@ -502,19 +508,19 @@ class TimerGifGenerator
         // Base height for layout: always based on the timer height (not the output/GIF height)
         // so vertical spacing for custom text is measured relative to the timer itself.
         $contentHeight = $timerH + ($hasText ? ($textH + $distance) : 0);
-        $layoutHeight = max($timerH, $contentHeight);
+        $layoutHeight = max($timerH, $contentHeight) + ($edgePad * 2);
 
         // Clamp distance so text + timer fit inside the layout height
         $effectiveDistance = $distance;
         if ($hasText) {
-            $available = $layoutHeight - $timerH - $textH;
+            $available = $layoutHeight - ($edgePad * 2) - $timerH - $textH;
             if ($available < 0) { $available = 0; }
             $effectiveDistance = min($distance, $available);
         }
 
         // Center the combined block (text + timer) within the layout height (timer-based)
         $combinedHeight = $timerH + ($hasText ? ($textH + $effectiveDistance) : 0);
-        $innerTopPadding = max(0, (int) floor(($layoutHeight - $combinedHeight) / 2));
+        $innerTopPadding = max(0, (int) floor(($layoutHeight - ($edgePad * 2) - $combinedHeight) / 2));
 
         // If an explicit output height is provided, add outer padding without changing the spacing math
         $canvasH = $layoutHeight;
@@ -524,7 +530,7 @@ class TimerGifGenerator
             $outerTopPadding = max(0, (int) floor(($canvasH - $layoutHeight) / 2));
         }
 
-        $topPadding = $outerTopPadding + $innerTopPadding;
+        $topPadding = $outerTopPadding + $innerTopPadding + $edgePad;
 
         $offsetY = $topPadding;
         if ($hasText && $textPosition === 'top') {
@@ -574,8 +580,8 @@ class TimerGifGenerator
             if (is_file($font)) {
                 $tx = (int) (($canvasW - $textW) / 2);
                 $ty = ($textPosition === 'top')
-                    ? (int) ($topPadding + $textHeightFromBaseline)
-                    : (int) ($offsetY + $timerH + $effectiveDistance + $textHeightFromBaseline);
+                    ? (int) ($topPadding + $textAscent)
+                    : (int) ($offsetY + $timerH + $effectiveDistance + $textAscent);
                 $this->logDraw('Render custom text (TTF)', [
                     'shape' => 'text',
                     'text' => $customText,
@@ -602,7 +608,7 @@ class TimerGifGenerator
                     'y' => $ty,
                     'font' => 'built-in-3',
                     'width' => $textW,
-                    'height' => $builtInTextH,
+                    'height' => $builtInTextH + (int) ceil($builtInTextH * 0.25),
                     'position' => $textPosition,
                 ]);
                 imagestring($im, $bi2, $tx, $ty, $customText, $customTxtCol);
@@ -610,7 +616,6 @@ class TimerGifGenerator
         }
 
         // Optional border around entire canvas
-        $borderWidth = (int) ($skin['borderWidth'] ?? 0);
         if ($borderWidth > 0) {
             [$brdR, $brdG, $brdB] = $this->hexToRgb((string) ($skin['borderColor'] ?? '#FFFFFF'));
             $brdCol = imagecolorallocate($im, $brdR, $brdG, $brdB);
