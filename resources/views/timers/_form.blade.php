@@ -359,7 +359,7 @@
 </div>
 <div class="py-4 py-md-3">
     <div class="container-fluid">
-        <form id="timer_form" method="POST" action="{{ $formAction }}" data-timer-id="{{ $isEdit ? $timer->id : '' }}" data-is-edit="{{ $isEdit ? '1' : '0' }}" data-has-gif="{{ $isEdit && !empty($timer->gif_url) ? '1' : '0' }}" data-timer-status="{{ $isEdit ? $timer->status : 'active' }}" data-user-id="{{ $isEdit ? $timer->user_id : Auth::id() }}" data-gif-url="{{ $isEdit && !empty($timer->gif_url) ? $timer->gif_url : '' }}">
+        <form id="timer_form" method="POST" action="{{ $formAction }}" data-timer-id="{{ $isEdit ? $timer->id : '' }}" data-is-edit="{{ $isEdit ? '1' : '0' }}" data-has-gif="{{ $isEdit && !empty($timer->gif_url) ? '1' : '0' }}" data-timer-status="{{ $isEdit ? $timer->status : 'active' }}" data-user-id="{{ $isEdit ? $timer->user_id : Auth::id() }}" data-gif-url="{{ $isEdit && !empty($timer->gif_url) ? $timer->gif_url : '' }}" data-timer-width="{{ $isEdit ? ($timer->width ?? '') : '' }}" data-timer-output-width="{{ $isEdit ? ($timer->skin_overrides['outputWidth'] ?? $timer->skin_overrides['width'] ?? '') : '' }}">
             @csrf
             @if($isEdit)
                 @method('PUT')
@@ -1235,6 +1235,8 @@ function renderFields(metadata, savedOverrides = {}) {
     let label = field.label || key;
     if (key === 'outputHeight') {
       label = 'GIF height';
+    } else if (key === 'outputWidth') {
+      label = 'Timer Width';
     }
     const type = field.type || 'text';
     const container = document.createElement('div');
@@ -1349,6 +1351,17 @@ function renderFields(metadata, savedOverrides = {}) {
       if (savedOverrides.height !== undefined) return savedOverrides.height;
       if (defaults[key] !== undefined) return defaults[key];
       if (defaults.height !== undefined) return defaults.height;
+    } else if (key === 'outputWidth') {
+      const formEl = document.getElementById('timer_form');
+      const serverOutputWidth = firstNumber(
+        formEl?.dataset.timerOutputWidth,
+        formEl?.dataset.timerWidth
+      );
+      if (savedOverrides[key] !== undefined) return savedOverrides[key];
+      if (savedOverrides.width !== undefined) return savedOverrides.width;
+      if (!isNaN(serverOutputWidth)) return serverOutputWidth;
+      if (defaults[key] !== undefined) return defaults[key];
+      if (defaults.width !== undefined) return defaults.width;
     }
     return (savedOverrides[key] !== undefined) ? savedOverrides[key] : defaults[key];
   };
@@ -1731,6 +1744,22 @@ document.addEventListener('DOMContentLoaded', () => {
           return JSON.parse(document.getElementById('skin_overrides_input').value || '{}');
         } catch(e) {
           return {};
+        }
+      })();
+      // Seed outputWidth from existing width/outputWidth (DB or overrides) so Timer Width shows the stored value
+      (function seedOutputWidth() {
+        const formEl = document.getElementById('timer_form');
+        const seed = firstNumber(
+          savedOverrides.outputWidth,
+          savedOverrides.width,
+          formEl?.dataset.timerOutputWidth,
+          formEl?.dataset.timerWidth
+        );
+        if (!isNaN(seed)) {
+          savedOverrides.outputWidth = seed;
+          if (savedOverrides.width === undefined) {
+            savedOverrides.width = seed;
+          }
         }
       })();
       

@@ -503,7 +503,10 @@ class TimerGifGenerator
             $distance = 0;
         }
 
-        $canvasW = max($timerW, $hasText ? ($textW + 2 * $padX) : $timerW);
+        // Allow explicit output width even if smaller than timer/text (will crop)
+        $canvasW = $requestedW && $requestedW > 0
+            ? max(1, $requestedW)
+            : max($timerW, $hasText ? ($textW + 2 * $padX) : $timerW);
 
         // Base height for layout: always based on the timer height (not the output/GIF height)
         // so vertical spacing for custom text is measured relative to the timer itself.
@@ -537,7 +540,10 @@ class TimerGifGenerator
             $offsetY += $textH + $effectiveDistance;
         }
         // For bottom position, timer stays at topPadding; text is drawn after timer using effectiveDistance
-        if ($requestedW && $requestedW > 0) { $canvasW = max($canvasW, $requestedW); }
+        // If output width was not set above, fall back to natural max
+        if ((!$requestedW || $requestedW <= 0) && $requestedW !== 0) {
+            $canvasW = max($canvasW, $hasText ? ($textW + 2 * $padX) : $timerW);
+        }
 
         // Compose final image
         $im = imagecreatetruecolor($canvasW, $canvasH);
