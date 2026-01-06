@@ -41,6 +41,13 @@ class SkinController extends Controller
             return response()->json(['message' => 'Skin not found'], 404);
         }
         $json = json_decode(File::get($path), true) ?: [];
+        // Default border to 1 if not provided or provided as zero (for creation)
+        if (!array_key_exists('borderWidth', $json) || (int) $json['borderWidth'] === 0) {
+            $json['borderWidth'] = 1;
+        }
+        if (!array_key_exists('borderColor', $json) || empty($json['borderColor'])) {
+            $json['borderColor'] = '#FFFFFF';
+        }
         
         $fields = $json['fields'] ?? $this->inferFieldsFromSkin($json);
         // Ensure new optional fields (e.g., separatorColor) are exposed when present but missing in provided fields
@@ -203,5 +210,3 @@ class SkinController extends Controller
         return $fields;
     }
 }
-
-

@@ -199,6 +199,8 @@ class TimerGifGenerator
                 'accentColor' => '#FFCC00',
                 'fontSize' => 36,
                 'fontPath' => resource_path('fonts/dejavu-sans.book.ttf'),
+                'borderWidth' => 1,
+                'borderColor' => '#FFFFFF',
             ];
         }
         $json = json_decode(file_get_contents($path), true) ?: [];
@@ -214,7 +216,7 @@ class TimerGifGenerator
             'finalMessage' => "Time's Up",
             'finalBackground' => null, // defaults to background if null
             'finalTextColor' => null,  // defaults to textColor if null
-            'borderWidth' => 0,
+            'borderWidth' => 1,
             'borderColor' => '#FFFFFF',
         ], $json);
         // Validate
@@ -253,7 +255,8 @@ class TimerGifGenerator
         }
         $skin['fontPath'] = $fontPath;
         // Normalize borderWidth
-        $bw = (int) ($skin['borderWidth'] ?? 0);
+        $bw = (int) ($skin['borderWidth'] ?? 1);
+        if ($bw === 0) { $bw = 1; }
         $skin['borderWidth'] = max(0, min(50, $bw));
         if (empty($skin['borderColor']) || !is_string($skin['borderColor'])) {
             $skin['borderColor'] = '#FFFFFF';

@@ -641,6 +641,25 @@ function firstNumber(...vals) {
   return NaN;
 }
 
+function invertHexColor(hex) {
+  if (typeof hex !== 'string') return '#000000';
+  let h = hex.trim().replace('#','');
+  if (h.length === 3) {
+    h = h.split('').map(c => c + c).join('');
+  }
+  if (h.length !== 6) return '#000000';
+  const r = 255 - parseInt(h.slice(0,2), 16);
+  const g = 255 - parseInt(h.slice(2,4), 16);
+  const b = 255 - parseInt(h.slice(4,6), 16);
+  const toHex = (v) => v.toString(16).padStart(2, '0');
+  const inv = `#${toHex(r)}${toHex(g)}${toHex(b)}`.toUpperCase();
+  // If pure black, nudge to a dark gray to ensure visibility on white backgrounds
+  // if (inv === '#000000') {
+  //   return '#111111';
+  // }
+  return inv;
+}
+
 function parseOverrides() {
   try {
     return JSON.parse(document.getElementById('skin_overrides_input')?.value || '{}') || {};
@@ -1177,6 +1196,29 @@ function renderFields(metadata, savedOverrides = {}) {
   currentHiddenOverrides = {};
   const fieldsWrap = document.getElementById('skin_fields');
   const defaults = metadata.defaults || {};
+
+  // For create flows only, enforce a visible border default when skin is missing or zero
+  const formEl = document.getElementById('timer_form');
+  const isEdit = formEl && formEl.dataset.isEdit === '1';
+  if (!isEdit) {
+    if (defaults.borderWidth === undefined || defaults.borderWidth === null || Number(defaults.borderWidth) === 0) {
+      defaults.borderWidth = 1;
+    }
+    const bg = defaults.background || '#000000';
+    const bgNorm = (bg || '').toString().trim().toLowerCase();
+    const borderNorm = (defaults.borderColor || '').toString().trim().toLowerCase();
+    if (!defaults.borderColor || defaults.borderColor === '' || borderNorm === bgNorm) {
+      defaults.borderColor = invertHexColor(bg);
+    }
+  } else {
+    // Edit: respect saved values; if missing, still ensure a sane fallback
+    if (defaults.borderWidth === undefined || defaults.borderWidth === null) {
+      defaults.borderWidth = 1;
+    }
+    if (!defaults.borderColor || defaults.borderColor === '') {
+      defaults.borderColor = '#FFFFFF';
+    }
+  }
   const fields = Array.isArray(metadata.fields) ? metadata.fields : [];
   fieldsWrap.innerHTML = '';
   
@@ -1498,6 +1540,11 @@ function syncOverrides() {
     // Store if different from default OR if it's an applied formDefault
     // This ensures formDefaults are always saved, even if they match original defaults
     if (val !== defaults[k] || appliedFormDefaults[k] !== undefined) {
+      data[k] = val;
+    }
+
+    // Always persist borderColor to ensure the chosen/derived color is saved even if it matches defaults
+    if (k === 'borderColor') {
       data[k] = val;
     }
   });
