@@ -382,12 +382,33 @@ class TimerGifGenerator
         $txtTimer = imagecolorallocate($timerIm, $tr, $tg, $tb);
         $accTimer = imagecolorallocate($timerIm, $ar, $ag, $ab);
         imagefilledrectangle($timerIm, 0, 0, $timerW, $timerH, $bgTimer);
+        $this->logDraw('Timer base rectangle', [
+            'shape' => 'rectangle',
+            'x' => 0,
+            'y' => 0,
+            'width' => $timerW,
+            'height' => $timerH,
+            'color' => $skin['background'] ?? '#000000',
+            'context' => 'timer_surface',
+        ]);
 
+        $this->logDraw('Applying skin style', [
+            'style' => $skin['style'] ?? 'default',
+            'timer_width' => $timerW,
+            'timer_height' => $timerH,
+            'seconds_remaining' => $secondsRemaining,
+        ]);
         $this->applySkinStyle($timerIm, $skin, $timerW, $timerH, $bgTimer, $txtTimer, $accTimer, $secondsRemaining);
 
         $renderer = SkinRendererFactory::resolve($skin['style'] ?? null);
         if ($renderer instanceof SkinRendererInterface && $renderer->renderTimeText($timerIm, $secondsRemaining, $skin, $timerW, $timerH, $txtTimer, $accTimer)) {
             // handled by renderer
+            $this->logDraw('Renderer handled countdown text', [
+                'renderer' => get_class($renderer),
+                'seconds_remaining' => $secondsRemaining,
+                'timer_width' => $timerW,
+                'timer_height' => $timerH,
+            ]);
         } else {
             // Fallback timer text layout
             $sep = (string)($skin['separator'] ?? ':');
@@ -408,6 +429,16 @@ class TimerGifGenerator
                 $cx = (int) ($timerW / 2 - $this->textBoxWidth($timeText, $font, $fontSize) / 2);
                 $cy = (int) ($timerH / 2 + $fontSize / 2);
                 $txtColor = $txtTimer;
+                $this->logDraw('Render countdown text (TTF)', [
+                    'shape' => 'text',
+                    'text' => $timeText,
+                    'x' => $cx,
+                    'y' => $cy,
+                    'font_size' => $fontSize,
+                    'font' => $font,
+                    'width' => $this->textBoxWidth($timeText, $font, $fontSize),
+                    'height' => $fontSize,
+                ]);
                 imagettftext($timerIm, $fontSize, 0, $cx, $cy, $txtColor, $font, $timeText);
             } else {
                 $builtIn = 5;
@@ -415,6 +446,15 @@ class TimerGifGenerator
                 $th = imagefontheight($builtIn);
                 $x = (int) (($timerW - $tw) / 2);
                 $y = (int) (($timerH - $th) / 2);
+                $this->logDraw('Render countdown text (GD built-in)', [
+                    'shape' => 'text',
+                    'text' => $timeText,
+                    'x' => $x,
+                    'y' => $y,
+                    'font' => 'built-in-5',
+                    'width' => $tw,
+                    'height' => $th,
+                ]);
                 imagestring($timerIm, $builtIn, $x, $y, $timeText, $txtTimer);
             }
         }
@@ -504,9 +544,27 @@ class TimerGifGenerator
         }
         $customTxtCol = imagecolorallocate($im, $ctr, $ctg, $ctb);
         imagefilledrectangle($im, 0, 0, $canvasW, $canvasH, $bgCol);
+        $this->logDraw('Canvas background', [
+            'shape' => 'rectangle',
+            'x' => 0,
+            'y' => 0,
+            'width' => $canvasW,
+            'height' => $canvasH,
+            'color' => $skin['background'] ?? '#000000',
+            'context' => 'canvas',
+        ]);
 
         $offsetX = (int) (($canvasW - $timerW) / 2);
         imagecopy($im, $timerIm, $offsetX, $offsetY, 0, 0, $timerW, $timerH);
+        $this->logDraw('Place timer onto canvas', [
+            'shape' => 'imagecopy',
+            'source_width' => $timerW,
+            'source_height' => $timerH,
+            'dest_x' => $offsetX,
+            'dest_y' => $offsetY,
+            'canvas_width' => $canvasW,
+            'canvas_height' => $canvasH,
+        ]);
         // Add a 1px border around the counter area for visual separation
         $timerBorderCol = imagecolorallocate($im, $tr, $tg, $tb);
         // imagerectangle($im, $offsetX, $offsetY, $offsetX + $timerW - 1, $offsetY + $timerH - 1, $timerBorderCol);
@@ -518,6 +576,17 @@ class TimerGifGenerator
                 $ty = ($textPosition === 'top')
                     ? (int) ($topPadding + $textHeightFromBaseline)
                     : (int) ($offsetY + $timerH + $effectiveDistance + $textHeightFromBaseline);
+                $this->logDraw('Render custom text (TTF)', [
+                    'shape' => 'text',
+                    'text' => $customText,
+                    'x' => $tx,
+                    'y' => $ty,
+                    'font' => $font,
+                    'font_size' => $textSize,
+                    'width' => $textW,
+                    'height' => $textH,
+                    'position' => $textPosition,
+                ]);
                 imagettftext($im, $textSize, 0, $tx, $ty, $customTxtCol, $font, $customText);
             } else {
                 $bi2 = 3;
@@ -526,6 +595,16 @@ class TimerGifGenerator
                 $ty = ($textPosition === 'top')
                     ? (int) ($topPadding)
                     : (int) ($offsetY + $timerH + $effectiveDistance);
+                $this->logDraw('Render custom text (GD built-in)', [
+                    'shape' => 'text',
+                    'text' => $customText,
+                    'x' => $tx,
+                    'y' => $ty,
+                    'font' => 'built-in-3',
+                    'width' => $textW,
+                    'height' => $builtInTextH,
+                    'position' => $textPosition,
+                ]);
                 imagestring($im, $bi2, $tx, $ty, $customText, $customTxtCol);
             }
         }
@@ -539,6 +618,15 @@ class TimerGifGenerator
             if ($bw > 0) {
                 if (function_exists('imagesetthickness')) { imagesetthickness($im, $bw); }
                 imagerectangle($im, (int) floor($bw/2), (int) floor($bw/2), $canvasW - 1 - (int) floor($bw/2), $canvasH - 1 - (int) floor($bw/2), $brdCol);
+                $this->logDraw('Canvas border', [
+                    'shape' => 'rectangle_border',
+                    'x' => (int) floor($bw / 2),
+                    'y' => (int) floor($bw / 2),
+                    'width' => $canvasW - (int) floor($bw / 2),
+                    'height' => $canvasH - (int) floor($bw / 2),
+                    'thickness' => $bw,
+                    'color' => $skin['borderColor'] ?? '#FFFFFF',
+                ]);
                 if (function_exists('imagesetthickness')) { imagesetthickness($im, 1); }
             }
         }
@@ -636,6 +724,13 @@ class TimerGifGenerator
             $y = 5;
             $w = $unitWidth - 10;
             $h = $height - 10;
+            $this->logDraw('Draw squared outline block', [
+                'shape' => 'rectangle_outline',
+                'x' => $x,
+                'y' => $y,
+                'width' => $w,
+                'height' => $h,
+            ]);
             imagerectangle($im, $x, $y, $x + $w, $y + $h, $textCol);
         }
     }
@@ -648,7 +743,23 @@ class TimerGifGenerator
             $y = 5;
             $w = $unitWidth - 10;
             $h = $height - 10;
+            $this->logDraw('Draw flip clock background', [
+                'shape' => 'rectangle_filled',
+                'x' => $x,
+                'y' => $y,
+                'width' => $w,
+                'height' => $h,
+                'color_context' => 'background',
+            ]);
             imagefilledrectangle($im, $x, $y, $x + $w, $y + $h, $bgCol);
+            $this->logDraw('Draw flip clock border', [
+                'shape' => 'rectangle_outline',
+                'x' => $x,
+                'y' => $y,
+                'width' => $w,
+                'height' => $h,
+                'color_context' => 'text',
+            ]);
             imagerectangle($im, $x, $y, $x + $w, $y + $h, $textCol);
         }
     }
@@ -690,9 +801,41 @@ class TimerGifGenerator
             $blockWidth = $w / 2;
             $blockHeight = $h / 2;
             imagefilledrectangle($im, $x, $y, $x + $blockWidth, $y + $blockHeight, $accentCol);
+            $this->logDraw('Draw segmented digit block', [
+                'shape' => 'rectangle_filled',
+                'x' => $x,
+                'y' => $y,
+                'width' => $blockWidth,
+                'height' => $blockHeight,
+                'segment' => 'top_left',
+            ]);
             imagefilledrectangle($im, $x + $blockWidth, $y, $x + $w, $y + $blockHeight, $accentCol);
+            $this->logDraw('Draw segmented digit block', [
+                'shape' => 'rectangle_filled',
+                'x' => $x + $blockWidth,
+                'y' => $y,
+                'width' => $blockWidth,
+                'height' => $blockHeight,
+                'segment' => 'top_right',
+            ]);
             imagefilledrectangle($im, $x, $y + $blockHeight, $x + $blockWidth, $y + $h, $accentCol);
+            $this->logDraw('Draw segmented digit block', [
+                'shape' => 'rectangle_filled',
+                'x' => $x,
+                'y' => $y + $blockHeight,
+                'width' => $blockWidth,
+                'height' => $blockHeight,
+                'segment' => 'bottom_left',
+            ]);
             imagefilledrectangle($im, $x + $blockWidth, $y + $blockHeight, $x + $w, $y + $h, $accentCol);
+            $this->logDraw('Draw segmented digit block', [
+                'shape' => 'rectangle_filled',
+                'x' => $x + $blockWidth,
+                'y' => $y + $blockHeight,
+                'width' => $blockWidth,
+                'height' => $blockHeight,
+                'segment' => 'bottom_right',
+            ]);
         }
     }
 
@@ -710,6 +853,13 @@ class TimerGifGenerator
 
     private function drawSolidBlueBackground($im, int $width, int $height, int $accentCol): void
     {
+        $this->logDraw('Draw solid blue background', [
+            'shape' => 'rectangle_filled',
+            'x' => 0,
+            'y' => 0,
+            'width' => $width,
+            'height' => $height,
+        ]);
         imagefilledrectangle($im, 0, 0, $width, $height, $accentCol);
     }
 
@@ -740,9 +890,24 @@ class TimerGifGenerator
     private function drawNeonGlow($im, int $width, int $height, int $bgCol, int $textCol, int $accentCol): void
     {
         // Dark background with neon glow effect
+        $this->logDraw('Draw neon glow background', [
+            'shape' => 'rectangle_filled',
+            'x' => 0,
+            'y' => 0,
+            'width' => $width,
+            'height' => $height,
+        ]);
         imagefilledrectangle($im, 0, 0, $width, $height, $bgCol);
         // Add glow effect around borders
         for ($i = 1; $i <= 3; $i++) {
+            $this->logDraw('Draw neon glow border', [
+                'shape' => 'rectangle_outline',
+                'x' => $i,
+                'y' => $i,
+                'width' => $width - (2 * $i),
+                'height' => $height - (2 * $i),
+                'layer' => $i,
+            ]);
             imagerectangle($im, $i, $i, $width - $i, $height - $i, $accentCol);
         }
     }
@@ -750,10 +915,24 @@ class TimerGifGenerator
     private function drawClassicDigital($im, int $width, int $height, int $bgCol, int $textCol): void
     {
         // Classic green digital display
+        $this->logDraw('Draw classic digital background', [
+            'shape' => 'rectangle_filled',
+            'x' => 0,
+            'y' => 0,
+            'width' => $width,
+            'height' => $height,
+        ]);
         imagefilledrectangle($im, 0, 0, $width, $height, $bgCol);
         // Add digital display grid lines
         for ($i = 1; $i < 4; $i++) {
             $x = ($width / 4) * $i;
+            $this->logDraw('Draw classic digital separator', [
+                'shape' => 'line',
+                'x1' => $x,
+                'y1' => 0,
+                'x2' => $x,
+                'y2' => $height,
+            ]);
             imageline($im, $x, 0, $x, $height, $textCol);
         }
     }
@@ -761,9 +940,24 @@ class TimerGifGenerator
     private function drawCleanWhiteTimer($im, int $width, int $height, int $bgCol, int $textCol, int $accentCol): void
     {
         // White background
+        $this->logDraw('Draw clean white background', [
+            'shape' => 'rectangle_filled',
+            'x' => 0,
+            'y' => 0,
+            'width' => $width,
+            'height' => $height,
+        ]);
         imagefilledrectangle($im, 0, 0, $width, $height, $bgCol);
         
         // Thin black border
+        $this->logDraw('Draw clean white border', [
+            'shape' => 'rectangle_outline',
+            'x' => 0,
+            'y' => 0,
+            'width' => $width,
+            'height' => $height,
+            'thickness' => 1,
+        ]);
         imagerectangle($im, 0, 0, $width - 1, $height - 1, $textCol);
     }
 
@@ -812,6 +1006,17 @@ class TimerGifGenerator
                 $numberY = $centerY - 10; // Slightly above center
                 
                 // Draw number
+                $this->logDraw('Render clean white number (TTF)', [
+                    'shape' => 'text',
+                    'text' => $numberText,
+                    'x' => $numberX,
+                    'y' => $numberY,
+                    'font' => $font,
+                    'font_size' => $fontSize,
+                    'width' => $numberWidth,
+                    'height' => $fontSize,
+                    'unit' => $unit['label'],
+                ]);
                 imagettftext($im, $fontSize, 0, $numberX, $numberY, $textCol, $font, $numberText);
                 
                 // Draw label below
@@ -819,12 +1024,31 @@ class TimerGifGenerator
                 $labelX = $unitX - $labelWidth / 2;
                 $labelY = $centerY + 20; // Below the number
                 
+                $this->logDraw('Render clean white label (TTF)', [
+                    'shape' => 'text',
+                    'text' => $unit['label'],
+                    'x' => $labelX,
+                    'y' => $labelY,
+                    'font' => $font,
+                    'font_size' => $labelSize,
+                    'width' => $labelWidth,
+                    'height' => $labelSize,
+                    'unit' => $unit['label'],
+                ]);
                 imagettftext($im, $labelSize, 0, $labelX, $labelY, $accentCol, $font, $unit['label']);
                 
                 // Draw colon separator (except for last unit)
                 if ($i < 3) {
                     $colonX = $unitX + $unitWidth / 2 - 5;
                     $colonY = $centerY - 5;
+                    $this->logDraw('Render clean white colon (TTF)', [
+                        'shape' => 'text',
+                        'text' => ':',
+                        'x' => $colonX,
+                        'y' => $colonY,
+                        'font' => $font,
+                        'font_size' => $fontSize,
+                    ]);
                     imagettftext($im, $fontSize, 0, $colonX, $colonY, $sepCol, $font, ':');
                 }
             }
@@ -843,6 +1067,16 @@ class TimerGifGenerator
                 $numberX = $unitX - $numberWidth / 2;
                 $numberY = $centerY - $numberHeight / 2 - 5;
                 
+                $this->logDraw('Render clean white number (GD built-in)', [
+                    'shape' => 'text',
+                    'text' => $numberText,
+                    'x' => $numberX,
+                    'y' => $numberY,
+                    'font' => 'built-in-5',
+                    'width' => $numberWidth,
+                    'height' => $numberHeight,
+                    'unit' => $unit['label'],
+                ]);
                 imagestring($im, $builtIn, $numberX, $numberY, $numberText, $textCol);
                 
                 // Draw label
@@ -851,12 +1085,31 @@ class TimerGifGenerator
                 $labelX = $unitX - $labelWidth / 2;
                 $labelY = $centerY + 10;
                 
+                $this->logDraw('Render clean white label (GD built-in)', [
+                    'shape' => 'text',
+                    'text' => $unit['label'],
+                    'x' => $labelX,
+                    'y' => $labelY,
+                    'font' => 'built-in-3',
+                    'width' => $labelWidth,
+                    'height' => $labelHeight,
+                    'unit' => $unit['label'],
+                ]);
                 imagestring($im, $labelBuiltIn, $labelX, $labelY, $unit['label'], $accentCol);
                 
                 // Draw colon
                 if ($i < 3) {
                     $colonX = $unitX + $unitWidth / 2 - 3;
                     $colonY = $centerY - 3;
+                    $this->logDraw('Render clean white colon (GD built-in)', [
+                        'shape' => 'text',
+                        'text' => ':',
+                        'x' => $colonX,
+                        'y' => $colonY,
+                        'font' => 'built-in-5',
+                        'width' => imagefontwidth($builtIn),
+                        'height' => imagefontheight($builtIn),
+                    ]);
                     imagestring($im, $builtIn, $colonX, $colonY, ':', $sepCol);
                 }
             }
@@ -865,6 +1118,12 @@ class TimerGifGenerator
 
     private function drawCircle($im, int $centerX, int $centerY, int $radius, int $color, bool $filled = true): void
     {
+        $this->logDraw('Draw circle', [
+            'shape' => $filled ? 'circle_filled' : 'circle_outline',
+            'center_x' => $centerX,
+            'center_y' => $centerY,
+            'radius' => $radius,
+        ]);
         if ($filled) {
             imagefilledellipse($im, $centerX, $centerY, $radius * 2, $radius * 2, $color);
         } else {
@@ -878,6 +1137,15 @@ class TimerGifGenerator
         for ($angle = 0; $angle < 360; $angle += 10) {
             $x = $centerX + $radius * cos(deg2rad($angle));
             $y = $centerY + $radius * sin(deg2rad($angle));
+            $this->logDraw('Draw dotted circle point', [
+                'shape' => 'circle_dot',
+                'center_x' => $centerX,
+                'center_y' => $centerY,
+                'radius' => $radius,
+                'dot_x' => $x,
+                'dot_y' => $y,
+                'angle' => $angle,
+            ]);
             imagefilledellipse($im, $x, $y, 3, 3, $color);
         }
     }
@@ -889,6 +1157,15 @@ class TimerGifGenerator
             $x = $centerX + $radius * cos(deg2rad($angle));
             $y = $centerY + $radius * sin(deg2rad($angle));
             if ($angle % 10 < 5) {
+                $this->logDraw('Draw dashed circle segment', [
+                    'shape' => 'circle_dash',
+                    'center_x' => $centerX,
+                    'center_y' => $centerY,
+                    'radius' => $radius,
+                    'dot_x' => $x,
+                    'dot_y' => $y,
+                    'angle' => $angle,
+                ]);
                 imagefilledellipse($im, $x, $y, 2, 2, $color);
             }
         }
@@ -899,6 +1176,13 @@ class TimerGifGenerator
         // Simple gradient effect
         for ($r = $radius; $r > 0; $r--) {
             $ratio = $r / $radius;
+            $this->logDraw('Draw gradient circle ring', [
+                'shape' => 'circle_ring',
+                'center_x' => $centerX,
+                'center_y' => $centerY,
+                'radius' => $r,
+                'ratio' => $ratio,
+            ]);
             $color = imagecolorallocate($im, 
                 (int) (($ratio * 255) + ((1 - $ratio) * 0)),
                 (int) (($ratio * 255) + ((1 - $ratio) * 0)),
@@ -928,6 +1212,16 @@ class TimerGifGenerator
         if (is_file($font)) {
             $centerY = (int) ($height / 2 + $fontSize / 2);
             $centerX = (int) ($width / 2 - $this->textBoxWidth($msg, $font, $fontSize) / 2);
+            $this->logDraw('Render final message (TTF)', [
+                'shape' => 'text',
+                'text' => $msg,
+                'x' => $centerX,
+                'y' => $centerY,
+                'font' => $font,
+                'font_size' => $fontSize,
+                'width' => $this->textBoxWidth($msg, $font, $fontSize),
+                'height' => $fontSize,
+            ]);
             imagettftext($im, $fontSize, 0, $centerX, $centerY, $textCol, $font, $msg);
         } else {
             $builtIn = 5;
@@ -935,6 +1229,15 @@ class TimerGifGenerator
             $textHeight = imagefontheight($builtIn);
             $x = (int) (($width - $textWidth) / 2);
             $y = (int) (($height - $textHeight) / 2);
+            $this->logDraw('Render final message (GD built-in)', [
+                'shape' => 'text',
+                'text' => $msg,
+                'x' => $x,
+                'y' => $y,
+                'font' => 'built-in-5',
+                'width' => $textWidth,
+                'height' => $textHeight,
+            ]);
             imagestring($im, $builtIn, $x, $y, $msg, $textCol);
         }
 
@@ -944,12 +1247,33 @@ class TimerGifGenerator
                 $textWidth = $this->textBoxWidth($customText, $font, $smallSize);
                 $x = max(5, (int) (($width - $textWidth) / 2));
                 $y = $textPosition === 'top' ? (int) (10 + $smallSize) : (int) ($height - 10);
+                $this->logDraw('Render final frame custom text (TTF)', [
+                    'shape' => 'text',
+                    'text' => $customText,
+                    'x' => $x,
+                    'y' => $y,
+                    'font' => $font,
+                    'font_size' => $smallSize,
+                    'width' => $textWidth,
+                    'height' => $smallSize,
+                    'position' => $textPosition,
+                ]);
                 imagettftext($im, $smallSize, 0, $x, $y, $textCol, $font, $customText);
             } else {
                 $builtIn = 3;
                 $textWidth = imagefontwidth($builtIn) * strlen($customText);
                 $x = max(5, (int) (($width - $textWidth) / 2));
                 $y = $textPosition === 'top' ? 5 : (int) ($height - imagefontheight($builtIn) - 5);
+                $this->logDraw('Render final frame custom text (GD built-in)', [
+                    'shape' => 'text',
+                    'text' => $customText,
+                    'x' => $x,
+                    'y' => $y,
+                    'font' => 'built-in-3',
+                    'width' => $textWidth,
+                    'height' => imagefontheight($builtIn),
+                    'position' => $textPosition,
+                ]);
                 imagestring($im, $builtIn, $x, $y, $customText, $textCol);
             }
         }
@@ -963,6 +1287,15 @@ class TimerGifGenerator
             if ($bw > 0) {
                 if (function_exists('imagesetthickness')) { imagesetthickness($im, $bw); }
                 imagerectangle($im, (int) floor($bw/2), (int) floor($bw/2), $width - 1 - (int) floor($bw/2), $height - 1 - (int) floor($bw/2), $brdCol);
+                $this->logDraw('Final frame border', [
+                    'shape' => 'rectangle_border',
+                    'x' => (int) floor($bw / 2),
+                    'y' => (int) floor($bw / 2),
+                    'width' => $width - (int) floor($bw / 2),
+                    'height' => $height - (int) floor($bw / 2),
+                    'thickness' => $bw,
+                    'color' => $skin['borderColor'] ?? '#FFFFFF',
+                ]);
                 if (function_exists('imagesetthickness')) { imagesetthickness($im, 1); }
             }
         }
@@ -972,6 +1305,15 @@ class TimerGifGenerator
         $pngData = ob_get_clean();
         imagedestroy($im);
         return $pngData;
+    }
+
+    private function logDraw(string $title, array $context = []): void
+    {
+        try {
+            Log::channel('timer_draw')->info($title, $context);
+        } catch (\Throwable $e) {
+            // Never allow logging failures to break rendering
+        }
     }
 
     private function encodeAnimatedGif(array $pngFrames, string $outputPath, int $totalSeconds): void
@@ -1055,6 +1397,14 @@ class TimerGifGenerator
     {
         // Clamp radius
         $r = max(0, min((int) floor(min($w, $h) / 2), $r));
+        $this->logDraw('Draw rounded rectangle', [
+            'shape' => 'rounded_rectangle',
+            'x' => $x,
+            'y' => $y,
+            'width' => $w,
+            'height' => $h,
+            'radius' => $r,
+        ]);
         // Center
         imagefilledrectangle($im, $x + $r, $y, $x + $w - $r, $y + $h, $color);
         imagefilledrectangle($im, $x, $y + $r, $x + $w, $y + $h - $r, $color);
