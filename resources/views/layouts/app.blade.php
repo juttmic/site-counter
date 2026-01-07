@@ -74,7 +74,7 @@
                                 </a>
                                 <nav class="d-none d-md-flex align-items-center gap-3">
                                     <a href="{{ route('dashboard') }}" class="text-decoration-none fw-semibold {{ request()->routeIs('dashboard') ? 'text-primary' : 'text-dark' }}">Dashboard</a>
-                                    <a href="{{ route('timers.create') }}" class="text-decoration-none fw-semibold {{ request()->routeIs('timers.create') ? 'text-primary' : 'text-dark' }}">Create New Counter</a>
+                                    {{-- <a href="{{ route('timers.create') }}" class="text-decoration-none fw-semibold {{ request()->routeIs('timers.create') ? 'text-primary' : 'text-dark' }}">Create New Counter</a> --}}
                                 </nav>
                                 <div class="flex-grow-1 d-none d-md-block">
                                     {{ $header ?? '' }}
@@ -136,9 +136,9 @@
                                     <a href="{{ route('dashboard') }}" class="d-flex align-items-center text-decoration-none {{ request()->routeIs('dashboard') ? 'text-primary fw-semibold' : 'text-dark' }}">
                                         <i class="bi bi-speedometer2 me-2"></i> Dashboard
                                     </a>
-                                    <a href="{{ route('timers.create') }}" class="d-flex align-items-center text-decoration-none {{ request()->routeIs('timers.create') ? 'text-primary fw-semibold' : 'text-dark' }}">
+                                    {{-- <a href="{{ route('timers.create') }}" class="d-flex align-items-center text-decoration-none {{ request()->routeIs('timers.create') ? 'text-primary fw-semibold' : 'text-dark' }}">
                                         <i class="bi bi-plus-square me-2"></i> Create New Counter
-                                    </a>
+                                    </a> --}}
                                 </nav>
                                 <div class="border-top pt-2">
                                     <form method="POST" action="{{ route('logout') }}">

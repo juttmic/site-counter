@@ -7,12 +7,17 @@
         </div> --}}
     </x-slot>
 
-    <div class="py-4 py-md-5">
+    <div class="py-2 py-md-3">
         <div class="container-fluid">
+          <div class="" style="display: flex;
+    flex-direction: row;
+    justify-content: end;
+    padding-bottom: 0.5rem;"><a href="{{ route('timers.create') }}" class="btn btn-primary text-decoration-none fw-semibold {{ request()->routeIs('timers.create') ? 'text-primary' : 'text-dark' }}" style="color:white !important">Create New</a>
+                                </div>
             <div class="rounded">
                 <div class="">
                     @if(isset($timers) && $timers->isEmpty())
-                        <div class="alert alert-info">No timers yet. Create your first one!</div>
+                        <div class="alert alert-info">No counters yet. Create your first one!</div>
                     @else
                         <div class="row g-3">
                             @foreach($timers as $timer)
