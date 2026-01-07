@@ -482,7 +482,7 @@
                                     <input type="datetime-local" name="target_datetime" class="form-control"
                                            min="{{ now()->format('Y-m-d\\TH:i') }}"
                                            value="{{ old('target_datetime', $isEdit && $timer->target_datetime ? $timer->target_datetime->format('Y-m-d\\TH:i') : ($isEdit ? '' : now()->addDays(3)->format('Y-m-d\\TH:i'))) }}">
-                                           <div class="form-text small">Select a target date and time.</div>
+                                           <div class="form-text small">Select a target date and time. Must be in future</div>
                                 </div>
 
                                 <div id="duration_input" class="{{ ($isEdit && $timer->timer_type !== 'reload_based') || !$isEdit ? 'd-none' : '' }}">
