@@ -482,14 +482,14 @@
                                     <input type="datetime-local" name="target_datetime" class="form-control"
                                            min="{{ now()->format('Y-m-d\\TH:i') }}"
                                            value="{{ old('target_datetime', $isEdit && $timer->target_datetime ? $timer->target_datetime->format('Y-m-d\\TH:i') : ($isEdit ? '' : now()->addDays(3)->format('Y-m-d\\TH:i'))) }}">
-                                           <div class="form-text small">Select date.</div>
+                                           <div class="form-text small">Select a target date and time.</div>
                                 </div>
 
                                 <div id="duration_input" class="{{ ($isEdit && $timer->timer_type !== 'reload_based') || !$isEdit ? 'd-none' : '' }}">
                                     {{-- <label class="form-label">Duration (seconds)</label> --}}
                                     <input type="number" name="duration_seconds" class="form-control" min="1" max="604800"
                                            value="{{ old('duration_seconds', $timer->duration_seconds ?? '') }}">
-                                           <div class="form-text small">Numbwer of seconds.</div>
+                                           <div class="form-text small">Enter seconds for a fresh countdown on reload.</div>
                                 </div>
                                     </div>
                                 </div>
