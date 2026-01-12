@@ -456,15 +456,15 @@
                                 </div>
 
                                 <div class="row g-3 mt-1">
-                                    <label class="form-label">Counter Type</label>
+                                    <label class="form-label">Counter Expiry</label>
                                     <div class="col-12 col-sm-3 type-pill" style="
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;">
                                         <div class="toggle-pill-group" data-toggle-select="timer_type">
-                                            <button type="button" class="toggle-pill" data-value="fixed_date">FIXED</button>
-                                            <button type="button" class="toggle-pill" data-value="reload_based">RELOAD</button>
+                                            <button type="button" class="toggle-pill" data-value="fixed_date">Ends</button>
+                                            <button type="button" class="toggle-pill" data-value="reload_based">EverGreen</button>
                                         </div>
                                         <select name="timer_type" id="timer_type" class="form-select d-none" aria-hidden="true" onchange="toggleInputs()">
                                             <option value="fixed_date" {{ ($isEdit && $timer->timer_type === 'fixed_date') || !$isEdit ? 'selected' : '' }}>Fixed Date</option>
@@ -482,14 +482,14 @@
                                     <input type="datetime-local" name="target_datetime" class="form-control"
                                            min="{{ now()->format('Y-m-d\\TH:i') }}"
                                            value="{{ old('target_datetime', $isEdit && $timer->target_datetime ? $timer->target_datetime->format('Y-m-d\\TH:i') : ($isEdit ? '' : now()->addDays(3)->format('Y-m-d\\TH:i'))) }}">
-                                           <div class="form-text small">Select a target date and time. Must be in future</div>
+                                           <div class="form-text small">Select the date and time when the counter stops.</div>
                                 </div>
 
                                 <div id="duration_input" class="{{ ($isEdit && $timer->timer_type !== 'reload_based') || !$isEdit ? 'd-none' : '' }}">
                                     {{-- <label class="form-label">Duration (seconds)</label> --}}
                                     <input type="number" name="duration_seconds" class="form-control" min="1" max="604800"
                                            value="{{ old('duration_seconds', $timer->duration_seconds ?? '') }}">
-                                           <div class="form-text small">Enter seconds for a fresh countdown on reload.</div>
+                                           <div class="form-text small">Enter how long the counter runs before restarting e.g. Enter 120 for 2 minutes.</div>
                                 </div>
                                     </div>
                                 </div>

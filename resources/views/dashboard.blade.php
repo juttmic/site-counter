@@ -25,22 +25,21 @@
                                 <div class="card shadow-sm border-0 h-100">
                                   <div class="card-body d-flex flex-column justify-content-between">
                                     <!-- Title -->
+                                    <div>
+                                      <span class="badge {{ $timer->status === 'active' ? 'bg-success' : 'bg-danger' }}">
+                                        {{ ucfirst($timer->status) }}
+                                      </span>
+                                    </div>
                                     <h5 class="card-title fw-bold text-dark mb-2">{{ $timer->title }}</h5>
                               
                                     <!-- Metadata -->
                                     <div class="small text-muted mb-3">
                                       <div class="mb-1">
-                                        <span class="badge bg-secondary">{{ ucwords( str_replace('_', ' ', $timer->timer_type)) }}</span>
-                                      </div>
-                                      <div class="mb-1">
-                                        Skin:
-                                        <span class="text-dark fw-semibold">{{ $timer->skin }}</span>
-                                      </div>
-                                      <div>
-                                        Status:
-                                        <span class="badge {{ $timer->status === 'active' ? 'bg-success' : 'bg-danger' }}">
-                                          {{ ucfirst($timer->status) }}
-                                        </span>
+                                        @if($timer->timer_type == 'fixed_date' && $timer->target_datetime)
+                                          <span class="badge bg-secondary">Ends {{ $timer->target_datetime->format('M d, Y H:i') }}</span>
+                                        @else
+                                          <span class="badge bg-secondary">Evergreen</span>
+                                        @endif
                                       </div>
                                     </div>
                               
