@@ -25,12 +25,15 @@
                                 <div class="card shadow-sm border-0 h-100">
                                   <div class="card-body d-flex flex-column justify-content-between">
                                     <!-- Title -->
+                                    <h5 class="card-title fw-bold text-dark mb-2" style="    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;">{{ $timer->title }}</h5>
                                     <div>
                                       <span class="badge {{ $timer->status === 'active' ? 'bg-success' : 'bg-danger' }}">
                                         {{ ucfirst($timer->status) }}
                                       </span>
                                     </div>
-                                    <h5 class="card-title fw-bold text-dark mb-2">{{ $timer->title }}</h5>
+                                    
                               
                                     <!-- Metadata -->
                                     <div class="small text-muted mb-3">
@@ -55,18 +58,18 @@
                                     </div>
                               
                                     <!-- Actions -->
-                                    <div class="mt-3 d-flex justify-content-end align-items-center">
+                                    <div class="mt-3 d-flex justify-content-between align-items-center">
                                       <div class="btn-group" role="group">
                                         @php($embedCopyUrl = $timer->gif_url ? url('/gettimer/'.$timer->user_id.'/'.pathinfo($timer->gif_url, PATHINFO_FILENAME)).'.gif' : null)
                                         <a href="{{ route('timers.preview', $timer) }}" class="btn btn-outline-secondary btn-sm" title="Preview">
                                           <i class="bi bi-eye"></i>
                                         </a>
                                         @if($embedCopyUrl && $timer->status === 'active')
-                                          <button type="button" class="btn btn-outline-secondary btn-sm copy-embed-btn copy-embed-btn-{{ $timer->id }}" title="Copy code" data-embed-url="{{ $embedCopyUrl }}" style="margin-left: 2px;">
+                                          <button type="button" class="btn btn-outline-secondary btn-sm copy-embed-btn copy-embed-btn-{{ $timer->id }}" title="Embed code" data-embed-url="{{ $embedCopyUrl }}" style="margin-left: 2px;">
                                             <i class="bi bi-clipboard"></i>
                                           </button>
                                         @else
-                                          <button type="button" class="btn btn-outline-secondary btn-sm copy-embed-btn copy-embed-btn-{{ $timer->id }} d-none" title="Copy code" data-embed-url="" style="margin-left: 2px;">
+                                          <button type="button" class="btn btn-outline-secondary btn-sm copy-embed-btn copy-embed-btn-{{ $timer->id }} d-none" title="Embed code" data-embed-url="" style="margin-left: 2px;">
                                             <i class="bi bi-clipboard"></i>
                                           </button>
                                         @endif
@@ -90,15 +93,15 @@
                                             </span>
                                           </button>
                                         @endif
-                                        <form action="{{ route('timers.destroy', $timer) }}" method="POST" data-confirm="Delete this counter?" class="d-inline">
-                                          @csrf
-                                          @method('DELETE')
-                                          <button type="submit" class="btn btn-outline-danger btn-sm" title="Delete" style="    border-radius: 0px 5px 5px 0px;
-    margin-left: 2px;">
-                                            <i class="bi bi-trash"></i>
-                                          </button>
-                                        </form>
                                       </div>
+                                      <form action="{{ route('timers.destroy', $timer) }}" method="POST" data-confirm="Delete this counter?" class="d-inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-outline-danger btn-sm" title="Delete" style="    border-radius: 5px;
+  margin-left: 2px;">
+                                          <i class="bi bi-trash"></i>
+                                        </button>
+                                      </form>
                                     </div>
                                   </div>
                                 </div>

@@ -18,14 +18,7 @@
     <!-- Navigation Menu -->
     <nav class="flex-grow-1 overflow-y-auto py-3">
         <ul class="list-unstyled px-2 mb-0">
-            <li class="mb-1">
-                <a href="{{ route('dashboard') }}" 
-                   class="d-flex align-items-center px-3 py-2 rounded text-decoration-none {{ request()->routeIs('dashboard') ? 'bg-light text-dark fw-medium' : 'text-dark' }}"
-                   title="Dashboard">
-                    <i class="bi bi-speedometer2 me-3"></i>
-                    <span class="sidebar-text">Dashboard</span>
-                </a>
-            </li>
+            {{-- Dashboard link removed --}}
             <li class="mb-1">
                 <a href="{{ route('timers.create') }}" 
                    class="d-flex align-items-center px-3 py-2 rounded text-decoration-none {{ request()->routeIs('timers.create') ? 'bg-light text-dark fw-medium' : 'text-dark' }}"
@@ -80,14 +73,7 @@
     <div class="offcanvas-body">
         <nav class="mb-3">
             <ul class="list-unstyled mb-0">
-                <li class="mb-2">
-                    <a href="{{ route('dashboard') }}" 
-                       class="d-flex align-items-center px-3 py-2 rounded text-decoration-none {{ request()->routeIs('dashboard') ? 'bg-light text-dark fw-medium' : 'text-dark' }}"
-                       data-bs-dismiss="offcanvas">
-                        <i class="bi bi-speedometer2 me-3"></i>
-                        Dashboard
-                    </a>
-                </li>
+                {{-- Dashboard link removed --}}
                 <li class="mb-2">
                     <a href="{{ route('timers.create') }}" 
                        class="d-flex align-items-center px-3 py-2 rounded text-decoration-none {{ request()->routeIs('timers.create') ? 'bg-light text-dark fw-medium' : 'text-dark' }}"
@@ -138,10 +124,15 @@
         <a href="{{ route('dashboard') }}" class="text-decoration-none text-dark fw-semibold">
             {{ config('app.name', 'TimerGIF App') }}
         </a>
-        <button onclick="toggleTheme()" type="button" class="btn btn-link text-dark p-2">
-            <i class="bi bi-moon-stars d-none dark-mode-icon"></i>
-            <i class="bi bi-sun light-mode-icon"></i>
-        </button>
+        <div class="d-flex align-items-center gap-2">
+            <a href="{{ route('timers.create') }}" class="btn btn-primary btn-sm">
+                <i class="bi bi-plus-lg me-1"></i> New
+            </a>
+            <button onclick="toggleTheme()" type="button" class="btn btn-link text-dark p-2">
+                <i class="bi bi-moon-stars d-none dark-mode-icon"></i>
+                <i class="bi bi-sun light-mode-icon"></i>
+            </button>
+        </div>
     </div>
 </div>
 

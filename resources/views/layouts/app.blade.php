@@ -73,8 +73,7 @@
                                     <x-application-logo class="d-block" style="height: 32px; width: auto;" />
                                 </a>
                                 <nav class="d-none d-md-flex align-items-center gap-3">
-                                    <a href="{{ route('dashboard') }}" class="text-decoration-none fw-semibold {{ request()->routeIs('dashboard') ? 'text-primary' : 'text-dark' }}">Dashboard</a>
-                                    {{-- <a href="{{ route('timers.create') }}" class="text-decoration-none fw-semibold {{ request()->routeIs('timers.create') ? 'text-primary' : 'text-dark' }}">Create New Counter</a> --}}
+                                    {{-- Dashboard link removed --}}
                                 </nav>
                                 <div class="flex-grow-1 d-none d-md-block">
                                     {{ $header ?? '' }}
@@ -84,6 +83,11 @@
                                 <button class="btn btn-outline-secondary btn-sm d-md-none" type="button" data-bs-toggle="collapse" data-bs-target="#mobileHeaderNav" aria-expanded="false" aria-controls="mobileHeaderNav" aria-label="Toggle navigation">
                                     <i class="bi bi-list"></i>
                                 </button>
+                                <a href="{{ route('timers.create') }}"
+                                   class="btn btn-primary btn-sm d-none d-md-inline-flex align-items-center justify-content-center"
+                                   aria-label="Create new counter">
+                                    <i class="bi bi-plus-lg me-1"></i>
+                                </a>
                                 <button onclick="toggleTheme()" 
                                         type="button" 
                                         class="btn btn-outline-secondary btn-sm d-none d-md-inline-flex align-items-center justify-content-center"
@@ -91,6 +95,7 @@
                                     <i class="bi bi-sun light-mode-icon"></i>
                                     <i class="bi bi-moon-stars dark-mode-icon"></i>
                                 </button>
+                                
                                 <div class="dropdown d-none d-md-block">
                                     <button class="btn btn-outline-secondary btn-sm d-flex align-items-center justify-content-center rounded-circle p-0" type="button" id="userMenuDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="width: 38px; height: 38px;">
                                         <span class="fw-semibold text-uppercase small d-flex align-items-center justify-content-center" style="width: 100%; height: 100%;">{{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}</span>
@@ -133,12 +138,10 @@
                                     </button>
                                 </div>
                                 <nav class="d-flex flex-column gap-2">
-                                    <a href="{{ route('dashboard') }}" class="d-flex align-items-center text-decoration-none {{ request()->routeIs('dashboard') ? 'text-primary fw-semibold' : 'text-dark' }}">
-                                        <i class="bi bi-speedometer2 me-2"></i> Dashboard
+                                    {{-- Dashboard link removed --}}
+                                    <a href="{{ route('timers.create') }}" class="d-flex align-items-center text-decoration-none {{ request()->routeIs('timers.create') ? 'text-primary fw-semibold' : 'text-dark' }}">
+                                        <i class="bi bi-plus-square me-2"></i> Create Ndew Counter
                                     </a>
-                                    {{-- <a href="{{ route('timers.create') }}" class="d-flex align-items-center text-decoration-none {{ request()->routeIs('timers.create') ? 'text-primary fw-semibold' : 'text-dark' }}">
-                                        <i class="bi bi-plus-square me-2"></i> Create New Counter
-                                    </a> --}}
                                 </nav>
                                 <div class="border-top pt-2">
                                     <form method="POST" action="{{ route('logout') }}">
