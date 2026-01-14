@@ -382,6 +382,17 @@
     }
 
   }
+
+  .type-toggle .toggle-pill-group {
+    width: 85% !important;
+  }
+  .type-toggle button {
+    font-size: 20px !important;
+    width: 50% !important;
+  }
+  #preview_placeholder {
+    /* display: none !important; */
+  }
 </style>
 <div class="py-1" style="border: 0px solid red; display: flex; justify-content: space-between; gap: 0.5rem; padding: inherit;">
   @if(isset($timer))
@@ -457,10 +468,9 @@
 
                                 <div class="row g-3 mt-1">
                                     <label class="form-label">Counter Expiry</label>
-                                    <div class="col-12 col-sm-3 type-pill" style="
+                                    <div class="col-12 col-sm-6 type-pill type-toggle" style="
     display: flex;
     flex-direction: column;
-    justify-content: center;
     align-items: center;">
                                         <div class="toggle-pill-group" data-toggle-select="timer_type">
                                             <button type="button" class="toggle-pill" data-value="fixed_date">Ends</button>
@@ -471,7 +481,7 @@
                                             <option value="reload_based" {{ $isEdit && $timer->timer_type === 'reload_based' ? 'selected' : '' }}>Reload Based</option>
                                         </select>
                                     </div>
-                                    <div class="col-12 col-sm-9" style="
+                                    <div class="col-12 col-sm-6" style="
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -563,12 +573,12 @@
                         </div>
 
                         <!-- Customize skin (grouped fields) -->
-                        <div class="card flex-grow-1">
+                        <div class="card">
                             <div class="card-header d-flex justify-content-between align-items-center py-2 collapsible-header" data-target="#customize_skin_body">
                                 <span class="fw-semibold small text-uppercase text-muted">Customize skin</span>
                                 <i class="bi bi-chevron-down collapse-icon"></i>
                             </div>
-                            <div class="card-body collapsible-body" id="customize_skin_body">
+                            <div class="card-body collapsible-body" id="customize_skin_body" style="padding:0px">
                                 <!-- Dynamic skin customization fields (rendered first, Dimensions will be first) -->
                                 <div id="skin_overrides_section" class="d-none">
                                     <div id="skin_fields" class="row g-3"></div>
@@ -621,8 +631,8 @@
                         <div id="embed_notice" class="mt-3 alert alert-warning py-2 px-3 small {{ $isEdit && isset($timer->status) && $timer->status !== 'active' ? '' : 'd-none' }}">
                           Activate this timer to generate a shareable embed code.
                       </div>
-                            <h3 class="h6 fw-semibold mb-3">Preview</h3>
-                            <div id="timer_preview" class="d-flex align-items-center justify-content-center rounded border bg-light mb-3" style="min-height: 260px;">
+                            {{-- <h3 class="h6 fw-semibold mb-3">Preview</h3> --}}
+                            <div id="timer_preview" class="d-flex align-items-center justify-content-center rounded mb-3" style="min-height: 260px;">
                                 <div id="preview_loader" class="text-center text-muted d-none">
                                     <div class="spinner-border text-primary mb-2" role="status" style="width: 3rem; height: 3rem;">
                                         <span class="visually-hidden">Loading...</span>
@@ -640,7 +650,7 @@
                                 </div>
                             </div>
                             <div>
-                              <button id="save_btn" type="button" class="btn btn-primary">Generate GIF</button>
+                              <button id="save_btn" type="button" class="btn btn-primary">Save Counter</button>
                             </div>
                             
                             
@@ -2136,7 +2146,7 @@ function startPreviewPolling(timerId) {
   if (frameImg) frameImg.classList.add('d-none');
   if (gifImg) gifImg.classList.add('d-none');
   if (placeholder) placeholder.classList.add('d-none');
-  if (loader) loader.classList.remove('d-none');
+  // if (loader) loader.classList.remove('d-none');
   
   // Update Swal loading message if Swal is already open
   if (Swal.isVisible()) {
