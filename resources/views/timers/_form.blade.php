@@ -497,8 +497,8 @@
 
                                 <div id="duration_input" class="{{ ($isEdit && $timer->timer_type !== 'reload_based') || !$isEdit ? 'd-none' : '' }}">
                                     {{-- <label class="form-label">Duration (seconds)</label> --}}
-                                    <input type="number" name="duration_seconds" class="form-control" min="1" max="604800"
-                                           value="{{ old('duration_seconds', $timer->duration_seconds ?? '') }}">
+                                    <input type="number" name="duration_seconds" class="form-control" min="0" max="604800"
+                                           value="{{ old('duration_seconds', $timer->duration_seconds ?? ($isEdit ? '' : '0')) }}">
                                            <div class="form-text small">Enter how long the counter runs before restarting e.g. Enter 120 for 2 minutes.</div>
                                 </div>
                                     </div>
@@ -682,8 +682,17 @@ if (!document.getElementById('fa-cdn')) {
 
 function toggleInputs() {
   const type = document.getElementById('timer_type').value;
-  document.getElementById('fixed_date_input').classList.toggle('d-none', type !== 'fixed_date');
-  document.getElementById('duration_input').classList.toggle('d-none', type !== 'reload_based');
+  const fixedDateInput = document.getElementById('fixed_date_input');
+  const durationInput = document.getElementById('duration_input');
+  const durationField = durationInput ? durationInput.querySelector('input[name="duration_seconds"]') : null;
+  
+  fixedDateInput.classList.toggle('d-none', type !== 'fixed_date');
+  durationInput.classList.toggle('d-none', type !== 'reload_based');
+  
+  // Set default value of 0 if switching to Evergreen and field is empty
+  if (type === 'reload_based' && durationField && (durationField.value === '' || durationField.value === null || durationField.value === undefined)) {
+    durationField.value = '0';
+  }
 }
 document.addEventListener('DOMContentLoaded', toggleInputs);
 
