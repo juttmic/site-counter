@@ -26,13 +26,22 @@
     },
     "fields": [
         {
+            "key": "background",
+            "label": "Background Color",
+            "type": "color",
+            "group": "GIF Appearance",
+            "groupOrder": 1,
+            "order": 1
+        },
+        {
             "key": "width",
             "label": "Width",
             "type": "number",
             "min": 100,
             "max": 2000,
             "step": 10,
-            "group": "overall"
+            "group": "GIF Appearance",
+            "order": 2
         },
         {
             "key": "height",
@@ -41,25 +50,23 @@
             "min": 50,
             "max": 1000,
             "step": 5,
-            "group": "overall"
-        },
-        {
-            "key": "background",
-            "label": "Background Color",
-            "type": "color",
-            "group": "overall"
+            "group": "GIF Appearance",
+            "order": 3
         },
         {
             "key": "separatorColor",
             "label": "Separator Color",
             "type": "color",
-            "group": "timer"
+            "group": "Counter.Separator & Box",
+            "groupOrder": 3
         },
         {
             "key": "textColor",
             "label": "Text Color",
             "type": "color",
-            "group": "timer"
+            "group": "Counter.Digits",
+            "groupOrder": 2,
+            "order": 1
         },
         {
             "key": "fontSize",
@@ -68,44 +75,46 @@
             "min": 8,
             "max": 200,
             "step": 1,
-            "group": "timer"
+            "group": "Counter.Digits",
+            "order": 2
         },
         {
             "key": "fontPath",
             "label": "Font",
             "type": "font",
-            "group": "overall"
+            "group": "GIF Appearance"
         },
         {
             "key": "showDays",
             "label": "Show Days",
             "type": "boolean",
-            "group": "timer"
+            "group": "Counter.Digits"
         },
         {
             "key": "showHours",
             "label": "Show Hours",
             "type": "boolean",
-            "group": "timer"
+            "group": "Counter.Digits"
         },
         {
             "key": "showMinutes",
             "label": "Show Minutes",
             "type": "boolean",
-            "group": "timer"
+            "group": "Counter.Digits"
         },
         {
             "key": "showSeconds",
             "label": "Show Seconds",
             "type": "boolean",
-            "group": "timer"
+            "group": "Counter.Digits"
         },
         {
             "key": "separator",
             "label": "Separator",
             "type": "text",
             "maxLength": 5,
-            "group": "timer"
+            "group": "Counter.Separator & Box",
+            "order": 1
         },
         {
             "key": "layout",
@@ -115,7 +124,7 @@
                 "horizontal",
                 "vertical"
             ],
-            "group": "timer"
+            "group": "Counter.Digits"
         },
         {
             "key": "animation",
@@ -126,26 +135,27 @@
                 "fade",
                 "slide"
             ],
-            "group": "timer"
+            "group": "Counter.Digits"
         },
         {
             "key": "finalMessage",
             "label": "Final Message",
             "type": "text",
             "maxLength": 64,
-            "group": "final"
+            "group": "Final Screen",
+            "groupOrder": 4
         },
         {
             "key": "finalBackground",
             "label": "Final Background",
             "type": "color",
-            "group": "final"
+            "group": "Final Screen"
         },
         {
             "key": "finalTextColor",
             "label": "Final Text Color",
             "type": "color",
-            "group": "final"
+            "group": "Final Screen"
         },
         {
             "key": "borderWidth",
@@ -154,13 +164,15 @@
             "min": 0,
             "max": 50,
             "step": 1,
-            "group": "overall"
+            "group": "GIF Appearance",
+            "order": 4
         },
         {
             "key": "borderColor",
             "label": "Border Color",
             "type": "color",
-            "group": "overall"
+            "group": "GIF Appearance",
+            "order": 5
         }
     ]
 }

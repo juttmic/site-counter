@@ -517,69 +517,69 @@
                             </div>
                         </div>
 
-                        <!-- Custom text settings -->
-                        <div class="card border shadow-sm">
-                            <div class="card-header bg-light py-2 collapsible-header" data-target="#custom_text_settings_body">
-                                <span class="text-uppercase text-muted fw-semibold small">Custom text settings ( Optional )</span>
-                                <i class="bi bi-chevron-down collapse-icon float-end"></i>
+                        <!-- Template (grouped fields) -->
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center py-2 collapsible-header" data-target="#template_body">
+                                <span class="fw-semibold small text-uppercase text-muted">Template</span>
+                                <i class="bi bi-chevron-down collapse-icon"></i>
                             </div>
-                            <div class="card-body collapsible-body" id="custom_text_settings_body">
-                                <div class="row g-3">
-                                    <div class="col-12 col-sm-6">
-                                        <label class="form-label small mb-1">Text Position</label>
-                                        <select name="text_position" class="form-select">
-                                            <option value="none" {{ ($isEdit && $timer->text_position === 'none') || !$isEdit ? 'selected' : '' }}>None</option>
-                                            <option value="top" {{ $isEdit && $timer->text_position === 'top' ? 'selected' : '' }}>Top</option>
-                                            <option value="bottom" {{ $isEdit && $timer->text_position === 'bottom' ? 'selected' : '' }}>Bottom</option>
-                                        </select>
+                            <div class="card-body collapsible-body" id="template_body" style="padding:1rem">
+                                <!-- Custom text settings -->
+                                <div class="card border shadow-sm mb-3">
+                                    <div class="card-header bg-light py-2 collapsible-header" data-target="#custom_text_settings_body">
+                                        <span class="text-uppercase text-muted fw-semibold small">Custom text settings ( Optional )</span>
+                                        <i class="bi bi-chevron-down collapse-icon float-end"></i>
                                     </div>
-                                    <div class="col-12 col-sm-6">
-                                        <label class="form-label small mb-1">Custom Text</label>
-                                        <input type="text" name="custom_text" class="form-control" maxlength="255" value="{{ old('custom_text', $timer->custom_text ?? '') }}">
-                                    </div>
-                                    <div class="col-12 col-sm-6">
-                                        @php
-                                            $customTextColor = old(
-                                                'customTextColor',
-                                                ($isEdit && is_array($timer->skin_overrides) && isset($timer->skin_overrides['customTextColor']))
-                                                    ? $timer->skin_overrides['customTextColor']
-                                                    : '#000000'
-                                            );
-                                        @endphp
-                                        <label class="form-label small mb-1">Custom Text Color</label>
-                                        <div class="modern-color-picker">
-                                            <div class="color-picker-swatch" style="--swatch-color: {{ $customTextColor }};"></div>
-                                            <div class="color-picker-input-wrapper">
-                                                <div class="color-picker-display">
-                                                    <span class="color-picker-hex">{{ strtoupper($customTextColor) }}</span>
-                                                    <i class="bi bi-palette color-picker-icon"></i>
+                                    <div class="card-body collapsible-body" id="custom_text_settings_body">
+                                        <div class="row g-3">
+                                            <div class="col-12 col-sm-6">
+                                                <label class="form-label small mb-1">Text Position</label>
+                                                <select name="text_position" class="form-select">
+                                                    <option value="none" {{ ($isEdit && $timer->text_position === 'none') || !$isEdit ? 'selected' : '' }}>None</option>
+                                                    <option value="top" {{ $isEdit && $timer->text_position === 'top' ? 'selected' : '' }}>Top</option>
+                                                    <option value="bottom" {{ $isEdit && $timer->text_position === 'bottom' ? 'selected' : '' }}>Bottom</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-12 col-sm-6">
+                                                <label class="form-label small mb-1">Custom Text</label>
+                                                <input type="text" name="custom_text" class="form-control" maxlength="255" value="{{ old('custom_text', $timer->custom_text ?? '') }}">
+                                            </div>
+                                            <div class="col-12 col-sm-6">
+                                                @php
+                                                    $customTextColor = old(
+                                                        'customTextColor',
+                                                        ($isEdit && is_array($timer->skin_overrides) && isset($timer->skin_overrides['customTextColor']))
+                                                            ? $timer->skin_overrides['customTextColor']
+                                                            : '#000000'
+                                                    );
+                                                @endphp
+                                                <label class="form-label small mb-1">Custom Text Color</label>
+                                                <div class="modern-color-picker">
+                                                    <div class="color-picker-swatch" style="--swatch-color: {{ $customTextColor }};"></div>
+                                                    <div class="color-picker-input-wrapper">
+                                                        <div class="color-picker-display">
+                                                            <span class="color-picker-hex">{{ strtoupper($customTextColor) }}</span>
+                                                            <i class="bi bi-palette color-picker-icon"></i>
+                                                        </div>
+                                                        <input type="color" name="customTextColor" class="color-picker-native" value="{{ $customTextColor }}">
+                                                    </div>
                                                 </div>
-                                                <input type="color" name="customTextColor" class="color-picker-native" value="{{ $customTextColor }}">
+                                            </div>
+                                            <div class="col-12 col-sm-6">
+                                                @php
+                                                    $overrides = ($isEdit && isset($timer) && is_array($timer->skin_overrides ?? null)) ? $timer->skin_overrides : [];
+                                                    $legacyMargin = $overrides['customTextMarginTop'] ?? 0;
+                                                    $distanceValue = old('customTextDistance', $overrides['customTextDistance'] ?? $legacyMargin ?? 0);
+                                                @endphp
+                                                <label class="form-label small mb-1">Distance from Counter</label>
+                                                <input type="number" name="customTextDistance" class="form-control form-control-sm" min="0" max="400" step="1" value="{{ $distanceValue }}">
+                                                <div class="form-text small">Space between the custom text and the counter.</div>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-12 col-sm-6">
-                                        @php
-                                            $overrides = ($isEdit && isset($timer) && is_array($timer->skin_overrides ?? null)) ? $timer->skin_overrides : [];
-                                            $legacyMargin = $overrides['customTextMarginTop'] ?? 0;
-                                            $distanceValue = old('customTextDistance', $overrides['customTextDistance'] ?? $legacyMargin ?? 0);
-                                        @endphp
-                                        <label class="form-label small mb-1">Distance from Counter</label>
-                                        <input type="number" name="customTextDistance" class="form-control form-control-sm" min="0" max="400" step="1" value="{{ $distanceValue }}">
-                                        <div class="form-text small">Space between the custom text and the counter.</div>
-                                    </div>
                                 </div>
-                            </div>
-                        </div>
 
-                        <!-- Customize skin (grouped fields) -->
-                        <div class="card">
-                            <div class="card-header d-flex justify-content-between align-items-center py-2 collapsible-header" data-target="#customize_skin_body">
-                                <span class="fw-semibold small text-uppercase text-muted">Customize skin</span>
-                                <i class="bi bi-chevron-down collapse-icon"></i>
-                            </div>
-                            <div class="card-body collapsible-body" id="customize_skin_body" style="padding:0px">
-                                <!-- Dynamic skin customization fields (rendered first, Dimensions will be first) -->
+                                <!-- Dynamic skin customization fields -->
                                 <div id="skin_overrides_section" class="d-none">
                                     <div id="skin_fields" class="row g-3"></div>
                                 </div>
@@ -1296,52 +1296,207 @@ function renderFields(metadata, savedOverrides = {}) {
   // Fields to hide but use defaults for
   // Note: accentColor is NOT hidden - it's needed for controlling tile/box/ring colors
   // Custom text fields live in the dedicated Custom Text settings card, not from skin JSON
-  const hiddenFields = new Set(['fontPath', 'font', 'showDays', 'showHours', 'showMinutes', 'showSeconds', 'layout', 'animation', 'customTextColor', 'customTextDistance', 'custom_text', 'text_position', 'finalBackground', 'finalTextColor', 'height', 'width']);
-  hiddenFields.forEach(key => {
+  // Note: If a field is explicitly listed in the fields array with a group, it should be shown.
+  // Only hide fields that are truly internal/not user-editable (fontPath, custom text fields)
+  // Fields like showDays, layout, animation, width, height can now be shown if specified in skin JSON
+  const alwaysHiddenFields = new Set(['fontPath', 'font', 'customTextColor', 'customTextDistance', 'custom_text', 'text_position', 'finalBackground', 'finalTextColor']);
+  alwaysHiddenFields.forEach(key => {
     if (savedOverrides[key] !== undefined) {
       currentHiddenOverrides[key] = savedOverrides[key];
     }
   });
   
-  // Filter out hidden fields
-  const visibleFields = fields.filter(field => !hiddenFields.has(field.key));
+  // Filter: Only hide fields that are in alwaysHiddenFields
+  // All other fields (including showDays, layout, animation, width, height if they're in the fields array) will be shown
+  const visibleFields = fields.filter(field => !alwaysHiddenFields.has(field.key));
   
   document.getElementById('skin_overrides_section').classList.toggle('d-none', visibleFields.length === 0);
 
-  // Order matters: Dimensions first, then others
-  const grouped = [
-    { key: 'overall', title: 'Dimensions', fields: [] },
-    { key: 'timer', title: 'Counter settings', fields: [] },
-    { key: 'custom', title: 'Custom text', fields: [] },
-    { key: 'final', title: 'Final screen', fields: [] },
-    { key: 'extra', title: 'Extra options', fields: [] },
-  ];
-  const groupMap = grouped.reduce((acc, group) => {
-    acc[group.key] = group;
-    return acc;
-  }, {});
+  // Multilevel group system: Parse group specification from field
+  // Supports: "GroupName", ["Group", "Subgroup"], "Group.Subgroup", ["Group", "Subgroup", "Subsubgroup"]
+  function parseGroupPath(groupSpec) {
+    if (!groupSpec) return null;
+    
+    if (Array.isArray(groupSpec)) {
+      return groupSpec.filter(g => g && g.trim()).map(g => g.trim());
+    }
+    
+    if (typeof groupSpec === 'string') {
+      // Support dot notation: "Group.Subgroup"
+      if (groupSpec.includes('.')) {
+        return groupSpec.split('.').map(g => g.trim()).filter(g => g);
+      }
+      // Single group name
+      return [groupSpec.trim()];
+    }
+    
+    return null;
+  }
 
+  // Build hierarchical group structure
+  function buildGroupTree(fields, defaults) {
+    const groupTree = {};
+    
+    // Fallback keys for fields without explicit groups
+    const gifAppearanceKeys = new Set(['background','borderwidth','bordercolor','outputwidth','outputheight']);
+    const counterDigitsKeys = new Set(['textcolor','fontsize','digitspacing','countdirection','refreshrate','pulsespeed']);
+    const counterSeparatorKeys = new Set(['separator','separatorcolor','accentcolor','boxcolor','tilecolor','ringcolor']);
+    const finalKeys = new Set(['finalmessage','finalbackground','finaltextcolor','finalscreentext','finalscreencolor']);
+    const extraKeys = new Set(['shadowcolor','glowcolor','blurstrength','outlinecolor','outlinewidth']);
+    
+    function getFallbackGroup(fieldKey) {
+      const key = fieldKey.toLowerCase();
+      if (finalKeys.has(key)) return ['Final Screen'];
+      if (extraKeys.has(key)) return ['Extra Options'];
+      if (gifAppearanceKeys.has(key)) return ['GIF Appearance'];
+      if (counterDigitsKeys.has(key)) return ['Counter', 'Digits'];
+      if (counterSeparatorKeys.has(key)) return ['Counter', 'Separator & Box'];
+      return ['GIF Appearance'];
+    }
+    
+    function ensureGroupPath(path) {
+      let current = groupTree;
+      for (let i = 0; i < path.length; i++) {
+        const name = path[i];
+        if (!current[name]) {
+          current[name] = {
+            name: name,
+            fields: [],
+            children: {},
+            groupOrder: null  // Track group order
+          };
+        }
+        if (i < path.length - 1) {
+          if (!current[name].children) {
+            current[name].children = {};
+          }
+          current = current[name].children;
+        }
+      }
+      return current[path[path.length - 1]];
+    }
+    
+    // Process fields with order support
+    // Add original index for fields without explicit order
+    fields.forEach((field, index) => {
+      // If field doesn't have an order property, use index (plus 1000 to allow room for explicit low orders)
+      if (field.order === undefined || field.order === null) {
+        field._originalIndex = index + 1000;
+      }
+      
+      let groupPath = parseGroupPath(field.group);
+      
+      // If no explicit group, use fallback logic
+      if (!groupPath || groupPath.length === 0) {
+        groupPath = getFallbackGroup(field.key);
+      }
+      
+      const group = ensureGroupPath(groupPath);
+      group.fields.push(field);
+      
+      // Track group order: groupOrder on a field controls the order of its immediate group/subgroup
+      // For "Counter.Digits", groupOrder controls "Digits" subgroup order within "Counter"
+      // For "GIF Appearance", groupOrder controls "GIF Appearance" group order among top-level groups
+      // Use the minimum groupOrder value from all fields in a group
+      if (field.groupOrder !== undefined && field.groupOrder !== null) {
+        const currentOrder = group.groupOrder;
+        if (currentOrder === null || field.groupOrder < currentOrder) {
+          group.groupOrder = field.groupOrder;
+        }
+      }
+    });
+    
+    // Sort fields within each group by order property
+    function sortFieldsInTree(node) {
+      // Sort fields by order (lower numbers first), then by original index
+      node.fields.sort((a, b) => {
+        const orderA = a.order !== undefined && a.order !== null ? a.order : a._originalIndex;
+        const orderB = b.order !== undefined && b.order !== null ? b.order : b._originalIndex;
+        return orderA - orderB;
+      });
+      
+      // Recursively sort children
+      Object.keys(node.children || {}).forEach(key => {
+        sortFieldsInTree(node.children[key]);
+      });
+    }
+    
+    // Calculate group order for parent groups based on their children
+    function calculateGroupOrders(node, level = 0) {
+      // Calculate order for this group: use its own groupOrder or minimum from children
+      if (node.groupOrder === null && node.children && Object.keys(node.children).length > 0) {
+        const childOrders = Object.values(node.children)
+          .map(child => child.groupOrder)
+          .filter(order => order !== null);
+        if (childOrders.length > 0) {
+          node.groupOrder = Math.min(...childOrders);
+        }
+      }
+      
+      // Recursively process children
+      Object.keys(node.children || {}).forEach(key => {
+        calculateGroupOrders(node.children[key], level + 1);
+      });
+    }
+    
+    // Sort all groups recursively
+    Object.keys(groupTree).forEach(key => {
+      calculateGroupOrders(groupTree[key]);
+      sortFieldsInTree(groupTree[key]);
+    });
+    
+    return groupTree;
+  }
+  
+  // Convert tree to flat list for rendering (preserving hierarchy)
+  function flattenGroupTree(tree, parentPath = []) {
+    const result = [];
+    // Get all groups and sort by groupOrder, then alphabetically
+    const groupNames = Object.keys(tree);
+    
+    // Sort groups: first by groupOrder (null/undefined last), then alphabetically
+    const sortedGroupNames = groupNames.sort((a, b) => {
+      const groupA = tree[a];
+      const groupB = tree[b];
+      const orderA = groupA.groupOrder !== null && groupA.groupOrder !== undefined ? groupA.groupOrder : 9999;
+      const orderB = groupB.groupOrder !== null && groupB.groupOrder !== undefined ? groupB.groupOrder : 9999;
+      
+      if (orderA !== orderB) {
+        return orderA - orderB;
+      }
+      // If same order, sort alphabetically
+      return a.localeCompare(b);
+    });
+    
+    sortedGroupNames.forEach(groupName => {
+      const group = tree[groupName];
+      const fullPath = [...parentPath, groupName];
+      const pathKey = fullPath.join('.');
+      
+      // Process children recursively (they will be sorted by their own groupOrder)
+      const children = group.children && Object.keys(group.children).length > 0
+        ? flattenGroupTree(group.children, fullPath)
+        : [];
+      
+      // Create group object (fields are already sorted by buildGroupTree)
+      const groupObj = {
+        path: fullPath,
+        pathKey: pathKey,
+        name: groupName,
+        title: groupName,
+        fields: group.fields || [], // Already sorted by order
+        children: children  // Already sorted by groupOrder
+      };
+      
+      result.push(groupObj);
+    });
+    
+    return result;
+  }
+
+  // Define field size keys for layout
   const smallKeys = new Set(['fontSize','separator','layout','animation','showDays','showHours','showMinutes','showSeconds','width','height','outputWidth','outputHeight','borderWidth','borderColor']);
   const marginKeys = new Set(['customTextDistance','textMarginTop','textMarginBottom','marginTop','marginBottom','labelMarginTop','labelMarginBottom']);
-  // Custom text fields are handled in their own section, not in dynamic groups
-  // Exclude them from dynamic grouping so they don't appear in skin fields
-  const customKeys = new Set([]); // Empty - custom text fields are handled in the Custom Text settings card
-  const timerKeys = new Set(['showdays','showhours','showminutes','showseconds','separator','layout','animation','digitspacing','countdirection','refreshrate','pulsespeed']);
-  const finalKeys = new Set(['finalmessage','finalbackground','finaltextcolor','finalscreentext','finalscreencolor']);
-  const extraKeys = new Set(['shadowcolor','glowcolor','blurstrength','outlinecolor','outlinewidth']);
-
-  const determineGroup = (field) => {
-    const explicit = (field.group || '').toLowerCase();
-    if (explicit && groupMap[explicit]) {
-      return groupMap[explicit];
-    }
-    const key = (field.key || '').toLowerCase();
-    if (customKeys.has(key)) return groupMap.custom;
-    if (finalKeys.has(key)) return groupMap.final;
-    if (timerKeys.has(key)) return groupMap.timer;
-    if (extraKeys.has(key)) return groupMap.extra;
-    return groupMap.overall;
-  };
 
   const createFieldInput = (field, value) => {
     const key = field.key;
@@ -1479,11 +1634,9 @@ function renderFields(metadata, savedOverrides = {}) {
     return (savedOverrides[key] !== undefined) ? savedOverrides[key] : defaults[key];
   };
 
-  visibleFields.forEach(field => {
-    const group = determineGroup(field) || groupMap.overall;
-    const value = resolveFieldValue(field);
-    group.fields.push({ field, value });
-  });
+  // Build hierarchical group tree from fields
+  const groupTree = buildGroupTree(visibleFields, defaults);
+  const grouped = flattenGroupTree(groupTree);
 
   // Read saved overrides to determine initial toggle state for final screen
   const savedOverridesForFinal = (() => {
@@ -1496,35 +1649,53 @@ function renderFields(metadata, savedOverrides = {}) {
   const showFinalMessage = !!savedOverridesForFinal.show_final_message;
   let finalCardRef = null;
 
-  grouped.forEach(group => {
-    // For final group, always show it (even if no fields) to include the toggle
-    if (!group.fields.length && group.key !== 'final') return;
+  // Recursive function to render groups and subgroups
+  function renderGroup(group, parentContainer, level = 0) {
+    // Skip empty groups (except for final which has special handling)
+    // But always render groups that have children (subgroups), even if they have no direct fields
+    const isFinalGroup = group.path.some(p => p.toLowerCase().includes('final'));
+    const hasChildren = group.children && group.children.length > 0;
+    if (!group.fields.length && !hasChildren && !isFinalGroup) return;
     
     const col = document.createElement('div');
     col.className = 'col-12';
     const card = document.createElement('div');
     card.className = 'card border shadow-sm mb-3';
+    const bodyId = `skin_group_${group.pathKey.replace(/\./g, '_').replace(/[^a-zA-Z0-9_]/g, '_')}`;
+    
     const header = document.createElement('div');
-    const bodyId = `skin_group_${group.key}`;
     header.className = 'card-header bg-light py-2 collapsible-header';
     header.dataset.target = `#${bodyId}`;
     header.innerHTML = `<span class="text-uppercase text-muted fw-semibold small">${group.title}</span><i class="bi bi-chevron-down collapse-icon float-end"></i>`;
+    
     const body = document.createElement('div');
     body.className = 'card-body collapsible-body';
     body.id = bodyId;
-    const row = document.createElement('div');
-    row.className = 'row g-3';
-    group.fields.forEach(({ field, value }) => {
-      row.appendChild(createFieldInput(field, value));
-    });
-
-    body.appendChild(row);
+    
+    // If this group has children (subgroups), render them first
+    if (group.children && group.children.length > 0) {
+      group.children.forEach(childGroup => {
+        renderGroup(childGroup, body, level + 1);
+      });
+    }
+    
+    // Add fields for this group
+    if (group.fields.length > 0) {
+      const row = document.createElement('div');
+      row.className = 'row g-3';
+      group.fields.forEach(field => {
+        const value = resolveFieldValue(field);
+        row.appendChild(createFieldInput(field, value));
+      });
+      body.appendChild(row);
+    }
+    
     card.appendChild(header);
     card.appendChild(body);
     col.appendChild(card);
 
-    // Insert the toggle just before the final card and control visibility
-    if (group.key === 'final') {
+    // Special handling for final screen group
+    if (isFinalGroup && level === 0) {
       const toggleCol = document.createElement('div');
       toggleCol.className = 'col-12 mb-0';
       toggleCol.innerHTML = `
@@ -1535,7 +1706,7 @@ function renderFields(metadata, savedOverrides = {}) {
           </label>
         </div>
       `;
-      fieldsWrap.appendChild(toggleCol);
+      parentContainer.appendChild(toggleCol);
 
       const toggleInput = toggleCol.querySelector('#show_final_message');
       if (toggleInput) {
@@ -1548,13 +1719,17 @@ function renderFields(metadata, savedOverrides = {}) {
         });
       }
 
-      // Hide the final section when toggle is off
       col.classList.toggle('d-none', !showFinalMessage);
       card.classList.toggle('d-none', !showFinalMessage);
       finalCardRef = col;
     }
 
-    fieldsWrap.appendChild(col);
+    parentContainer.appendChild(col);
+  }
+
+  // Render all groups
+  grouped.forEach(group => {
+    renderGroup(group, fieldsWrap, 0);
   });
 
   const outputHeightField = findFieldByKey('outputHeight');
