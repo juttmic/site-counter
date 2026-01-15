@@ -1016,11 +1016,17 @@ function renderFields(metadata, savedOverrides = {}) {
     // Skip empty groups (except for final which has special handling)
     // But always render groups that have children (subgroups), even if they have no direct fields
     const isFinalGroup = group.path.some(p => p.toLowerCase().includes('final'));
+    const isVisibilityGroup = group.name === 'Visibility' || group.path.some(p => p.toLowerCase() === 'visibility');
     const hasChildren = group.children && group.children.length > 0;
     if (!group.fields.length && !hasChildren && !isFinalGroup) return;
     
     const col = document.createElement('div');
     col.className = 'col-12';
+    // Hide Visibility group by default - fields will still be processed and applied but not shown to user
+    if (isVisibilityGroup) {
+      col.classList.add('d-none');
+    }
+    
     const card = document.createElement('div');
     card.className = 'card border shadow-sm mb-3';
     const bodyId = `skin_group_${group.pathKey.replace(/\./g, '_').replace(/[^a-zA-Z0-9_]/g, '_')}`;
@@ -1041,7 +1047,7 @@ function renderFields(metadata, savedOverrides = {}) {
       });
     }
     
-    // Add fields for this group
+    // Add fields for this group (even if hidden, fields are still created so their values are applied)
     if (group.fields.length > 0) {
       const row = document.createElement('div');
       row.className = 'row g-3';
