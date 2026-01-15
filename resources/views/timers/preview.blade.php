@@ -1,5 +1,11 @@
 <x-app-layout>
-    <div class="py-5">
+    <style>
+        .dark .prev_btn {
+            color: #fff;
+            border-color: #fff;
+        }
+    </style>
+    <div class="">
         <div class="container-fluid" style="max-width: 1100px;">
 
             {{-- Header --}}
@@ -11,14 +17,14 @@
 
                 <div class="d-flex gap-2">
                     <a href="{{ route('timers.edit', $timer) }}"
-                       class="btn btn-outline-primary btn-sm">
+                       class="btn btn-outline-primary btn-sm prev_btn" style="border-radius: 50%;">
                         <i class="bi bi-pencil"></i>
                     </a>
                     @if($timer->status === 'active')
                         @php(
                             $embedUrl = url('/gettimer/'.$timer->user_id.'/'.pathinfo($timer->gif_url, PATHINFO_FILENAME)).'.gif'
                         )
-                    <button id="preview_embed_copy" class="btn btn-outline-primary btn-sm"><i class="bi bi-copy"></i></button>
+                    <button id="preview_embed_copy" class="btn btn-outline-primary btn-sm prev_btn" style="border-radius: 50%;"><i class="bi bi-copy"></i></button>
                             
                                 <input
                                     id="preview_embed_input"
@@ -30,7 +36,7 @@
                                     readonly
                                 >
                     @else
-                    <button id="preview_embed_copy" class="btn btn-outline-primary btn-sm"><i class="bi bi-copy"></i></button>
+                    <button id="preview_embed_copy"  style="border-radius: 50%;" class="btn btn-outline-primary btn-sm prev_btn"><i class="bi bi-copy"></i></button>
                     @endif
                 </div>
             </div>

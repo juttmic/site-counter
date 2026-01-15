@@ -384,7 +384,7 @@
   }
 
   .type-toggle-top .toggle-pill-group {
-    width: 22% !important;
+    width: 19% !important;
   }
   .type-toggle-top button {
     font-size: 12px !important;
@@ -636,7 +636,7 @@
                             </div>
                         </div>
                         <div id="embed_notice" class="mt-3 alert alert-warning py-2 px-3 small {{ $isEdit && isset($timer->status) && $timer->status !== 'active' ? '' : 'd-none' }}">
-                          Activate this timer to generate a shareable embed code.
+                          {{-- Activate this timer to generate a shareable embed code. --}}
                       </div>
                             {{-- <h3 class="h6 fw-semibold mb-3">Preview</h3> --}}
                             <div id="timer_preview" class="d-flex align-items-center justify-content-center rounded mb-3" style="min-height: 260px;">

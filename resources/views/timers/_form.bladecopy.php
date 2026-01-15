@@ -2422,7 +2422,7 @@ function startPreviewPolling(timerId) {
               embedNotice.classList.remove('d-none');
             } else if (!gifUrl) {
               embedNotice.textContent = 'Generate a GIF to get the embed code.';
-              embedNotice.classList.remove('d-none');
+              // embedNotice.classList.remove('d-none');
             } else {
               embedNotice.classList.add('d-none');
             }
@@ -2620,7 +2620,7 @@ document.addEventListener('DOMContentLoaded', function(){
             embedNotice.classList.remove('d-none');
           } else if (!hasGif) {
             embedNotice.textContent = 'Generate a GIF to get the embed code.';
-            embedNotice.classList.remove('d-none');
+            // embedNotice.classList.remove('d-none');
           } else {
             embedNotice.classList.add('d-none');
           }

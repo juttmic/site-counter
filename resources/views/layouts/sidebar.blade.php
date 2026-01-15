@@ -126,7 +126,7 @@
         </a>
         <div class="d-flex align-items-center gap-2">
             <a href="{{ route('timers.create') }}" class="btn btn-primary btn-sm">
-                <i class="bi bi-plus-lg"></i> New
+                <i class="bi bi-plus-lg"></i> New Counter
             </a>
             <button onclick="toggleTheme()" type="button" class="btn btn-link text-dark p-2">
                 <i class="bi bi-moon-stars d-none dark-mode-icon"></i>

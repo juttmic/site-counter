@@ -86,7 +86,7 @@
                                 <a href="{{ route('timers.create') }}"
                                    class="btn btn-primary btn-sm d-none d-md-inline-flex align-items-center justify-content-center"
                                    aria-label="Create new counter">
-                                    <i class="bi bi-plus-lg"></i>
+                                    <i class="bi bi-plus-lg"></i> New Counter
                                 </a>
                                 <button onclick="toggleTheme()" 
                                         type="button" 
