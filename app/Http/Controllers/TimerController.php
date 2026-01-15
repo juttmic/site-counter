@@ -239,8 +239,22 @@ class TimerController extends Controller
         $data['title'] = $data['title'] ?? ($timer->title ?? 'Preview Counter');
         $data['timer_type'] = $data['timer_type'] ?? ($timer->timer_type ?? 'fixed_date');
 
-        if ($data['timer_type'] === 'fixed_date') {
-            $data['duration_seconds'] = null;
+        // Use timer_type to determine which field to prioritize
+        // For reload_based: prioritize duration_seconds, ignore target_datetime
+        // For fixed_date: prioritize target_datetime, ignore duration_seconds
+        if ($data['timer_type'] === 'reload_based') {
+            // Evergreen mode: use duration_seconds, ignore target_datetime for calculation
+            $duration = $data['duration_seconds'] ?? ($timer->duration_seconds ?? null);
+            if ($duration && (int)$duration > 0) {
+                $data['duration_seconds'] = max(1, min((int) $duration, 604800));
+                $data['target_datetime'] = null; // Clear target_datetime for reload_based
+            } else {
+                // No valid duration provided, default to 1 second
+                $data['duration_seconds'] = 1;
+                $data['target_datetime'] = null;
+            }
+        } else {
+            // Fixed date mode: use target_datetime, ignore duration_seconds for calculation
             if (!empty($data['target_datetime'])) {
                 $target = Carbon::parse($data['target_datetime']);
                 $data['target_datetime'] = $target->lt(now()) ? now()->addDays(3) : $target;
@@ -249,10 +263,7 @@ class TimerController extends Controller
             } else {
                 $data['target_datetime'] = now()->addDays(3);
             }
-        } else {
-            $duration = $data['duration_seconds'] ?? ($timer->duration_seconds ?? null);
-            $data['duration_seconds'] = $duration ? max(1, min((int) $duration, 604800)) : 60;
-            $data['target_datetime'] = null;
+            $data['duration_seconds'] = null; // Clear duration_seconds for fixed_date
         }
 
         $data['skin'] = $data['skin'] ?? ($timer->skin ?? null);

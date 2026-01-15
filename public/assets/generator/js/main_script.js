@@ -7,7 +7,10 @@ if (!document.getElementById('fa-cdn')) {
   document.head.appendChild(link);
 }
 
-function toggleInputs() {
+let isInitialLoad = true;
+let initialLoadComplete = false;
+
+function toggleInputs(isUserAction = false) {
   const type = document.getElementById('timer_type').value;
   const fixedDateInput = document.getElementById('fixed_date_input');
   const durationInput = document.getElementById('duration_input');
@@ -16,12 +19,31 @@ function toggleInputs() {
   fixedDateInput.classList.toggle('d-none', type !== 'fixed_date');
   durationInput.classList.toggle('d-none', type !== 'reload_based');
   
-  // Set default value of 0 if switching to Evergreen and field is empty
-  if (type === 'reload_based' && durationField && (durationField.value === '' || durationField.value === null || durationField.value === undefined)) {
-    durationField.value = '0';
+  // Only set default value when user explicitly switches to Evergreen (not on initial page load)
+  // This ensures the field starts empty before skin selection
+  // IMPORTANT: When switching to fixed_date, do NOT clear or modify duration_seconds
+  // The fields should remain independent - entering a date should not affect duration_seconds
+  if (type === 'reload_based' && durationField && isUserAction && initialLoadComplete) {
+    const currentValue = parseInt(durationField.value, 10);
+    if (isNaN(currentValue) || currentValue <= 0 || durationField.value === '' || durationField.value === null || durationField.value === undefined) {
+      durationField.value = '1'; // Default to 1 second when user switches to Evergreen
+      // Trigger change event to update preview immediately
+      durationField.dispatchEvent(new Event('change', { bubbles: true }));
+      durationField.dispatchEvent(new Event('input', { bubbles: true }));
+    }
   }
+  // When switching to fixed_date, we intentionally do NOT touch duration_seconds
+  // This keeps the fields independent as requested
 }
-document.addEventListener('DOMContentLoaded', toggleInputs);
+
+document.addEventListener('DOMContentLoaded', () => {
+  toggleInputs(false); // Initial load, don't set default
+  // Mark initial load as complete after a short delay to ensure all setup is done
+  setTimeout(() => {
+    initialLoadComplete = true;
+    isInitialLoad = false;
+  }, 100);
+});
 
 function enforceMinTargetDateTime() {
   const input = document.querySelector('input[name="target_datetime"]');
@@ -199,6 +221,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const targetInput = document.querySelector('input[name="target_datetime"]');
   if (targetInput) {
     targetInput.addEventListener('change', enforceMinTargetDateTime);
+    // Ensure that changing the date does not affect the duration_seconds field
+    // The fields are independent - entering a date should not populate or modify duration_seconds
   }
 });
 
@@ -1817,6 +1841,10 @@ document.addEventListener('DOMContentLoaded', function(){
           const val = btn.dataset.value;
           select.value = val;
           setActive(val);
+          // If this is the timer_type select, call toggleInputs with user action flag
+          if (selectName === 'timer_type' && typeof toggleInputs === 'function') {
+            toggleInputs(true);
+          }
           select.dispatchEvent(new Event('change', { bubbles: true }));
           select.dispatchEvent(new Event('input', { bubbles: true }));
         });

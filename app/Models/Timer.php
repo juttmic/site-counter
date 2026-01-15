@@ -65,15 +65,18 @@ class Timer extends Model
 
     public function remainingSecondsFromNow(): int
     {
-        if ($this->isFixedDate() && $this->target_datetime instanceof CarbonInterface) {
-            $diff = now()->diffInSeconds($this->target_datetime, false);
-            return max(0, $diff);
-        }
-
+        // Use timer_type to determine which field to use
+        // For reload_based: use duration_seconds
+        // For fixed_date: use target_datetime
         if ($this->isReloadBased() && $this->duration_seconds) {
             // For reload-based timers, always return the full duration
             // The GIF will show the countdown from this duration
             return max(0, (int) $this->duration_seconds);
+        }
+
+        if ($this->isFixedDate() && $this->target_datetime instanceof CarbonInterface) {
+            $diff = now()->diffInSeconds($this->target_datetime, false);
+            return max(0, $diff);
         }
 
         return 0;

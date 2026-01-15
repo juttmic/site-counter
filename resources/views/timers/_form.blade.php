@@ -476,7 +476,7 @@
                                             <button type="button" class="toggle-pill" data-value="fixed_date">Ends</button>
                                             <button type="button" class="toggle-pill" data-value="reload_based">EverGreen</button>
                                         </div>
-                                        <select name="timer_type" id="timer_type" class="form-select d-none" aria-hidden="true" onchange="toggleInputs()">
+                                        <select name="timer_type" id="timer_type" class="form-select d-none" aria-hidden="true" onchange="toggleInputs(false)">
                                             <option value="fixed_date" {{ ($isEdit && $timer->timer_type === 'fixed_date') || !$isEdit ? 'selected' : '' }}>Fixed Date</option>
                                             <option value="reload_based" {{ $isEdit && $timer->timer_type === 'reload_based' ? 'selected' : '' }}>Reload Based</option>
                                         </select>
@@ -497,8 +497,8 @@
 
                                 <div id="duration_input" class="{{ ($isEdit && $timer->timer_type !== 'reload_based') || !$isEdit ? 'd-none' : '' }}">
                                     {{-- <label class="form-label">Duration (seconds)</label> --}}
-                                    <input type="number" name="duration_seconds" class="form-control" min="0" max="604800"
-                                           value="{{ old('duration_seconds', $timer->duration_seconds ?? ($isEdit ? '' : '0')) }}">
+                                    <input type="number" name="duration_seconds" class="form-control" min="1" max="604800"
+                                           value="{{ old('duration_seconds', $timer->duration_seconds ?? '') }}">
                                            <div class="form-text small">Enter how long the counter runs before restarting e.g. Enter 120 for 2 minutes.</div>
                                 </div>
                                     </div>
