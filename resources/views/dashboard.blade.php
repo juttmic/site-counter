@@ -12,7 +12,8 @@
           <div class="" style="display: flex;
     flex-direction: row;
     justify-content: end;
-    padding-bottom: 0.5rem;"><a href="{{ route('timers.create') }}" class="btn btn-primary text-decoration-none fw-semibold {{ request()->routeIs('timers.create') ? 'text-primary' : 'text-dark' }}" style="color:white !important">Create New</a>
+    padding-bottom: 0.5rem;">
+    {{-- <a href="{{ route('timers.create') }}" class="btn btn-primary text-decoration-none fw-semibold {{ request()->routeIs('timers.create') ? 'text-primary' : 'text-dark' }}" style="color:white !important">Create New</a> --}}
                                 </div>
             <div class="rounded">
                 <div class="">

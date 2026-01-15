@@ -1,4 +1,3 @@
-alert()
 // Font Awesome (for the change icon)
 if (!document.getElementById('fa-cdn')) {
   const link = document.createElement('link');
