@@ -50,9 +50,9 @@
             "key": "background",
             "label": "Background Color",
             "type": "color",
-            "group": "GIF Appearance",
-            "groupOrder": 2,
-            "order": 1
+            "group": "Appearance",
+            "groupOrder": 1,
+            "order": 7
         },
         {
             "key": "borderWidth",
@@ -61,31 +61,31 @@
             "min": 0,
             "max": 50,
             "step": 1,
-            "group": "GIF Appearance",
-            "order": 2
+            "group": "Appearance",
+            "order": 8
         },
         {
             "key": "borderColor",
             "label": "Border Color",
             "type": "color",
-            "group": "GIF Appearance",
-            "order": 3
+            "group": "Appearance",
+            "order": 9
         },
         
         {
             "key": "separatorColor",
             "label": "Separator Color",
             "type": "color",
-            "group": "Separator & Box",
-            "groupOrder": 3
+            "group": "Appearance",
+            "groupOrder": 10
         },
         {
             "key": "textColor",
             "label": "Text Color",
             "type": "color",
-            "group": "Digits",
+            "group": "Appearance",
             "groupOrder": 4,
-            "order": 1
+            "order": 11
         },
         {
             "key": "fontSize",
@@ -94,14 +94,14 @@
             "min": 8,
             "max": 200,
             "step": 1,
-            "group": "Digits",
-            "order": 2
+            "group": "Appearance",
+            "order": 12
         },
         {
             "key": "fontPath",
             "label": "Font",
             "type": "font",
-            "group": "GIF Appearance"
+            "group": "Appearance"
         },
         {
             "key": "showDays",
@@ -133,8 +133,8 @@
             "label": "Separator",
             "type": "text",
             "maxLength": 5,
-            "group": "Separator & Box",
-            "order": 1
+            "group": "Appearance",
+            "order": 13
         },
         {
             "key": "finalMessage",

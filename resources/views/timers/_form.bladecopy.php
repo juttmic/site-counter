@@ -384,10 +384,10 @@
   }
 
   .type-toggle .toggle-pill-group {
-    width: 85% !important;
+    width: 50% !important;
   }
   .type-toggle button {
-    font-size: 20px !important;
+    font-size: 17px !important;
     width: 50% !important;
   }
   #preview_placeholder {
@@ -1357,10 +1357,10 @@ function renderFields(metadata, savedOverrides = {}) {
       const key = fieldKey.toLowerCase();
       if (finalKeys.has(key)) return ['Final Screen'];
       if (extraKeys.has(key)) return ['Extra Options'];
-      if (gifAppearanceKeys.has(key)) return ['GIF Appearance'];
+      if (gifAppearanceKeys.has(key)) return ['Appearance'];
       if (counterDigitsKeys.has(key)) return ['Counter', 'Digits'];
-      if (counterSeparatorKeys.has(key)) return ['Counter', 'Separator & Box'];
-      return ['GIF Appearance'];
+      if (counterSeparatorKeys.has(key)) return ['Counter', 'Appearance'];
+      return ['Appearance'];
     }
     
     function ensureGroupPath(path) {
@@ -1404,8 +1404,8 @@ function renderFields(metadata, savedOverrides = {}) {
       group.fields.push(field);
       
       // Track group order: groupOrder on a field controls the order of its immediate group/subgroup
-      // For "Counter.Digits", groupOrder controls "Digits" subgroup order within "Counter"
-      // For "GIF Appearance", groupOrder controls "GIF Appearance" group order among top-level groups
+      // For "Counter.Digits", groupOrder controls "Appearance" subgroup order within "Counter"
+      // For "Appearance", groupOrder controls "Appearance" group order among top-level groups
       // Use the minimum groupOrder value from all fields in a group
       if (field.groupOrder !== undefined && field.groupOrder !== null) {
         const currentOrder = group.groupOrder;

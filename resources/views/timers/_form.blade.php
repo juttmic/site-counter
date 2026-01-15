@@ -383,11 +383,18 @@
 
   }
 
+  .type-toggle-top .toggle-pill-group {
+    width: 22% !important;
+  }
+  .type-toggle-top button {
+    font-size: 12px !important;
+    width: 50% !important;
+  }
   .type-toggle .toggle-pill-group {
-    width: 85% !important;
+    width: 50% !important;
   }
   .type-toggle button {
-    font-size: 20px !important;
+    font-size: 16px !important;
     width: 50% !important;
   }
   #preview_placeholder {
@@ -448,7 +455,7 @@
                                 <i class="bi bi-chevron-down collapse-icon"></i>
                             </div>
                             <div class="card-body collapsible-body" id="general_settings_body">
-                              <div class="col-12" style="
+                              <div class="col-12 type-toggle-top" style="
     display: flex;
     justify-content: end;
 ">
@@ -520,7 +527,7 @@
                         <!-- TEXT ( optional ) -->
                         <div class="card">
                             <div class="card-header d-flex justify-content-between align-items-center py-2 collapsible-header" data-target="#text_optional_body">
-                                <span class="fw-semibold small text-uppercase text-muted">TEXT ( optional )</span>
+                                <span class="fw-semibold small text-uppercase text-muted">TEXT ( <span class="text-lowercase">optional</span> )</span>
                                 <i class="bi bi-chevron-down collapse-icon"></i>
                             </div>
                             <div class="card-body collapsible-body" id="text_optional_body">
