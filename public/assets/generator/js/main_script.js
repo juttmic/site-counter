@@ -674,7 +674,8 @@ function renderFields(metadata, savedOverrides = {}) {
     const groupTree = {};
     
     // Fallback keys for fields without explicit groups
-    const gifAppearanceKeys = new Set(['background','borderwidth','bordercolor','outputwidth','outputheight']);
+    const gifAppearanceKeys = new Set(['background','borderwidth','bordercolor']);
+    const gifDimensionKeys = new Set(['outputwidth','outputheight']);
     const counterDigitsKeys = new Set(['textcolor','fontsize','digitspacing','countdirection','refreshrate','pulsespeed']);
     const counterSeparatorKeys = new Set(['separator','separatorcolor','accentcolor','boxcolor','tilecolor','ringcolor']);
     const finalKeys = new Set(['finalmessage','finalbackground','finaltextcolor','finalscreentext','finalscreencolor']);
@@ -686,6 +687,7 @@ function renderFields(metadata, savedOverrides = {}) {
       if (extraKeys.has(key)) return ['Extra Options'];
       if (gifAppearanceKeys.has(key)) return ['GIF Appearance'];
       if (counterDigitsKeys.has(key)) return ['Counter', 'Digits'];
+      if (gifDimensionKeys.has(key)) return ['Dimensions'];
       if (counterSeparatorKeys.has(key)) return ['Counter', 'Separator & Box'];
       return ['GIF Appearance'];
     }
