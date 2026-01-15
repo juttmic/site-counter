@@ -1050,13 +1050,54 @@ function renderFields(metadata, savedOverrides = {}) {
     
     // Add fields for this group (even if hidden, fields are still created so their values are applied)
     if (group.fields.length > 0) {
-      const row = document.createElement('div');
-      row.className = 'row g-3';
-      group.fields.forEach(field => {
-        const value = resolveFieldValue(field);
-        row.appendChild(createFieldInput(field, value));
-      });
-      body.appendChild(row);
+      const isAppearanceGroup = group.name === 'Appearance' || group.path.some(p => p.toLowerCase() === 'appearance');
+      
+      if (isAppearanceGroup && group.fields.length > 0) {
+        // For Appearance group: first 3 fields in one row (col-12 col-sm-4), then 2 per row (col-12 col-sm-6)
+        
+        // First row: first 3 fields
+        if (group.fields.length > 0) {
+          const firstRow = document.createElement('div');
+          firstRow.className = 'row g-3';
+          
+          group.fields.slice(0, 3).forEach(field => {
+            const value = resolveFieldValue(field);
+            const fieldContainer = createFieldInput(field, value);
+            // Override column classes: remove all col-* classes and add col-12 col-sm-4
+            const classes = fieldContainer.className.split(' ').filter(c => !c.startsWith('col-'));
+            fieldContainer.className = 'col-12 col-sm-4 ' + classes.join(' ').trim();
+            firstRow.appendChild(fieldContainer);
+          });
+          body.appendChild(firstRow);
+        }
+        
+        // Subsequent rows: remaining fields, 2 per row
+        const remainingFields = group.fields.slice(3);
+        for (let i = 0; i < remainingFields.length; i += 2) {
+          const row = document.createElement('div');
+          row.className = 'row g-3';
+          
+          const fieldsToAdd = remainingFields.slice(i, i + 2);
+          fieldsToAdd.forEach(field => {
+            const value = resolveFieldValue(field);
+            const fieldContainer = createFieldInput(field, value);
+            // Override column classes: remove all col-* classes and add col-12 col-sm-6
+            const classes = fieldContainer.className.split(' ').filter(c => !c.startsWith('col-'));
+            fieldContainer.className = 'col-12 col-sm-6 ' + classes.join(' ').trim();
+            row.appendChild(fieldContainer);
+          });
+          body.appendChild(row);
+        }
+      } else {
+        // For all other groups: use existing logic (all fields in one row)
+        const row = document.createElement('div');
+        row.className = 'row g-3';
+        group.fields.forEach(field => {
+          const value = resolveFieldValue(field);
+          row.appendChild(createFieldInput(field, value));
+        });
+        body.appendChild(row);
+      }
     }
     
     card.appendChild(header);
