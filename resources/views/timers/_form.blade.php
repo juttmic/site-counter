@@ -441,10 +441,10 @@
                 <!-- Left column: all form fields + customization -->
                 <div class="col-12 col-md-6">
                     <div class="d-flex flex-column gap-3 h-100">
-                        <!-- General settings -->
+                        <!-- General -->
                         <div class="card">
                             <div class="card-header d-flex justify-content-between align-items-center py-2 collapsible-header" data-target="#general_settings_body">
-                                <span class="fw-semibold small text-uppercase text-muted">General settings</span>
+                                <span class="fw-semibold small text-uppercase text-muted">General</span>
                                 <i class="bi bi-chevron-down collapse-icon"></i>
                             </div>
                             <div class="card-body collapsible-body" id="general_settings_body">
@@ -517,68 +517,68 @@
                             </div>
                         </div>
 
-                        <!-- Template (grouped fields) -->
+                        <!-- TEXT ( optional ) -->
                         <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center py-2 collapsible-header" data-target="#text_optional_body">
+                                <span class="fw-semibold small text-uppercase text-muted">TEXT ( optional )</span>
+                                <i class="bi bi-chevron-down collapse-icon"></i>
+                            </div>
+                            <div class="card-body collapsible-body" id="text_optional_body">
+                                <div class="row g-3">
+                                    <div class="col-12 col-sm-6">
+                                        <label class="form-label small mb-1">Text Position</label>
+                                        <select name="text_position" class="form-select">
+                                            <option value="none" {{ ($isEdit && $timer->text_position === 'none') || !$isEdit ? 'selected' : '' }}>None</option>
+                                            <option value="top" {{ $isEdit && $timer->text_position === 'top' ? 'selected' : '' }}>Top</option>
+                                            <option value="bottom" {{ $isEdit && $timer->text_position === 'bottom' ? 'selected' : '' }}>Bottom</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-12 col-sm-6">
+                                        <label class="form-label small mb-1">Custom Text</label>
+                                        <input type="text" name="custom_text" class="form-control" maxlength="255" value="{{ old('custom_text', $timer->custom_text ?? '') }}">
+                                    </div>
+                                    <div class="col-12 col-sm-6">
+                                        @php
+                                            $customTextColor = old(
+                                                'customTextColor',
+                                                ($isEdit && is_array($timer->skin_overrides) && isset($timer->skin_overrides['customTextColor']))
+                                                    ? $timer->skin_overrides['customTextColor']
+                                                    : '#000000'
+                                            );
+                                        @endphp
+                                        <label class="form-label small mb-1">Custom Text Color</label>
+                                        <div class="modern-color-picker">
+                                            <div class="color-picker-swatch" style="--swatch-color: {{ $customTextColor }};"></div>
+                                            <div class="color-picker-input-wrapper">
+                                                <div class="color-picker-display">
+                                                    <span class="color-picker-hex">{{ strtoupper($customTextColor) }}</span>
+                                                    <i class="bi bi-palette color-picker-icon"></i>
+                                                </div>
+                                                <input type="color" name="customTextColor" class="color-picker-native" value="{{ $customTextColor }}">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 col-sm-6">
+                                        @php
+                                            $overrides = ($isEdit && isset($timer) && is_array($timer->skin_overrides ?? null)) ? $timer->skin_overrides : [];
+                                            $legacyMargin = $overrides['customTextMarginTop'] ?? 0;
+                                            $distanceValue = old('customTextDistance', $overrides['customTextDistance'] ?? $legacyMargin ?? 0);
+                                        @endphp
+                                        <label class="form-label small mb-1">Distance from Counter</label>
+                                        <input type="number" name="customTextDistance" class="form-control form-control-sm" min="0" max="400" step="1" value="{{ $distanceValue }}">
+                                        <div class="form-text small">Space between the custom text and the counter.</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Template (grouped fields) -->
+                        <div class="card d-none" id="template_card">
                             <div class="card-header d-flex justify-content-between align-items-center py-2 collapsible-header" data-target="#template_body">
                                 <span class="fw-semibold small text-uppercase text-muted">Template</span>
                                 <i class="bi bi-chevron-down collapse-icon"></i>
                             </div>
                             <div class="card-body collapsible-body" id="template_body" style="padding:1rem">
-                                <!-- Custom text settings -->
-                                <div class="card border shadow-sm mb-3">
-                                    <div class="card-header bg-light py-2 collapsible-header" data-target="#custom_text_settings_body">
-                                        <span class="text-uppercase text-muted fw-semibold small">Custom text settings ( Optional )</span>
-                                        <i class="bi bi-chevron-down collapse-icon float-end"></i>
-                                    </div>
-                                    <div class="card-body collapsible-body" id="custom_text_settings_body">
-                                        <div class="row g-3">
-                                            <div class="col-12 col-sm-6">
-                                                <label class="form-label small mb-1">Text Position</label>
-                                                <select name="text_position" class="form-select">
-                                                    <option value="none" {{ ($isEdit && $timer->text_position === 'none') || !$isEdit ? 'selected' : '' }}>None</option>
-                                                    <option value="top" {{ $isEdit && $timer->text_position === 'top' ? 'selected' : '' }}>Top</option>
-                                                    <option value="bottom" {{ $isEdit && $timer->text_position === 'bottom' ? 'selected' : '' }}>Bottom</option>
-                                                </select>
-                                            </div>
-                                            <div class="col-12 col-sm-6">
-                                                <label class="form-label small mb-1">Custom Text</label>
-                                                <input type="text" name="custom_text" class="form-control" maxlength="255" value="{{ old('custom_text', $timer->custom_text ?? '') }}">
-                                            </div>
-                                            <div class="col-12 col-sm-6">
-                                                @php
-                                                    $customTextColor = old(
-                                                        'customTextColor',
-                                                        ($isEdit && is_array($timer->skin_overrides) && isset($timer->skin_overrides['customTextColor']))
-                                                            ? $timer->skin_overrides['customTextColor']
-                                                            : '#000000'
-                                                    );
-                                                @endphp
-                                                <label class="form-label small mb-1">Custom Text Color</label>
-                                                <div class="modern-color-picker">
-                                                    <div class="color-picker-swatch" style="--swatch-color: {{ $customTextColor }};"></div>
-                                                    <div class="color-picker-input-wrapper">
-                                                        <div class="color-picker-display">
-                                                            <span class="color-picker-hex">{{ strtoupper($customTextColor) }}</span>
-                                                            <i class="bi bi-palette color-picker-icon"></i>
-                                                        </div>
-                                                        <input type="color" name="customTextColor" class="color-picker-native" value="{{ $customTextColor }}">
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="col-12 col-sm-6">
-                                                @php
-                                                    $overrides = ($isEdit && isset($timer) && is_array($timer->skin_overrides ?? null)) ? $timer->skin_overrides : [];
-                                                    $legacyMargin = $overrides['customTextMarginTop'] ?? 0;
-                                                    $distanceValue = old('customTextDistance', $overrides['customTextDistance'] ?? $legacyMargin ?? 0);
-                                                @endphp
-                                                <label class="form-label small mb-1">Distance from Counter</label>
-                                                <input type="number" name="customTextDistance" class="form-control form-control-sm" min="0" max="400" step="1" value="{{ $distanceValue }}">
-                                                <div class="form-text small">Space between the custom text and the counter.</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
                                 <!-- Dynamic skin customization fields -->
                                 <div id="skin_overrides_section" class="d-none">
                                     <div id="skin_fields" class="row g-3"></div>
