@@ -24,10 +24,52 @@
         <!-- SweetAlert2 -->
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
         <script>
+            // Configure SweetAlert2 for dark mode
+            (function() {
+                function getSwalConfig() {
+                    const isDark = document.documentElement.classList.contains('dark');
+                    return {
+                        color: isDark ? '#e9ecef' : '#212529',
+                        background: isDark ? '#212529' : '#ffffff',
+                        confirmButtonColor: '#0d6efd',
+                        cancelButtonColor: isDark ? '#6c757d' : '#6c757d',
+                        popup: isDark ? '#212529' : '#ffffff',
+                    };
+                }
+                
+                // Set initial configuration
+                if (typeof Swal !== 'undefined') {
+                    Swal.mixin(getSwalConfig());
+                }
+                
+                // Listen for theme changes and update SweetAlert2
+                const observer = new MutationObserver(function(mutations) {
+                    mutations.forEach(function(mutation) {
+                        if (mutation.attributeName === 'class' && typeof Swal !== 'undefined') {
+                            Swal.mixin(getSwalConfig());
+                        }
+                    });
+                });
+                
+                // Wait for DOM to be ready before observing
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', function() {
+                        observer.observe(document.documentElement, { attributes: true });
+                    });
+                } else {
+                    observer.observe(document.documentElement, { attributes: true });
+                }
+            })();
+        </script>
+        <script>
             (function() {
                 try {
                     var saved = localStorage.getItem('theme');
-                    if (saved === 'dark' || (!saved && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                    // Default to dark mode if no saved preference
+                    if (saved === null || saved === undefined || saved === '') {
+                        document.documentElement.classList.add('dark');
+                        localStorage.setItem('theme', 'dark');
+                    } else if (saved === 'dark') {
                         document.documentElement.classList.add('dark');
                     } else {
                         document.documentElement.classList.remove('dark');
@@ -184,7 +226,7 @@
                             <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>\
                         </div>';
                         container.appendChild(toastEl);
-                        var toast = new bootstrap.Toast(toastEl, { delay: 2000 });
+                        var toast = new bootstrap.Toast(toastEl, { delay: 200000 });
                         toast.show();
                         toastEl.addEventListener('hidden.bs.toast', function(){ toastEl.remove(); });
                     } catch (e) {}

@@ -62,24 +62,74 @@
 }
 
 /* Bootstrap Toast dark mode */
-.dark .toast.text-bg-success,
-.dark .toast.text-bg-primary,
-.dark .toast.text-bg-danger,
-.dark .toast.text-bg-warning,
-.dark .toast.text-bg-info,
-.dark .toast.text-bg-secondary,
-.dark .toast.text-bg-dark,
-.dark .toast.text-bg-light {
-    color: #e9ecef;
+.dark .toast {
+    background-color: #343a40 !important;
+    border-color: #495057 !important;
+    color: #e9ecef !important;
 }
 
-.dark .toast,
 .dark .toast .toast-body {
-    background-color: #343a40;
+    background-color: transparent !important;
+    color: #fff !important;
 }
 
-.dark .btn-close-white {
-    filter: invert(1) grayscale(100%);
+/* Override Bootstrap's text-bg-* utility classes in dark mode */
+.dark .toast.text-bg-success,
+.dark .toast.text-bg-success .toast-body {
+    background-color: #198754 !important;
+    color: #ffffff !important;
+}
+
+.dark .toast.text-bg-primary,
+.dark .toast.text-bg-primary .toast-body {
+    background-color: #0d6efd !important;
+    color: #ffffff !important;
+}
+
+.dark .toast.text-bg-danger,
+.dark .toast.text-bg-danger .toast-body {
+    background-color: #dc3545 !important;
+    color: #ffffff !important;
+}
+
+.dark .toast.text-bg-warning,
+.dark .toast.text-bg-warning .toast-body {
+    background-color: #ffc107 !important;
+    color: #000000 !important;
+}
+
+.dark .toast.text-bg-info,
+.dark .toast.text-bg-info .toast-body {
+    background-color: #0dcaf0 !important;
+    color: #000000 !important;
+}
+
+.dark .toast.text-bg-secondary,
+.dark .toast.text-bg-secondary .toast-body {
+    background-color: #6c757d !important;
+    color: #ffffff !important;
+}
+
+.dark .toast.text-bg-dark,
+.dark .toast.text-bg-dark .toast-body {
+    background-color: #212529 !important;
+    color: #ffffff !important;
+}
+
+.dark .toast.text-bg-light,
+.dark .toast.text-bg-light .toast-body {
+    background-color: #f8f9fa !important;
+    color: #212529 !important;
+}
+
+.dark .btn-close-white,
+.dark .toast .btn-close {
+    filter: invert(1) grayscale(100%) brightness(1.5);
+    opacity: 0.8;
+}
+
+.dark .toast .btn-close:hover {
+    opacity: 1;
 }
 
 /* Bootstrap cards in dark mode */
@@ -203,4 +253,7 @@
     background-color: #664d03;
     border-color: #997404;
     color: #ffc107;
+}
+.dark .toast .toast-body {
+    background-color: red !important;
 }
