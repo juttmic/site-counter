@@ -382,16 +382,53 @@
     }
 
   }
+@media(min-width:460px){
+    .type-toggle-top .toggle-pill-group{
+        width:35% !important;
+    }
+  .type-toggle .toggle-pill-group{
+        width:48% !important;
+    }
+}
+  @media(min-width:500px){
+    .type-toggle-top .toggle-pill-group{
+        width:31% !important;
+    }
+    .type-toggle .toggle-pill-group{
+        width:37% !important;
+    }
+}
+   @media(min-width:575.98px){
+    .type-toggle-top .toggle-pill-group{
+        width:20% !important;
+    }
+     .type-toggle .toggle-pill-group{
+        width:54% !important;
+    }
+}
+  @media(min-width:767.98px){
+    .type-toggle-top .toggle-pill-group{
+        width:33% !important;
+    }
+    .type-toggle .toggle-pill-group{
+        width:87% !important;
+    }
+}
 
-  .type-toggle-top .toggle-pill-group {
-    width: 19% !important;
-  }
+  @media(min-width:991.98px){
+    .type-toggle-top .toggle-pill-group{
+        width:26% !important;
+    }
+    .type-toggle .toggle-pill-group{
+        width:70% !important;
+    }
+}
   .type-toggle-top button {
     font-size: 12px !important;
     width: 50% !important;
   }
   .type-toggle .toggle-pill-group {
-    width: 50% !important;
+    
   }
   .type-toggle button {
     font-size: 16px !important;
@@ -400,11 +437,23 @@
   #preview_placeholder {
     /* display: none !important; */
   }
+  .dark .prevbtntop{
+    border: 1px solid #fff !important;
+  }
+  .dark .color-picker-display {
+    background-color: #343a40;
+    color: #e9ecef;
+    border-color: #495057;
+}
+  .dark .toggle-pill:not(.active) {
+    background-color: #343a40;
+    color: #fff;
+}
 </style>
 <div class="py-1" style="border: 0px solid red; display: flex; justify-content: space-between; gap: 0.5rem; padding: inherit;">
   @if(isset($timer))
     <h2 class="font-semibold text-xl text-gray-800 leading-tight" style="font-size: 1.5rem !important">Edit Counter</h2>
-    <a href="{{ route('timers.preview', $timer) }}" class="btn btn-outline-secondary border rounded" style="
+    <a href="{{ route('timers.preview', $timer) }}" class="btn btn-outline-secondary border rounded prevbtntop" style="
     display: flex;
     align-items: center;">Preview Counter</a>
   @else
@@ -460,8 +509,8 @@
     justify-content: end;
 ">
                                         <div class="toggle-pill-group" data-toggle-select="status">
-                                            <button type="button" class="toggle-pill" data-value="active">ACTIVE</button>
-                                            <button type="button" class="toggle-pill" data-value="inactive">INACTIVE</button>
+                                            <button type="button" class="toggle-pill" data-value="active">Active</button>
+                                            <button type="button" class="toggle-pill" data-value="inactive">Inactive</button>
                                         </div>
                                         <select name="status" class="form-select d-none" aria-hidden="true">
                                             <option value="active" {{ ($isEdit && $timer->status === 'active') || !$isEdit ? 'selected' : '' }}>Active</option>
