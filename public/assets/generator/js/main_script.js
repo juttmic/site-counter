@@ -1320,7 +1320,7 @@ async function generatePreviewFrame() {
         // Create page without a saved counter yet
         if (createPreviewInFlight) {
           loader.classList.add('d-none');
-          placeholder.classList.remove('d-none');
+          // placeholder.classList.remove('d-none');
           return;
         }
         createPreviewInFlight = true;
@@ -1361,7 +1361,7 @@ async function generatePreviewFrame() {
     } catch (e) {
       console.error('Preview generation error:', e);
       loader.classList.add('d-none');
-      placeholder.classList.remove('d-none');
+      // placeholder.classList.remove('d-none');
     } finally {
       // Allow another create-preview attempt if needed
       createPreviewInFlight = false;
