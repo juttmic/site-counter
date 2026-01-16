@@ -259,7 +259,7 @@
     background-color: red !important;
 }
 
-.dark .swal2-popup.swal2-modal.swal2-icon-warning.swal2-show{
+.dark .swal2-popup{
     background-color: #1f2326;
     border: 1px solid white;
     color: #999999;
