@@ -262,19 +262,15 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // If timer height changes, re-clamp distance
-  // Note: This handles initial setup, but renderFields also sets up listeners with more specific logic
   ['outputHeight'].forEach(name => {
     const el = document.querySelector(`[data-key="${name}"]`) || document.querySelector(`input[name="${name}"]`);
-    if (el && !el.dataset.boundGifHeight) {
-      // Only enforce minimum on change (blur), not on every input keystroke
-      el.addEventListener('change', () => {
+    if (el) {
+      const handler = () => {
         clampCustomTextDistance();
         enforceGifHeightMinimum();
-      });
-      // Only clamp distance on input, don't enforce minimum (which could interfere with typing)
-      el.addEventListener('input', () => {
-        clampCustomTextDistance();
-      });
+      };
+      el.addEventListener('change', handler);
+      el.addEventListener('input', handler);
       el.dataset.boundGifHeight = '1';
     }
   });
@@ -662,8 +658,7 @@ function renderFields(metadata, savedOverrides = {}) {
   // Custom text fields live in the dedicated Custom Text settings card, not from skin JSON
   // Note: If a field is explicitly listed in the fields array with a group, it should be shown.
   // Only hide fields that are truly internal/not user-editable (fontPath, custom text fields)
-  // Fields like showDays, layout, animation can now be shown if specified in skin JSON
-  // width and height are hidden from UI but still processed - users control outputWidth/outputHeight instead
+  // Fields like showDays, layout, animation, width, height can now be shown if specified in skin JSON
   const alwaysHiddenFields = new Set(['fontPath', 'font', 'customTextColor', 'customTextDistance', 'custom_text', 'text_position', 'finalBackground', 'finalTextColor', 'width', 'height']);
   alwaysHiddenFields.forEach(key => {
     if (savedOverrides[key] !== undefined) {
@@ -870,9 +865,9 @@ function renderFields(metadata, savedOverrides = {}) {
     const key = field.key;
     let label = field.label || key;
     if (key === 'outputHeight') {
-      label = 'Counter Height';
+      label = 'Height';
     } else if (key === 'outputWidth') {
-      label = 'Counter Width';
+      label = 'Width';
     }
     const type = field.type || 'text';
     const container = document.createElement('div');
@@ -1181,16 +1176,12 @@ function renderFields(metadata, savedOverrides = {}) {
 
   const outputHeightField = findFieldByKey('outputHeight');
   if (outputHeightField && !outputHeightField.dataset.boundGifHeight) {
-    // Only enforce minimum on change (blur), not on every input keystroke
-    // This prevents the field from being auto-adjusted while the user is typing
-    outputHeightField.addEventListener('change', () => {
+    const handler = () => {
       clampCustomTextDistance();
       enforceGifHeightMinimum();
-    });
-    // Only clamp distance on input, don't enforce minimum (which could interfere with typing)
-    outputHeightField.addEventListener('input', () => {
-      clampCustomTextDistance();
-    });
+    };
+    outputHeightField.addEventListener('change', handler);
+    outputHeightField.addEventListener('input', handler);
     outputHeightField.dataset.boundGifHeight = '1';
   }
 
@@ -1245,24 +1236,6 @@ function syncOverrides() {
       data[k] = val;
     }
   });
-
-  // Sync width/height from outputWidth/outputHeight if they exist
-  // width and height are hidden from UI but need to match outputWidth/outputHeight for backend compatibility
-  if (data.outputWidth !== undefined) {
-    data.width = data.outputWidth;
-  } else if (defaults.outputWidth !== undefined) {
-    data.width = defaults.outputWidth;
-  } else if (defaults.width !== undefined) {
-    data.width = defaults.width;
-  }
-  
-  if (data.outputHeight !== undefined) {
-    data.height = data.outputHeight;
-  } else if (defaults.outputHeight !== undefined) {
-    data.height = defaults.outputHeight;
-  } else if (defaults.height !== undefined) {
-    data.height = defaults.height;
-  }
 
   // Ensure final screen colors mirror primary timer colors
   const resolvedBackground = data.background ?? defaults.background;
