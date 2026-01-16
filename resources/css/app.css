@@ -258,3 +258,9 @@
 .dark .toast .toast-body {
     background-color: red !important;
 }
+
+.dark .swal2-popup.swal2-modal.swal2-icon-warning.swal2-show{
+    background-color: #1f2326;
+    border: 1px solid white;
+    color: #999999;
+}
