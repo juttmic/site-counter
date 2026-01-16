@@ -94,8 +94,9 @@
 
 .dark .toast.text-bg-warning,
 .dark .toast.text-bg-warning .toast-body {
-    background-color: #ffc107 !important;
-    color: #000000 !important;
+    
+    background-color: #343a40 !important;
+    color: #ffffff !important;
 }
 
 .dark .toast.text-bg-info,

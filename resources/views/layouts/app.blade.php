@@ -226,7 +226,7 @@
                             <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>\
                         </div>';
                         container.appendChild(toastEl);
-                        var toast = new bootstrap.Toast(toastEl, { delay: 200000 });
+                        var toast = new bootstrap.Toast(toastEl, { delay: 2000 });
                         toast.show();
                         toastEl.addEventListener('hidden.bs.toast', function(){ toastEl.remove(); });
                     } catch (e) {}
