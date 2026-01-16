@@ -428,6 +428,7 @@
     width: 50% !important;
   }
   .type-toggle .toggle-pill-group {
+    min-width: 180px !important;
     
   }
   .type-toggle button {
@@ -449,6 +450,10 @@
     background-color: #343a40;
     color: #fff;
 }
+
+  .type-toggle-top .toggle-pill-group{
+    min-width: 120px !important;
+  }
 </style>
 <div class="py-1" style="border: 0px solid red; display: flex; justify-content: space-between; gap: 0.5rem; padding: inherit;">
   @if(isset($timer))
@@ -524,7 +529,7 @@
 
                                 <div class="row g-3 mt-1">
                                     <label class="form-label">Counter Expiry</label>
-                                    <div class="col-12 col-sm-6 type-pill type-toggle" style="
+                                    <div class="col-12 col-lg-6 type-pill type-toggle" style="
     display: flex;
     flex-direction: column;
     align-items: center;">
@@ -537,7 +542,7 @@
                                             <option value="reload_based" {{ $isEdit && $timer->timer_type === 'reload_based' ? 'selected' : '' }}>Reload Based</option>
                                         </select>
                                     </div>
-                                    <div class="col-12 col-sm-6" style="
+                                    <div class="col-12 col-lg-6" style="
     display: flex;
     flex-direction: column;
     justify-content: center;
