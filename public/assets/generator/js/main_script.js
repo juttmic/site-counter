@@ -262,15 +262,19 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // If timer height changes, re-clamp distance
+  // Note: This handles initial setup, but renderFields also sets up listeners with more specific logic
   ['outputHeight'].forEach(name => {
     const el = document.querySelector(`[data-key="${name}"]`) || document.querySelector(`input[name="${name}"]`);
-    if (el) {
-      const handler = () => {
+    if (el && !el.dataset.boundGifHeight) {
+      // Only enforce minimum on change (blur), not on every input keystroke
+      el.addEventListener('change', () => {
         clampCustomTextDistance();
         enforceGifHeightMinimum();
-      };
-      el.addEventListener('change', handler);
-      el.addEventListener('input', handler);
+      });
+      // Only clamp distance on input, don't enforce minimum (which could interfere with typing)
+      el.addEventListener('input', () => {
+        clampCustomTextDistance();
+      });
       el.dataset.boundGifHeight = '1';
     }
   });
@@ -658,8 +662,9 @@ function renderFields(metadata, savedOverrides = {}) {
   // Custom text fields live in the dedicated Custom Text settings card, not from skin JSON
   // Note: If a field is explicitly listed in the fields array with a group, it should be shown.
   // Only hide fields that are truly internal/not user-editable (fontPath, custom text fields)
-  // Fields like showDays, layout, animation, width, height can now be shown if specified in skin JSON
-  const alwaysHiddenFields = new Set(['fontPath', 'font', 'customTextColor', 'customTextDistance', 'custom_text', 'text_position', 'finalBackground', 'finalTextColor']);
+  // Fields like showDays, layout, animation can now be shown if specified in skin JSON
+  // width and height are hidden from UI but still processed - users control outputWidth/outputHeight instead
+  const alwaysHiddenFields = new Set(['fontPath', 'font', 'customTextColor', 'customTextDistance', 'custom_text', 'text_position', 'finalBackground', 'finalTextColor', 'width', 'height']);
   alwaysHiddenFields.forEach(key => {
     if (savedOverrides[key] !== undefined) {
       currentHiddenOverrides[key] = savedOverrides[key];
@@ -1051,6 +1056,7 @@ function renderFields(metadata, savedOverrides = {}) {
     // Add fields for this group (even if hidden, fields are still created so their values are applied)
     if (group.fields.length > 0) {
       const isAppearanceGroup = group.name === 'Appearance' || group.path.some(p => p.toLowerCase() === 'appearance');
+      const isDimensionsGroup = group.name === 'Dimensions' || group.path.some(p => p.toLowerCase() === 'dimensions');
       
       if (isAppearanceGroup && group.fields.length > 0) {
         // For Appearance group: first 3 fields in one row (col-12 col-sm-4), then 2 per row (col-12 col-sm-6)
@@ -1078,6 +1084,23 @@ function renderFields(metadata, savedOverrides = {}) {
           row.className = 'row g-3';
           
           const fieldsToAdd = remainingFields.slice(i, i + 2);
+          fieldsToAdd.forEach(field => {
+            const value = resolveFieldValue(field);
+            const fieldContainer = createFieldInput(field, value);
+            // Override column classes: remove all col-* classes and add col-12 col-sm-6
+            const classes = fieldContainer.className.split(' ').filter(c => !c.startsWith('col-'));
+            fieldContainer.className = 'col-12 col-sm-6 ' + classes.join(' ').trim();
+            row.appendChild(fieldContainer);
+          });
+          body.appendChild(row);
+        }
+      } else if (isDimensionsGroup && group.fields.length > 0) {
+        // For Dimensions group: all fields 2 per row (col-12 col-sm-6)
+        for (let i = 0; i < group.fields.length; i += 2) {
+          const row = document.createElement('div');
+          row.className = 'row g-3';
+          
+          const fieldsToAdd = group.fields.slice(i, i + 2);
           fieldsToAdd.forEach(field => {
             const value = resolveFieldValue(field);
             const fieldContainer = createFieldInput(field, value);
@@ -1158,12 +1181,16 @@ function renderFields(metadata, savedOverrides = {}) {
 
   const outputHeightField = findFieldByKey('outputHeight');
   if (outputHeightField && !outputHeightField.dataset.boundGifHeight) {
-    const handler = () => {
+    // Only enforce minimum on change (blur), not on every input keystroke
+    // This prevents the field from being auto-adjusted while the user is typing
+    outputHeightField.addEventListener('change', () => {
       clampCustomTextDistance();
       enforceGifHeightMinimum();
-    };
-    outputHeightField.addEventListener('change', handler);
-    outputHeightField.addEventListener('input', handler);
+    });
+    // Only clamp distance on input, don't enforce minimum (which could interfere with typing)
+    outputHeightField.addEventListener('input', () => {
+      clampCustomTextDistance();
+    });
     outputHeightField.dataset.boundGifHeight = '1';
   }
 
@@ -1218,6 +1245,24 @@ function syncOverrides() {
       data[k] = val;
     }
   });
+
+  // Sync width/height from outputWidth/outputHeight if they exist
+  // width and height are hidden from UI but need to match outputWidth/outputHeight for backend compatibility
+  if (data.outputWidth !== undefined) {
+    data.width = data.outputWidth;
+  } else if (defaults.outputWidth !== undefined) {
+    data.width = defaults.outputWidth;
+  } else if (defaults.width !== undefined) {
+    data.width = defaults.width;
+  }
+  
+  if (data.outputHeight !== undefined) {
+    data.height = data.outputHeight;
+  } else if (defaults.outputHeight !== undefined) {
+    data.height = defaults.outputHeight;
+  } else if (defaults.height !== undefined) {
+    data.height = defaults.height;
+  }
 
   // Ensure final screen colors mirror primary timer colors
   const resolvedBackground = data.background ?? defaults.background;
