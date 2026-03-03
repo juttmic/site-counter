@@ -6,7 +6,7 @@ use App\Services\Skins\SkinRendererInterface;
 
 /**
  * Skin style: "hanging_ribbon_blocks"
- * Renders countdown as hanging ribbon tiles: light grey block extends below, primary block (white + blue ribbon with swallowtail) floats above.
+ * Renders countdown as horizontal hanging ribbon tiles with hanger bars, white number area, and colored label bar.
  */
 class HangingRibbonBlocksRenderer implements SkinRendererInterface
 {
@@ -14,24 +14,32 @@ class HangingRibbonBlocksRenderer implements SkinRendererInterface
     {
         imagefilledrectangle($im, 0, 0, $width, $height, $bgCol);
 
-        $showDays = ($skin['showDays'] ?? true) === true;
-        $showHours = ($skin['showHours'] ?? true) === true;
-        $showMinutes = ($skin['showMinutes'] ?? true) === true;
-        $showSeconds = ($skin['showSeconds'] ?? true) === true;
+        if ($secondsRemaining <= 0) {
+            $finalBg = $skin['finalBackground'] ?? null;
+            if ($finalBg !== null && $finalBg !== '') {
+                $finalBgCol = $this->allocColor($im, $finalBg);
+                imagefilledrectangle($im, 0, 0, $width, $height, $finalBgCol);
+            }
+            return;
+        }
 
-        $units = [];
-        if ($showDays) { $units[] = 'd'; }
-        if ($showHours) { $units[] = 'h'; }
-        if ($showMinutes) { $units[] = 'm'; }
-        if ($showSeconds) { $units[] = 's'; }
-        if (empty($units)) { $units = ['s']; }
+        $units = $this->getVisibleUnits($skin);
+        $segments = count($units);
+        if ($segments === 0) {
+            return;
+        }
 
         $segmentGap = max(0, (int) ($skin['segmentGap'] ?? 18));
-        $segments = count($units);
-        $totalGap = ($segments + 1) * $segmentGap;
+        $totalGap = ($segments - 1) * $segmentGap;
         $tileWidth = (int) floor(($width - $totalGap) / $segments);
-        $tileHeight = $height - 2 * $segmentGap;
-        $tileY = $segmentGap;
+        $startX = (int) (($width - ($segments * $tileWidth + $totalGap)) / 2);
+
+        $hangerWidth = max(0, (int) ($skin['hangerWidth'] ?? 10));
+        $hangerHeight = max(0, (int) ($skin['hangerHeight'] ?? 18));
+        $hangerGap = max(2, (int) round($hangerHeight * 0.3));
+        $verticalPad = max(8, (int) round($height * 0.05));
+        $tileHeight = $height - 2 * $verticalPad - $hangerHeight - $hangerGap;
+        $tileY = $verticalPad + $hangerHeight + $hangerGap;
 
         $tileBg = $this->allocColor($im, $skin['tileBackground'] ?? '#FFFFFF');
         $tileBottomCol = $this->allocColor($im, $skin['tileBottomColor'] ?? '#7EB0CF');
@@ -39,42 +47,41 @@ class HangingRibbonBlocksRenderer implements SkinRendererInterface
         $tileRadius = max(0, (int) ($skin['tileRadius'] ?? 12));
         $tileBorderCol = $this->allocColor($im, $skin['tileBorderColor'] ?? '#9BB7CB');
         $tileBorderWidth = max(0, (int) ($skin['tileBorderWidth'] ?? 2));
+        $hangerCol = $this->allocColor($im, $skin['hangerColor'] ?? '#CAD7E2');
         $showBottomLabelBar = ($skin['showBottomLabelBar'] ?? true) === true;
         $shadowCol = $this->allocColor($im, $skin['shadowColor'] ?? '#D7E0E8');
         $shadowOffsetY = (int) ($skin['shadowOffsetY'] ?? 8);
-        $hangerHeight = max(0, (int) ($skin['hangerHeight'] ?? 18));
-        $hangExtension = max(4, (int) round($hangerHeight * 0.6));
 
-        $bottomBarHeight = $showBottomLabelBar ? max(22, (int) round($tileHeight * 0.28)) : 0;
+        $bottomBarHeight = $showBottomLabelBar ? max(20, (int) round($tileHeight * 0.32)) : 0;
         $mainTileHeight = $tileHeight - $bottomBarHeight;
-        $extendPad = 4;
-        $overlap = 2;
 
         for ($i = 0; $i < $segments; $i++) {
-            $tileX = $segmentGap + $i * ($tileWidth + $segmentGap);
+            $tileX = (int) ($startX + $i * ($tileWidth + $segmentGap));
+            $isLastVisible = ($i === $segments - 1);
+            $barCol = $isLastVisible ? $tileBottomColAlt : $tileBottomCol;
 
-            // Back layer: light grey "hanging" block (extends below and slightly wider)
-            $backX = $tileX - $extendPad;
-            $backY = $tileY;
-            $backW = $tileWidth + 2 * $extendPad;
-            $backH = $tileHeight + $hangExtension;
-            $this->fillRoundedRect($im, $backX, $backY, $backW, $backH, $tileRadius + 2, $shadowCol);
+            // 1) Shadow (drawn first, beneath tile)
+            $shadowY = $tileY + $shadowOffsetY;
+            $this->fillRoundedRect($im, $tileX, $shadowY, $tileWidth, $tileHeight, $tileRadius, $shadowCol);
 
-            // Primary block: white value section
-            $mainY = $tileY + $shadowOffsetY;
-            $this->fillRoundedRect($im, $tileX, $mainY, $tileWidth, $mainTileHeight, $tileRadius, $tileBg);
+            // 2) Hanger (centered above tile)
+            $hangerX = (int) ($tileX + $tileWidth / 2 - $hangerWidth / 2);
+            $hangerY = $verticalPad;
+            $hangerR = min(2, (int) floor(min($hangerWidth, $hangerHeight) / 2));
+            $this->fillRoundedRect($im, $hangerX, $hangerY, $hangerWidth, $hangerHeight, $hangerR, $hangerCol);
 
-            // Bottom ribbon: swallowtail shape (slight overlap to connect to white)
+            // 3) Tile body (white number area)
+            $this->fillRoundedRect($im, $tileX, $tileY, $tileWidth, $mainTileHeight, $tileRadius, $tileBg);
+
+            // 4) Bottom label bar (solid rectangle per spec)
             if ($showBottomLabelBar && $bottomBarHeight > 0) {
-                $barY = $mainY + $mainTileHeight - $bottomBarHeight - $overlap;
-                $barH = $bottomBarHeight + $overlap;
-                $isSeconds = ($units[$i] ?? '') === 's';
-                $barCol = $isSeconds ? $tileBottomColAlt : $tileBottomCol;
-                $this->fillSwallowtailRibbon($im, $tileX, $barY, $tileWidth, $barH, $tileRadius, $barCol);
+                $barY = $tileY + $mainTileHeight;
+                imagefilledrectangle($im, $tileX, $barY, $tileX + $tileWidth, $barY + $bottomBarHeight, $barCol);
             }
 
+            // 5) Tile border
             if ($tileBorderWidth > 0) {
-                $this->strokeRoundedRect($im, $tileX, $mainY, $tileWidth, $mainTileHeight, $tileRadius, $tileBorderCol, $tileBorderWidth);
+                $this->strokeRoundedRect($im, $tileX, $tileY, $tileWidth, $mainTileHeight, $tileRadius, $tileBorderCol, $tileBorderWidth);
             }
         }
 
@@ -86,118 +93,119 @@ class HangingRibbonBlocksRenderer implements SkinRendererInterface
         }
     }
 
-    /**
-     * Draw ribbon with swallowtail/flag bottom (inward-curving cut-outs, center tail).
-     */
-    private function fillSwallowtailRibbon($im, int $x, int $y, int $w, int $h, int $topRadius, int $color): void
-    {
-        $r = min($topRadius, (int) floor(min($w, $h) / 2));
-        $tailDepth = min(10, (int) round($h * 0.35));
-        $cutIn = max(8, (int) round($w * 0.1));
-        $cx = (int) ($x + $w / 2);
-        $bottom = $y + $h;
-
-        $points = [
-            $x, $y + $r,
-            $x + $r, $y,
-            $x + $w - $r, $y,
-            $x + $w, $y + $r,
-            $x + $w, $bottom - $tailDepth,
-            $x + $w - $cutIn, $bottom - $tailDepth,
-            $cx, $bottom,
-            $x + $cutIn, $bottom - $tailDepth,
-            $x, $bottom - $tailDepth,
-        ];
-        imagefilledpolygon($im, $points, 9, $color);
-        imagefilledellipse($im, $x + $r, $y + $r, 2 * $r, 2 * $r, $color);
-        imagefilledellipse($im, $x + $w - $r, $y + $r, 2 * $r, 2 * $r, $color);
-    }
-
     public function renderTimeText($im, int $secondsRemaining, array $skin, int $width, int $height, int $textCol, int $accentCol): bool
     {
         $font = (string) ($skin['fontPath'] ?? '');
         $fontSize = (int) ($skin['fontSize'] ?? 48);
         $labelFontSize = (int) ($skin['labelFontSize'] ?? 16);
+        $numberCol = ($skin['textColor'] ?? null) !== null && ($skin['textColor'] ?? '') !== ''
+            ? $this->allocColor($im, $skin['textColor']) : $textCol;
         $labelCol = $this->allocColor($im, $skin['labelColor'] ?? '#FFFFFF');
 
-        $showDays = ($skin['showDays'] ?? true) === true;
-        $showHours = ($skin['showHours'] ?? true) === true;
-        $showMinutes = ($skin['showMinutes'] ?? true) === true;
-        $showSeconds = ($skin['showSeconds'] ?? true) === true;
+        if ($secondsRemaining <= 0) {
+            $finalMsg = (string) ($skin['finalMessage'] ?? "Time's Up");
+            $finalTextCol = $skin['finalTextColor'] ?? null;
+            $drawCol = ($finalTextCol !== null && $finalTextCol !== '') ? $this->allocColor($im, $finalTextCol) : $textCol;
+            if (is_file($font)) {
+                $box = imagettfbbox($fontSize, 0, $font, $finalMsg) ?: [0, 0, 0, 0, 0, 0, 0, 0];
+                $tw = (int) (max($box[0], $box[2], $box[4], $box[6]) - min($box[0], $box[2], $box[4], $box[6]));
+                $x = (int) (($width - $tw) / 2);
+                $y = (int) ($height / 2 + $fontSize / 2);
+                imagettftext($im, $fontSize, 0, $x, $y, $drawCol, $font, $finalMsg);
+            } else {
+                $tw = imagefontwidth(5) * strlen($finalMsg);
+                $th = imagefontheight(5);
+                imagestring($im, 5, (int) (($width - $tw) / 2), (int) (($height - $th) / 2), $finalMsg, $drawCol);
+            }
+            return true;
+        }
 
+        $units = $this->getVisibleUnitsWithValues($skin, $secondsRemaining);
+        $segments = count($units);
+        if ($segments === 0) {
+            return true;
+        }
+
+        $segmentGap = max(0, (int) ($skin['segmentGap'] ?? 18));
+        $totalGap = ($segments - 1) * $segmentGap;
+        $tileWidth = (int) floor(($width - $totalGap) / $segments);
+        $startX = (int) (($width - ($segments * $tileWidth + $totalGap)) / 2);
+
+        $hangerHeight = max(0, (int) ($skin['hangerHeight'] ?? 18));
+        $hangerGap = max(2, (int) round($hangerHeight * 0.3));
+        $verticalPad = max(8, (int) round($height * 0.05));
+        $tileHeight = $height - 2 * $verticalPad - $hangerHeight - $hangerGap;
+        $tileY = $verticalPad + $hangerHeight + $hangerGap;
+        $showBottomLabelBar = ($skin['showBottomLabelBar'] ?? true) === true;
+        $bottomBarHeight = $showBottomLabelBar ? max(20, (int) round($tileHeight * 0.32)) : 0;
+        $mainTileHeight = $tileHeight - $bottomBarHeight;
+        $numberCenterY = $tileY + $mainTileHeight / 2;
+        $labelCenterY = $showBottomLabelBar
+            ? $tileY + $mainTileHeight + $bottomBarHeight / 2
+            : $tileY + $mainTileHeight - (int) round($labelFontSize * 0.5);
+
+        if (is_file($font)) {
+            for ($i = 0; $i < $segments; $i++) {
+                $tileX = (int) ($startX + $i * ($tileWidth + $segmentGap));
+                $centerX = (int) ($tileX + $tileWidth / 2);
+
+                $value = $units[$i]['value'];
+                $label = $units[$i]['label'];
+                $isDays = ($label === 'DAYS');
+                $numberText = $isDays ? (string) $value : sprintf('%02d', $value);
+                $numberWidth = $this->textBoxWidth($numberText, $font, $fontSize);
+                $numberBaseline = (int) ($numberCenterY - $this->textVerticalCenterOffset($numberText, $font, $fontSize));
+                imagettftext($im, $fontSize, 0, (int) ($centerX - $numberWidth / 2), $numberBaseline, $numberCol, $font, $numberText);
+
+                $labelWidth = $this->textBoxWidth($label, $font, $labelFontSize);
+                $labelBaseline = (int) ($labelCenterY - $this->textVerticalCenterOffset($label, $font, $labelFontSize));
+                imagettftext($im, $labelFontSize, 0, (int) ($centerX - $labelWidth / 2), $labelBaseline, $labelCol, $font, $label);
+            }
+        } else {
+            $builtIn = 5;
+            $labelBuiltIn = 3;
+            $numberY = (int) ($numberCenterY - 12);
+            $labelY = (int) ($labelCenterY - 10);
+            for ($i = 0; $i < $segments; $i++) {
+                $tileX = (int) ($startX + $i * ($tileWidth + $segmentGap));
+                $centerX = (int) ($tileX + $tileWidth / 2);
+                $value = $units[$i]['value'];
+                $label = $units[$i]['label'];
+                $isDays = ($label === 'DAYS');
+                $numberText = $isDays ? (string) $value : sprintf('%02d', $value);
+                $nW = imagefontwidth($builtIn) * strlen($numberText);
+                imagestring($im, $builtIn, (int) ($centerX - $nW / 2), $numberY, $numberText, $numberCol);
+                $lW = imagefontwidth($labelBuiltIn) * strlen($label);
+                imagestring($im, $labelBuiltIn, (int) ($centerX - $lW / 2), $labelY, $label, $labelCol);
+            }
+        }
+
+        return true;
+    }
+
+    private function getVisibleUnits(array $skin): array
+    {
+        $units = [];
+        if (($skin['showDays'] ?? true) === true) { $units[] = 'd'; }
+        if (($skin['showHours'] ?? true) === true) { $units[] = 'h'; }
+        if (($skin['showMinutes'] ?? true) === true) { $units[] = 'm'; }
+        if (($skin['showSeconds'] ?? true) === true) { $units[] = 's'; }
+        return empty($units) ? ['s'] : $units;
+    }
+
+    private function getVisibleUnitsWithValues(array $skin, int $secondsRemaining): array
+    {
         $days = intdiv($secondsRemaining, 86400);
         $hours = intdiv($secondsRemaining % 86400, 3600);
         $minutes = intdiv($secondsRemaining % 3600, 60);
         $seconds = $secondsRemaining % 60;
 
         $units = [];
-        if ($showDays) { $units[] = ['value' => $days, 'label' => 'DAYS']; }
-        if ($showHours) { $units[] = ['value' => $hours, 'label' => 'HOURS']; }
-        if ($showMinutes) { $units[] = ['value' => $minutes, 'label' => 'MINUTES']; }
-        if ($showSeconds) { $units[] = ['value' => $seconds, 'label' => 'SECONDS']; }
-        if (empty($units)) { $units[] = ['value' => $seconds, 'label' => 'SECONDS']; }
-
-        $segmentGap = max(0, (int) ($skin['segmentGap'] ?? 18));
-        $shadowOffsetY = (int) ($skin['shadowOffsetY'] ?? 8);
-        $showBottomLabelBar = ($skin['showBottomLabelBar'] ?? true) === true;
-        $segments = count($units);
-        $totalGap = ($segments + 1) * $segmentGap;
-        $tileWidth = (int) floor(($width - $totalGap) / $segments);
-        $tileHeight = $height - 2 * $segmentGap;
-        $tileY = $segmentGap;
-        $mainY = $tileY + $shadowOffsetY;
-        $bottomBarHeight = $showBottomLabelBar ? max(22, (int) round($tileHeight * 0.28)) : 0;
-        $mainTileHeight = $tileHeight - $bottomBarHeight;
-
-        $numberY = (int) ($mainY + $mainTileHeight / 2 - 8);
-        $ribbonCenterY = $mainY + $mainTileHeight - $bottomBarHeight / 2 - 1;
-        $labelY = (int) ($ribbonCenterY + (int) round($labelFontSize * 0.4));
-
-        $highlightCol = $this->allocColor($im, $skin['hangerColor'] ?? '#CAD7E2');
-
-        if (is_file($font)) {
-            for ($i = 0; $i < $segments; $i++) {
-                $tileX = $segmentGap + $i * ($tileWidth + $segmentGap);
-                $centerX = (int) ($tileX + $tileWidth / 2);
-
-                $numberText = sprintf('%02d', $units[$i]['value']);
-                $numberWidth = $this->textBoxWidth($numberText, $font, $fontSize);
-                $numX = (int) ($centerX - $numberWidth / 2);
-
-                $lineW = min($numberWidth + 12, (int) round($tileWidth * 0.5));
-                imageline($im, $centerX - $lineW / 2, $numberY - $fontSize - 4, $centerX + $lineW / 2, $numberY - $fontSize - 4, $highlightCol);
-
-                imagettftext($im, $fontSize, 0, $numX, $numberY, $textCol, $font, $numberText);
-
-                if ($showBottomLabelBar) {
-                    $label = $units[$i]['label'];
-                    $labelWidth = $this->textBoxWidth($label, $font, $labelFontSize);
-                    imagettftext($im, $labelFontSize, 0, (int) ($centerX - $labelWidth / 2), $labelY, $labelCol, $font, $label);
-                } else {
-                    $label = $units[$i]['label'];
-                    $labelWidth = $this->textBoxWidth($label, $font, $labelFontSize);
-                    $labelYAlt = (int) ($mainY + $mainTileHeight + (int) round($labelFontSize * 0.5));
-                    imagettftext($im, $labelFontSize, 0, (int) ($centerX - $labelWidth / 2), $labelYAlt, $labelCol, $font, $label);
-                }
-            }
-        } else {
-            $builtIn = 5;
-            $labelBuiltIn = 3;
-            for ($i = 0; $i < $segments; $i++) {
-                $tileX = $segmentGap + $i * ($tileWidth + $segmentGap);
-                $centerX = (int) ($tileX + $tileWidth / 2);
-
-                $numberText = sprintf('%02d', $units[$i]['value']);
-                $nW = imagefontwidth($builtIn) * strlen($numberText);
-                imagestring($im, $builtIn, (int) ($centerX - $nW / 2), $numberY - 12, $numberText, $textCol);
-
-                $label = $units[$i]['label'];
-                $lW = imagefontwidth($labelBuiltIn) * strlen($label);
-                imagestring($im, $labelBuiltIn, (int) ($centerX - $lW / 2), $labelY - 10, $label, $labelCol);
-            }
-        }
-
-        return true;
+        if (($skin['showDays'] ?? true) === true) { $units[] = ['value' => $days, 'label' => 'DAYS']; }
+        if (($skin['showHours'] ?? true) === true) { $units[] = ['value' => $hours, 'label' => 'HOURS']; }
+        if (($skin['showMinutes'] ?? true) === true) { $units[] = ['value' => $minutes, 'label' => 'MINUTES']; }
+        if (($skin['showSeconds'] ?? true) === true) { $units[] = ['value' => $seconds, 'label' => 'SECONDS']; }
+        return empty($units) ? [['value' => $seconds, 'label' => 'SECONDS']] : $units;
     }
 
     private function allocColor($im, string $hex): int
@@ -273,5 +281,11 @@ class HangingRibbonBlocksRenderer implements SkinRendererInterface
         $minX = min($box[0], $box[2], $box[4], $box[6]);
         $maxX = max($box[0], $box[2], $box[4], $box[6]);
         return (int) ($maxX - $minX);
+    }
+
+    private function textVerticalCenterOffset(string $text, string $fontPath, int $fontSize): float
+    {
+        $box = imagettfbbox($fontSize, 0, $fontPath, $text) ?: [0, 0, 0, 0, 0, 0, 0, 0];
+        return ($box[7] + $box[1]) / 2.0;
     }
 }
