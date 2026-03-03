@@ -37,25 +37,18 @@ class RoundedPanelCardsRenderer implements SkinRendererInterface
             return;
         }
 
-        // 1) Panel shadow (soft, offset down)
+        // 1) Panel shadow (soft, diffused - draw inner then outer for layered effect)
         $shadowCol = $this->allocColor($im, $skin['shadowColor'] ?? '#D9E3EB');
         $shadowOffsetY = (int) ($skin['shadowOffsetY'] ?? 8);
-        $this->fillRoundedRect(
-            $im,
-            $layout['panelX'] + 2,
-            $layout['panelY'] + $shadowOffsetY,
-            $layout['panelW'],
-            $layout['panelH'],
-            $layout['panelR'],
-            $shadowCol
-        );
+        $this->fillRoundedRect($im, $layout['panelX'] + 3, $layout['panelY'] + $shadowOffsetY + 2, $layout['panelW'], $layout['panelH'], $layout['panelR'], $shadowCol);
+        $this->fillRoundedRect($im, $layout['panelX'] + 2, $layout['panelY'] + $shadowOffsetY, $layout['panelW'], $layout['panelH'], $layout['panelR'], $shadowCol);
 
         // 2) Outer panel fill
         $panelFillCol = $bgCol;
         $this->fillRoundedRect($im, $layout['panelX'], $layout['panelY'], $layout['panelW'], $layout['panelH'], $layout['panelR'], $panelFillCol);
 
-        // 3) Outer panel border
-        $borderWidth = max(0, (int) ($skin['borderWidth'] ?? 2));
+        // 3) Outer panel border (thin, refined - max 1px for clean look)
+        $borderWidth = max(0, min(1, (int) ($skin['borderWidth'] ?? 1)));
         if ($borderWidth > 0) {
             $borderCol = $this->allocColor($im, $skin['borderColor'] ?? '#D8E0E8');
             $this->strokeRoundedRect($im, $layout['panelX'], $layout['panelY'], $layout['panelW'], $layout['panelH'], $layout['panelR'], $borderCol, $borderWidth);
@@ -66,12 +59,17 @@ class RoundedPanelCardsRenderer implements SkinRendererInterface
         $numberBoxBg = $this->allocColor($im, $skin['numberBoxBackground'] ?? '#FFFFFF');
         $accentBorderCol = $this->allocColor($im, (string) ($skin['numberBoxBorderColor'] ?? $skin['accentColor'] ?? '#69B7CB'));
         $neutralBorderCol = $this->allocColor($im, $skin['borderColor'] ?? '#D8E0E8');
-        $numberBoxBorderWidth = max(0, (int) ($skin['numberBoxBorderWidth'] ?? 3));
+        $accentBorderWidth = max(0, min(3, (int) ($skin['numberBoxBorderWidth'] ?? 3)));
+        $neutralBorderWidth = 1;
         $numberBoxRadius = max(0, (int) ($skin['numberBoxRadius'] ?? 14));
+        $cardShadowCol = $this->allocColor($im, $skin['shadowColor'] ?? '#D9E3EB');
 
         for ($i = 0; $i < $segments; $i++) {
             $cardX = $layout['cardX'] + $i * ($layout['cardWidth'] + $layout['segmentGap']);
             $cardY = $layout['cardY'];
+
+            // Card subtle shadow (lift effect)
+            $this->fillRoundedRect($im, $cardX + 1, $cardY + 2, $layout['cardWidth'], $layout['cardHeight'], $layout['cardRadius'], $cardShadowCol);
 
             // Card background
             $this->fillRoundedRect($im, $cardX, $cardY, $layout['cardWidth'], $layout['cardHeight'], $layout['cardRadius'], $cardBg);
@@ -83,12 +81,13 @@ class RoundedPanelCardsRenderer implements SkinRendererInterface
             $boxH = $layout['boxH'];
             $isHighlighted = ($i === 0);
             $boxBorderCol = $isHighlighted ? $accentBorderCol : $neutralBorderCol;
+            $boxBorderW = $isHighlighted ? $accentBorderWidth : $neutralBorderWidth;
 
-            if ($numberBoxBorderWidth > 0) {
-                $borderR = min($numberBoxRadius + $numberBoxBorderWidth, (int) floor(min($boxW, $boxH) / 2));
+            if ($boxBorderW > 0) {
+                $borderR = min($numberBoxRadius + $boxBorderW, (int) floor(min($boxW, $boxH) / 2));
                 $this->fillRoundedRect($im, $boxX, $boxY, $boxW, $boxH, $borderR, $boxBorderCol);
             }
-            $innerPad = $numberBoxBorderWidth;
+            $innerPad = $boxBorderW;
             $innerX = $boxX + $innerPad;
             $innerY = $boxY + $innerPad;
             $innerW = $boxW - 2 * $innerPad;
@@ -135,7 +134,7 @@ class RoundedPanelCardsRenderer implements SkinRendererInterface
         }
 
         $numberCenterY = $layout['cardY'] + $layout['boxPadY'] + $layout['boxH'] / 2;
-        $labelY = $layout['cardY'] + $layout['boxPadY'] + $layout['boxH'] + 8;
+        $labelY = $layout['cardY'] + $layout['boxPadY'] + $layout['boxH'] + 12;
 
         if (is_file($font)) {
             for ($i = 0; $i < $segments; $i++) {
@@ -184,9 +183,10 @@ class RoundedPanelCardsRenderer implements SkinRendererInterface
         $layout = $this->computePanelBounds($skin, $width, $height);
         $shadowCol = $this->allocColor($im, $skin['shadowColor'] ?? '#D9E3EB');
         $shadowOffsetY = (int) ($skin['shadowOffsetY'] ?? 8);
+        $this->fillRoundedRect($im, $layout['panelX'] + 3, $layout['panelY'] + $shadowOffsetY + 2, $layout['panelW'], $layout['panelH'], $layout['panelR'], $shadowCol);
         $this->fillRoundedRect($im, $layout['panelX'] + 2, $layout['panelY'] + $shadowOffsetY, $layout['panelW'], $layout['panelH'], $layout['panelR'], $shadowCol);
         $this->fillRoundedRect($im, $layout['panelX'], $layout['panelY'], $layout['panelW'], $layout['panelH'], $layout['panelR'], $bgCol);
-        $borderWidth = max(0, (int) ($skin['borderWidth'] ?? 2));
+        $borderWidth = $layout['borderWidth'];
         if ($borderWidth > 0) {
             $borderCol = $this->allocColor($im, $skin['borderColor'] ?? '#D8E0E8');
             $this->strokeRoundedRect($im, $layout['panelX'], $layout['panelY'], $layout['panelW'], $layout['panelH'], $layout['panelR'], $borderCol, $borderWidth);
@@ -196,7 +196,7 @@ class RoundedPanelCardsRenderer implements SkinRendererInterface
     private function computeLayout(array $skin, int $width, int $height, int $segments): ?array
     {
         $panel = $this->computePanelBounds($skin, $width, $height);
-        $segmentGap = max(0, (int) ($skin['segmentGap'] ?? 22));
+        $segmentGap = max(12, (int) round(($skin['segmentGap'] ?? 22) * 0.75));
         $cardRadius = max(0, (int) ($skin['cardRadius'] ?? 16));
         $innerPad = 16;
 
@@ -205,11 +205,13 @@ class RoundedPanelCardsRenderer implements SkinRendererInterface
         $contentW = $panel['panelW'] - 2 * ($panel['borderWidth'] + $innerPad);
         $contentH = $panel['panelH'] - 2 * ($panel['borderWidth'] + $innerPad);
 
+        // Cards: medium-sized, ~72% of panel content height, balanced width
         $cardHeight = (int) ($contentH * 0.72);
         $totalGap = ($segments - 1) * $segmentGap;
         $cardWidth = (int) (($contentW - $totalGap) / $segments);
-        $cardY = $contentY + (int) (($contentH - $cardHeight) * 0.12);
+        $cardY = $contentY + (int) (($contentH - $cardHeight) * 0.08);
 
+        // Number box: balanced padding, digits centered with top/bottom room
         $boxPadX = (int) round($cardWidth * 0.08);
         $boxPadY = (int) round($cardHeight * 0.08);
         $boxW = $cardWidth - 2 * $boxPadX;
@@ -233,8 +235,8 @@ class RoundedPanelCardsRenderer implements SkinRendererInterface
     private function computePanelBounds(array $skin, int $width, int $height): array
     {
         $panelRadius = max(0, (int) ($skin['panelRadius'] ?? 28));
-        $borderWidth = max(0, (int) ($skin['borderWidth'] ?? 2));
-        $outerMargin = max(24, (int) round(min($width, $height) * 0.06));
+        $borderWidth = max(0, min(1, (int) ($skin['borderWidth'] ?? 1)));
+        $outerMargin = max(48, (int) round(min($width, $height) * 0.10));
 
         $panelX = $outerMargin;
         $panelY = $outerMargin;
