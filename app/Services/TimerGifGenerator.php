@@ -374,6 +374,8 @@ class TimerGifGenerator
 
     public function renderPngFrame(int $secondsRemaining, array $skin, ?string $customText, string $textPosition): string
     {
+        $skin = $this->resolveVisibilityLayout($skin);
+
         // Base timer dimensions from skin
         $timerW = max(120, (int) ($skin['width'] ?? 400));
         $timerH = max(80, (int) ($skin['height'] ?? 160));
@@ -662,6 +664,44 @@ class TimerGifGenerator
     {
         $limit = (int) ($timer->animation_frame_limit ?? 20);
         return max(10, min(60, $limit));
+    }
+
+    /**
+     * Resolve visibilityLayouts when present: pick layout by showDays/showSeconds and apply width/height/segmentGap.
+     */
+    private function resolveVisibilityLayout(array $skin): array
+    {
+        $layouts = $skin['visibilityLayouts'] ?? null;
+        if (!is_array($layouts) || empty($layouts)) {
+            return $skin;
+        }
+        $showDays = ($skin['showDays'] ?? true) === true;
+        $showSeconds = ($skin['showSeconds'] ?? true) === true;
+
+        $layout = null;
+        if (!$showDays && !$showSeconds && isset($layouts['daysAndSecondsHidden'])) {
+            $layout = $layouts['daysAndSecondsHidden'];
+        } elseif (!$showDays && isset($layouts['daysHidden'])) {
+            $layout = $layouts['daysHidden'];
+        } elseif (!$showSeconds && isset($layouts['secondsHidden'])) {
+            $layout = $layouts['secondsHidden'];
+        } elseif (isset($layouts['allVisible'])) {
+            $layout = $layouts['allVisible'];
+        }
+
+        if (is_array($layout)) {
+            if (isset($layout['width'])) {
+                $skin['width'] = (int) $layout['width'];
+            }
+            if (isset($layout['height'])) {
+                $skin['height'] = (int) $layout['height'];
+            }
+            if (isset($layout['segmentGap'])) {
+                $skin['segmentGap'] = (int) $layout['segmentGap'];
+            }
+        }
+
+        return $skin;
     }
 
     private function applySkinStyle($im, array $skin, int $width, int $height, int $bgCol, int $textCol, int $accentCol, int $secondsRemaining): void

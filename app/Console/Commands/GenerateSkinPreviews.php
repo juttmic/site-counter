@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Services\TimerGifGenerator;
 use App\Services\Skins\SkinRendererFactory;
+use App\Services\SkinFileHelper;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 
@@ -26,18 +27,18 @@ class GenerateSkinPreviews extends Command
         $legacySkins = (array) ($this->option('skin') ?? []);
         foreach ($legacySkins as $s) { $selected[] = $s; }
 
-        $files = collect(File::files($skinsDir))
-            ->filter(fn($f) => strtolower($f->getExtension()) === 'json')
+        $paths = SkinFileHelper::listFiles();
+        $files = collect($paths)
             ->when(!empty($selected), function ($c) use ($selected) {
                 $set = array_map(fn($k) => trim($k), $selected);
-                return $c->filter(function ($f) use ($set) {
-                    return in_array(pathinfo($f->getFilename(), PATHINFO_FILENAME), $set, true);
+                return $c->filter(function ($path) use ($set) {
+                    return in_array(pathinfo($path, PATHINFO_FILENAME), $set, true);
                 });
             })
             ->values();
 
         if ($files->isEmpty()) {
-            $this->warn('No skin JSON files found.');
+            $this->warn('No skin JSON/JSONC files found.');
             return self::SUCCESS;
         }
 
@@ -46,12 +47,10 @@ class GenerateSkinPreviews extends Command
 
         $onlyWithRenderer = ! (bool) $this->option('all');
 
-        foreach ($files as $file) {
-            $skinKey = pathinfo($file->getFilename(), PATHINFO_FILENAME);
-            $json = [];
-            try {
-                $json = json_decode(File::get($file->getPathname()), true) ?: [];
-            } catch (\Throwable $e) {
+        foreach ($files as $filePath) {
+            $skinKey = pathinfo($filePath, PATHINFO_FILENAME);
+            $json = SkinFileHelper::load($filePath);
+            if ($json === null) {
                 $this->error("Skip {$skinKey}: invalid JSON");
                 continue;
             }

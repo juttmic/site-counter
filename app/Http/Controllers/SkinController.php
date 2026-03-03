@@ -5,26 +5,19 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use App\Services\TimerGifGenerator;
+use App\Services\SkinFileHelper;
 
 class SkinController extends Controller
 {
     public function index()
     {
-        $dir = resource_path('timerskins');
         $skins = [];
-        foreach (File::files($dir) as $file) {
-            if (strtolower($file->getExtension()) !== 'json') continue;
-            
-            // Only include skins that have valid JSON files
-            $key = pathinfo($file->getFilename(), PATHINFO_FILENAME);
-            $jsonPath = $file->getPathname();
-            
-            // Double-check file exists (should always be true, but safety check)
-            if (!File::exists($jsonPath)) continue;
-            
-            $json = json_decode(File::get($jsonPath), true);
-            if ($json === null) continue; // Skip invalid JSON
-            
+        foreach (SkinFileHelper::listFiles() as $jsonPath) {
+            $key = pathinfo($jsonPath, PATHINFO_FILENAME);
+            $json = SkinFileHelper::load($jsonPath);
+            if ($json === null) {
+                continue;
+            }
             $skins[] = [
                 'key' => $key,
                 'name' => $json['name'] ?? $key,
@@ -36,11 +29,14 @@ class SkinController extends Controller
 
     public function show(string $key)
     {
-        $path = resource_path('timerskins/' . $key . '.json');
-        if (!File::exists($path)) {
+        $path = SkinFileHelper::resolvePath($key);
+        if ($path === null) {
             return response()->json(['message' => 'Skin not found'], 404);
         }
-        $json = json_decode(File::get($path), true) ?: [];
+        $json = SkinFileHelper::load($path);
+        if ($json === null) {
+            return response()->json(['message' => 'Skin not found'], 404);
+        }
         // Default border to 1 if not provided or provided as zero (for creation)
         if (!array_key_exists('borderWidth', $json) || (int) $json['borderWidth'] === 0) {
             $json['borderWidth'] = 1;
@@ -69,12 +65,14 @@ class SkinController extends Controller
      */
     public function getFormDefaults(string $key)
     {
-        $path = resource_path('timerskins/' . $key . '.json');
-        if (!File::exists($path)) {
+        $path = SkinFileHelper::resolvePath($key);
+        if ($path === null) {
             return response()->json(['message' => 'Skin not found'], 404);
         }
-        
-        $json = json_decode(File::get($path), true) ?: [];
+        $json = SkinFileHelper::load($path);
+        if ($json === null) {
+            return response()->json(['message' => 'Skin not found'], 404);
+        }
         $formDefaults = [];
         
         // Extract formDefaults object if it exists
@@ -102,32 +100,26 @@ class SkinController extends Controller
     public function gallery()
     {
         $dir = public_path('skin-previews');
-        $jsonDir = resource_path('timerskins');
         $files = collect(glob($dir . DIRECTORY_SEPARATOR . '*.gif'));
         
-        $items = $files->map(function ($path) use ($jsonDir) {
+        $items = $files->map(function ($path) {
             $file = pathinfo($path, PATHINFO_BASENAME);
             $key = pathinfo($path, PATHINFO_FILENAME);
-            
-            // Only include if corresponding JSON file exists
-            $jsonPath = $jsonDir . DIRECTORY_SEPARATOR . $key . '.json';
-            if (!File::exists($jsonPath)) {
-                return null; // Filter out skins without JSON files
+            if (!SkinFileHelper::exists($key)) {
+                return null;
             }
-            
             return [
                 'key' => $key,
                 'url' => url('skin-previews/' . $file),
             ];
-        })->filter(); // Remove null entries
+        })->filter();
         
         return view('skins.gallery', ['items' => $items]);
     }
 
     public function regenerate(string $key, TimerGifGenerator $generator)
     {
-        $jsonPath = resource_path('timerskins/' . $key . '.json');
-        if (!File::exists($jsonPath)) {
+        if (!SkinFileHelper::exists($key)) {
             return response()->json(['message' => 'Skin not found'], 404);
         }
         try {
