@@ -690,14 +690,10 @@ class TimerGifGenerator
         }
 
         if (is_array($layout)) {
-            if (isset($layout['width'])) {
-                $skin['width'] = (int) $layout['width'];
-            }
-            if (isset($layout['height'])) {
-                $skin['height'] = (int) $layout['height'];
-            }
-            if (isset($layout['segmentGap'])) {
-                $skin['segmentGap'] = (int) $layout['segmentGap'];
+            foreach (['width', 'height', 'segmentGap', 'ringSize', 'connectorLength'] as $key) {
+                if (isset($layout[$key])) {
+                    $skin[$key] = (int) $layout[$key];
+                }
             }
         }
 
