@@ -690,7 +690,7 @@ class TimerGifGenerator
         }
 
         if (is_array($layout)) {
-            foreach (['width', 'height', 'segmentGap', 'ringSize', 'connectorLength', 'framePadding', 'separatorHeight'] as $key) {
+            foreach (['width', 'height', 'segmentGap', 'horizontalPadding', 'ringSize', 'connectorLength', 'framePadding', 'separatorHeight'] as $key) {
                 if (isset($layout[$key])) {
                     $skin[$key] = (int) $layout[$key];
                 }

@@ -52,7 +52,8 @@ class HangingRibbonBlocksRenderer implements SkinRendererInterface
         $shadowCol = $this->allocColor($im, $skin['shadowColor'] ?? '#D7E0E8');
         $shadowOffsetY = (int) ($skin['shadowOffsetY'] ?? 8);
 
-        $bottomBarHeight = $showBottomLabelBar ? max(20, (int) round($tileHeight * 0.32)) : 0;
+        $bottomBarRatio = 0.30;
+        $bottomBarHeight = $showBottomLabelBar ? max(18, (int) round($tileHeight * $bottomBarRatio)) : 0;
         $mainTileHeight = $tileHeight - $bottomBarHeight;
 
         for ($i = 0; $i < $segments; $i++) {
@@ -60,7 +61,7 @@ class HangingRibbonBlocksRenderer implements SkinRendererInterface
             $isLastVisible = ($i === $segments - 1);
             $barCol = $isLastVisible ? $tileBottomColAlt : $tileBottomCol;
 
-            // 1) Shadow (drawn first, beneath tile)
+            // 1) Shadow (drawn first, beneath full tile)
             $shadowY = $tileY + $shadowOffsetY;
             $this->fillRoundedRect($im, $tileX, $shadowY, $tileWidth, $tileHeight, $tileRadius, $shadowCol);
 
@@ -70,18 +71,18 @@ class HangingRibbonBlocksRenderer implements SkinRendererInterface
             $hangerR = min(2, (int) floor(min($hangerWidth, $hangerHeight) / 2));
             $this->fillRoundedRect($im, $hangerX, $hangerY, $hangerWidth, $hangerHeight, $hangerR, $hangerCol);
 
-            // 3) Tile body (white number area)
-            $this->fillRoundedRect($im, $tileX, $tileY, $tileWidth, $mainTileHeight, $tileRadius, $tileBg);
-
-            // 4) Bottom label bar (solid rectangle per spec)
+            // 3) Unified tile: one outer rounded box for both digit and label areas
+            //    Fill full tile with label bar color, then overlay white for number area
             if ($showBottomLabelBar && $bottomBarHeight > 0) {
-                $barY = $tileY + $mainTileHeight;
-                imagefilledrectangle($im, $tileX, $barY, $tileX + $tileWidth, $barY + $bottomBarHeight, $barCol);
+                $this->fillRoundedRect($im, $tileX, $tileY, $tileWidth, $tileHeight, $tileRadius, $barCol);
+                $this->fillRoundedRect($im, $tileX, $tileY, $tileWidth, $mainTileHeight, $tileRadius, $tileBg);
+            } else {
+                $this->fillRoundedRect($im, $tileX, $tileY, $tileWidth, $tileHeight, $tileRadius, $tileBg);
             }
 
-            // 5) Tile border
+            // 4) Tile border (around full unified tile)
             if ($tileBorderWidth > 0) {
-                $this->strokeRoundedRect($im, $tileX, $tileY, $tileWidth, $mainTileHeight, $tileRadius, $tileBorderCol, $tileBorderWidth);
+                $this->strokeRoundedRect($im, $tileX, $tileY, $tileWidth, $tileHeight, $tileRadius, $tileBorderCol, $tileBorderWidth);
             }
         }
 
@@ -137,7 +138,8 @@ class HangingRibbonBlocksRenderer implements SkinRendererInterface
         $tileHeight = $height - 2 * $verticalPad - $hangerHeight - $hangerGap;
         $tileY = $verticalPad + $hangerHeight + $hangerGap;
         $showBottomLabelBar = ($skin['showBottomLabelBar'] ?? true) === true;
-        $bottomBarHeight = $showBottomLabelBar ? max(20, (int) round($tileHeight * 0.32)) : 0;
+        $bottomBarRatio = 0.30;
+        $bottomBarHeight = $showBottomLabelBar ? max(18, (int) round($tileHeight * $bottomBarRatio)) : 0;
         $mainTileHeight = $tileHeight - $bottomBarHeight;
         $numberCenterY = $tileY + $mainTileHeight / 2;
         $labelCenterY = $showBottomLabelBar
