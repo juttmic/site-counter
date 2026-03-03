@@ -1,0 +1,127 @@
+{
+    "name": "Framed Flip Board",
+    "width": 860,
+    "height": 260,
+    "background": "#F7F8FA",
+    "textColor": "#263A4F",
+    "accentColor": "#C9D4DE",
+    "fontSize": 58,
+    "labelFontSize": 18,
+    "fontPath": "resources/fonts/dejavu-sans.book.ttf",
+    "style": "framed_flip_board",
+  
+    "showDays": true,
+    "showHours": true,
+    "showMinutes": true,
+    "showSeconds": true,
+  
+    "circleStroke": 0,
+    "finalMessage": "Time's Up",
+    "finalBackground": null,
+    "finalTextColor": null,
+  
+    "borderWidth": 3,
+    "borderColor": "#D5DEE7",
+  
+    "frameRadius": 10,
+    "framePadding": 26,
+    "tileBackground": "#FFFFFF",
+    "tileBorderColor": "#CBD5DE",
+    "tileBorderWidth": 2,
+    "tileRadius": 10,
+    "tileShadowColor": "#DCE4EB",
+    "tileShadowBlur": 10,
+    "hingeColor": "#C6D0DA",
+    "hingeWidth": 10,
+    "hingeHeight": 18,
+    "basePlateColor": "#D6E0E8",
+    "basePlateHeight": 18,
+    "labelColor": "#485D71",
+    "dotColor": "#B8C4D0",
+    "showLabelDots": true,
+  
+    "visibilityLayouts": {
+      "allVisible": {
+        "width": 860,
+        "height": 260,
+        "visibleUnits": 4,
+        "framePadding": 26,
+        "note": "Standard flip board with 4 tiles"
+      },
+      "daysHidden": {
+        "width": 860,
+        "height": 260,
+        "visibleUnits": 3,
+        "framePadding": 30,
+        "stretchRemainingUnits": true,
+        "note": "Hide Days only, frame size remains same"
+      },
+      "secondsHidden": {
+        "width": 860,
+        "height": 260,
+        "visibleUnits": 3,
+        "framePadding": 30,
+        "stretchRemainingUnits": true,
+        "note": "Hide Seconds only, frame size remains same"
+      },
+      "daysAndSecondsHidden": {
+        "width": 640,
+        "height": 230,
+        "visibleUnits": 2,
+        "framePadding": 28,
+        "stretchRemainingUnits": true,
+        "note": "Compact frame for Hours and Minutes only"
+      }
+    },
+  
+    "visibilityRules": {
+      "keepSameCanvasIfOnlyOneEdgeUnitHidden": true,
+      "useCompactCanvasIfDaysAndSecondsHidden": true,
+      "compactTrigger": {
+        "showDays": false,
+        "showSeconds": false
+      }
+    },
+  
+    "formDefaults": {
+      "background": "#F7F8FA",
+      "textColor": "#263A4F",
+      "accentColor": "#C9D4DE"
+    },
+  
+    "fields": [
+      { "key": "width", "label": "Width", "type": "number", "min": 100, "max": 2000, "step": 10, "group": "Dimensions", "groupOrder": 2, "order": 1 },
+      { "key": "height", "label": "Height", "type": "number", "min": 80, "max": 1000, "step": 5, "group": "Dimensions", "order": 2 },
+  
+      { "key": "background", "label": "Background Color", "type": "color", "group": "Appearance", "groupOrder": 1, "order": 1 },
+      { "key": "frameRadius", "label": "Frame Radius", "type": "number", "min": 0, "max": 40, "step": 1, "group": "Appearance", "order": 2 },
+      { "key": "borderWidth", "label": "Frame Border Width", "type": "number", "min": 0, "max": 20, "step": 1, "group": "Appearance", "order": 3 },
+      { "key": "borderColor", "label": "Frame Border Color", "type": "color", "group": "Appearance", "order": 4 },
+      { "key": "tileBackground", "label": "Tile Background", "type": "color", "group": "Appearance", "order": 5 },
+      { "key": "tileBorderColor", "label": "Tile Border Color", "type": "color", "group": "Appearance", "order": 6 },
+      { "key": "textColor", "label": "Number Color", "type": "color", "group": "Appearance", "order": 7 },
+      { "key": "labelColor", "label": "Label Color", "type": "color", "group": "Appearance", "order": 8 },
+      { "key": "basePlateColor", "label": "Base Plate Color", "type": "color", "group": "Appearance", "order": 9 },
+      { "key": "hingeColor", "label": "Side Hinge Color", "type": "color", "group": "Appearance", "order": 10 },
+  
+      { "key": "fontSize", "label": "Number Font Size", "type": "number", "min": 8, "max": 200, "step": 1, "group": "Appearance", "order": 11 },
+      { "key": "labelFontSize", "label": "Label Font Size", "type": "number", "min": 8, "max": 100, "step": 1, "group": "Appearance", "order": 12 },
+  
+      { "key": "framePadding", "label": "Frame Padding", "type": "number", "min": 0, "max": 80, "step": 1, "group": "Layout", "groupOrder": 3, "order": 1 },
+      { "key": "tileRadius", "label": "Tile Radius", "type": "number", "min": 0, "max": 30, "step": 1, "group": "Layout", "order": 2 },
+      { "key": "tileBorderWidth", "label": "Tile Border Width", "type": "number", "min": 0, "max": 10, "step": 1, "group": "Layout", "order": 3 },
+      { "key": "hingeWidth", "label": "Hinge Width", "type": "number", "min": 0, "max": 30, "step": 1, "group": "Layout", "order": 4 },
+      { "key": "hingeHeight", "label": "Hinge Height", "type": "number", "min": 0, "max": 40, "step": 1, "group": "Layout", "order": 5 },
+      { "key": "basePlateHeight", "label": "Base Plate Height", "type": "number", "min": 0, "max": 40, "step": 1, "group": "Layout", "order": 6 },
+  
+      { "key": "showLabelDots", "label": "Show Label Dots", "type": "boolean", "group": "Visibility", "groupOrder": 4, "order": 1 },
+      { "key": "showDays", "label": "Show Days", "type": "boolean", "group": "Visibility", "order": 2 },
+      { "key": "showHours", "label": "Show Hours", "type": "boolean", "group": "Visibility", "order": 3 },
+      { "key": "showMinutes", "label": "Show Minutes", "type": "boolean", "group": "Visibility", "order": 4 },
+      { "key": "showSeconds", "label": "Show Seconds", "type": "boolean", "group": "Visibility", "order": 5 },
+  
+      { "key": "finalMessage", "label": "Final Message", "type": "text", "maxLength": 64, "group": "Final Screen", "groupOrder": 6 },
+      { "key": "finalBackground", "label": "Final Background", "type": "color", "group": "Final Screen" },
+      { "key": "finalTextColor", "label": "Final Text Color", "type": "color", "group": "Final Screen" }
+    ]
+  }

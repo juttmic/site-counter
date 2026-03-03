@@ -1,0 +1,112 @@
+{
+    "name": "Minimal Inline Divider",
+    "width": 860,
+    "height": 140,
+    "background": "#F7F8FA",
+    "textColor": "#2B93BD",
+    "accentColor": "#D0D7DF",
+    "fontSize": 64,
+    "labelFontSize": 16,
+    "fontPath": "resources/fonts/dejavu-sans.book.ttf",
+    "style": "minimal_inline_divider",
+  
+    "showDays": true,
+    "showHours": true,
+    "showMinutes": true,
+    "showSeconds": true,
+  
+    "circleStroke": 0,
+    "finalMessage": "Time's Up",
+    "finalBackground": null,
+    "finalTextColor": null,
+    "borderWidth": 0,
+    "borderColor": "#FFFFFF",
+  
+    "separatorColor": "#CBD3DC",
+    "separatorWidth": 2,
+    "separatorHeight": 86,
+    "segmentGap": 36,
+    "labelColor": "#56697C",
+    "numberWeight": 700,
+    "labelLetterSpacing": 1.2,
+  
+    "visibilityLayouts": {
+      "allVisible": {
+        "width": 860,
+        "height": 140,
+        "visibleUnits": 4,
+        "segmentGap": 36,
+        "separatorHeight": 86,
+        "note": "All four inline segments visible"
+      },
+      "daysHidden": {
+        "width": 860,
+        "height": 140,
+        "visibleUnits": 3,
+        "segmentGap": 46,
+        "separatorHeight": 86,
+        "stretchRemainingUnits": true,
+        "note": "Hide Days only, same canvas maintained"
+      },
+      "secondsHidden": {
+        "width": 860,
+        "height": 140,
+        "visibleUnits": 3,
+        "segmentGap": 46,
+        "separatorHeight": 86,
+        "stretchRemainingUnits": true,
+        "note": "Hide Seconds only, same canvas maintained"
+      },
+      "daysAndSecondsHidden": {
+        "width": 560,
+        "height": 120,
+        "visibleUnits": 2,
+        "segmentGap": 54,
+        "separatorHeight": 76,
+        "stretchRemainingUnits": true,
+        "note": "Hours and Minutes only, smaller inline layout"
+      }
+    },
+  
+    "visibilityRules": {
+      "keepSameCanvasIfOnlyOneEdgeUnitHidden": true,
+      "useCompactCanvasIfDaysAndSecondsHidden": true,
+      "compactTrigger": {
+        "showDays": false,
+        "showSeconds": false
+      }
+    },
+  
+    "formDefaults": {
+      "background": "#F7F8FA",
+      "textColor": "#2B93BD",
+      "accentColor": "#D0D7DF"
+    },
+  
+    "fields": [
+      { "key": "width", "label": "Width", "type": "number", "min": 100, "max": 2000, "step": 10, "group": "Dimensions", "groupOrder": 2, "order": 1 },
+      { "key": "height", "label": "Height", "type": "number", "min": 80, "max": 1000, "step": 5, "group": "Dimensions", "order": 2 },
+  
+      { "key": "background", "label": "Background Color", "type": "color", "group": "Appearance", "groupOrder": 1, "order": 1 },
+      { "key": "textColor", "label": "Number Color", "type": "color", "group": "Appearance", "order": 2 },
+      { "key": "labelColor", "label": "Label Color", "type": "color", "group": "Appearance", "order": 3 },
+      { "key": "separatorColor", "label": "Divider Color", "type": "color", "group": "Appearance", "order": 4 },
+  
+      { "key": "fontSize", "label": "Number Font Size", "type": "number", "min": 8, "max": 200, "step": 1, "group": "Appearance", "order": 5 },
+      { "key": "labelFontSize", "label": "Label Font Size", "type": "number", "min": 8, "max": 100, "step": 1, "group": "Appearance", "order": 6 },
+      { "key": "labelLetterSpacing", "label": "Label Letter Spacing", "type": "number", "min": 0, "max": 10, "step": 0.1, "group": "Appearance", "order": 7 },
+  
+      { "key": "segmentGap", "label": "Segment Gap", "type": "number", "min": 0, "max": 100, "step": 1, "group": "Layout", "groupOrder": 3, "order": 1 },
+      { "key": "separatorWidth", "label": "Divider Width", "type": "number", "min": 1, "max": 10, "step": 1, "group": "Layout", "order": 2 },
+      { "key": "separatorHeight", "label": "Divider Height", "type": "number", "min": 10, "max": 150, "step": 1, "group": "Layout", "order": 3 },
+  
+      { "key": "showDays", "label": "Show Days", "type": "boolean", "group": "Visibility", "groupOrder": 4, "order": 1 },
+      { "key": "showHours", "label": "Show Hours", "type": "boolean", "group": "Visibility", "order": 2 },
+      { "key": "showMinutes", "label": "Show Minutes", "type": "boolean", "group": "Visibility", "order": 3 },
+      { "key": "showSeconds", "label": "Show Seconds", "type": "boolean", "group": "Visibility", "order": 4 },
+  
+      { "key": "finalMessage", "label": "Final Message", "type": "text", "maxLength": 64, "group": "Final Screen", "groupOrder": 6 },
+      { "key": "finalBackground", "label": "Final Background", "type": "color", "group": "Final Screen" },
+      { "key": "finalTextColor", "label": "Final Text Color", "type": "color", "group": "Final Screen" }
+    ]
+  }
