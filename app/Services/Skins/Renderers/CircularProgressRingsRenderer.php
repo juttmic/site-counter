@@ -130,7 +130,7 @@ class CircularProgressRingsRenderer implements SkinRendererInterface
         $segments = count($units);
         $unitWidth = (int) floor($width / $segments);
         $centerY = (int) ($height / 2);
-        $numberY = (int) ($centerY - 6);
+        $numberY = (int) ($centerY - 1);
         $labelY = (int) ($centerY + (int) round($fontSize * 0.6));
 
         if (is_file($font)) {
