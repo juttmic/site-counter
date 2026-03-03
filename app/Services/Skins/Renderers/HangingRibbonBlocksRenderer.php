@@ -6,7 +6,7 @@ use App\Services\Skins\SkinRendererInterface;
 
 /**
  * Skin style: "hanging_ribbon_blocks"
- * Renders countdown as hanging ribbon tiles with hanger bar, main tile, and optional bottom label bar.
+ * Renders countdown as hanging ribbon tiles: light grey block extends below, primary block (white + blue ribbon with swallowtail) floats above.
  */
 class HangingRibbonBlocksRenderer implements SkinRendererInterface
 {
@@ -35,42 +35,42 @@ class HangingRibbonBlocksRenderer implements SkinRendererInterface
 
         $tileBg = $this->allocColor($im, $skin['tileBackground'] ?? '#FFFFFF');
         $tileBottomCol = $this->allocColor($im, $skin['tileBottomColor'] ?? '#7EB0CF');
+        $tileBottomColAlt = $this->allocColor($im, $skin['tileBottomColorAlt'] ?? '#214A75');
         $tileRadius = max(0, (int) ($skin['tileRadius'] ?? 12));
         $tileBorderCol = $this->allocColor($im, $skin['tileBorderColor'] ?? '#9BB7CB');
         $tileBorderWidth = max(0, (int) ($skin['tileBorderWidth'] ?? 2));
-        $hangerCol = $this->allocColor($im, $skin['hangerColor'] ?? '#CAD7E2');
-        $hangerWidth = max(0, (int) ($skin['hangerWidth'] ?? 10));
-        $hangerHeight = max(0, (int) ($skin['hangerHeight'] ?? 18));
         $showBottomLabelBar = ($skin['showBottomLabelBar'] ?? true) === true;
         $shadowCol = $this->allocColor($im, $skin['shadowColor'] ?? '#D7E0E8');
         $shadowOffsetY = (int) ($skin['shadowOffsetY'] ?? 8);
+        $hangerHeight = max(0, (int) ($skin['hangerHeight'] ?? 18));
+        $hangExtension = max(4, (int) round($hangerHeight * 0.6));
 
-        $bottomBarHeight = $showBottomLabelBar ? max(20, (int) round($tileHeight * 0.22)) : 0;
-        $mainTileHeight = $tileHeight - $hangerHeight - $bottomBarHeight;
+        $bottomBarHeight = $showBottomLabelBar ? max(22, (int) round($tileHeight * 0.28)) : 0;
+        $mainTileHeight = $tileHeight - $bottomBarHeight;
+        $extendPad = 4;
+        $overlap = 2;
 
         for ($i = 0; $i < $segments; $i++) {
             $tileX = $segmentGap + $i * ($tileWidth + $segmentGap);
 
-            // Shadow
-            $shadowX = $tileX + 3;
-            $shadowY = $tileY + $shadowOffsetY;
-            $this->fillRoundedRect($im, $shadowX, $shadowY + $hangerHeight, $tileWidth, $mainTileHeight + $bottomBarHeight, $tileRadius, $shadowCol);
+            // Back layer: light grey "hanging" block (extends below and slightly wider)
+            $backX = $tileX - $extendPad;
+            $backY = $tileY;
+            $backW = $tileWidth + 2 * $extendPad;
+            $backH = $tileHeight + $hangExtension;
+            $this->fillRoundedRect($im, $backX, $backY, $backW, $backH, $tileRadius + 2, $shadowCol);
 
-            // Hanger bar (top)
-            $hangerX = (int) ($tileX + $tileWidth / 2 - $hangerWidth / 2);
-            imagefilledrectangle($im, $hangerX, $tileY, $hangerX + $hangerWidth, $tileY + $hangerHeight, $hangerCol);
-
-            // Main tile body
-            $mainY = $tileY + $hangerHeight;
+            // Primary block: white value section
+            $mainY = $tileY + $shadowOffsetY;
             $this->fillRoundedRect($im, $tileX, $mainY, $tileWidth, $mainTileHeight, $tileRadius, $tileBg);
 
-            // Bottom label bar (ribbon tail)
+            // Bottom ribbon: swallowtail shape (slight overlap to connect to white)
             if ($showBottomLabelBar && $bottomBarHeight > 0) {
-                $barY = $mainY + $mainTileHeight - $bottomBarHeight;
-                $barR = min($tileRadius, (int) floor($bottomBarHeight / 2));
-                imagefilledrectangle($im, $tileX, $barY, $tileX + $tileWidth, $barY + $bottomBarHeight - $barR, $tileBottomCol);
-                imagefilledellipse($im, $tileX + $barR, $barY + $bottomBarHeight - $barR, 2 * $barR, 2 * $barR, $tileBottomCol);
-                imagefilledellipse($im, $tileX + $tileWidth - $barR, $barY + $bottomBarHeight - $barR, 2 * $barR, 2 * $barR, $tileBottomCol);
+                $barY = $mainY + $mainTileHeight - $bottomBarHeight - $overlap;
+                $barH = $bottomBarHeight + $overlap;
+                $isSeconds = ($units[$i] ?? '') === 's';
+                $barCol = $isSeconds ? $tileBottomColAlt : $tileBottomCol;
+                $this->fillSwallowtailRibbon($im, $tileX, $barY, $tileWidth, $barH, $tileRadius, $barCol);
             }
 
             if ($tileBorderWidth > 0) {
@@ -84,6 +84,33 @@ class HangingRibbonBlocksRenderer implements SkinRendererInterface
             $borderCol = $this->allocColor($im, $skin['borderColor'] ?? '#8DB0C8');
             $this->strokeRect($im, 0, 0, $width, $height, $borderCol, $borderWidth);
         }
+    }
+
+    /**
+     * Draw ribbon with swallowtail/flag bottom (inward-curving cut-outs, center tail).
+     */
+    private function fillSwallowtailRibbon($im, int $x, int $y, int $w, int $h, int $topRadius, int $color): void
+    {
+        $r = min($topRadius, (int) floor(min($w, $h) / 2));
+        $tailDepth = min(10, (int) round($h * 0.35));
+        $cutIn = max(8, (int) round($w * 0.1));
+        $cx = (int) ($x + $w / 2);
+        $bottom = $y + $h;
+
+        $points = [
+            $x, $y + $r,
+            $x + $r, $y,
+            $x + $w - $r, $y,
+            $x + $w, $y + $r,
+            $x + $w, $bottom - $tailDepth,
+            $x + $w - $cutIn, $bottom - $tailDepth,
+            $cx, $bottom,
+            $x + $cutIn, $bottom - $tailDepth,
+            $x, $bottom - $tailDepth,
+        ];
+        imagefilledpolygon($im, $points, 9, $color);
+        imagefilledellipse($im, $x + $r, $y + $r, 2 * $r, 2 * $r, $color);
+        imagefilledellipse($im, $x + $w - $r, $y + $r, 2 * $r, 2 * $r, $color);
     }
 
     public function renderTimeText($im, int $secondsRemaining, array $skin, int $width, int $height, int $textCol, int $accentCol): bool
@@ -111,18 +138,22 @@ class HangingRibbonBlocksRenderer implements SkinRendererInterface
         if (empty($units)) { $units[] = ['value' => $seconds, 'label' => 'SECONDS']; }
 
         $segmentGap = max(0, (int) ($skin['segmentGap'] ?? 18));
-        $hangerHeight = max(0, (int) ($skin['hangerHeight'] ?? 18));
+        $shadowOffsetY = (int) ($skin['shadowOffsetY'] ?? 8);
         $showBottomLabelBar = ($skin['showBottomLabelBar'] ?? true) === true;
         $segments = count($units);
         $totalGap = ($segments + 1) * $segmentGap;
         $tileWidth = (int) floor(($width - $totalGap) / $segments);
         $tileHeight = $height - 2 * $segmentGap;
         $tileY = $segmentGap;
-        $bottomBarHeight = $showBottomLabelBar ? max(20, (int) round($tileHeight * 0.22)) : 0;
-        $mainTileHeight = $tileHeight - $hangerHeight - $bottomBarHeight;
+        $mainY = $tileY + $shadowOffsetY;
+        $bottomBarHeight = $showBottomLabelBar ? max(22, (int) round($tileHeight * 0.28)) : 0;
+        $mainTileHeight = $tileHeight - $bottomBarHeight;
 
-        $numberY = (int) ($tileY + $hangerHeight + $mainTileHeight / 2 - 8);
-        $labelY = (int) ($tileY + $hangerHeight + $mainTileHeight - $bottomBarHeight / 2 + (int) round($labelFontSize * 0.4));
+        $numberY = (int) ($mainY + $mainTileHeight / 2 - 8);
+        $ribbonCenterY = $mainY + $mainTileHeight - $bottomBarHeight / 2 - 1;
+        $labelY = (int) ($ribbonCenterY + (int) round($labelFontSize * 0.4));
+
+        $highlightCol = $this->allocColor($im, $skin['hangerColor'] ?? '#CAD7E2');
 
         if (is_file($font)) {
             for ($i = 0; $i < $segments; $i++) {
@@ -131,7 +162,12 @@ class HangingRibbonBlocksRenderer implements SkinRendererInterface
 
                 $numberText = sprintf('%02d', $units[$i]['value']);
                 $numberWidth = $this->textBoxWidth($numberText, $font, $fontSize);
-                imagettftext($im, $fontSize, 0, (int) ($centerX - $numberWidth / 2), $numberY, $textCol, $font, $numberText);
+                $numX = (int) ($centerX - $numberWidth / 2);
+
+                $lineW = min($numberWidth + 12, (int) round($tileWidth * 0.5));
+                imageline($im, $centerX - $lineW / 2, $numberY - $fontSize - 4, $centerX + $lineW / 2, $numberY - $fontSize - 4, $highlightCol);
+
+                imagettftext($im, $fontSize, 0, $numX, $numberY, $textCol, $font, $numberText);
 
                 if ($showBottomLabelBar) {
                     $label = $units[$i]['label'];
@@ -140,7 +176,7 @@ class HangingRibbonBlocksRenderer implements SkinRendererInterface
                 } else {
                     $label = $units[$i]['label'];
                     $labelWidth = $this->textBoxWidth($label, $font, $labelFontSize);
-                    $labelYAlt = (int) ($tileY + $hangerHeight + $mainTileHeight + (int) round($labelFontSize * 0.5));
+                    $labelYAlt = (int) ($mainY + $mainTileHeight + (int) round($labelFontSize * 0.5));
                     imagettftext($im, $labelFontSize, 0, (int) ($centerX - $labelWidth / 2), $labelYAlt, $labelCol, $font, $label);
                 }
             }
