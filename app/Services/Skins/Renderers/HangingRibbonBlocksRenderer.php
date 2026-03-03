@@ -6,7 +6,8 @@ use App\Services\Skins\SkinRendererInterface;
 
 /**
  * Skin style: "hanging_ribbon_blocks"
- * Renders countdown as horizontal hanging ribbon tiles with hanger bars, white number area, and colored label bar.
+ * Renders countdown as horizontal ribbon tiles connected by metallic bars with cylindrical hinges.
+ * Tiles have white number area and colored label bar; connectors use module-frame aesthetic with drop shadows.
  */
 class HangingRibbonBlocksRenderer implements SkinRendererInterface
 {
@@ -44,7 +45,6 @@ class HangingRibbonBlocksRenderer implements SkinRendererInterface
         $tileRadius = max(0, (int) ($skin['tileRadius'] ?? 12));
         $tileBorderCol = $this->allocColor($im, $skin['tileBorderColor'] ?? '#9BB7CB');
         $tileBorderWidth = max(0, (int) ($skin['tileBorderWidth'] ?? 2));
-        $hangerCol = $this->allocColor($im, $skin['hangerColor'] ?? '#CAD7E2');
         $showBottomLabelBar = ($skin['showBottomLabelBar'] ?? true) === true;
         $shadowCol = $this->allocColor($im, $skin['shadowColor'] ?? '#D7E0E8');
         $shadowOffsetY = (int) ($skin['shadowOffsetY'] ?? 8);
@@ -54,26 +54,45 @@ class HangingRibbonBlocksRenderer implements SkinRendererInterface
         $mainTileHeight = $tileHeight - $bottomBarHeight;
 
         $pipeCenterY = $tileY + $tileHeight / 2;
-        $pipeThickness = max(6, min((int) round($tileHeight * 0.12), (int) round($segmentGap * 0.6)));
+        $pipeThickness = max(6, min((int) round($tileHeight * 0.10), (int) round($segmentGap * 0.5)));
         $pipeY = (int) ($pipeCenterY - $pipeThickness / 2);
         $endPipeLength = max(8, (int) round($segmentGap * 0.6));
         $pipeR = (int) floor($pipeThickness / 2);
+        $pipeCol = $tileBorderCol;
+        $pipeShadowCol = $this->allocDarkenedColor($im, $skin['shadowColor'] ?? '#D7E0E8', 0.18);
+        $pipeShadowOffset = 3;
+        $hingeR = max(3, (int) round($pipeThickness * 0.75));
+        $hingeCol = $pipeCol;
+        $hingeEdgeCol = $this->allocDarkenedColor($im, $skin['tileBorderColor'] ?? '#9BB7CB', 0.28);
 
-        // 1) Horizontal connecting pipes (drawn first, behind tiles)
+        // 1a) Pipe shadows (subtle drop shadow behind pipes, enhances 3D floating effect)
+        $pipeShadowY = $pipeY + $pipeShadowOffset;
         for ($i = 0; $i < $segments - 1; $i++) {
             $pipeX = (int) ($startX + $i * ($tileWidth + $segmentGap) + $tileWidth);
-            $this->fillRoundedRect($im, $pipeX, $pipeY, $segmentGap, $pipeThickness, $pipeR, $hangerCol);
+            $this->fillRoundedRect($im, $pipeX, $pipeShadowY, $segmentGap, $pipeThickness, $pipeR, $pipeShadowCol);
         }
         $firstTileX = $startX;
         $lastTileRight = (int) ($startX + ($segments - 1) * ($tileWidth + $segmentGap) + $tileWidth);
         $leftPipeX = max(0, $firstTileX - $endPipeLength);
         $leftPipeW = $firstTileX - $leftPipeX;
         if ($leftPipeW > 0) {
-            $this->fillRoundedRect($im, (int) $leftPipeX, $pipeY, $leftPipeW, $pipeThickness, $pipeR, $hangerCol);
+            $this->fillRoundedRect($im, (int) $leftPipeX, $pipeShadowY, $leftPipeW, $pipeThickness, $pipeR, $pipeShadowCol);
         }
         $rightPipeW = min($endPipeLength, $width - $lastTileRight);
         if ($rightPipeW > 0) {
-            $this->fillRoundedRect($im, $lastTileRight, $pipeY, $rightPipeW, $pipeThickness, $pipeR, $hangerCol);
+            $this->fillRoundedRect($im, $lastTileRight, $pipeShadowY, $rightPipeW, $pipeThickness, $pipeR, $pipeShadowCol);
+        }
+
+        // 1b) Horizontal metallic bars (satin aluminum, same as module frames)
+        for ($i = 0; $i < $segments - 1; $i++) {
+            $pipeX = (int) ($startX + $i * ($tileWidth + $segmentGap) + $tileWidth);
+            $this->fillRoundedRect($im, $pipeX, $pipeY, $segmentGap, $pipeThickness, $pipeR, $pipeCol);
+        }
+        if ($leftPipeW > 0) {
+            $this->fillRoundedRect($im, (int) $leftPipeX, $pipeY, $leftPipeW, $pipeThickness, $pipeR, $pipeCol);
+        }
+        if ($rightPipeW > 0) {
+            $this->fillRoundedRect($im, $lastTileRight, $pipeY, $rightPipeW, $pipeThickness, $pipeR, $pipeCol);
         }
 
         for ($i = 0; $i < $segments; $i++) {
@@ -100,13 +119,15 @@ class HangingRibbonBlocksRenderer implements SkinRendererInterface
             }
         }
 
-        // 5) Side joints (small circles where pipes meet tiles, drawn on top for mechanical look)
-        $jointR = max(2, (int) floor($pipeThickness / 2));
+        // 5) Cylindrical hinges/clips (watch-band style pins securing bars to modules)
         $jointY = (int) $pipeCenterY;
         for ($i = 0; $i < $segments; $i++) {
             $tileX = (int) ($startX + $i * ($tileWidth + $segmentGap));
-            imagefilledellipse($im, $tileX, $jointY, 2 * $jointR, 2 * $jointR, $hangerCol);
-            imagefilledellipse($im, $tileX + $tileWidth, $jointY, 2 * $jointR, 2 * $jointR, $hangerCol);
+            foreach ([$tileX, $tileX + $tileWidth] as $hingeX) {
+                imagefilledellipse($im, $hingeX, $jointY, 2 * $hingeR, 2 * $hingeR, $hingeEdgeCol);
+                $innerR = max(1, $hingeR - 1);
+                imagefilledellipse($im, $hingeX, $jointY, 2 * $innerR, 2 * $innerR, $hingeCol);
+            }
         }
 
         // Outer border
@@ -241,6 +262,18 @@ class HangingRibbonBlocksRenderer implements SkinRendererInterface
             return imagecolorallocate($im, $r, $g, $b);
         }
         return imagecolorallocate($im, 255, 255, 255);
+    }
+
+    private function allocDarkenedColor($im, string $hex, float $factor): int
+    {
+        $hex = ltrim($hex, '#');
+        if (strlen($hex) !== 6) {
+            return imagecolorallocate($im, 180, 180, 180);
+        }
+        $r = max(0, (int) (hexdec(substr($hex, 0, 2)) * (1 - $factor)));
+        $g = max(0, (int) (hexdec(substr($hex, 2, 2)) * (1 - $factor)));
+        $b = max(0, (int) (hexdec(substr($hex, 4, 2)) * (1 - $factor)));
+        return imagecolorallocate($im, $r, $g, $b);
     }
 
     private function fillRoundedRect($im, int $x, int $y, int $w, int $h, int $r, int $color): void
