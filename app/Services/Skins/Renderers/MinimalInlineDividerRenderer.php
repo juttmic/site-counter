@@ -74,37 +74,55 @@ class MinimalInlineDividerRenderer implements SkinRendererInterface
         $segments = count($units);
         $totalGap = ($segments - 1) * ($segmentGap + $separatorWidth);
         $segmentWidth = (int) floor(($width - $totalGap) / $segments);
-        $centerY = (int) ($height / 2);
-        $numberY = (int) ($centerY - 8);
-        $labelY = (int) ($centerY + (int) round($fontSize * 0.6));
 
         if (is_file($font)) {
+            $numberSample = '00';
+            $labelSample = 'HOURS';
+            $numBox = imagettfbbox($fontSize, 0, $font, $numberSample) ?: [0, 0, 0, 0, 0, 0, 0, 0];
+            $labBox = imagettfbbox($labelFontSize, 0, $font, $labelSample) ?: [0, 0, 0, 0, 0, 0, 0, 0];
+            $numberHeight = (float) ($numBox[1] - $numBox[7]);
+            $labelHeight = (float) ($labBox[1] - $labBox[7]);
+            $gap = (int) round($fontSize * 0.18);
+            $totalBlockHeight = $numberHeight + $gap + $labelHeight;
+            $blockTop = (float) max(0, ($height - $totalBlockHeight) / 2);
+            $numberCenterY = $blockTop + $numberHeight / 2;
+            $labelCenterY = $blockTop + $numberHeight + $gap + $labelHeight / 2;
+
             for ($i = 0; $i < $segments; $i++) {
                 $segX = $i * ($segmentWidth + $segmentGap + $separatorWidth);
                 $centerX = (int) ($segX + $segmentWidth / 2);
 
                 $numberText = sprintf('%02d', $units[$i]['value']);
                 $numberWidth = $this->textBoxWidth($numberText, $font, $fontSize);
-                imagettftext($im, $fontSize, 0, (int) ($centerX - $numberWidth / 2), $numberY, $textCol, $font, $numberText);
+                $numberBaseline = (int) round($numberCenterY - $this->textVerticalCenterOffset($numberText, $font, $fontSize));
+                imagettftext($im, $fontSize, 0, (int) ($centerX - $numberWidth / 2), $numberBaseline, $textCol, $font, $numberText);
 
                 $label = $units[$i]['label'];
                 $labelWidth = $this->textBoxWidth($label, $font, $labelFontSize);
-                imagettftext($im, $labelFontSize, 0, (int) ($centerX - $labelWidth / 2), $labelY, $labelCol, $font, $label);
+                $labelBaseline = (int) round($labelCenterY - $this->textVerticalCenterOffset($label, $font, $labelFontSize));
+                imagettftext($im, $labelFontSize, 0, (int) ($centerX - $labelWidth / 2), $labelBaseline, $labelCol, $font, $label);
             }
         } else {
             $builtIn = 5;
             $labelBuiltIn = 3;
+            $numH = imagefontheight($builtIn);
+            $labH = imagefontheight($labelBuiltIn);
+            $gap = 8;
+            $totalBlockHeight = $numH + $gap + $labH;
+            $blockTop = (int) (($height - $totalBlockHeight) / 2);
+            $numberY = $blockTop;
+            $labelY = $blockTop + $numH + $gap;
             for ($i = 0; $i < $segments; $i++) {
                 $segX = $i * ($segmentWidth + $segmentGap + $separatorWidth);
                 $centerX = (int) ($segX + $segmentWidth / 2);
 
                 $numberText = sprintf('%02d', $units[$i]['value']);
                 $nW = imagefontwidth($builtIn) * strlen($numberText);
-                imagestring($im, $builtIn, (int) ($centerX - $nW / 2), $numberY - 12, $numberText, $textCol);
+                imagestring($im, $builtIn, (int) ($centerX - $nW / 2), $numberY, $numberText, $textCol);
 
                 $label = $units[$i]['label'];
                 $lW = imagefontwidth($labelBuiltIn) * strlen($label);
-                imagestring($im, $labelBuiltIn, (int) ($centerX - $lW / 2), $labelY - 10, $label, $labelCol);
+                imagestring($im, $labelBuiltIn, (int) ($centerX - $lW / 2), $labelY, $label, $labelCol);
             }
         }
 
@@ -129,5 +147,11 @@ class MinimalInlineDividerRenderer implements SkinRendererInterface
         $minX = min($box[0], $box[2], $box[4], $box[6]);
         $maxX = max($box[0], $box[2], $box[4], $box[6]);
         return (int) ($maxX - $minX);
+    }
+
+    private function textVerticalCenterOffset(string $text, string $fontPath, int $fontSize): float
+    {
+        $box = imagettfbbox($fontSize, 0, $fontPath, $text) ?: [0, 0, 0, 0, 0, 0, 0, 0];
+        return ($box[7] + $box[1]) / 2.0;
     }
 }
