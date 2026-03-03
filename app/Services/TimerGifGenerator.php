@@ -191,6 +191,9 @@ class TimerGifGenerator
     {
         $path = resource_path('timerskins/' . $skinName . '.json');
         if (!file_exists($path)) {
+            $path = resource_path('timerskins/' . $skinName . '.jsonc');
+        }
+        if (!file_exists($path)) {
             return [
                 'width' => 400,
                 'height' => 160,
@@ -203,7 +206,7 @@ class TimerGifGenerator
                 'borderColor' => '#FFFFFF',
             ];
         }
-        $json = json_decode(file_get_contents($path), true) ?: [];
+        $json = SkinFileHelper::load($path) ?? [];
         $skin = array_merge([
             'width' => 400,
             'height' => 160,

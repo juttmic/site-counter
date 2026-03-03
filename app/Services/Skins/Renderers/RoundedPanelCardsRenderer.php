@@ -6,8 +6,9 @@ use App\Services\Skins\SkinRendererInterface;
 
 /**
  * Skin style: "rounded_panel_cards"
- * Renders countdown as rounded panel cards with number boxes, labels, and optional shadow.
- * Supports visibilityLayouts for dynamic canvas sizing based on showDays/showSeconds.
+ * Renders countdown as soft, modern SaaS-style rounded panel with elevated cards inside.
+ * Outer panel has shadow, fill, and border. Cards contain number boxes and labels.
+ * First visible unit gets accent border highlight.
  */
 class RoundedPanelCardsRenderer implements SkinRendererInterface
 {
@@ -15,60 +16,77 @@ class RoundedPanelCardsRenderer implements SkinRendererInterface
     {
         imagefilledrectangle($im, 0, 0, $width, $height, $bgCol);
 
-        $showDays = ($skin['showDays'] ?? true) === true;
-        $showHours = ($skin['showHours'] ?? true) === true;
-        $showMinutes = ($skin['showMinutes'] ?? true) === true;
-        $showSeconds = ($skin['showSeconds'] ?? true) === true;
+        if ($secondsRemaining <= 0) {
+            $finalBg = $skin['finalBackground'] ?? null;
+            if ($finalBg !== null && $finalBg !== '') {
+                $finalBgCol = $this->allocColor($im, $finalBg);
+                imagefilledrectangle($im, 0, 0, $width, $height, $finalBgCol);
+            }
+            return;
+        }
 
-        $units = [];
-        if ($showDays) { $units[] = 'd'; }
-        if ($showHours) { $units[] = 'h'; }
-        if ($showMinutes) { $units[] = 'm'; }
-        if ($showSeconds) { $units[] = 's'; }
-        if (empty($units)) { $units = ['s']; }
+        $units = $this->getVisibleUnits($skin);
+        $segments = count($units);
+        if ($segments === 0) {
+            $this->drawPanelOnly($im, $skin, $width, $height, $bgCol);
+            return;
+        }
 
-        $segmentGap = max(0, (int) ($skin['segmentGap'] ?? 22));
-        $panelRadius = max(0, (int) ($skin['panelRadius'] ?? 28));
-        $cardRadius = max(0, (int) ($skin['cardRadius'] ?? 16));
-        $numberBoxRadius = max(0, (int) ($skin['numberBoxRadius'] ?? 14));
-        $numberBoxBorderWidth = max(0, (int) ($skin['numberBoxBorderWidth'] ?? 3));
+        $layout = $this->computeLayout($skin, $width, $height, $segments);
+        if ($layout === null) {
+            return;
+        }
+
+        // 1) Panel shadow (soft, offset down)
+        $shadowCol = $this->allocColor($im, $skin['shadowColor'] ?? '#D9E3EB');
         $shadowOffsetY = (int) ($skin['shadowOffsetY'] ?? 8);
-        $shadowBlur = max(0, (int) ($skin['shadowBlur'] ?? 18));
+        $this->fillRoundedRect(
+            $im,
+            $layout['panelX'] + 2,
+            $layout['panelY'] + $shadowOffsetY,
+            $layout['panelW'],
+            $layout['panelH'],
+            $layout['panelR'],
+            $shadowCol
+        );
 
+        // 2) Outer panel fill
+        $panelFillCol = $bgCol;
+        $this->fillRoundedRect($im, $layout['panelX'], $layout['panelY'], $layout['panelW'], $layout['panelH'], $layout['panelR'], $panelFillCol);
+
+        // 3) Outer panel border
+        $borderWidth = max(0, (int) ($skin['borderWidth'] ?? 2));
+        if ($borderWidth > 0) {
+            $borderCol = $this->allocColor($im, $skin['borderColor'] ?? '#D8E0E8');
+            $this->strokeRoundedRect($im, $layout['panelX'], $layout['panelY'], $layout['panelW'], $layout['panelH'], $layout['panelR'], $borderCol, $borderWidth);
+        }
+
+        // 4) Cards
         $cardBg = $this->allocColor($im, $skin['cardBackground'] ?? '#EDF1F5');
         $numberBoxBg = $this->allocColor($im, $skin['numberBoxBackground'] ?? '#FFFFFF');
-        $numberBoxBorderCol = $this->allocColor($im, $skin['numberBoxBorderColor'] ?? '#69B7CB');
-        $shadowCol = $this->allocColor($im, $skin['shadowColor'] ?? '#D9E3EB');
-
-        $segments = count($units);
-        $totalGap = ($segments + 1) * $segmentGap;
-        $cardWidth = (int) floor(($width - $totalGap) / $segments);
-        $cardHeight = $height - 2 * $segmentGap;
-        $cardY = $segmentGap;
+        $accentBorderCol = $this->allocColor($im, (string) ($skin['numberBoxBorderColor'] ?? $skin['accentColor'] ?? '#69B7CB'));
+        $neutralBorderCol = $this->allocColor($im, $skin['borderColor'] ?? '#D8E0E8');
+        $numberBoxBorderWidth = max(0, (int) ($skin['numberBoxBorderWidth'] ?? 3));
+        $numberBoxRadius = max(0, (int) ($skin['numberBoxRadius'] ?? 14));
 
         for ($i = 0; $i < $segments; $i++) {
-            $cardX = $segmentGap + $i * ($cardWidth + $segmentGap);
-
-            // Shadow (simple offset rect, no blur for GD compatibility)
-            if ($shadowOffsetY > 0 && $shadowBlur >= 0) {
-                $shadowX = $cardX + 2;
-                $shadowY = $cardY + $shadowOffsetY;
-                $this->fillRoundedRect($im, $shadowX, $shadowY, $cardWidth, $cardHeight, $cardRadius, $shadowCol);
-            }
+            $cardX = $layout['cardX'] + $i * ($layout['cardWidth'] + $layout['segmentGap']);
+            $cardY = $layout['cardY'];
 
             // Card background
-            $this->fillRoundedRect($im, $cardX, $cardY, $cardWidth, $cardHeight, $cardRadius, $cardBg);
+            $this->fillRoundedRect($im, $cardX, $cardY, $layout['cardWidth'], $layout['cardHeight'], $layout['cardRadius'], $cardBg);
 
-            // Number box: border then fill
-            $boxPad = (int) round($cardWidth * 0.08);
-            $boxW = $cardWidth - 2 * $boxPad;
-            $boxH = (int) round($cardHeight * 0.55);
-            $boxX = $cardX + $boxPad;
-            $boxY = $cardY + (int) round($cardHeight * 0.12);
+            // Number box (border + fill)
+            $boxX = $cardX + $layout['boxPadX'];
+            $boxY = $cardY + $layout['boxPadY'];
+            $boxW = $layout['boxW'];
+            $boxH = $layout['boxH'];
+            $isHighlighted = ($i === 0);
+            $boxBorderCol = $isHighlighted ? $accentBorderCol : $neutralBorderCol;
 
             if ($numberBoxBorderWidth > 0) {
                 $borderR = min($numberBoxRadius + $numberBoxBorderWidth, (int) floor(min($boxW, $boxH) / 2));
-                $this->fillRoundedRect($im, $boxX, $boxY, $boxW, $boxH, $borderR, $numberBoxBorderCol);
+                $this->fillRoundedRect($im, $boxX, $boxY, $boxW, $boxH, $borderR, $boxBorderCol);
             }
             $innerPad = $numberBoxBorderWidth;
             $innerX = $boxX + $innerPad;
@@ -77,13 +95,6 @@ class RoundedPanelCardsRenderer implements SkinRendererInterface
             $innerH = $boxH - 2 * $innerPad;
             $innerR = max(0, $numberBoxRadius - $innerPad);
             $this->fillRoundedRect($im, $innerX, $innerY, $innerW, $innerH, $innerR, $numberBoxBg);
-        }
-
-        // Outer border
-        $borderWidth = max(0, (int) ($skin['borderWidth'] ?? 2));
-        if ($borderWidth > 0) {
-            $borderCol = $this->allocColor($im, $skin['borderColor'] ?? '#D8E0E8');
-            $this->strokeRect($im, 0, 0, $width, $height, $borderCol, $borderWidth);
         }
     }
 
@@ -94,70 +105,176 @@ class RoundedPanelCardsRenderer implements SkinRendererInterface
         $labelFontSize = (int) ($skin['labelFontSize'] ?? 18);
         $labelCol = $this->allocColor($im, $skin['labelColor'] ?? '#3D5268');
 
-        $showDays = ($skin['showDays'] ?? true) === true;
-        $showHours = ($skin['showHours'] ?? true) === true;
-        $showMinutes = ($skin['showMinutes'] ?? true) === true;
-        $showSeconds = ($skin['showSeconds'] ?? true) === true;
+        if ($secondsRemaining <= 0) {
+            $finalMsg = (string) ($skin['finalMessage'] ?? "Time's Up");
+            $finalTextCol = $skin['finalTextColor'] ?? null;
+            $drawCol = ($finalTextCol !== null && $finalTextCol !== '') ? $this->allocColor($im, $finalTextCol) : $textCol;
+            if (is_file($font)) {
+                $box = imagettfbbox($fontSize, 0, $font, $finalMsg) ?: [0, 0, 0, 0, 0, 0, 0, 0];
+                $tw = (int) (max($box[0], $box[2], $box[4], $box[6]) - min($box[0], $box[2], $box[4], $box[6]));
+                $x = (int) (($width - $tw) / 2);
+                $y = (int) ($height / 2 + $fontSize / 2);
+                imagettftext($im, $fontSize, 0, $x, $y, $drawCol, $font, $finalMsg);
+            } else {
+                $tw = imagefontwidth(5) * strlen($finalMsg);
+                $th = imagefontheight(5);
+                imagestring($im, 5, (int) (($width - $tw) / 2), (int) (($height - $th) / 2), $finalMsg, $drawCol);
+            }
+            return true;
+        }
 
+        $units = $this->getVisibleUnitsWithValues($skin, $secondsRemaining);
+        $segments = count($units);
+        if ($segments === 0) {
+            return true;
+        }
+
+        $layout = $this->computeLayout($skin, $width, $height, $segments);
+        if ($layout === null) {
+            return true;
+        }
+
+        $numberCenterY = $layout['cardY'] + $layout['boxPadY'] + $layout['boxH'] / 2;
+        $labelY = $layout['cardY'] + $layout['boxPadY'] + $layout['boxH'] + 8;
+
+        if (is_file($font)) {
+            for ($i = 0; $i < $segments; $i++) {
+                $cardX = $layout['cardX'] + $i * ($layout['cardWidth'] + $layout['segmentGap']);
+                $centerX = (int) ($cardX + $layout['cardWidth'] / 2);
+
+                $value = $units[$i]['value'];
+                $label = $units[$i]['label'];
+                $isDays = ($label === 'DAYS');
+                $numberText = $isDays ? (string) $value : sprintf('%02d', $value);
+
+                $numberWidth = $this->textBoxWidth($numberText, $font, $fontSize);
+                $numberBaseline = (int) round($numberCenterY - $this->textVerticalCenterOffset($numberText, $font, $fontSize));
+                imagettftext($im, $fontSize, 0, (int) ($centerX - $numberWidth / 2), $numberBaseline, $textCol, $font, $numberText);
+
+                $labelWidth = $this->textBoxWidth($label, $font, $labelFontSize);
+                $labelBaseline = (int) round($labelY - $this->textVerticalCenterOffset($label, $font, $labelFontSize));
+                imagettftext($im, $labelFontSize, 0, (int) ($centerX - $labelWidth / 2), $labelBaseline, $labelCol, $font, $label);
+            }
+        } else {
+            $builtIn = 5;
+            $labelBuiltIn = 3;
+            $numberY = (int) ($numberCenterY - 12);
+            for ($i = 0; $i < $segments; $i++) {
+                $cardX = $layout['cardX'] + $i * ($layout['cardWidth'] + $layout['segmentGap']);
+                $centerX = (int) ($cardX + $layout['cardWidth'] / 2);
+
+                $value = $units[$i]['value'];
+                $label = $units[$i]['label'];
+                $isDays = ($label === 'DAYS');
+                $numberText = $isDays ? (string) $value : sprintf('%02d', $value);
+
+                $nW = imagefontwidth($builtIn) * strlen($numberText);
+                imagestring($im, $builtIn, (int) ($centerX - $nW / 2), $numberY, $numberText, $textCol);
+
+                $lW = imagefontwidth($labelBuiltIn) * strlen($label);
+                imagestring($im, $labelBuiltIn, (int) ($centerX - $lW / 2), (int) ($labelY - 10), $label, $labelCol);
+            }
+        }
+
+        return true;
+    }
+
+    private function drawPanelOnly($im, array $skin, int $width, int $height, int $bgCol): void
+    {
+        $layout = $this->computePanelBounds($skin, $width, $height);
+        $shadowCol = $this->allocColor($im, $skin['shadowColor'] ?? '#D9E3EB');
+        $shadowOffsetY = (int) ($skin['shadowOffsetY'] ?? 8);
+        $this->fillRoundedRect($im, $layout['panelX'] + 2, $layout['panelY'] + $shadowOffsetY, $layout['panelW'], $layout['panelH'], $layout['panelR'], $shadowCol);
+        $this->fillRoundedRect($im, $layout['panelX'], $layout['panelY'], $layout['panelW'], $layout['panelH'], $layout['panelR'], $bgCol);
+        $borderWidth = max(0, (int) ($skin['borderWidth'] ?? 2));
+        if ($borderWidth > 0) {
+            $borderCol = $this->allocColor($im, $skin['borderColor'] ?? '#D8E0E8');
+            $this->strokeRoundedRect($im, $layout['panelX'], $layout['panelY'], $layout['panelW'], $layout['panelH'], $layout['panelR'], $borderCol, $borderWidth);
+        }
+    }
+
+    private function computeLayout(array $skin, int $width, int $height, int $segments): ?array
+    {
+        $panel = $this->computePanelBounds($skin, $width, $height);
+        $segmentGap = max(0, (int) ($skin['segmentGap'] ?? 22));
+        $cardRadius = max(0, (int) ($skin['cardRadius'] ?? 16));
+        $innerPad = 16;
+
+        $contentX = $panel['panelX'] + $panel['borderWidth'] + $innerPad;
+        $contentY = $panel['panelY'] + $panel['borderWidth'] + $innerPad;
+        $contentW = $panel['panelW'] - 2 * ($panel['borderWidth'] + $innerPad);
+        $contentH = $panel['panelH'] - 2 * ($panel['borderWidth'] + $innerPad);
+
+        $cardHeight = (int) ($contentH * 0.72);
+        $totalGap = ($segments - 1) * $segmentGap;
+        $cardWidth = (int) (($contentW - $totalGap) / $segments);
+        $cardY = $contentY + (int) (($contentH - $cardHeight) * 0.12);
+
+        $boxPadX = (int) round($cardWidth * 0.08);
+        $boxPadY = (int) round($cardHeight * 0.08);
+        $boxW = $cardWidth - 2 * $boxPadX;
+        $boxH = (int) round($cardHeight * 0.55);
+        $cardX = $contentX + (int) (($contentW - ($segments * $cardWidth + $totalGap)) / 2);
+
+        return array_merge($panel, [
+            'segmentGap' => $segmentGap,
+            'cardRadius' => $cardRadius,
+            'cardX' => $cardX,
+            'cardY' => $cardY,
+            'cardWidth' => $cardWidth,
+            'cardHeight' => $cardHeight,
+            'boxPadX' => $boxPadX,
+            'boxPadY' => $boxPadY,
+            'boxW' => $boxW,
+            'boxH' => $boxH,
+        ]);
+    }
+
+    private function computePanelBounds(array $skin, int $width, int $height): array
+    {
+        $panelRadius = max(0, (int) ($skin['panelRadius'] ?? 28));
+        $borderWidth = max(0, (int) ($skin['borderWidth'] ?? 2));
+        $outerMargin = max(24, (int) round(min($width, $height) * 0.06));
+
+        $panelX = $outerMargin;
+        $panelY = $outerMargin;
+        $panelW = $width - 2 * $outerMargin;
+        $panelH = $height - 2 * $outerMargin;
+        $panelR = min($panelRadius, (int) floor(min($panelW, $panelH) / 4));
+
+        return [
+            'panelX' => $panelX,
+            'panelY' => $panelY,
+            'panelW' => $panelW,
+            'panelH' => $panelH,
+            'panelR' => $panelR,
+            'borderWidth' => $borderWidth,
+        ];
+    }
+
+    private function getVisibleUnits(array $skin): array
+    {
+        $units = [];
+        if (($skin['showDays'] ?? true) === true) { $units[] = 'd'; }
+        if (($skin['showHours'] ?? true) === true) { $units[] = 'h'; }
+        if (($skin['showMinutes'] ?? true) === true) { $units[] = 'm'; }
+        if (($skin['showSeconds'] ?? true) === true) { $units[] = 's'; }
+        return empty($units) ? ['s'] : $units;
+    }
+
+    private function getVisibleUnitsWithValues(array $skin, int $secondsRemaining): array
+    {
         $days = intdiv($secondsRemaining, 86400);
         $hours = intdiv($secondsRemaining % 86400, 3600);
         $minutes = intdiv($secondsRemaining % 3600, 60);
         $seconds = $secondsRemaining % 60;
 
         $units = [];
-        if ($showDays) { $units[] = ['value' => $days, 'label' => 'DAYS']; }
-        if ($showHours) { $units[] = ['value' => $hours, 'label' => 'HOURS']; }
-        if ($showMinutes) { $units[] = ['value' => $minutes, 'label' => 'MINUTES']; }
-        if ($showSeconds) { $units[] = ['value' => $seconds, 'label' => 'SECONDS']; }
-        if (empty($units)) { $units[] = ['value' => $seconds, 'label' => 'SECONDS']; }
-
-        $segmentGap = max(0, (int) ($skin['segmentGap'] ?? 22));
-        $segments = count($units);
-        $totalGap = ($segments + 1) * $segmentGap;
-        $cardWidth = (int) floor(($width - $totalGap) / $segments);
-        $cardHeight = $height - 2 * $segmentGap;
-        $cardY = $segmentGap;
-
-        $boxPad = (int) round($cardWidth * 0.08);
-        $boxW = $cardWidth - 2 * $boxPad;
-        $boxH = (int) round($cardHeight * 0.55);
-        $boxY = $cardY + (int) round($cardHeight * 0.12);
-        $numberY = $boxY + (int) round($boxH * 0.38);
-        $labelY = $boxY + $boxH + (int) round($labelFontSize * 0.8);
-
-        if (is_file($font)) {
-            for ($i = 0; $i < $segments; $i++) {
-                $cardX = $segmentGap + $i * ($cardWidth + $segmentGap);
-                $centerX = (int) ($cardX + $cardWidth / 2);
-
-                $numberText = sprintf('%02d', $units[$i]['value']);
-                $numberWidth = $this->textBoxWidth($numberText, $font, $fontSize);
-                $numberX = (int) ($centerX - $numberWidth / 2);
-                imagettftext($im, $fontSize, 0, $numberX, $numberY, $textCol, $font, $numberText);
-
-                $label = $units[$i]['label'];
-                $labelWidth = $this->textBoxWidth($label, $font, $labelFontSize);
-                $labelX = (int) ($centerX - $labelWidth / 2);
-                imagettftext($im, $labelFontSize, 0, $labelX, $labelY, $labelCol, $font, $label);
-            }
-        } else {
-            $builtIn = 5;
-            $labelBuiltIn = 3;
-            for ($i = 0; $i < $segments; $i++) {
-                $cardX = $segmentGap + $i * ($cardWidth + $segmentGap);
-                $centerX = (int) ($cardX + $cardWidth / 2);
-
-                $numberText = sprintf('%02d', $units[$i]['value']);
-                $nW = imagefontwidth($builtIn) * strlen($numberText);
-                imagestring($im, $builtIn, (int) ($centerX - $nW / 2), $numberY - 12, $numberText, $textCol);
-
-                $label = $units[$i]['label'];
-                $lW = imagefontwidth($labelBuiltIn) * strlen($label);
-                imagestring($im, $labelBuiltIn, (int) ($centerX - $lW / 2), $labelY - 10, $label, $labelCol);
-            }
-        }
-
-        return true;
+        if (($skin['showDays'] ?? true) === true) { $units[] = ['value' => $days, 'label' => 'DAYS']; }
+        if (($skin['showHours'] ?? true) === true) { $units[] = ['value' => $hours, 'label' => 'HOURS']; }
+        if (($skin['showMinutes'] ?? true) === true) { $units[] = ['value' => $minutes, 'label' => 'MINUTES']; }
+        if (($skin['showSeconds'] ?? true) === true) { $units[] = ['value' => $seconds, 'label' => 'SECONDS']; }
+        return empty($units) ? [['value' => $seconds, 'label' => 'SECONDS']] : $units;
     }
 
     private function allocColor($im, string $hex): int
@@ -188,15 +305,32 @@ class RoundedPanelCardsRenderer implements SkinRendererInterface
         imagefilledellipse($im, $x + $w - $r, $y + $h - $r, 2 * $r, 2 * $r, $color);
     }
 
-    private function strokeRect($im, int $x, int $y, int $w, int $h, int $color, int $thickness): void
+    private function strokeRoundedRect($im, int $x, int $y, int $w, int $h, int $r, int $color, int $thickness): void
     {
-        if ($thickness <= 0) {
-            return;
+        for ($t = 0; $t < $thickness; $t++) {
+            $ox = $x + $t;
+            $oy = $y + $t;
+            $ow = $w - 2 * $t;
+            $oh = $h - 2 * $t;
+            $ir = max(0, $r - $t);
+            if ($ir <= 0) {
+                imagerectangle($im, $ox, $oy, $ox + $ow, $oy + $oh, $color);
+            } else {
+                $this->drawRoundedRectOutline($im, $ox, $oy, $ow, $oh, $ir, $color);
+            }
         }
-        imagefilledrectangle($im, $x, $y, $x + $w, $y + $thickness, $color);
-        imagefilledrectangle($im, $x, $y + $h - $thickness, $x + $w, $y + $h, $color);
-        imagefilledrectangle($im, $x, $y + $thickness, $x + $thickness, $y + $h - $thickness, $color);
-        imagefilledrectangle($im, $x + $w - $thickness, $y + $thickness, $x + $w, $y + $h - $thickness, $color);
+    }
+
+    private function drawRoundedRectOutline($im, int $x, int $y, int $w, int $h, int $r, int $color): void
+    {
+        imageline($im, $x + $r, $y, $x + $w - $r, $y, $color);
+        imageline($im, $x + $r, $y + $h, $x + $w - $r, $y + $h, $color);
+        imageline($im, $x, $y + $r, $x, $y + $h - $r, $color);
+        imageline($im, $x + $w, $y + $r, $x + $w, $y + $h - $r, $color);
+        imagearc($im, $x + $r, $y + $r, 2 * $r, 2 * $r, 180, 270, $color);
+        imagearc($im, $x + $w - $r, $y + $r, 2 * $r, 2 * $r, 270, 360, $color);
+        imagearc($im, $x + $r, $y + $h - $r, 2 * $r, 2 * $r, 90, 180, $color);
+        imagearc($im, $x + $w - $r, $y + $h - $r, 2 * $r, 2 * $r, 0, 90, $color);
     }
 
     private function textBoxWidth(string $text, string $fontPath, int $fontSize): int
@@ -205,5 +339,11 @@ class RoundedPanelCardsRenderer implements SkinRendererInterface
         $minX = min($box[0], $box[2], $box[4], $box[6]);
         $maxX = max($box[0], $box[2], $box[4], $box[6]);
         return (int) ($maxX - $minX);
+    }
+
+    private function textVerticalCenterOffset(string $text, string $fontPath, int $fontSize): float
+    {
+        $box = imagettfbbox($fontSize, 0, $fontPath, $text) ?: [0, 0, 0, 0, 0, 0, 0, 0];
+        return ($box[7] + $box[1]) / 2.0;
     }
 }
