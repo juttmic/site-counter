@@ -34,12 +34,9 @@ class HangingRibbonBlocksRenderer implements SkinRendererInterface
         $tileWidth = (int) floor(($width - $totalGap) / $segments);
         $startX = (int) (($width - ($segments * $tileWidth + $totalGap)) / 2);
 
-        $hangerWidth = max(0, (int) ($skin['hangerWidth'] ?? 10));
-        $hangerHeight = max(0, (int) ($skin['hangerHeight'] ?? 18));
-        $hangerGap = max(2, (int) round($hangerHeight * 0.3));
         $verticalPad = max(8, (int) round($height * 0.05));
-        $tileHeight = $height - 2 * $verticalPad - $hangerHeight - $hangerGap;
-        $tileY = $verticalPad + $hangerHeight + $hangerGap;
+        $tileHeight = $height - 2 * $verticalPad;
+        $tileY = $verticalPad;
 
         $tileBg = $this->allocColor($im, $skin['tileBackground'] ?? '#FFFFFF');
         $tileBottomCol = $this->allocColor($im, $skin['tileBottomColor'] ?? '#7EB0CF');
@@ -56,20 +53,37 @@ class HangingRibbonBlocksRenderer implements SkinRendererInterface
         $bottomBarHeight = $showBottomLabelBar ? max(18, (int) round($tileHeight * $bottomBarRatio)) : 0;
         $mainTileHeight = $tileHeight - $bottomBarHeight;
 
+        $pipeCenterY = $tileY + $tileHeight / 2;
+        $pipeThickness = max(6, min((int) round($tileHeight * 0.12), (int) round($segmentGap * 0.6)));
+        $pipeY = (int) ($pipeCenterY - $pipeThickness / 2);
+        $endPipeLength = max(8, (int) round($segmentGap * 0.6));
+        $pipeR = (int) floor($pipeThickness / 2);
+
+        // 1) Horizontal connecting pipes (drawn first, behind tiles)
+        for ($i = 0; $i < $segments - 1; $i++) {
+            $pipeX = (int) ($startX + $i * ($tileWidth + $segmentGap) + $tileWidth);
+            $this->fillRoundedRect($im, $pipeX, $pipeY, $segmentGap, $pipeThickness, $pipeR, $hangerCol);
+        }
+        $firstTileX = $startX;
+        $lastTileRight = (int) ($startX + ($segments - 1) * ($tileWidth + $segmentGap) + $tileWidth);
+        $leftPipeX = max(0, $firstTileX - $endPipeLength);
+        $leftPipeW = $firstTileX - $leftPipeX;
+        if ($leftPipeW > 0) {
+            $this->fillRoundedRect($im, (int) $leftPipeX, $pipeY, $leftPipeW, $pipeThickness, $pipeR, $hangerCol);
+        }
+        $rightPipeW = min($endPipeLength, $width - $lastTileRight);
+        if ($rightPipeW > 0) {
+            $this->fillRoundedRect($im, $lastTileRight, $pipeY, $rightPipeW, $pipeThickness, $pipeR, $hangerCol);
+        }
+
         for ($i = 0; $i < $segments; $i++) {
             $tileX = (int) ($startX + $i * ($tileWidth + $segmentGap));
             $isLastVisible = ($i === $segments - 1);
             $barCol = $isLastVisible ? $tileBottomColAlt : $tileBottomCol;
 
-            // 1) Shadow (drawn first, beneath full tile)
+            // 2) Shadow (beneath full tile)
             $shadowY = $tileY + $shadowOffsetY;
             $this->fillRoundedRect($im, $tileX, $shadowY, $tileWidth, $tileHeight, $tileRadius, $shadowCol);
-
-            // 2) Hanger (centered above tile)
-            $hangerX = (int) ($tileX + $tileWidth / 2 - $hangerWidth / 2);
-            $hangerY = $verticalPad;
-            $hangerR = min(2, (int) floor(min($hangerWidth, $hangerHeight) / 2));
-            $this->fillRoundedRect($im, $hangerX, $hangerY, $hangerWidth, $hangerHeight, $hangerR, $hangerCol);
 
             // 3) Unified tile: one outer rounded box for both digit and label areas
             //    Fill full tile with label bar color, then overlay white for number area
@@ -84,6 +98,15 @@ class HangingRibbonBlocksRenderer implements SkinRendererInterface
             if ($tileBorderWidth > 0) {
                 $this->strokeRoundedRect($im, $tileX, $tileY, $tileWidth, $tileHeight, $tileRadius, $tileBorderCol, $tileBorderWidth);
             }
+        }
+
+        // 5) Side joints (small circles where pipes meet tiles, drawn on top for mechanical look)
+        $jointR = max(2, (int) floor($pipeThickness / 2));
+        $jointY = (int) $pipeCenterY;
+        for ($i = 0; $i < $segments; $i++) {
+            $tileX = (int) ($startX + $i * ($tileWidth + $segmentGap));
+            imagefilledellipse($im, $tileX, $jointY, 2 * $jointR, 2 * $jointR, $hangerCol);
+            imagefilledellipse($im, $tileX + $tileWidth, $jointY, 2 * $jointR, 2 * $jointR, $hangerCol);
         }
 
         // Outer border
@@ -132,11 +155,9 @@ class HangingRibbonBlocksRenderer implements SkinRendererInterface
         $tileWidth = (int) floor(($width - $totalGap) / $segments);
         $startX = (int) (($width - ($segments * $tileWidth + $totalGap)) / 2);
 
-        $hangerHeight = max(0, (int) ($skin['hangerHeight'] ?? 18));
-        $hangerGap = max(2, (int) round($hangerHeight * 0.3));
         $verticalPad = max(8, (int) round($height * 0.05));
-        $tileHeight = $height - 2 * $verticalPad - $hangerHeight - $hangerGap;
-        $tileY = $verticalPad + $hangerHeight + $hangerGap;
+        $tileHeight = $height - 2 * $verticalPad;
+        $tileY = $verticalPad;
         $showBottomLabelBar = ($skin['showBottomLabelBar'] ?? true) === true;
         $bottomBarRatio = 0.30;
         $bottomBarHeight = $showBottomLabelBar ? max(18, (int) round($tileHeight * $bottomBarRatio)) : 0;
