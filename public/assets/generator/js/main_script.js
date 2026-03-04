@@ -861,7 +861,7 @@ function renderFields(metadata, savedOverrides = {}) {
   const smallKeys = new Set(['fontSize','separator','layout','animation','showDays','showHours','showMinutes','showSeconds','width','height','outputWidth','outputHeight','borderWidth','borderColor']);
   const marginKeys = new Set(['customTextDistance','textMarginTop','textMarginBottom','marginTop','marginBottom','labelMarginTop','labelMarginBottom']);
 
-  const createFieldInput = (field, value) => {
+  const createFieldInput = (field, value, options = {}) => {
     const key = field.key;
     let label = field.label || key;
     if (key === 'outputHeight') {
@@ -870,6 +870,7 @@ function renderFields(metadata, savedOverrides = {}) {
       label = 'Width';
     }
     const type = field.type || 'text';
+    const useSwitch = options.useSwitch === true;
     const container = document.createElement('div');
     const isSmall = type === 'color' || type === 'boolean' || smallKeys.has(key);
     const isMarginField = marginKeys.has(key);
@@ -878,7 +879,9 @@ function renderFields(metadata, savedOverrides = {}) {
     } else {
       container.className = isSmall ? 'col-12 col-sm-6 col-md-4' : 'col-12';
     }
-    container.innerHTML = `<label class="form-label small mb-1">${label}</label>`;
+    if (!useSwitch) {
+      container.innerHTML = `<label class="form-label small mb-1">${label}</label>`;
+    }
     let input;
     if (type === 'color') {
       // Create modern color picker wrapper
@@ -955,6 +958,22 @@ function renderFields(metadata, savedOverrides = {}) {
       input.type = 'checkbox';
       input.checked = !!value;
       input.className = 'form-check-input';
+      if (useSwitch) {
+        const id = `skin_${key}`;
+        input.id = id;
+        const switchWrap = document.createElement('div');
+        switchWrap.className = 'form-check form-switch';
+        const lbl = document.createElement('label');
+        lbl.className = 'form-check-label';
+        lbl.htmlFor = id;
+        lbl.textContent = label;
+        switchWrap.appendChild(input);
+        switchWrap.appendChild(lbl);
+        container.appendChild(switchWrap);
+        input.dataset.key = key;
+        input.addEventListener('change', syncOverrides);
+        return container;
+      }
     } else if (type === 'select') {
       input = document.createElement('select');
       input.className = 'form-select';
@@ -1115,12 +1134,18 @@ function renderFields(metadata, savedOverrides = {}) {
           body.appendChild(row);
         }
       } else {
-        // For all other groups: use existing logic (all fields in one row)
+        // For all other groups: use existing logic
+        // Visibility group: use form-switch toggles like "Show Time's Up Screen", one per row
         const row = document.createElement('div');
         row.className = 'row g-3';
         group.fields.forEach(field => {
           const value = resolveFieldValue(field);
-          row.appendChild(createFieldInput(field, value));
+          const fieldContainer = createFieldInput(field, value, { useSwitch: isVisibilityGroup });
+          if (isVisibilityGroup) {
+            const classes = fieldContainer.className.split(' ').filter(c => !c.startsWith('col-'));
+            fieldContainer.className = 'col-12 ' + classes.join(' ').trim();
+          }
+          row.appendChild(fieldContainer);
         });
         body.appendChild(row);
       }
