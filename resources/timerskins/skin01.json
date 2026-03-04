@@ -20,6 +20,43 @@
     "finalTextColor": null,
     "borderWidth": 0,
     "borderColor": "#FFFFFF",
+
+    "visibilityLayouts": {
+      "allVisible": {
+        "width": 400,
+        "height": 160,
+        "visibleUnits": 4,
+        "note": "All 4 units visible"
+      },
+      "daysHidden": {
+        "width": 300,
+        "height": 160,
+        "visibleUnits": 3,
+        "note": "Hours, Minutes, Seconds only"
+      },
+      "secondsHidden": {
+        "width": 300,
+        "height": 160,
+        "visibleUnits": 3,
+        "note": "Days, Hours, Minutes only"
+      },
+      "daysAndSecondsHidden": {
+        "width": 240,
+        "height": 160,
+        "visibleUnits": 2,
+        "note": "Hours and Minutes only"
+      }
+    },
+
+    "visibilityRules": {
+      "keepSameCanvasIfOnlyOneEdgeUnitHidden": false,
+      "useCompactCanvasIfDaysAndSecondsHidden": true,
+      "compactTrigger": {
+        "showDays": false,
+        "showSeconds": false
+      }
+    },
+
     "formDefaults": {
         "background": "#FFFFFF",
         "textColor": "#DB0000"
@@ -108,18 +145,6 @@
             "label": "Show Days",
             "type": "boolean",
             "groupOrder": 5,
-            "group": "Visibility"
-        },
-        {
-            "key": "showHours",
-            "label": "Show Hours",
-            "type": "boolean",
-            "group": "Visibility"
-        },
-        {
-            "key": "showMinutes",
-            "label": "Show Minutes",
-            "type": "boolean",
             "group": "Visibility"
         },
         {
