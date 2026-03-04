@@ -5,7 +5,7 @@
   "background": "#FFFFFF",
   "textColor": "#111111",
   "accentColor": "#22A699",
-  "fontSize": 30,
+  "fontSize": 45,
   "fontPath": "resources/fonts/dejavu-sans.book.ttf",
   "style": "orbit_dots",
   "showDays": true,

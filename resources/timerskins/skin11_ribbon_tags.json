@@ -5,7 +5,7 @@
   "background": "#FFFFFF",
   "textColor": "#FFFFFF",
   "accentColor": "#2F7A8A",
-  "fontSize": 26,
+  "fontSize": 40,
   "fontPath": "resources/fonts/dejavu-sans.bold.ttf",
   "style": "ribbon_tag",
   "showDays": true,
