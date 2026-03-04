@@ -44,9 +44,10 @@ class FramedFlipBoardRenderer implements SkinRendererInterface
         $tileRadius = max(12, min(18, (int) ($skin['tileRadius'] ?? 14)));
         $tileShadowCol = $this->allocColor($im, $skin['tileShadowColor'] ?? '#D6DCE4');
         $tileShadowOffset = 4;
-        $hingeWidth = max(6, (int) ($skin['hingeWidth'] ?? 10));
-        $hingeHeight = max(3, (int) ($skin['hingeHeight'] ?? 5));
-        $hingeCol = $this->allocColor($im, $skin['hingeColor'] ?? '#C8D0D8');
+        $hingeWidth = max(10, (int) ($skin['hingeWidth'] ?? 16));
+        $hingeHeight = max(4, (int) ($skin['hingeHeight'] ?? 6));
+        $hingeCol = $this->allocColor($im, $skin['hingeColor'] ?? '#FAFAFA');
+        $hingeBorderCol = $this->allocColor($im, $skin['hingeBorderColor'] ?? '#9B9CA7');
 
         $frameX = $outerMargin;
         $frameY = $outerMargin;
@@ -89,17 +90,41 @@ class FramedFlipBoardRenderer implements SkinRendererInterface
         }
 
         $hingeCenterY = (int) ($tileY + $tileHeight / 2);
-        $hingeR = (int) floor(min($hingeWidth, $hingeHeight) / 2);
-        $hingeInset = max((int) ($skin['hingeInset'] ?? 8), $hingeWidth / 2 + 2);
+        $hingeInset = max((int) ($skin['hingeInset'] ?? 10), (int) ($hingeWidth / 2) + 2);
         for ($i = 0; $i < $segments; $i++) {
             $tileX = $startX + $i * ($tileWidth + $tileGap);
             $leftCenterX = $tileX + $hingeInset;
             $rightCenterX = $tileX + $tileWidth - $hingeInset;
-            foreach ([$leftCenterX, $rightCenterX] as $centerX) {
-                $hingeX = (int) ($centerX - $hingeWidth / 2);
-                $hingeY = (int) ($hingeCenterY - $hingeHeight / 2);
-                $this->fillRoundedRect($im, $hingeX, $hingeY, $hingeWidth, $hingeHeight, $hingeR, $hingeCol);
-            }
+            $leftHingeX = (int) ($leftCenterX - $hingeWidth / 2);
+            $rightHingeX = (int) ($rightCenterX - $hingeWidth / 2);
+            $hingeY = (int) ($hingeCenterY - $hingeHeight / 2);
+            $this->drawHingeFlatEnd($im, $leftHingeX, $hingeY, $hingeWidth, $hingeHeight, false, $hingeCol, $hingeBorderCol);
+            $this->drawHingeFlatEnd($im, $rightHingeX, $hingeY, $hingeWidth, $hingeHeight, true, $hingeCol, $hingeBorderCol);
+        }
+    }
+
+    private function drawHingeFlatEnd($im, int $x, int $y, int $w, int $h, bool $roundedOnLeft, int $fillCol, int $borderCol): void
+    {
+        $r = (int) floor($h / 2);
+        if ($r <= 0 || $w <= $r) {
+            imagefilledrectangle($im, $x, $y, $x + $w, $y + $h, $fillCol);
+            imagerectangle($im, $x, $y, $x + $w, $y + $h, $borderCol);
+            return;
+        }
+        if ($roundedOnLeft) {
+            imagefilledrectangle($im, $x + $r, $y, $x + $w, $y + $h, $fillCol);
+            imagefilledarc($im, $x + $r, $y + $r, $h, $h, 90, 270, $fillCol, IMG_ARC_PIE);
+            imageline($im, $x + $r, $y, $x + $w, $y, $borderCol);
+            imageline($im, $x + $r, $y + $h - 1, $x + $w, $y + $h - 1, $borderCol);
+            imageline($im, $x + $w - 1, $y, $x + $w - 1, $y + $h, $borderCol);
+            imagearc($im, $x + $r, $y + $r, $h, $h, 90, 270, $borderCol);
+        } else {
+            imagefilledrectangle($im, $x, $y, $x + $w - $r, $y + $h, $fillCol);
+            imagefilledarc($im, $x + $w - $r, $y + $r, $h, $h, 270, 90, $fillCol, IMG_ARC_PIE);
+            imageline($im, $x, $y, $x + $w - $r, $y, $borderCol);
+            imageline($im, $x, $y + $h - 1, $x + $w - $r, $y + $h - 1, $borderCol);
+            imageline($im, $x, $y, $x, $y + $h, $borderCol);
+            imagearc($im, $x + $w - $r, $y + $r, $h, $h, 270, 90, $borderCol);
         }
     }
 
