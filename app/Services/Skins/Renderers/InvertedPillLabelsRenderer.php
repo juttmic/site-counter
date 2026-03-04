@@ -24,7 +24,7 @@ class InvertedPillLabelsRenderer implements SkinRendererInterface
 
         // Geometry (now: 4 segments; each segment has TWO digit tiles)
         $segments = 4;
-        $gapX = max(8, (int)round($width * 0.02));            // gap between segments
+        $gapX = max(3, (int)round($width * 0.0));            // gap between segments
         $innerGap = max(6, (int)round($width * 0.012));        // gap between the two digit tiles inside a segment
         $padTop  = max(8, (int)round($height * 0.12));         // top padding above tiles
         $labelArea = max(20, (int)round($height * 0.26));      // reserved height for labels
@@ -32,11 +32,10 @@ class InvertedPillLabelsRenderer implements SkinRendererInterface
         $digitTileH = max(24, $height - $labelArea - $padTop); // height of digit tiles area
         
         // Calculate square tile size (make them smaller and square)
-        // Use 70% of the available space to make them smaller
+        // Use 90% of available space to minimize horizontal padding within each section
         $availableTileW = (int) floor(($segW - $innerGap) / 2);
         $availableTileH = $digitTileH;
-        // Make square using the smaller dimension, then reduce by 30% to make them smaller
-        $tileSize = (int) floor(min($availableTileW, $availableTileH) * 0.7);
+        $tileSize = (int) floor(min($availableTileW, $availableTileH) * 0.9);
 
         // Colors
         [$br, $bg_, $bb] = $this->hexToRgb($skin['background'] ?? '#FFFFFF'); // unused aside from $bgCol param
@@ -132,7 +131,7 @@ class InvertedPillLabelsRenderer implements SkinRendererInterface
         }
 
         $fontSize  = (int)($skin['fontSize'] ?? 32);
-        $labelSize = max(10, (int) round($fontSize * 0.38));
+        $labelSize = max(12, (int) round($fontSize * 0.52));
 
         $days    = (int) floor($secondsRemaining / 86400);
         $hours   = (int) floor(($secondsRemaining % 86400) / 3600);
@@ -150,7 +149,7 @@ class InvertedPillLabelsRenderer implements SkinRendererInterface
         }
 
         $segments = count($units);
-        $gapX = max(8, (int)round($width * 0.02));
+        $gapX = max(4, (int)round($width * 0.008));
         $innerGap = max(6, (int)round($width * 0.012));
         $padTop  = max(8, (int)round($height * 0.12));
         $labelArea = max(20, (int)round($height * 0.26));
@@ -160,7 +159,7 @@ class InvertedPillLabelsRenderer implements SkinRendererInterface
         // Calculate square tile size (same as in renderStyle)
         $availableTileW = (int) floor(($segW - $innerGap) / 2);
         $availableTileH = $digitTileH;
-        $tileSize = (int) floor(min($availableTileW, $availableTileH) * 0.7);
+        $tileSize = (int) floor(min($availableTileW, $availableTileH) * 0.9);
         
         $digitsCenterY  = (int) ($padTop + $digitTileH * 0.50);
 
