@@ -52,7 +52,6 @@ class CircularProgressRingsRenderer implements SkinRendererInterface
         $connectorCol = $this->allocColor($im, $skin['connectorColor'] ?? '#AEBAC6');
         $connectorWidth = max(1, (int) ($skin['connectorWidth'] ?? 6));
         $connectorLength = max(0, (int) ($skin['connectorLength'] ?? 16));
-        $debugBorderCol = imagecolorallocate($im,  255, 0, 0);
 
         $segments = count($units);
         $padX = max(0, (int) ($skin['horizontalPadding'] ?? 80));

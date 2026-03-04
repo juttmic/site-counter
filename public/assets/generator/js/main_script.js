@@ -1403,6 +1403,9 @@ async function generatePreviewFrame() {
 }
 
 async function selectSkin(key) {
+  const previousKey = document.getElementById('skin_key').value || '';
+  const isSwitchingToDifferentSkin = previousKey && previousKey !== key;
+
   document.getElementById('skin_key').value = key;
   document.getElementById('selected_skin_label').textContent = key;
   
@@ -1432,7 +1435,10 @@ async function selectSkin(key) {
     
     const meta = await fetchJson(`/skins/${encodeURIComponent(key)}`);
     
-    let baseOverrides = lastSkinOverrides || {};
+    // When switching to a different skin, use empty overrides so the new skin's defaults
+    // (including dimensions, visibility toggles, etc.) are applied. Carrying over the previous
+    // skin's overrides caused wrong dimensions and missing fields (e.g. visibility toggles).
+    let baseOverrides = (isSwitchingToDifferentSkin ? {} : (lastSkinOverrides || {}));
     
     // For new timers, fetch and apply formDefaults on first skin load
     if (isFirstLoad) {
