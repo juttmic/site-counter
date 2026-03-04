@@ -82,25 +82,24 @@ class FramedFlipBoardRenderer implements SkinRendererInterface
         for ($i = 0; $i < $segments; $i++) {
             $tileX = $startX + $i * ($tileWidth + $tileGap);
             $this->fillRoundedRect($im, $tileX, $tileY, $tileWidth, $tileHeight, $tileRadius, $tileBg);
+            $this->drawNeumorphicEmboss($im, $tileX, $tileY, $tileWidth, $tileHeight, $tileRadius, $tileBevelHighlight, $tileBevelShadow);
             if ($tileBorderWidth > 0) {
                 $this->strokeRoundedRect($im, $tileX, $tileY, $tileWidth, $tileHeight, $tileRadius, $tileBorderCol, $tileBorderWidth);
             }
-            $this->drawNeumorphicEmboss($im, $tileX, $tileY, $tileWidth, $tileHeight, $tileRadius, $tileBevelHighlight, $tileBevelShadow);
         }
 
         $hingeCenterY = (int) ($tileY + $tileHeight / 2);
         $hingeR = (int) floor(min($hingeWidth, $hingeHeight) / 2);
-        for ($i = 0; $i <= $segments; $i++) {
-            if ($i === 0) {
-                $gapCenterX = $startX;
-            } elseif ($i === $segments) {
-                $gapCenterX = $startX + ($segments - 1) * ($tileWidth + $tileGap) + $tileWidth;
-            } else {
-                $gapCenterX = (int) ($startX + $i * $tileWidth + ($i - 1) * $tileGap + $tileGap / 2);
+        $hingeInset = max((int) ($skin['hingeInset'] ?? 8), $hingeWidth / 2 + 2);
+        for ($i = 0; $i < $segments; $i++) {
+            $tileX = $startX + $i * ($tileWidth + $tileGap);
+            $leftCenterX = $tileX + $hingeInset;
+            $rightCenterX = $tileX + $tileWidth - $hingeInset;
+            foreach ([$leftCenterX, $rightCenterX] as $centerX) {
+                $hingeX = (int) ($centerX - $hingeWidth / 2);
+                $hingeY = (int) ($hingeCenterY - $hingeHeight / 2);
+                $this->fillRoundedRect($im, $hingeX, $hingeY, $hingeWidth, $hingeHeight, $hingeR, $hingeCol);
             }
-            $hingeX = (int) ($gapCenterX - $hingeWidth / 2);
-            $hingeY = (int) ($hingeCenterY - $hingeHeight / 2);
-            $this->fillRoundedRect($im, $hingeX, $hingeY, $hingeWidth, $hingeHeight, $hingeR, $hingeCol);
         }
     }
 
