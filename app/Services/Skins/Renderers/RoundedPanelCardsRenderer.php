@@ -206,7 +206,7 @@ class RoundedPanelCardsRenderer implements SkinRendererInterface
         $contentH = $panel['panelH'] - 2 * ($panel['borderWidth'] + $innerPad);
 
         // Cards: medium-sized, ~72% of panel content height, balanced width
-        $cardHeight = (int) ($contentH * 0.72);
+        $cardHeight = (int) ($contentH );
         $totalGap = ($segments - 1) * $segmentGap;
         $cardWidth = (int) (($contentW - $totalGap) / $segments);
         $cardY = $contentY + (int) (($contentH - $cardHeight) * 0.08);
@@ -215,7 +215,7 @@ class RoundedPanelCardsRenderer implements SkinRendererInterface
         $boxPadX = (int) round($cardWidth * 0.08);
         $boxPadY = (int) round($cardHeight * 0.08);
         $boxW = $cardWidth - 2 * $boxPadX;
-        $boxH = (int) round($cardHeight * 0.55)+30; //boxheight
+        $boxH = (int) round($cardHeight * 0.55); //boxheight
         $cardX = $contentX + (int) (($contentW - ($segments * $cardWidth + $totalGap)) / 2);
 
         return array_merge($panel, [
@@ -236,12 +236,12 @@ class RoundedPanelCardsRenderer implements SkinRendererInterface
     {
         $panelRadius = max(0, (int) ($skin['panelRadius'] ?? 28));
         $borderWidth = max(0, min(1, (int) ($skin['borderWidth'] ?? 1)));
-        $outerMargin = max(48, (int) round(min($width, $height) * 0.10));
+        $outerMargin = max(33, (int) round(min($width, $height) * 0.10));
 
         $panelX = $outerMargin;
-        $panelY = $outerMargin;
+        $panelY = $outerMargin-20;
         $panelW = $width - 2 * $outerMargin;
-        $panelH = $height - 2 * $outerMargin;
+        $panelH = $height - 2 * $outerMargin+40;
         $panelR = min($panelRadius, (int) floor(min($panelW, $panelH) / 4));
 
         return [
