@@ -22,8 +22,15 @@ class InvertedPillLabelsRenderer implements SkinRendererInterface
         // Fill background
         imagefilledrectangle($im, 0, 0, $width, $height, $bgCol);
 
-        // Geometry (now: 4 segments; each segment has TWO digit tiles)
-        $segments = 4;
+        // Geometry: respect visibility toggles (showDays, showSeconds; hours/minutes always shown)
+        $showDays = ($skin['showDays'] ?? true) === true;
+        $showHours = ($skin['showHours'] ?? true) === true;
+        $showMinutes = ($skin['showMinutes'] ?? true) === true;
+        $showSeconds = ($skin['showSeconds'] ?? true) === true;
+        $segments = ($showDays ? 1 : 0) + ($showHours ? 1 : 0) + ($showMinutes ? 1 : 0) + ($showSeconds ? 1 : 0);
+        if ($segments < 1) {
+            $segments = 1;
+        }
         $gapX = max(3, (int)round($width * 0.0));            // gap between segments
         $innerGap = max(6, (int)round($width * 0.012));        // gap between the two digit tiles inside a segment
         $padTop  = max(8, (int)round($height * 0.12));         // top padding above tiles
