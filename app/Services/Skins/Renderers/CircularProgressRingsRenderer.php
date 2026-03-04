@@ -52,14 +52,17 @@ class CircularProgressRingsRenderer implements SkinRendererInterface
         $connectorCol = $this->allocColor($im, $skin['connectorColor'] ?? '#AEBAC6');
         $connectorWidth = max(1, (int) ($skin['connectorWidth'] ?? 6));
         $connectorLength = max(0, (int) ($skin['connectorLength'] ?? 16));
+        $debugBorderCol = imagecolorallocate($im,  255, 0, 0);
 
         $segments = count($units);
-        $unitWidth = (int) floor($width / $segments);
+        $padX = max(0, (int) ($skin['horizontalPadding'] ?? 80));
+        $availableWidth = $width - 2 * $padX;
+        $unitWidth = (int) floor($availableWidth / $segments);
         $centerY = (int) ($height / 2);
         $radius = (int) round(min($ringSize / 2, $unitWidth / 2.2, $height / 2.2));
 
         for ($i = 0; $i < $segments; $i++) {
-            $cx = (int) ($unitWidth * $i + $unitWidth / 2);
+            $cx = (int) ($padX + $unitWidth * $i + $unitWidth / 2);
             $unitIdx = ['d' => 0, 'h' => 1, 'm' => 2, 's' => 3][$units[$i]] ?? 0;
             $value = $values[$unitIdx];
             $max = $maxes[$unitIdx];
@@ -94,12 +97,14 @@ class CircularProgressRingsRenderer implements SkinRendererInterface
 
             // Connector to next ring (vertical bar between units)
             if ($i < $segments - 1 && $connectorLength > 0) {
-                $connCenterX = (int) ($unitWidth * ($i + 1));
+                $connCenterX = (int) ($padX + $unitWidth * ($i + 1));
                 $connLeft = (int) ($connCenterX - $connectorWidth / 2);
                 $connTop = (int) ($centerY - $connectorLength / 2);
                 $connBottom = (int) ($centerY + $connectorLength / 2);
                 imagefilledrectangle($im, $connLeft, $connTop, $connLeft + $connectorWidth, $connBottom, $connectorCol);
             }
+
+            
         }
     }
 
@@ -128,14 +133,16 @@ class CircularProgressRingsRenderer implements SkinRendererInterface
         if (empty($units)) { $units[] = ['value' => $seconds, 'label' => 'SECONDS']; }
 
         $segments = count($units);
-        $unitWidth = (int) floor($width / $segments);
+        $padX = max(0, (int) ($skin['horizontalPadding'] ?? 80));
+        $availableWidth = $width - 2 * $padX;
+        $unitWidth = (int) floor($availableWidth / $segments);
         $centerY = (int) ($height / 2);
         $numberY = (int) ($centerY - 1);
         $labelY = (int) ($centerY + (int) round($fontSize * 0.6));
 
         if (is_file($font)) {
             for ($i = 0; $i < $segments; $i++) {
-                $cx = (int) ($unitWidth * $i + $unitWidth / 2);
+                $cx = (int) ($padX + $unitWidth * $i + $unitWidth / 2);
 
                 $numberText = sprintf('%02d', $units[$i]['value']);
                 $numberWidth = $this->textBoxWidth($numberText, $font, $fontSize);
@@ -149,7 +156,7 @@ class CircularProgressRingsRenderer implements SkinRendererInterface
             $builtIn = 5;
             $labelBuiltIn = 3;
             for ($i = 0; $i < $segments; $i++) {
-                $cx = (int) ($unitWidth * $i + $unitWidth / 2);
+                $cx = (int) ($padX + $unitWidth * $i + $unitWidth / 2);
 
                 $numberText = sprintf('%02d', $units[$i]['value']);
                 $nW = imagefontwidth($builtIn) * strlen($numberText);
