@@ -7,9 +7,8 @@ use Illuminate\Support\Str;
 
 /**
  * Skin style: "framed_flip_board" (e.g. skin23)
- * Renders a framed flip-board countdown: outer rounded frame, four number tiles, hinge connectors
- * between tiles, labels under each tile with decorative dots left/right, and a two-layer base stand
- * (lower shadow plate + top platform). Minimal mechanical flip-board aesthetic, soft grayscale.
+ * Compact premium landing-page countdown: minimal outer container, uniform square tiles with
+ * subtle elevation, small square connectors between units, minimal labels, no base stand.
  */
 class FramedFlipBoardRenderer implements SkinRendererInterface
 {
@@ -32,24 +31,20 @@ class FramedFlipBoardRenderer implements SkinRendererInterface
             return;
         }
 
-        $framePadding = max(0, (int) ($skin['framePadding'] ?? 28));
-        $frameRadius = max(8, min(12, (int) ($skin['frameRadius'] ?? 10)));
-        $borderWidth = max(0, min(2, (int) ($skin['borderWidth'] ?? 1)));
-        $outerMargin = max(24, (int) round(min($width, $height) * 0.08));
-        $borderCol = $this->allocColor($im, $skin['borderColor'] ?? '#E0E0E0');
+        $framePadding = max(0, (int) ($skin['framePadding'] ?? 12));
+        $frameRadius = max(4, min(8, (int) ($skin['frameRadius'] ?? 6)));
+        $borderWidth = 0;
+        $outerMargin = max(16, (int) round(min($width, $height) * 0.05));
         $frameFillHex = $skin['frameFillColor'] ?? null;
-        $frameFillCol = ($frameFillHex !== null && $frameFillHex !== '') ? $this->allocColor($im, $frameFillHex) : $this->allocColor($im, '#FDFDFD');
-        $tileBg = $this->allocColor($im, $skin['tileBackground'] ?? '#FFFFFF');
+        $frameFillCol = ($frameFillHex !== null && $frameFillHex !== '') ? $this->allocColor($im, $frameFillHex) : $bgCol;
+        $tileBg = $this->allocColor($im, $skin['tileBackground'] ?? '#F5F5F5');
         $tileBorderCol = $this->allocColor($im, $skin['tileBorderColor'] ?? '#E8E8E8');
-        $tileBorderWidth = max(0, min(1, (int) ($skin['tileBorderWidth'] ?? 1)));
-        $tileRadius = max(4, min(6, (int) ($skin['tileRadius'] ?? 5)));
-        $tileShadowCol = $this->allocColor($im, $skin['tileShadowColor'] ?? '#EBEBEB');
-        $tileShadowOffset = (int) ($skin['tileShadowOffset'] ?? 2);
-        $hingeCol = $this->allocColor($im, $skin['hingeColor'] ?? '#D0D0D0');
-        $hingeWidth = max(12, (int) ($skin['hingeWidth'] ?? 20));
-        $hingeHeight = max(4, (int) ($skin['hingeHeight'] ?? 8));
-        $basePlateCol = $this->allocColor($im, $skin['basePlateColor'] ?? '#E8E8E8');
-        $basePlateHeight = max(0, (int) ($skin['basePlateHeight'] ?? 16));
+        $tileBorderWidth = 0;
+        $tileRadius = max(2, min(4, (int) ($skin['tileRadius'] ?? 3)));
+        $tileShadowCol = $this->allocColor($im, $skin['tileShadowColor'] ?? '#E5E5E5');
+        $tileShadowOffset = 3;
+        $hingeSize = max(2, min(6, (int) ($skin['hingeSize'] ?? 4)));
+        $hingeCol = $this->allocColor($im, $skin['hingeColor'] ?? '#D8D8D8');
 
         $frameX = $outerMargin;
         $frameY = $outerMargin;
@@ -57,99 +52,62 @@ class FramedFlipBoardRenderer implements SkinRendererInterface
         $frameH = $height - 2 * $outerMargin;
         $frameR = min($frameRadius, (int) floor(min($frameW, $frameH) / 4));
 
-        $innerX = $frameX + $borderWidth + $framePadding;
-        $innerY = $frameY + $borderWidth + $framePadding;
-        $innerW = $frameW - 2 * ($borderWidth + $framePadding);
-        $innerH = $frameH - 2 * ($borderWidth + $framePadding);
+        $innerX = $frameX + $framePadding;
+        $innerY = $frameY + $framePadding;
+        $innerW = $frameW - 2 * $framePadding;
+        $innerH = $frameH - 2 * $framePadding;
 
-        $labelFontSize = (int) ($skin['labelFontSize'] ?? 16);
-        $labelGap = 12;
-        $basePlateGap = 12;
-        $topPad = 16;
-        $labelRowHeight = $labelFontSize + $labelGap;
-        $dotsRowHeight = 12;
-        $dotLabelGap = 4;
-        $bottomRegionH = $labelRowHeight + $dotLabelGap + $dotsRowHeight + $basePlateGap + $basePlateHeight;
-        $tileHeight = (int) ($innerH - $topPad - $bottomRegionH);
-        $tileGap = max(12, (int) round($innerW * 0.025));
-        $tileWidth = (int) (($innerW - ($segments - 1) * $tileGap) / $segments);
-        $tileWidth = (int) min($tileWidth, (int) ($tileHeight * 1.25));
-        $tileGap = max(12, (int) (($innerW - $segments * $tileWidth) / max(1, $segments - 1)));
+        $labelFontSize = (int) ($skin['labelFontSize'] ?? 11);
+        $labelGap = 6;
+        $bottomRegionH = $labelFontSize + $labelGap;
+        $topPad = 8;
+        $tileGap = max(4, (int) round($innerW * 0.015));
+        $tileSize = (int) (($innerW - ($segments - 1) * $tileGap) / $segments);
+        $tileSize = (int) min($tileSize, (int) (($innerH - $topPad - $bottomRegionH)));
+        $tileGap = max(4, (int) (($innerW - $segments * $tileSize) / max(1, $segments - 1)));
+        $tileWidth = $tileSize;
+        $tileHeight = $tileSize;
         $tileY = $innerY + $topPad;
-        $startX = (int) ($innerX + ($innerW - ($segments * $tileWidth + ($segments - 1) * $tileGap)) / 2);
+        $startX = (int) ($innerX + ($innerW - ($segments * $tileSize + ($segments - 1) * $tileGap)) / 2);
 
-        // 0) Very soft shadow beneath entire frame (floating effect)
-        $frameShadowCol = $this->allocColor($im, $skin['frameShadowColor'] ?? '#E8E8E8');
-        $frameShadowOffset = max(2, (int) ($skin['frameShadowOffset'] ?? 4));
-        $this->fillRoundedRect($im, $frameX + $frameShadowOffset, $frameY + $frameShadowOffset, $frameW, $frameH, $frameR, $frameShadowCol);
-
-        // 1) Outer frame fill + thin border (board brighter than background)
         $this->fillRoundedRect($im, $frameX, $frameY, $frameW, $frameH, $frameR, $frameFillCol);
-        if ($borderWidth > 0) {
-            $this->strokeRoundedRect($im, $frameX, $frameY, $frameW, $frameH, $frameR, $borderCol, $borderWidth);
-        }
 
-        // 2) Base stand: single soft shadow (wider) then one top platform (no second solid plate)
-        $plateY = $innerY + $innerH - $basePlateHeight;
-        $plateInset = (int) round($framePadding * 0.5);
-        $plateX = $innerX + $plateInset;
-        $plateW = $innerW - 2 * $plateInset;
-        $plateShadowExtension = (int) ($skin['basePlateShadowExtension'] ?? 8);
-        $plateShadowX = $plateX - $plateShadowExtension;
-        $plateShadowW = $plateW + 2 * $plateShadowExtension;
-        $plateR = min($frameRadius - 2, (int) floor($basePlateHeight / 2), 8);
-        $plateR = max(4, $plateR);
-        $plateShadowCol = $this->allocColor($im, $skin['basePlateShadowColor'] ?? '#E0E0E0');
-        $this->fillRoundedRect($im, $plateShadowX + 2, $plateY + 2, $plateShadowW, $basePlateHeight, $plateR, $plateShadowCol);
-        $this->fillRoundedRect($im, $plateX, $plateY, $plateW, $basePlateHeight, $plateR, $basePlateCol);
-
-        // 3) Very subtle tile shadows (1–2px offset, light) or none
-        if ($tileShadowOffset > 0) {
-            for ($i = 0; $i < $segments; $i++) {
-                $tileX = $startX + $i * ($tileWidth + $tileGap);
-                $this->fillRoundedRect($im, $tileX + $tileShadowOffset, $tileY + $tileShadowOffset, $tileWidth, $tileHeight, $tileRadius, $tileShadowCol);
-            }
-        }
-
-        // 4) Tiles (white, thin border, smaller radius than frame)
         for ($i = 0; $i < $segments; $i++) {
-            $tileX = $startX + $i * ($tileWidth + $tileGap);
-            $this->fillRoundedRect($im, $tileX, $tileY, $tileWidth, $tileHeight, $tileRadius, $tileBg);
-            if ($tileBorderWidth > 0) {
-                $this->strokeRoundedRect($im, $tileX, $tileY, $tileWidth, $tileHeight, $tileRadius, $tileBorderCol, $tileBorderWidth);
-            }
+            $tileX = $startX + $i * ($tileSize + $tileGap);
+            $this->fillRoundedRect($im, $tileX + $tileShadowOffset, $tileY + $tileShadowOffset, $tileWidth, $tileHeight, $tileRadius, $tileShadowCol);
         }
 
-        // 5) Hinges – horizontal flat capsules between tiles (width > height)
+        for ($i = 0; $i < $segments; $i++) {
+            $tileX = $startX + $i * ($tileSize + $tileGap);
+            $this->fillRoundedRect($im, $tileX, $tileY, $tileWidth, $tileHeight, $tileRadius, $tileBg);
+        }
+
         $hingeCenterY = (int) ($tileY + $tileHeight / 2);
-        $hingeR = (int) floor(min($hingeWidth, $hingeHeight) / 2);
         for ($i = 0; $i < $segments - 1; $i++) {
-            $gapCenterX = (int) ($startX + ($i + 1) * $tileWidth + $i * $tileGap + $tileGap / 2);
-            $hingeX = (int) ($gapCenterX - $hingeWidth / 2);
-            $hingeY = (int) ($hingeCenterY - $hingeHeight / 2);
-            $this->fillRoundedRect($im, $hingeX, $hingeY, $hingeWidth, $hingeHeight, $hingeR, $hingeCol);
+            $gapCenterX = (int) ($startX + ($i + 1) * $tileSize + $i * $tileGap + $tileGap / 2);
+            $hingeX = (int) ($gapCenterX - $hingeSize / 2);
+            $hingeY = (int) ($hingeCenterY - $hingeSize / 2);
+            imagefilledrectangle($im, $hingeX, $hingeY, $hingeX + $hingeSize, $hingeY + $hingeSize, $hingeCol);
         }
     }
 
     public function renderTimeText($im, int $secondsRemaining, array $skin, int $width, int $height, int $textCol, int $accentCol): bool
     {
         $font = (string) ($skin['fontPath'] ?? '');
-        $fontSize = (int) ($skin['fontSize'] ?? 58);
-        $labelFontSize = (int) ($skin['labelFontSize'] ?? 18);
-        $labelCol = $this->allocColor($im, $skin['labelColor'] ?? '#485D71');
-        $dotCol = $this->allocColor($im, $skin['dotColor'] ?? '#B8C4D0');
-        $showLabelDots = ($skin['showLabelDots'] ?? true) === true;
+        $labelFontSize = (int) ($skin['labelFontSize'] ?? 11);
+        $labelCol = $this->allocColor($im, $skin['labelColor'] ?? '#777777');
 
         if ($secondsRemaining <= 0) {
             $finalMsg = (string) ($skin['finalMessage'] ?? "Time's Up");
             $finalTextCol = $skin['finalTextColor'] ?? null;
             $drawCol = ($finalTextCol !== null && $finalTextCol !== '') ? $this->allocColor($im, $finalTextCol) : $textCol;
+            $finalFontSize = (int) ($skin['fontSize'] ?? 36);
             if (is_file($font)) {
-                $box = imagettfbbox($fontSize, 0, $font, $finalMsg) ?: [0, 0, 0, 0, 0, 0, 0, 0];
+                $box = imagettfbbox($finalFontSize, 0, $font, $finalMsg) ?: [0, 0, 0, 0, 0, 0, 0, 0];
                 $tw = (int) (max($box[0], $box[2], $box[4], $box[6]) - min($box[0], $box[2], $box[4], $box[6]));
                 $x = (int) (($width - $tw) / 2);
-                $y = (int) ($height / 2 + $fontSize / 2);
-                imagettftext($im, $fontSize, 0, $x, $y, $drawCol, $font, $finalMsg);
+                $y = (int) ($height / 2 + $finalFontSize / 2);
+                imagettftext($im, $finalFontSize, 0, $x, $y, $drawCol, $font, $finalMsg);
             } else {
                 $tw = imagefontwidth(5) * strlen($finalMsg);
                 $th = imagefontheight(5);
@@ -164,35 +122,32 @@ class FramedFlipBoardRenderer implements SkinRendererInterface
             return true;
         }
 
-        $framePadding = max(0, (int) ($skin['framePadding'] ?? 28));
-        $borderWidth = max(0, min(2, (int) ($skin['borderWidth'] ?? 1)));
-        $basePlateHeight = max(0, (int) ($skin['basePlateHeight'] ?? 16));
-        $outerMargin = max(24, (int) round(min($width, $height) * 0.08));
+        $framePadding = max(0, (int) ($skin['framePadding'] ?? 12));
+        $outerMargin = max(16, (int) round(min($width, $height) * 0.05));
 
         $frameX = $outerMargin;
         $frameY = $outerMargin;
         $frameW = $width - 2 * $outerMargin;
         $frameH = $height - 2 * $outerMargin;
 
-        $innerX = $frameX + $borderWidth + $framePadding;
-        $innerY = $frameY + $borderWidth + $framePadding;
-        $innerW = $frameW - 2 * ($borderWidth + $framePadding);
-        $innerH = $frameH - 2 * ($borderWidth + $framePadding);
+        $innerX = $frameX + $framePadding;
+        $innerY = $frameY + $framePadding;
+        $innerW = $frameW - 2 * $framePadding;
+        $innerH = $frameH - 2 * $framePadding;
 
-        $labelGap = 12;
-        $basePlateGap = 12;
-        $topPad = 16;
-        $labelRowHeight = $labelFontSize + $labelGap;
-        $dotsRowHeight = 12;
-        $dotLabelGap = 4;
-        $bottomRegionH = $labelRowHeight + $dotLabelGap + $dotsRowHeight + $basePlateGap + $basePlateHeight;
-        $tileHeight = (int) ($innerH - $topPad - $bottomRegionH);
-        $tileGap = max(12, (int) round($innerW * 0.025));
-        $tileWidth = (int) (($innerW - ($segments - 1) * $tileGap) / $segments);
-        $tileWidth = (int) min($tileWidth, (int) ($tileHeight * 1.25));
-        $tileGap = max(12, (int) (($innerW - $segments * $tileWidth) / max(1, $segments - 1)));
+        $labelGap = 6;
+        $topPad = 8;
+        $bottomRegionH = $labelFontSize + $labelGap;
+        $tileGap = max(4, (int) round($innerW * 0.015));
+        $tileSize = (int) (($innerW - ($segments - 1) * $tileGap) / $segments);
+        $tileSize = (int) min($tileSize, (int) ($innerH - $topPad - $bottomRegionH));
+        $tileGap = max(4, (int) (($innerW - $segments * $tileSize) / max(1, $segments - 1)));
+        $tileWidth = $tileSize;
+        $tileHeight = $tileSize;
         $tileY = $innerY + $topPad;
-        $startX = (int) ($innerX + ($innerW - ($segments * $tileWidth + ($segments - 1) * $tileGap)) / 2);
+        $startX = (int) ($innerX + ($innerW - ($segments * $tileSize + ($segments - 1) * $tileGap)) / 2);
+
+        $fontSize = (int) max(18, min(42, (int) round($tileSize * 0.52)));
 
         $numberCenterY = $tileY + $tileHeight / 2;
         $labelCenterY = $tileY + $tileHeight + $labelGap + $labelFontSize / 2;
@@ -215,16 +170,6 @@ class FramedFlipBoardRenderer implements SkinRendererInterface
                 $labelWidth = $this->textBoxWidth($label, $font, $labelFontSize);
                 $labelBaseline = (int) round($labelCenterY - $this->textVerticalCenterOffset($label, $font, $labelFontSize));
                 imagettftext($im, $labelFontSize, 0, (int) ($centerX - $labelWidth / 2), $labelBaseline, $labelCol, $font, $label);
-
-                if ($showLabelDots) {
-                    $dotRadius = max(1, (int) ($skin['labelDotRadius'] ?? 2));
-                    $dotOffset = max(2, (int) ($skin['labelDotOffset'] ?? 6));
-                    $leftDotX = (int) ($centerX - $labelWidth / 2 - $dotOffset);
-                    $rightDotX = (int) ($centerX + $labelWidth / 2 + $dotOffset);
-                    $dotY = $labelBaseline;
-                    imagefilledellipse($im, $leftDotX, $dotY, 2 * $dotRadius, 2 * $dotRadius, $dotCol);
-                    imagefilledellipse($im, $rightDotX, $dotY, 2 * $dotRadius, 2 * $dotRadius, $dotCol);
-                }
             }
         } else {
             $builtIn = 5;
@@ -243,16 +188,6 @@ class FramedFlipBoardRenderer implements SkinRendererInterface
 
                 $lW = imagefontwidth($labelBuiltIn) * strlen($label);
                 imagestring($im, $labelBuiltIn, (int) ($centerX - $lW / 2), (int) ($labelCenterY - 10), $label, $labelCol);
-
-                if ($showLabelDots) {
-                    $dotRadius = max(1, (int) ($skin['labelDotRadius'] ?? 2));
-                    $dotOffset = max(2, (int) ($skin['labelDotOffset'] ?? 6));
-                    $leftDotX = (int) ($centerX - $lW / 2 - $dotOffset);
-                    $rightDotX = (int) ($centerX + $lW / 2 + $dotOffset);
-                    $dotY = (int) $labelCenterY;
-                    imagefilledellipse($im, $leftDotX, $dotY, 2 * $dotRadius, 2 * $dotRadius, $dotCol);
-                    imagefilledellipse($im, $rightDotX, $dotY, 2 * $dotRadius, 2 * $dotRadius, $dotCol);
-                }
             }
         }
 
