@@ -122,11 +122,9 @@
       { "key": "numberBoxBorderWidth", "label": "Number Box Border Width", "type": "number", "min": 0, "max": 10, "step": 1, "group": "Layout", "order": 4 },
       { "key": "segmentGap", "label": "Segment Gap", "type": "number", "min": 0, "max": 80, "step": 1, "group": "Layout", "order": 5 },
   
-      // Visibility fields
+      // Visibility fields (days and seconds only; hours/minutes always shown)
       { "key": "showDays", "label": "Show Days", "type": "boolean", "group": "Visibility", "groupOrder": 4, "order": 1 },
-      { "key": "showHours", "label": "Show Hours", "type": "boolean", "group": "Visibility", "order": 2 },
-      { "key": "showMinutes", "label": "Show Minutes", "type": "boolean", "group": "Visibility", "order": 3 },
-      { "key": "showSeconds", "label": "Show Seconds", "type": "boolean", "group": "Visibility", "order": 4 },
+      { "key": "showSeconds", "label": "Show Seconds", "type": "boolean", "group": "Visibility", "order": 2 },
   
       { "key": "finalMessage", "label": "Final Message", "type": "text", "maxLength": 64, "group": "Final Screen", "groupOrder": 6 },
       { "key": "finalBackground", "label": "Final Background", "type": "color", "group": "Final Screen" },

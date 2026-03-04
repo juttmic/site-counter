@@ -112,9 +112,7 @@
   
       { "key": "showBottomLabelBar", "label": "Show Bottom Label Bar", "type": "boolean", "group": "Visibility", "groupOrder": 4, "order": 1 },
       { "key": "showDays", "label": "Show Days", "type": "boolean", "group": "Visibility", "order": 2 },
-      { "key": "showHours", "label": "Show Hours", "type": "boolean", "group": "Visibility", "order": 3 },
-      { "key": "showMinutes", "label": "Show Minutes", "type": "boolean", "group": "Visibility", "order": 4 },
-      { "key": "showSeconds", "label": "Show Seconds", "type": "boolean", "group": "Visibility", "order": 5 },
+      { "key": "showSeconds", "label": "Show Seconds", "type": "boolean", "group": "Visibility", "order": 3 },
   
       { "key": "finalMessage", "label": "Final Message", "type": "text", "maxLength": 64, "group": "Final Screen", "groupOrder": 6 },
       { "key": "finalBackground", "label": "Final Background", "type": "color", "group": "Final Screen" },
