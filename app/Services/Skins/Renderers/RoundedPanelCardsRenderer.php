@@ -134,7 +134,7 @@ class RoundedPanelCardsRenderer implements SkinRendererInterface
         }
 
         $numberCenterY = $layout['cardY'] + $layout['boxPadY'] + $layout['boxH'] / 2;
-        $labelY = $layout['cardY'] + $layout['boxPadY'] + $layout['boxH'] + 20; //label y margin
+        $labelY = $layout['cardY'] + $layout['boxPadY'] + $layout['boxH'] + 30; //label y margin
 
         if (is_file($font)) {
             for ($i = 0; $i < $segments; $i++) {
