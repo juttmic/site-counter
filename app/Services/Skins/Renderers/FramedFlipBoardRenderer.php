@@ -87,13 +87,15 @@ class FramedFlipBoardRenderer implements SkinRendererInterface
             }
         }
 
-        $hingeCenterY = (int) ($tileY + $tileHeight / 2);
-        $hingeHeight = max(8, (int) ($skin['hingeHeight'] ?? (int) ($tileHeight * 0.28)));
-        $hingeHeight = min($hingeHeight, $tileHeight - 4);
-        for ($i = 0; $i < $segments; $i++) {
-            $tileX = $startX + $i * ($tileWidth + $tileGap);
-            $this->drawHingeVerticalD($im, $tileX, $hingeCenterY, $hingeHeight, true, $hingeCol, $hingeBorderCol);
-            $this->drawHingeVerticalD($im, $tileX + $tileWidth, $hingeCenterY, $hingeHeight, false, $hingeCol, $hingeBorderCol);
+        if (($skin['showHinges'] ?? true) === true) {
+            $hingeCenterY = (int) ($tileY + $tileHeight / 2);
+            $hingeHeight = max(8, (int) ($skin['hingeHeight'] ?? (int) ($tileHeight * 0.28)));
+            $hingeHeight = min($hingeHeight, $tileHeight - 4);
+            for ($i = 0; $i < $segments; $i++) {
+                $tileX = $startX + $i * ($tileWidth + $tileGap);
+                $this->drawHingeVerticalD($im, $tileX, $hingeCenterY, $hingeHeight, true, $hingeCol, $hingeBorderCol);
+                $this->drawHingeVerticalD($im, $tileX + $tileWidth, $hingeCenterY, $hingeHeight, false, $hingeCol, $hingeBorderCol);
+            }
         }
     }
 
