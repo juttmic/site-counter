@@ -208,7 +208,7 @@ class RoundedPanelCardsRenderer implements SkinRendererInterface
         // Cards: medium-sized, ~72% of panel content height, balanced width
         $cardHeight = (int) ($contentH );
         $totalGap = ($segments - 1) * $segmentGap;
-        $cardWidth = (int) (($contentW - $totalGap) / $segments);
+        $cardWidth = (int) (($contentW - $totalGap) / $segments)-30;
         $cardY = $contentY + (int) (($contentH - $cardHeight) * 0.08);
 
         // Number box: balanced padding, digits centered with top/bottom room
