@@ -6,8 +6,8 @@ use App\Services\Skins\SkinRendererInterface;
 
 /**
  * Skin style: "hanging_ribbon_blocks"
- * Renders countdown as horizontal ribbon tiles connected by metallic bars with cylindrical hinges.
- * Tiles have white number area and colored label bar; connectors use module-frame aesthetic with drop shadows.
+ * Renders countdown as horizontal ribbon tiles.
+ * Tiles have white number area and colored label bar.
  */
 class HangingRibbonBlocksRenderer implements SkinRendererInterface
 {
@@ -31,9 +31,11 @@ class HangingRibbonBlocksRenderer implements SkinRendererInterface
         }
 
         $segmentGap = max(0, (int) ($skin['segmentGap'] ?? 18));
+        $padX = max(20, (int) round($width * 0.03));
+        $availableWidth = $width - 2 * $padX;
         $totalGap = ($segments - 1) * $segmentGap;
-        $tileWidth = (int) floor(($width - $totalGap) / $segments);
-        $startX = (int) (($width - ($segments * $tileWidth + $totalGap)) / 2);
+        $tileWidth = (int) floor(($availableWidth - $totalGap) / $segments);
+        $startX = $padX + (int) (($availableWidth - ($segments * $tileWidth + $totalGap)) / 2);
 
         $verticalPad = max(8, (int) round($height * 0.05));
         $tileHeight = $height - 2 * $verticalPad;
@@ -52,48 +54,6 @@ class HangingRibbonBlocksRenderer implements SkinRendererInterface
         $bottomBarRatio = 0.30;
         $bottomBarHeight = $showBottomLabelBar ? max(18, (int) round($tileHeight * $bottomBarRatio)) : 0;
         $mainTileHeight = $tileHeight - $bottomBarHeight;
-
-        $pipeCenterY = $tileY + $tileHeight / 2;
-        $pipeThickness = max(6, min((int) round($tileHeight * 0.10), (int) round($segmentGap * 0.5)));
-        $pipeY = (int) ($pipeCenterY - $pipeThickness / 2);
-        $endPipeLength = max(8, (int) round($segmentGap * 0.6));
-        $pipeR = (int) floor($pipeThickness / 2);
-        $pipeCol = $tileBorderCol;
-        $pipeShadowCol = $this->allocDarkenedColor($im, $skin['shadowColor'] ?? '#D7E0E8', 0.18);
-        $pipeShadowOffset = 3;
-        $hingeR = max(3, (int) round($pipeThickness * 0.75));
-        $hingeCol = $pipeCol;
-        $hingeEdgeCol = $this->allocDarkenedColor($im, $skin['tileBorderColor'] ?? '#9BB7CB', 0.28);
-
-        // 1a) Pipe shadows (subtle drop shadow behind pipes, enhances 3D floating effect)
-        $pipeShadowY = $pipeY + $pipeShadowOffset;
-        for ($i = 0; $i < $segments - 1; $i++) {
-            $pipeX = (int) ($startX + $i * ($tileWidth + $segmentGap) + $tileWidth);
-            $this->fillRoundedRect($im, $pipeX, $pipeShadowY, $segmentGap, $pipeThickness, $pipeR, $pipeShadowCol);
-        }
-        $firstTileX = $startX;
-        $lastTileRight = (int) ($startX + ($segments - 1) * ($tileWidth + $segmentGap) + $tileWidth);
-        $leftPipeX = max(0, $firstTileX - $endPipeLength);
-        $leftPipeW = $firstTileX - $leftPipeX;
-        if ($leftPipeW > 0) {
-            $this->fillRoundedRect($im, (int) $leftPipeX, $pipeShadowY, $leftPipeW, $pipeThickness, $pipeR, $pipeShadowCol);
-        }
-        $rightPipeW = min($endPipeLength, $width - $lastTileRight);
-        if ($rightPipeW > 0) {
-            $this->fillRoundedRect($im, $lastTileRight, $pipeShadowY, $rightPipeW, $pipeThickness, $pipeR, $pipeShadowCol);
-        }
-
-        // 1b) Horizontal metallic bars (satin aluminum, same as module frames)
-        for ($i = 0; $i < $segments - 1; $i++) {
-            $pipeX = (int) ($startX + $i * ($tileWidth + $segmentGap) + $tileWidth);
-            $this->fillRoundedRect($im, $pipeX, $pipeY, $segmentGap, $pipeThickness, $pipeR, $pipeCol);
-        }
-        if ($leftPipeW > 0) {
-            $this->fillRoundedRect($im, (int) $leftPipeX, $pipeY, $leftPipeW, $pipeThickness, $pipeR, $pipeCol);
-        }
-        if ($rightPipeW > 0) {
-            $this->fillRoundedRect($im, $lastTileRight, $pipeY, $rightPipeW, $pipeThickness, $pipeR, $pipeCol);
-        }
 
         for ($i = 0; $i < $segments; $i++) {
             $tileX = (int) ($startX + $i * ($tileWidth + $segmentGap));
@@ -116,17 +76,6 @@ class HangingRibbonBlocksRenderer implements SkinRendererInterface
             // 4) Tile border (around full unified tile)
             if ($tileBorderWidth > 0) {
                 $this->strokeRoundedRect($im, $tileX, $tileY, $tileWidth, $tileHeight, $tileRadius, $tileBorderCol, $tileBorderWidth);
-            }
-        }
-
-        // 5) Cylindrical hinges/clips (watch-band style pins securing bars to modules)
-        $jointY = (int) $pipeCenterY;
-        for ($i = 0; $i < $segments; $i++) {
-            $tileX = (int) ($startX + $i * ($tileWidth + $segmentGap));
-            foreach ([$tileX, $tileX + $tileWidth] as $hingeX) {
-                imagefilledellipse($im, $hingeX, $jointY, 2 * $hingeR, 2 * $hingeR, $hingeEdgeCol);
-                $innerR = max(1, $hingeR - 1);
-                imagefilledellipse($im, $hingeX, $jointY, 2 * $innerR, 2 * $innerR, $hingeCol);
             }
         }
 
@@ -172,9 +121,11 @@ class HangingRibbonBlocksRenderer implements SkinRendererInterface
         }
 
         $segmentGap = max(0, (int) ($skin['segmentGap'] ?? 18));
+        $padX = max(20, (int) round($width * 0.03));
+        $availableWidth = $width - 2 * $padX;
         $totalGap = ($segments - 1) * $segmentGap;
-        $tileWidth = (int) floor(($width - $totalGap) / $segments);
-        $startX = (int) (($width - ($segments * $tileWidth + $totalGap)) / 2);
+        $tileWidth = (int) floor(($availableWidth - $totalGap) / $segments);
+        $startX = $padX + (int) (($availableWidth - ($segments * $tileWidth + $totalGap)) / 2);
 
         $verticalPad = max(8, (int) round($height * 0.05));
         $tileHeight = $height - 2 * $verticalPad;
