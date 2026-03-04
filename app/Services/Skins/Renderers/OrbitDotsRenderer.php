@@ -8,9 +8,19 @@ class OrbitDotsRenderer implements SkinRendererInterface
 {
     public function renderStyle($im, array $skin, int $width, int $height, int $bgCol, int $textCol, int $accentCol, int $secondsRemaining): void
     {
-        // Dotted orbits around each unit
+        // Dotted orbits around each unit; respect visibility (days and seconds only toggled)
         imagefilledrectangle($im,0,0,$width,$height,$bgCol);
-        $segments=4; $unitW=$width/$segments; $cy=(int)($height/2); $r=(int)round(min($unitW/2.6,$height/2.6));
+        $showDays = ($skin['showDays'] ?? true) === true;
+        $showHours = ($skin['showHours'] ?? true) === true;
+        $showMinutes = ($skin['showMinutes'] ?? true) === true;
+        $showSeconds = ($skin['showSeconds'] ?? true) === true;
+        $segments = ($showDays ? 1 : 0) + ($showHours ? 1 : 0) + ($showMinutes ? 1 : 0) + ($showSeconds ? 1 : 0);
+        if ($segments < 1) {
+            $segments = 1;
+        }
+        $unitW = $width / $segments;
+        $cy = (int)($height/2);
+        $r = (int)round(min($unitW/2.6,$height/2.6));
         $dot = $accentCol; $dots=24;
         for($i=0;$i<$segments;$i++){
             $cx=(int)($unitW*$i + $unitW/2);
