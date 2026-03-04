@@ -7,8 +7,8 @@ use Illuminate\Support\Str;
 
 /**
  * Skin style: "framed_flip_board" (e.g. skin23)
- * Compact premium landing-page countdown: minimal outer container, uniform square tiles with
- * subtle elevation, small square connectors between units, minimal labels, no base stand.
+ * Cards: cool light gray, soft dual shadow (outer drop + inner highlight), medium-large corners,
+ * bold geometric sans-serif, monochromatic cool grays with dark slate accent, soft neumorphic emboss.
  */
 class FramedFlipBoardRenderer implements SkinRendererInterface
 {
@@ -33,18 +33,20 @@ class FramedFlipBoardRenderer implements SkinRendererInterface
 
         $framePadding = max(0, (int) ($skin['framePadding'] ?? 12));
         $frameRadius = max(4, min(8, (int) ($skin['frameRadius'] ?? 6)));
-        $borderWidth = 0;
         $outerMargin = max(16, (int) round(min($width, $height) * 0.05));
         $frameFillHex = $skin['frameFillColor'] ?? null;
         $frameFillCol = ($frameFillHex !== null && $frameFillHex !== '') ? $this->allocColor($im, $frameFillHex) : $bgCol;
-        $tileBg = $this->allocColor($im, $skin['tileBackground'] ?? '#F5F5F5');
-        $tileBorderCol = $this->allocColor($im, $skin['tileBorderColor'] ?? '#E8E8E8');
-        $tileBorderWidth = 0;
-        $tileRadius = max(2, min(4, (int) ($skin['tileRadius'] ?? 3)));
-        $tileShadowCol = $this->allocColor($im, $skin['tileShadowColor'] ?? '#E5E5E5');
-        $tileShadowOffset = 3;
-        $hingeSize = max(2, min(6, (int) ($skin['hingeSize'] ?? 4)));
-        $hingeCol = $this->allocColor($im, $skin['hingeColor'] ?? '#D8D8D8');
+        $tileBg = $this->allocColor($im, $skin['tileBackground'] ?? '#F5F6F8');
+        $tileBorderCol = $this->allocColor($im, $skin['tileBorderColor'] ?? '#E5E7ED');
+        $tileBorderWidth = max(0, (int) ($skin['tileBorderWidth'] ?? 1));
+        $tileBevelHighlight = $this->allocColor($im, $skin['tileBevelHighlight'] ?? '#F4F6F9');
+        $tileBevelShadow = $this->allocColor($im, $skin['tileBevelShadow'] ?? '#D0D8E2');
+        $tileRadius = max(12, min(18, (int) ($skin['tileRadius'] ?? 14)));
+        $tileShadowCol = $this->allocColor($im, $skin['tileShadowColor'] ?? '#D6DCE4');
+        $tileShadowOffset = 4;
+        $hingeWidth = max(6, (int) ($skin['hingeWidth'] ?? 10));
+        $hingeHeight = max(3, (int) ($skin['hingeHeight'] ?? 5));
+        $hingeCol = $this->allocColor($im, $skin['hingeColor'] ?? '#C8D0D8');
 
         $frameX = $outerMargin;
         $frameY = $outerMargin;
@@ -58,36 +60,73 @@ class FramedFlipBoardRenderer implements SkinRendererInterface
         $innerH = $frameH - 2 * $framePadding;
 
         $labelFontSize = (int) ($skin['labelFontSize'] ?? 11);
-        $labelGap = 6;
+        $labelGap = (int) ($skin['labelGap'] ?? 10);
         $bottomRegionH = $labelFontSize + $labelGap;
         $topPad = 8;
         $tileGap = max(4, (int) round($innerW * 0.015));
-        $tileSize = (int) (($innerW - ($segments - 1) * $tileGap) / $segments);
-        $tileSize = (int) min($tileSize, (int) (($innerH - $topPad - $bottomRegionH)));
-        $tileGap = max(4, (int) (($innerW - $segments * $tileSize) / max(1, $segments - 1)));
-        $tileWidth = $tileSize;
-        $tileHeight = $tileSize;
+        $tileWidth = (int) (($innerW - ($segments - 1) * $tileGap) / $segments);
+        $availableHeight = (int) ($innerH - $topPad - $bottomRegionH);
+        $rawHeight = min($availableHeight, (int) ($tileWidth * 0.85));
+        $tileHeight = (int) ($rawHeight * 0.8);
+        $tileGap = max(4, (int) (($innerW - $segments * $tileWidth) / max(1, $segments - 1)));
         $tileY = $innerY + $topPad;
-        $startX = (int) ($innerX + ($innerW - ($segments * $tileSize + ($segments - 1) * $tileGap)) / 2);
+        $startX = (int) ($innerX + ($innerW - ($segments * $tileWidth + ($segments - 1) * $tileGap)) / 2);
 
         $this->fillRoundedRect($im, $frameX, $frameY, $frameW, $frameH, $frameR, $frameFillCol);
 
         for ($i = 0; $i < $segments; $i++) {
-            $tileX = $startX + $i * ($tileSize + $tileGap);
+            $tileX = $startX + $i * ($tileWidth + $tileGap);
             $this->fillRoundedRect($im, $tileX + $tileShadowOffset, $tileY + $tileShadowOffset, $tileWidth, $tileHeight, $tileRadius, $tileShadowCol);
         }
 
         for ($i = 0; $i < $segments; $i++) {
-            $tileX = $startX + $i * ($tileSize + $tileGap);
+            $tileX = $startX + $i * ($tileWidth + $tileGap);
             $this->fillRoundedRect($im, $tileX, $tileY, $tileWidth, $tileHeight, $tileRadius, $tileBg);
+            if ($tileBorderWidth > 0) {
+                $this->strokeRoundedRect($im, $tileX, $tileY, $tileWidth, $tileHeight, $tileRadius, $tileBorderCol, $tileBorderWidth);
+            }
+            $this->drawNeumorphicEmboss($im, $tileX, $tileY, $tileWidth, $tileHeight, $tileRadius, $tileBevelHighlight, $tileBevelShadow);
         }
 
         $hingeCenterY = (int) ($tileY + $tileHeight / 2);
-        for ($i = 0; $i < $segments - 1; $i++) {
-            $gapCenterX = (int) ($startX + ($i + 1) * $tileSize + $i * $tileGap + $tileGap / 2);
-            $hingeX = (int) ($gapCenterX - $hingeSize / 2);
-            $hingeY = (int) ($hingeCenterY - $hingeSize / 2);
-            imagefilledrectangle($im, $hingeX, $hingeY, $hingeX + $hingeSize, $hingeY + $hingeSize, $hingeCol);
+        $hingeR = (int) floor(min($hingeWidth, $hingeHeight) / 2);
+        for ($i = 0; $i <= $segments; $i++) {
+            if ($i === 0) {
+                $gapCenterX = $startX;
+            } elseif ($i === $segments) {
+                $gapCenterX = $startX + ($segments - 1) * ($tileWidth + $tileGap) + $tileWidth;
+            } else {
+                $gapCenterX = (int) ($startX + $i * $tileWidth + ($i - 1) * $tileGap + $tileGap / 2);
+            }
+            $hingeX = (int) ($gapCenterX - $hingeWidth / 2);
+            $hingeY = (int) ($hingeCenterY - $hingeHeight / 2);
+            $this->fillRoundedRect($im, $hingeX, $hingeY, $hingeWidth, $hingeHeight, $hingeR, $hingeCol);
+        }
+    }
+
+    private function drawNeumorphicEmboss($im, int $x, int $y, int $w, int $h, int $r, int $highlightCol, int $shadowCol): void
+    {
+        $r = min($r, (int) floor(min($w, $h) / 2));
+        if ($r <= 0) {
+            imageline($im, $x, $y, $x + $w, $y, $highlightCol);
+            imageline($im, $x, $y, $x, $y + $h, $highlightCol);
+            imageline($im, $x, $y + $h - 1, $x + $w, $y + $h - 1, $shadowCol);
+            imageline($im, $x + $w - 1, $y, $x + $w - 1, $y + $h, $shadowCol);
+            return;
+        }
+        for ($i = 0; $i < 2; $i++) {
+            $ox = $x + $i;
+            $oy = $y + $i;
+            $ow = $w - 2 * $i;
+            $oh = $h - 2 * $i;
+            $ir = max(0, $r - $i);
+            if ($i === 0) {
+                imageline($im, $ox + $ir, $oy, $ox + $ow - $ir, $oy, $highlightCol);
+                imageline($im, $ox, $oy + $ir, $ox, $oy + $oh - $ir, $highlightCol);
+            } else {
+                imageline($im, $ox + $ir, $oy + $oh - 1, $ox + $ow - $ir, $oy + $oh - 1, $shadowCol);
+                imageline($im, $ox + $ow - 1, $oy + $ir, $ox + $ow - 1, $oy + $oh - $ir, $shadowCol);
+            }
         }
     }
 
@@ -95,7 +134,7 @@ class FramedFlipBoardRenderer implements SkinRendererInterface
     {
         $font = (string) ($skin['fontPath'] ?? '');
         $labelFontSize = (int) ($skin['labelFontSize'] ?? 11);
-        $labelCol = $this->allocColor($im, $skin['labelColor'] ?? '#777777');
+        $labelCol = $this->allocColor($im, $skin['labelColor'] ?? '#5C6B7A');
 
         if ($secondsRemaining <= 0) {
             $finalMsg = (string) ($skin['finalMessage'] ?? "Time's Up");
@@ -135,19 +174,19 @@ class FramedFlipBoardRenderer implements SkinRendererInterface
         $innerW = $frameW - 2 * $framePadding;
         $innerH = $frameH - 2 * $framePadding;
 
-        $labelGap = 6;
+        $labelGap = (int) ($skin['labelGap'] ?? 10);
         $topPad = 8;
         $bottomRegionH = $labelFontSize + $labelGap;
         $tileGap = max(4, (int) round($innerW * 0.015));
-        $tileSize = (int) (($innerW - ($segments - 1) * $tileGap) / $segments);
-        $tileSize = (int) min($tileSize, (int) ($innerH - $topPad - $bottomRegionH));
-        $tileGap = max(4, (int) (($innerW - $segments * $tileSize) / max(1, $segments - 1)));
-        $tileWidth = $tileSize;
-        $tileHeight = $tileSize;
+        $tileWidth = (int) (($innerW - ($segments - 1) * $tileGap) / $segments);
+        $availableHeight = (int) ($innerH - $topPad - $bottomRegionH);
+        $rawHeight = min($availableHeight, (int) ($tileWidth * 0.85));
+        $tileHeight = (int) ($rawHeight * 0.8);
+        $tileGap = max(4, (int) (($innerW - $segments * $tileWidth) / max(1, $segments - 1)));
         $tileY = $innerY + $topPad;
-        $startX = (int) ($innerX + ($innerW - ($segments * $tileSize + ($segments - 1) * $tileGap)) / 2);
+        $startX = (int) ($innerX + ($innerW - ($segments * $tileWidth + ($segments - 1) * $tileGap)) / 2);
 
-        $fontSize = (int) max(18, min(42, (int) round($tileSize * 0.52)));
+        $fontSize = (int) max(18, min(42, (int) round($tileHeight * 0.52)));
 
         $numberCenterY = $tileY + $tileHeight / 2;
         $labelCenterY = $tileY + $tileHeight + $labelGap + $labelFontSize / 2;
