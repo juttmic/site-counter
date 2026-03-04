@@ -17,6 +17,19 @@
   "finalTextColor": null,
   "borderWidth": 0,
   "borderColor": "#FFFFFF",
+
+  "visibilityLayouts": {
+    "allVisible": { "width": 760, "height": 200, "visibleUnits": 4, "note": "All 4 units visible" },
+    "daysHidden": { "width": 570, "height": 200, "visibleUnits": 3, "note": "Hours, Minutes, Seconds only" },
+    "secondsHidden": { "width": 570, "height": 200, "visibleUnits": 3, "note": "Days, Hours, Minutes only" },
+    "daysAndSecondsHidden": { "width": 380, "height": 200, "visibleUnits": 2, "note": "Hours and Minutes only" }
+  },
+  "visibilityRules": {
+    "keepSameCanvasIfOnlyOneEdgeUnitHidden": false,
+    "useCompactCanvasIfDaysAndSecondsHidden": true,
+    "compactTrigger": { "showDays": false, "showSeconds": false }
+  },
+
   "formDefaults": {
         "background": "#FFFFFF",
         "textColor": "#FFFFFF",
@@ -31,9 +44,7 @@
     { "key": "textColor", "label": "Text Color", "type": "color", "group": "Appearance", "order": 4 },
     { "key": "fontSize", "label": "Font Size", "type": "number", "min": 8, "max": 200, "step": 1, "group": "Appearance", "order": 5 },
     { "key": "showDays", "label": "Show Days", "type": "boolean", "group": "Visibility", "groupOrder": 4, "order": 3 },
-    { "key": "showHours", "label": "Show Hours", "type": "boolean", "group": "Visibility", "order": 4 },
-    { "key": "showMinutes", "label": "Show Minutes", "type": "boolean", "group": "Visibility", "order": 5 },
-    { "key": "showSeconds", "label": "Show Seconds", "type": "boolean", "group": "Visibility", "order": 6 },
+    { "key": "showSeconds", "label": "Show Seconds", "type": "boolean", "group": "Visibility", "order": 4 },
     { "key": "accentColor", "label": "Card Color", "type": "color", "group": "Appearance", "order": 6 },
     { "key": "finalMessage", "label": "Final Message", "type": "text", "maxLength": 64, "group": "Final Screen", "groupOrder": 6 },
     { "key": "finalBackground", "label": "Final Background", "type": "color", "group": "Final Screen"  },

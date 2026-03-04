@@ -8,9 +8,14 @@ class HexTileRenderer implements SkinRendererInterface
 {
     public function renderStyle($im, array $skin, int $width, int $height, int $bgCol, int $textCol, int $accentCol, int $secondsRemaining): void
     {
-        // Hexagonal tiles in a row
+        // Hexagonal tiles in a row; respect visibility
         imagefilledrectangle($im, 0, 0, $width, $height, $bgCol);
-        $segments = 4;
+        $showDays = ($skin['showDays'] ?? true) === true;
+        $showHours = ($skin['showHours'] ?? true) === true;
+        $showMinutes = ($skin['showMinutes'] ?? true) === true;
+        $showSeconds = ($skin['showSeconds'] ?? true) === true;
+        $segments = ($showDays ? 1 : 0) + ($showHours ? 1 : 0) + ($showMinutes ? 1 : 0) + ($showSeconds ? 1 : 0);
+        if ($segments < 1) { $segments = 1; }
         $gap = max(6, (int) round($width * 0.012));
         $unitWidth = (int) floor(($width - ($segments + 1) * $gap) / $segments);
         $diam = min($unitWidth, $height - 2 * $gap);

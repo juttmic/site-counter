@@ -8,9 +8,14 @@ class RibbonTagRenderer implements SkinRendererInterface
 {
     public function renderStyle($im, array $skin, int $width, int $height, int $bgCol, int $textCol, int $accentCol, int $secondsRemaining): void
     {
-        // Ribbon tags: each unit on a label with a right notch
+        // Ribbon tags: each unit on a label with a right notch; respect visibility
         imagefilledrectangle($im, 0, 0, $width, $height, $bgCol);
-        $segments = 4;
+        $showDays = ($skin['showDays'] ?? true) === true;
+        $showHours = ($skin['showHours'] ?? true) === true;
+        $showMinutes = ($skin['showMinutes'] ?? true) === true;
+        $showSeconds = ($skin['showSeconds'] ?? true) === true;
+        $segments = ($showDays ? 1 : 0) + ($showHours ? 1 : 0) + ($showMinutes ? 1 : 0) + ($showSeconds ? 1 : 0);
+        if ($segments < 1) { $segments = 1; }
         $gap = max(8, (int) round($width * 0.015));
         $unitWidth = (int) floor(($width - ($segments + 1) * $gap) / $segments);
         $tagH = (int) ($height * 0.7);

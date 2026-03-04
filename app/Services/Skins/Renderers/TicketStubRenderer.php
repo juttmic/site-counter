@@ -8,9 +8,18 @@ class TicketStubRenderer implements SkinRendererInterface
 {
     public function renderStyle($im, array $skin, int $width, int $height, int $bgCol, int $textCol, int $accentCol, int $secondsRemaining): void
     {
-        // Ticket stubs with perforated dots between units
+        // Ticket stubs with perforated dots between units; respect visibility
         imagefilledrectangle($im, 0, 0, $width, $height, $bgCol);
-        $segments=4; $gap=max(8,(int)round($width*0.015)); $unitW=(int)floor(($width-($segments+1)*$gap)/$segments); $h=$height-2*$gap; $y=$gap;
+        $showDays = ($skin['showDays'] ?? true) === true;
+        $showHours = ($skin['showHours'] ?? true) === true;
+        $showMinutes = ($skin['showMinutes'] ?? true) === true;
+        $showSeconds = ($skin['showSeconds'] ?? true) === true;
+        $segments = ($showDays ? 1 : 0) + ($showHours ? 1 : 0) + ($showMinutes ? 1 : 0) + ($showSeconds ? 1 : 0);
+        if ($segments < 1) { $segments = 1; }
+        $gap = max(8, (int)round($width*0.015));
+        $unitW = (int)floor(($width-($segments+1)*$gap)/$segments);
+        $h = $height-2*$gap;
+        $y = $gap;
         $hole= imagecolorallocate($im, 255,255,255);
         for($i=0;$i<$segments;$i++){ $x=$gap+$i*($unitW+$gap); imagefilledrectangle($im,$x,$y,$x+$unitW,$y+$h,$accentCol);
             // semi-circular notches on left/right edges
