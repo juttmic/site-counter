@@ -44,8 +44,6 @@ class FramedFlipBoardRenderer implements SkinRendererInterface
         $tileRadius = max(12, min(18, (int) ($skin['tileRadius'] ?? 14)));
         $tileShadowCol = $this->allocColor($im, $skin['tileShadowColor'] ?? '#D6DCE4');
         $tileShadowOffset = 4;
-        $hingeWidth = max(10, (int) ($skin['hingeWidth'] ?? 16));
-        $hingeHeight = max(4, (int) ($skin['hingeHeight'] ?? 6));
         $hingeCol = $this->allocColor($im, $skin['hingeColor'] ?? '#FAFAFA');
         $hingeBorderCol = $this->allocColor($im, $skin['hingeBorderColor'] ?? '#9B9CA7');
 
@@ -90,41 +88,44 @@ class FramedFlipBoardRenderer implements SkinRendererInterface
         }
 
         $hingeCenterY = (int) ($tileY + $tileHeight / 2);
-        $hingeInset = max((int) ($skin['hingeInset'] ?? 10), (int) ($hingeWidth / 2) + 2);
+        $hingeHeight = max(8, (int) ($skin['hingeHeight'] ?? (int) ($tileHeight * 0.28)));
+        $hingeHeight = min($hingeHeight, $tileHeight - 4);
         for ($i = 0; $i < $segments; $i++) {
             $tileX = $startX + $i * ($tileWidth + $tileGap);
-            $leftCenterX = $tileX + $hingeInset;
-            $rightCenterX = $tileX + $tileWidth - $hingeInset;
-            $leftHingeX = (int) ($leftCenterX - $hingeWidth / 2);
-            $rightHingeX = (int) ($rightCenterX - $hingeWidth / 2);
-            $hingeY = (int) ($hingeCenterY - $hingeHeight / 2);
-            $this->drawHingeFlatEnd($im, $leftHingeX, $hingeY, $hingeWidth, $hingeHeight, false, $hingeCol, $hingeBorderCol);
-            $this->drawHingeFlatEnd($im, $rightHingeX, $hingeY, $hingeWidth, $hingeHeight, true, $hingeCol, $hingeBorderCol);
+            $this->drawHingeVerticalD($im, $tileX, $hingeCenterY, $hingeHeight, true, $hingeCol, $hingeBorderCol);
+            $this->drawHingeVerticalD($im, $tileX + $tileWidth, $hingeCenterY, $hingeHeight, false, $hingeCol, $hingeBorderCol);
         }
     }
 
-    private function drawHingeFlatEnd($im, int $x, int $y, int $w, int $h, bool $roundedOnLeft, int $fillCol, int $borderCol): void
+    /**
+     * Draw a vertical D-shaped hinge protruding from the tile edge.
+     * Flat vertical side touches the tile (sharp 90° corners), semicircle protrudes outward.
+     *
+     * @param int $edgeX X of the tile edge (left edge for left hinge, right edge for right hinge)
+     * @param int $centerY Vertical center of the hinge
+     * @param int $hingeHeight Vertical size of the hinge (diameter of semicircle)
+     * @param bool $protrudeLeft True = hinge extends left (for left edge), false = extends right (for right edge)
+     */
+    private function drawHingeVerticalD($im, int $edgeX, int $centerY, int $hingeHeight, bool $protrudeLeft, int $fillCol, int $borderCol): void
     {
-        $r = (int) floor($h / 2);
-        if ($r <= 0 || $w <= $r) {
-            imagefilledrectangle($im, $x, $y, $x + $w, $y + $h, $fillCol);
-            imagerectangle($im, $x, $y, $x + $w, $y + $h, $borderCol);
+        $r = (int) floor($hingeHeight / 2);
+        if ($r <= 0) {
             return;
         }
-        if ($roundedOnLeft) {
-            imagefilledrectangle($im, $x + $r, $y, $x + $w, $y + $h, $fillCol);
-            imagefilledarc($im, $x + $r, $y + $r, $h, $h, 90, 270, $fillCol, IMG_ARC_PIE);
-            imageline($im, $x + $r, $y, $x + $w, $y, $borderCol);
-            imageline($im, $x + $r, $y + $h - 1, $x + $w, $y + $h - 1, $borderCol);
-            imageline($im, $x + $w - 1, $y, $x + $w - 1, $y + $h, $borderCol);
-            imagearc($im, $x + $r, $y + $r, $h, $h, 90, 270, $borderCol);
+        $d = 2 * $r;
+        $topY = $centerY - $r;
+        $bottomY = $centerY + $r;
+
+        if ($protrudeLeft) {
+            $cx = $edgeX - $r;
+            imagefilledarc($im, $cx, $centerY, $d, $d, 90, 270, $fillCol, IMG_ARC_PIE);
+            imageline($im, $edgeX, $topY, $edgeX, $bottomY, $borderCol);
+            imagearc($im, $cx, $centerY, $d, $d, 90, 270, $borderCol);
         } else {
-            imagefilledrectangle($im, $x, $y, $x + $w - $r, $y + $h, $fillCol);
-            imagefilledarc($im, $x + $w - $r, $y + $r, $h, $h, 270, 90, $fillCol, IMG_ARC_PIE);
-            imageline($im, $x, $y, $x + $w - $r, $y, $borderCol);
-            imageline($im, $x, $y + $h - 1, $x + $w - $r, $y + $h - 1, $borderCol);
-            imageline($im, $x, $y, $x, $y + $h, $borderCol);
-            imagearc($im, $x + $w - $r, $y + $r, $h, $h, 270, 90, $borderCol);
+            $cx = $edgeX + $r;
+            imagefilledarc($im, $cx, $centerY, $d, $d, 270, 90, $fillCol, IMG_ARC_PIE);
+            imageline($im, $edgeX, $topY, $edgeX, $bottomY, $borderCol);
+            imagearc($im, $cx, $centerY, $d, $d, 270, 90, $borderCol);
         }
     }
 
