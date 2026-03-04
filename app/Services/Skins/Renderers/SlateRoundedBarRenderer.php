@@ -21,8 +21,15 @@ class SlateRoundedBarRenderer implements SkinRendererInterface
         $barCol = $accentCol;
         $this->fillRoundedRect($im, $barPaddingX, $barY, $barWidth, $barHeight, $radius, $barCol);
 
-        // Vertical separators between segments (within the bar)
-        $segments = 4;
+        // Vertical separators between segments (within the bar); respect visibility
+        $showDays = ($skin['showDays'] ?? true) === true;
+        $showHours = ($skin['showHours'] ?? true) === true;
+        $showMinutes = ($skin['showMinutes'] ?? true) === true;
+        $showSeconds = ($skin['showSeconds'] ?? true) === true;
+        $segments = ($showDays ? 1 : 0) + ($showHours ? 1 : 0) + ($showMinutes ? 1 : 0) + ($showSeconds ? 1 : 0);
+        if ($segments < 1) {
+            $segments = 1;
+        }
         $unitWidth = $width / $segments;
         $sepCol = imagecolorallocatealpha($im, 255, 255, 255, 70);
         for ($i = 1; $i < $segments; $i++) {

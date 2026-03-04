@@ -11,8 +11,15 @@ class TealCircleBadgesRenderer implements SkinRendererInterface
         // Fill background
         imagefilledrectangle($im, 0, 0, $width, $height, $bgCol);
 
-        // Draw 4 outlined circles as badges
-        $segments = 4;
+        // Draw outlined circles as badges; respect visibility (days and seconds only toggled)
+        $showDays = ($skin['showDays'] ?? true) === true;
+        $showHours = ($skin['showHours'] ?? true) === true;
+        $showMinutes = ($skin['showMinutes'] ?? true) === true;
+        $showSeconds = ($skin['showSeconds'] ?? true) === true;
+        $segments = ($showDays ? 1 : 0) + ($showHours ? 1 : 0) + ($showMinutes ? 1 : 0) + ($showSeconds ? 1 : 0);
+        if ($segments < 1) {
+            $segments = 1;
+        }
         $unitWidth = $width / $segments;
         $centerY = (int) round($height / 2);
         $radius = (int) round(min($unitWidth / 2.6, $height / 2.2));

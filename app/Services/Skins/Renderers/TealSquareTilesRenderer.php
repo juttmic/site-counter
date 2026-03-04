@@ -11,8 +11,15 @@ class TealSquareTilesRenderer implements SkinRendererInterface
         // Background fill
         imagefilledrectangle($im, 0, 0, $width, $height, $bgCol);
 
-        // Draw four teal squares with small gaps
-        $segments = 4;
+        // Draw teal squares; respect visibility (days and seconds only toggled)
+        $showDays = ($skin['showDays'] ?? true) === true;
+        $showHours = ($skin['showHours'] ?? true) === true;
+        $showMinutes = ($skin['showMinutes'] ?? true) === true;
+        $showSeconds = ($skin['showSeconds'] ?? true) === true;
+        $segments = ($showDays ? 1 : 0) + ($showHours ? 1 : 0) + ($showMinutes ? 1 : 0) + ($showSeconds ? 1 : 0);
+        if ($segments < 1) {
+            $segments = 1;
+        }
         $gap = max(4, (int) round($width * 0.01));
         $unitWidth = (int) floor(($width - ($segments + 1) * $gap) / $segments);
         $tileSize = min($unitWidth, $height - 2 * $gap);
