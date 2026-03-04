@@ -1023,8 +1023,16 @@ function renderFields(metadata, savedOverrides = {}) {
     
     const col = document.createElement('div');
     col.className = 'col-12';
-    // Hide Visibility group by default - fields will still be processed and applied but not shown to user
-    if (isVisibilityGroup) {
+    // Visibility group: show for skins that have visibilityLayouts OR are in the explicit whitelist.
+    // Previously hidden by default; now shown for skin03, skin04, skin05, skin06, skin07.
+    const skinsWithVisibilityToggles = new Set([
+      'skin03_rounded_panel_cards', 'skin04_circular_progress_rings', 'skin05_framed_flip_board',
+      'skin06_minimal_inline_divider', 'skin07_hanging_ribbon_blocks'
+    ]);
+    const skinKey = metadata.key || '';
+    const showVisibilityGroup = skinsWithVisibilityToggles.has(skinKey) ||
+      (defaults.visibilityLayouts && typeof defaults.visibilityLayouts === 'object' && Object.keys(defaults.visibilityLayouts).length > 0);
+    if (isVisibilityGroup && !showVisibilityGroup) {
       col.classList.add('d-none');
     }
     
