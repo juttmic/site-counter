@@ -100,7 +100,7 @@
       { "key": "borderColor", "label": "Frame Border Color", "type": "color", "group": "Appearance", "order": 4 },
       { "key": "tileBackground", "label": "Tile Background", "type": "color", "group": "Appearance", "order": 5 },
       { "key": "tileBorderColor", "label": "Tile Border Color", "type": "color", "group": "Appearance", "order": 6 },
-      { "key": "textColor", "label": "Number Color", "type": "color", "group": "Appearance", "order": 7 },
+      { "key": "textColor", "label": "Digit", "type": "color", "group": "Appearance", "order": 7 },
       { "key": "labelColor", "label": "Label Color", "type": "color", "group": "Appearance", "order": 8 },
       { "key": "basePlateColor", "label": "Base Plate Color", "type": "color", "group": "Appearance", "order": 9 },
       { "key": "hingeColor", "label": "Side Hinge Color", "type": "color", "group": "Appearance", "order": 10 },

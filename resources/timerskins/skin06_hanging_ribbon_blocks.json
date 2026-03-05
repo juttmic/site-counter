@@ -96,7 +96,7 @@
       { "key": "tileBackground", "label": "Tile Top Background", "type": "color", "group": "Appearance", "order": 2 },
       { "key": "tileBottomColor", "label": "Bottom Bar Color", "type": "color", "group": "Appearance", "order": 3 },
       { "key": "tileBottomColorAlt", "label": "Active Bottom Bar Color", "type": "color", "group": "Appearance", "order": 4 },
-      { "key": "textColor", "label": "Number Color", "type": "color", "group": "Appearance", "order": 5 },
+      { "key": "textColor", "label": "Digit", "type": "color", "group": "Appearance", "order": 5 },
       { "key": "labelColor", "label": "Label Color", "type": "color", "group": "Appearance", "order": 6 },
       { "key": "borderColor", "label": "Tile Border Color", "type": "color", "group": "Appearance", "order": 7 },
       { "key": "hangerColor", "label": "Hanger Color", "type": "color", "group": "Appearance", "order": 8 },
