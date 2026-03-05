@@ -907,6 +907,7 @@ function renderFields(metadata, savedOverrides = {}) {
   // Define field size keys for layout
   const smallKeys = new Set(['fontSize','separator','layout','animation','showDays','showHours','showMinutes','showSeconds','width','height','outputWidth','outputHeight','borderWidth','borderColor']);
   const marginKeys = new Set(['customTextDistance','textMarginTop','textMarginBottom','marginTop','marginBottom','labelMarginTop','labelMarginBottom']);
+  const visibilityToggleKeys = new Set(['showDays','showSeconds']);
 
   const createFieldInput = (field, value, options = {}) => {
     const key = field.key;
@@ -1086,13 +1087,44 @@ function renderFields(metadata, savedOverrides = {}) {
     // But always render groups that have children (subgroups), even if they have no direct fields
     const isFinalGroup = group.path.some(p => p.toLowerCase().includes('final'));
     const isVisibilityGroup = group.name === 'Visibility' || group.path.some(p => p.toLowerCase() === 'visibility');
+
+    // For the Visibility group, move the main showDays/showSeconds toggles into the General card
+    // under the "Counter Expires" section, and keep any remaining visibility fields in their own group.
+    if (isVisibilityGroup && Array.isArray(group.fields) && group.fields.length > 0) {
+      const visibilityToggles = group.fields.filter(field => visibilityToggleKeys.has(field.key));
+      const remainingFields = group.fields.filter(field => !visibilityToggleKeys.has(field.key));
+
+      if (visibilityToggles.length > 0) {
+        const visibilityRow = document.getElementById('visibility_toggles_row');
+        if (visibilityRow) {
+          // Clear any previous toggles when switching skins
+          visibilityRow.innerHTML = '';
+          const row = document.createElement('div');
+          row.className = 'row g-3';
+
+          visibilityToggles.forEach(field => {
+            const value = resolveFieldValue(field);
+            const fieldContainer = createFieldInput(field, value, { useSwitch: true });
+            // Force each toggle into half-width columns so both fit on one row
+            const classes = fieldContainer.className.split(' ').filter(c => !c.startsWith('col-'));
+            fieldContainer.className = 'col-12 col-sm-6 ' + classes.join(' ').trim();
+            row.appendChild(fieldContainer);
+          });
+
+          visibilityRow.appendChild(row);
+        }
+      }
+
+      // Only keep non-toggle visibility fields in the Template card's Visibility group
+      group.fields = remainingFields;
+    }
+
     const hasChildren = group.children && group.children.length > 0;
     if (!group.fields.length && !hasChildren && !isFinalGroup) return;
     
     const col = document.createElement('div');
     col.className = 'col-12';
-    // Visibility group: show whenever the skin has visibility fields (e.g. showDays, showSeconds).
-    // All skins support visibility toggles; only Days and Seconds are exposed per skin config.
+    // Visibility group: show whenever the skin has visibility fields (e.g. other visibility options).
     const showVisibilityGroup = (group.fields && group.fields.length > 0);
     if (isVisibilityGroup && !showVisibilityGroup) {
       col.classList.add('d-none');
@@ -1274,7 +1306,9 @@ function renderFields(metadata, savedOverrides = {}) {
 
 function syncOverrides() {
   const fieldsWrap = document.getElementById('skin_fields');
-  const inputs = fieldsWrap.querySelectorAll('[data-key]');
+  // Collect all skin-related inputs across the form (not just inside the Template card),
+  // so that relocated controls like the visibility toggles are included.
+  const inputs = document.querySelectorAll('[data-key]');
   const data = { ...(currentHiddenOverrides || {}) };
   const defaults = currentSkinMetadata?.defaults || {};
   

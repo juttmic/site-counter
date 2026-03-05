@@ -565,6 +565,9 @@
                                     </div>
                                 </div>
 
+                                {{-- Per-skin visibility toggles (e.g., show Days / Seconds) --}}
+                                <div id="visibility_toggles_row" class="mt-2"></div>
+
                                 
 
                                 <div class="mt-3 d-none">
