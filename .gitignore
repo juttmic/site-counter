@@ -25,3 +25,4 @@ Homestead.yaml
 Thumbs.db
 /public/skin-previews
 *.zip
+/public/assets/ff

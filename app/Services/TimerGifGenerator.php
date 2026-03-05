@@ -389,6 +389,8 @@ class TimerGifGenerator
         [$ar, $ag, $ab] = $this->hexToRgb($skin['accentColor'] ?? '#FFCC00');
         $font = $skin['fontPath'] ?? '';
         $fontSize = (int) ($skin['fontSize'] ?? 36);
+        // Optional override: use a different font for custom text if provided
+        $customFont = $this->resolveCustomTextFont($skin, (string) $font);
 
         // Render timer into off-screen surface
         $timerIm = imagecreatetruecolor($timerW, $timerH);
@@ -480,8 +482,8 @@ class TimerGifGenerator
         $textAscent = 0; // Height from baseline to top of text
         $textDescent = 0; // Height below baseline
         if ($hasText) {
-            if (is_file($font)) {
-                $box = imagettfbbox($textSize, 0, $font, $customText);
+            if (is_file($customFont)) {
+                $box = imagettfbbox($textSize, 0, $customFont, $customText);
                 $xCoords = [$box[0], $box[2], $box[4], $box[6]];
                 $yCoords = [$box[1], $box[3], $box[5], $box[7]];
                 $textW = (int) (max($xCoords) - min($xCoords));
@@ -597,7 +599,7 @@ class TimerGifGenerator
         imagedestroy($timerIm);
 
         if ($hasText) {
-            if (is_file($font)) {
+            if (is_file($customFont)) {
                 $tx = (int) (($canvasW - $textW) / 2);
                 $ty = ($textPosition === 'top')
                     ? (int) ($topPadding + $textAscent)
@@ -607,13 +609,13 @@ class TimerGifGenerator
                     'text' => $customText,
                     'x' => $tx,
                     'y' => $ty,
-                    'font' => $font,
+                    'font' => $customFont,
                     'font_size' => $textSize,
                     'width' => $textW,
                     'height' => $textH,
                     'position' => $textPosition,
                 ]);
-                imagettftext($im, $textSize, 0, $tx, $ty, $customTxtCol, $font, $customText);
+                imagettftext($im, $textSize, 0, $tx, $ty, $customTxtCol, $customFont, $customText);
             } else {
                 $bi2 = 3;
                 $builtInTextH = imagefontheight($bi2);
@@ -1268,9 +1270,11 @@ class TimerGifGenerator
         $hasText = ($customText !== null && $customText !== '' && $textPosition !== 'none');
         $textW = 0; $textH = 0; $textAscent = 0; $textDescent = 0;
         $textSize = max(12, (int) round($fontSize * 0.5));
+        // Optional override: use a different font for custom text if provided
+        $customFont = $this->resolveCustomTextFont($skin, (string) $font);
         if ($hasText) {
-            if (is_file($font)) {
-                $box = imagettfbbox($textSize, 0, $font, $customText);
+            if (is_file($customFont)) {
+                $box = imagettfbbox($textSize, 0, $customFont, $customText);
                 $xCoords = [$box[0], $box[2], $box[4], $box[6]];
                 $yCoords = [$box[1], $box[3], $box[5], $box[7]];
                 $textW = (int) (max($xCoords) - min($xCoords));
@@ -1519,6 +1523,32 @@ class TimerGifGenerator
         imagefilledellipse($im, $x + $w - $r, $y + $r, $r * 2, $r * 2, $color);
         imagefilledellipse($im, $x + $r, $y + $h - $r, $r * 2, $r * 2, $color);
         imagefilledellipse($im, $x + $w - $r, $y + $h - $r, $r * 2, $r * 2, $color);
+    }
+
+    /**
+     * Resolve the font file to use for custom text.
+     * Falls back to the main skin font if a valid custom font is not configured.
+     */
+    private function resolveCustomTextFont(array $skin, string $fallbackFont): string
+    {
+        $choice = (string) ($skin['customTextFont'] ?? '');
+        if ($choice === '') {
+            return $fallbackFont;
+        }
+
+        $basename = basename($choice);
+        $ext = strtolower(pathinfo($basename, PATHINFO_EXTENSION));
+        // Only TTF/OTF are supported by GD's imagettftext; ignore others like WOFF
+        if (!in_array($ext, ['ttf', 'otf'], true)) {
+            return $fallbackFont;
+        }
+
+        $candidate = public_path('assets/fonts/' . $basename);
+        if (is_file($candidate)) {
+            return $candidate;
+        }
+
+        return $fallbackFont;
     }
 
     // (no-op helpers removed)
