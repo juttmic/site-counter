@@ -24,7 +24,8 @@ class FontController extends Controller
                     $fonts[] = $file->getFilename();
                 }
             }
-            sort($fonts);
+            // Return fonts in alphabetical order (case-insensitive, natural sort)
+            sort($fonts, SORT_NATURAL | SORT_FLAG_CASE);
         }
 
         return response()->json(['fonts' => $fonts]);

@@ -279,12 +279,28 @@ document.addEventListener('DOMContentLoaded', function() {
       fonts.forEach(f => {
         const opt = document.createElement('option');
         opt.value = f;
-        opt.textContent = f;
+        // Display name without common font extensions (e.g. .ttf), but keep full filename as value
+        const displayName = f.replace(/\.(ttf|otf|woff2?|TTF|OTF|WOFF2?)$/i, '');
+        opt.textContent = displayName;
         fontSelect.appendChild(opt);
       });
       const saved = fontSelect.dataset.savedValue;
       if (saved && fonts.includes(saved)) {
         fontSelect.value = saved;
+      }
+      // Enhance font select with Select2 if available (searchable dropdown)
+      if (window.$ && $.fn && $.fn.select2) {
+        const $fontSelect = $(fontSelect).select2({
+          width: '100%',
+          placeholder: 'Default',
+          allowClear: true
+        });
+        // Ensure preview updates when selection changes via Select2
+        $fontSelect.on('change select2:select select2:clear', () => {
+          if (typeof syncOverrides === 'function') {
+            syncOverrides();
+          }
+        });
       }
       syncOverrides();
     } catch (e) {
