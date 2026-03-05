@@ -1149,7 +1149,23 @@ function renderFields(metadata, savedOverrides = {}) {
       return {};
     }
   })();
-  const showFinalMessage = !!savedOverridesForFinal.show_final_message;
+
+  // Determine whether the "Time's Up Message" toggle should start checked.
+  // Priority:
+  // 1) Explicit value from skin_overrides.show_final_message
+  // 2) Skin defaults.show_final_message
+  // 3) If a finalMessage text is defined, default ON (backwards-compatible)
+  const showFinalMessage = (() => {
+    if (savedOverridesForFinal.show_final_message !== undefined) {
+      return !!savedOverridesForFinal.show_final_message;
+    }
+    const defaults = metadata.defaults || {};
+    if (defaults.show_final_message !== undefined) {
+      return !!defaults.show_final_message;
+    }
+    const fm = (defaults.finalMessage ?? metadata.finalMessage ?? '').trim();
+    return fm !== '';
+  })();
   let finalCardRef = null;
 
   // Recursive function to render groups and subgroups
