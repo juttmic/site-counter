@@ -649,10 +649,11 @@
                                     $customTextFont = old('customTextFont', $overrides['customTextFont'] ?? '');
                                 @endphp
                                 <div class="row g-3 mt-2" id="visibility_font_row">
-                                    <div class="col-12 col-lg-6" id="visibility_toggles_col">
-                                        {{-- Visibility toggles will be injected here --}}
+                                    <div class="d-none" id="visibility_toggles_col">
+                                        <label class="form-label small mb-1">Visibility</label>
+                                        <div id="visibility_toggles_inner"></div>
                                     </div>
-                                    <div class="col-12 col-lg-6" id="font_field_col">
+                                    <div class="col-6" id="font_field_col">
                                         <label class="form-label small mb-1">Font</label>
                                         <select name="customTextFont" id="customTextFont" class="form-select form-select-sm" data-saved-value="{{ $customTextFont ?? '' }}">
                                             <option value="">Default</option>

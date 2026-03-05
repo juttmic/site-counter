@@ -1182,11 +1182,12 @@ function renderFields(metadata, savedOverrides = {}) {
       const remainingFields = group.fields.filter(field => !visibilityToggleKeys.has(field.key));
 
       const togglesCol = document.getElementById('visibility_toggles_col');
+      const togglesInner = document.getElementById('visibility_toggles_inner') || togglesCol;
       const fontCol = document.getElementById('font_field_col');
 
-      if (togglesCol) {
+      if (togglesInner) {
         // Clear any previous toggles when switching skins
-        togglesCol.innerHTML = '';
+        togglesInner.innerHTML = '';
 
         if (visibilityToggles.length > 0) {
           visibilityToggles.forEach(field => {
@@ -1195,7 +1196,7 @@ function renderFields(metadata, savedOverrides = {}) {
             // Make each toggle full width within the column (no Bootstrap grid classes)
             const classes = fieldContainer.className.split(' ').filter(c => !c.startsWith('col-'));
             fieldContainer.className = classes.join(' ').trim();
-            togglesCol.appendChild(fieldContainer);
+            togglesInner.appendChild(fieldContainer);
           });
         }
       }
