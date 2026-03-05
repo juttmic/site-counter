@@ -317,6 +317,84 @@
     background-size: 16px 12px;
     padding-right: 2.5rem;
   }
+
+  /* Select2 styling to match .form-select / .form-control */
+  .select2-container .select2-selection--single {
+    height: auto;
+    min-height: 2.75rem;
+    padding: 0.625rem 0.875rem;
+    border-radius: 0.5rem;
+    border: 1.5px solid #e5e7eb;
+    background-color: #ffffff;
+    display: flex;
+    align-items: center;
+    transition: all 0.2s ease;
+    font-size: 0.9375rem;
+    font-family: 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: #111827;
+  }
+
+  .select2-container--default .select2-selection--single .select2-selection__rendered {
+    padding: 0;
+    color: #111827;
+  }
+
+  .select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 100%;
+    right: 0.75rem;
+  }
+
+  .select2-container--default .select2-selection--single .select2-selection__placeholder {
+    color: #9ca3af;
+  }
+
+  .select2-container--default.select2-container--focus .select2-selection--single,
+  .select2-container--default .select2-selection--single:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    outline: none;
+    background-color: #ffffff;
+  }
+
+  .select2-container--default .select2-selection--single:hover {
+    border-color: #d1d5db;
+  }
+
+  .select2-container--default .select2-results__option {
+    font-size: 0.9375rem;
+    font-family: 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: #111827;
+  }
+
+  .select2-container--default .select2-results__option--highlighted[aria-selected] {
+    background-color: #0d6efd;
+    color: #ffffff;
+  }
+
+  /* Dark mode overrides */
+  .dark .select2-container .select2-selection--single {
+    background-color: #343a40;
+    border-color: #495057;
+    color: #e9ecef;
+  }
+
+  .dark .select2-container--default .select2-selection--single .select2-selection__rendered {
+    color: #e9ecef;
+  }
+
+  .dark .select2-container--default .select2-selection--single .select2-selection__placeholder {
+    color: #9ca3af;
+  }
+
+  .dark .select2-container--default .select2-results__option {
+    background-color: #343a40;
+    color: #e9ecef;
+  }
+
+  .dark .select2-container--default .select2-results__option--highlighted[aria-selected] {
+    background-color: #0d6efd;
+    color: #ffffff;
+  }
   
   .form-control:disabled,
   .form-select:disabled {
