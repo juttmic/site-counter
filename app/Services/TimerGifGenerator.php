@@ -67,13 +67,13 @@ class TimerGifGenerator
 
         // Special handling when a final "Time's Up" screen is configured
         if ($showFinalMessage) {
-            if ($remaining <= 5) {
-                // Remaining time is 5s or less: only render the final screen as a static GIF
+            if ($remaining <= 35) {
+                // Remaining time is 35s or less: only render the final screen as a static GIF
                 $framePng = $this->renderFinalFrame($skin, $timer->custom_text, $timer->text_position ?? 'none');
                 // Use a minimal non-zero duration so encoders behave correctly
                 $this->encodeAnimatedGif([$framePng], $fullPath, 1);
             } else {
-                // Remaining time is more than 5s: generate countdown frames without the final screen
+                // Remaining time is more than 35s: generate countdown frames without the final screen
                 $frameLimit = $this->resolveFrameLimit($timer);
                 $animateFor = min($frameLimit, max(0, $durationForGif));
                 // Temporarily disable final message so buildFramesCapped does not append the final frame
@@ -124,13 +124,13 @@ class TimerGifGenerator
         
         if ($showFinalMessage) {
             if ($remaining <= 35) {
-                // Remaining time is 5s or less: only render the final screen as a static GIF
+                // Remaining time is 35s or less: only render the final screen as a static GIF
                 $framePng = $this->renderFinalFrame($skin, $timer->custom_text, $timer->text_position ?? 'none');
                 $this->encodeAnimatedGif([$framePng], $targetPath, 1);
                 return;
             }
 
-            // Remaining time is more than 5s: generate countdown frames without the final screen
+            // Remaining time is more than 35s: generate countdown frames without the final screen
             $frameLimit = $this->resolveFrameLimit($timer);
             $animateFor = min($frameLimit, $maxAnimateFor, max(0, $durationForGif));
             $skinForFrames = $skin;
