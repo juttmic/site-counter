@@ -105,20 +105,43 @@ class DownloadFonts extends Command
                 continue;
             }
 
+            $binary = $response->body();
+
+            // Determine base filename (from override or URL basename)
             $filename = $overrideName;
+            $path = parse_url($url, PHP_URL_PATH);
+            $originalBasename = $path ? basename($path) : null;
+            $ext = $originalBasename ? pathinfo($originalBasename, PATHINFO_EXTENSION) : 'ttf';
             if (!$filename) {
-                $path = parse_url($url, PHP_URL_PATH);
-                $basename = $path ? basename($path) : null;
-                if (!$basename || $basename === '/' || $basename === '.') {
+                if (!$originalBasename || $originalBasename === '/' || $originalBasename === '.') {
                     $this->error('  Could not determine filename from URL. Skipping.');
                     continue;
                 }
-                $filename = $basename;
+                $filename = $originalBasename;
             }
 
+            // Try to extract the internal font full name and rename file accordingly
+            $fontName = $this->extractFontFullName($binary);
+            if ($fontName) {
+                // Sanitize font name for filesystem
+                $safeName = preg_replace('/[^A-Za-z0-9 _-]+/', '', $fontName) ?: 'font';
+                $safeName = trim(preg_replace('/\s+/', ' ', $safeName));
+                $filename = $safeName . '.' . $ext;
+            }
+
+            // Ensure uniqueness to avoid overwriting existing files
             $destination = $targetDir . DIRECTORY_SEPARATOR . $filename;
+            if (File::exists($destination)) {
+                $base = pathinfo($filename, PATHINFO_FILENAME);
+                $counter = 1;
+                do {
+                    $candidate = $base . '_' . $counter++ . '.' . $ext;
+                    $destination = $targetDir . DIRECTORY_SEPARATOR . $candidate;
+                } while (File::exists($destination));
+            }
+
             try {
-                File::put($destination, $response->body());
+                File::put($destination, $binary);
                 $this->info("  Saved to: {$destination}");
             } catch (\Throwable $e) {
                 $this->error("  Failed to save file: {$e->getMessage()}");
@@ -128,6 +151,107 @@ class DownloadFonts extends Command
 
         $this->info('Font download process finished.');
         return self::SUCCESS;
+    }
+
+    /**
+     * Extract the internal "Full font name" (name ID 4) or family name (name ID 1)
+     * from a TrueType/OpenType font binary.
+     */
+    private function extractFontFullName(string $binary): ?string
+    {
+        // Minimum sfnt header size
+        if (strlen($binary) < 12) {
+            return null;
+        }
+
+        // Offset table: sfntVersion(4), numTables(2), searchRange(2), entrySelector(2), rangeShift(2)
+        $header = unpack('Nsfnt/nnumTables', substr($binary, 0, 6));
+        $numTables = $header['numTables'] ?? 0;
+        if ($numTables <= 0) {
+            return null;
+        }
+
+        $nameTableOffset = null;
+        $nameTableLength = null;
+        $offset = 12; // start of table records
+
+        for ($i = 0; $i < $numTables; $i++) {
+            $record = substr($binary, $offset + $i * 16, 16);
+            if (strlen($record) < 16) {
+                break;
+            }
+            $tag = substr($record, 0, 4);
+            if ($tag === 'name') {
+                // Table record: tag(4), checkSum(4), offset(4), length(4)
+                $info = unpack('NcheckSum/NtableOffset/NtableLength', substr($record, 4, 12));
+                $nameTableOffset = $info['tableOffset'] ?? null;
+                $nameTableLength = $info['tableLength'] ?? null;
+                break;
+            }
+        }
+
+        if ($nameTableOffset === null || $nameTableLength === null) {
+            return null;
+        }
+
+        $nameData = substr($binary, $nameTableOffset, $nameTableLength);
+        if (strlen($nameData) < 6) {
+            return null;
+        }
+
+        // name table header: format(2), count(2), stringOffset(2)
+        $nameHeader = unpack('nformat/ncount/nstringOffset', substr($nameData, 0, 6));
+        $count = $nameHeader['count'] ?? 0;
+        $stringStorageOffset = $nameHeader['stringOffset'] ?? 0;
+
+        $best = null;
+
+        for ($i = 0; $i < $count; $i++) {
+            $rec = substr($nameData, 6 + $i * 12, 12);
+            if (strlen($rec) < 12) {
+                break;
+            }
+            // name record: platformID(2), encodingID(2), languageID(2), nameID(2), length(2), offset(2)
+            $r = unpack('nplatformID/nencodingID/nlanguageID/nnameID/nlength/noffset', $rec);
+            $nameId = $r['nameID'] ?? null;
+            if ($nameId !== 4 && $nameId !== 1) {
+                continue;
+            }
+            $len = $r['length'] ?? 0;
+            $off = $r['offset'] ?? 0;
+            $strOffset = $stringStorageOffset + $off;
+            if ($strOffset + $len > strlen($nameData)) {
+                continue;
+            }
+            $raw = substr($nameData, $strOffset, $len);
+            if ($raw === '') {
+                continue;
+            }
+
+            $candidate = null;
+            // Platform 3 = Windows, usually UTF-16BE
+            if (($r['platformID'] ?? 0) === 3) {
+                $decoded = @iconv('UTF-16BE', 'UTF-8//IGNORE', $raw);
+                if ($decoded !== false && $decoded !== '') {
+                    $candidate = $decoded;
+                }
+            } else {
+                $candidate = $raw;
+            }
+
+            if ($candidate !== null) {
+                $candidate = trim($candidate);
+                if ($candidate !== '') {
+                    $best = $candidate;
+                    // Prefer full font name (nameID 4) over family (1)
+                    if ($nameId === 4) {
+                        break;
+                    }
+                }
+            }
+        }
+
+        return $best ?: null;
     }
 }
 
