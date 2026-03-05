@@ -286,24 +286,81 @@ document.addEventListener('DOMContentLoaded', function() {
       if (!res.ok) return;
       const json = await res.json();
       const fonts = json.fonts || [];
+      const toDisplayName = (filename) => filename.replace(/\.(ttf|otf|woff2?|TTF|OTF|WOFF2?)$/i, '');
+      const toFamilyName = (filename) => {
+        const base = toDisplayName(filename);
+        const slug = base.replace(/[^a-zA-Z0-9_-]/g, '_');
+        return `CounterFont_${slug}`;
+      };
+
+      // Ensure we have a shared <style> tag for font samples
+      let styleEl = document.getElementById('custom-font-samples-style');
+      if (!styleEl) {
+        styleEl = document.createElement('style');
+        styleEl.id = 'custom-font-samples-style';
+        document.head.appendChild(styleEl);
+      }
+      let css = styleEl.textContent || '';
+
       fonts.forEach(f => {
         const opt = document.createElement('option');
         opt.value = f;
-        // Display name without common font extensions (e.g. .ttf), but keep full filename as value
-        const displayName = f.replace(/\.(ttf|otf|woff2?|TTF|OTF|WOFF2?)$/i, '');
+        const displayName = toDisplayName(f);
         opt.textContent = displayName;
         fontSelect.appendChild(opt);
+
+        const family = toFamilyName(f);
+        if (!css.includes(`font-family: '${family}'`)) {
+          const ext = (f.split('.').pop() || '').toLowerCase();
+          let format = 'truetype';
+          if (ext === 'otf') format = 'opentype';
+          else if (ext === 'woff' || ext === 'woff2') format = 'woff';
+          css += `
+@font-face {
+  font-family: '${family}';
+  src: url('/assets/fonts/${f}') format('${format}');
+  font-weight: normal;
+  font-style: normal;
+}
+`;
+        }
       });
+      styleEl.textContent = css;
       const saved = fontSelect.dataset.savedValue;
       if (saved && fonts.includes(saved)) {
         fontSelect.value = saved;
       }
       // Enhance font select with Select2 if available (searchable dropdown)
       if (window.$ && $.fn && $.fn.select2) {
+        const formatFontOption = (data) => {
+          if (!data.id) {
+            return data.text || '';
+          }
+          const value = data.id;
+          const family = toFamilyName(value);
+          const container = document.createElement('span');
+          container.className = 'font-option d-flex justify-content-between align-items-center';
+
+          const nameSpan = document.createElement('span');
+          nameSpan.textContent = data.text || '';
+
+          const sampleSpan = document.createElement('span');
+          sampleSpan.textContent = '123ABC';
+          sampleSpan.style.marginLeft = '0.75rem';
+          sampleSpan.style.fontFamily = `'${family}', inherit`;
+
+          container.appendChild(nameSpan);
+          container.appendChild(sampleSpan);
+          return $(container);
+        };
+
         const $fontSelect = $(fontSelect).select2({
           width: '100%',
           placeholder: 'Default',
-          allowClear: true
+          allowClear: true,
+          templateResult: formatFontOption,
+          templateSelection: formatFontOption,
+          escapeMarkup: (m) => m
         });
         // Ensure preview updates when selection changes via Select2
         $fontSelect.on('change select2:select select2:clear', () => {
@@ -1115,9 +1172,9 @@ function renderFields(metadata, savedOverrides = {}) {
           visibilityToggles.forEach(field => {
             const value = resolveFieldValue(field);
             const fieldContainer = createFieldInput(field, value, { useSwitch: true });
-            // Force each toggle into half-width columns so both fit on one row
+            // Stack toggles vertically in a single column
             const classes = fieldContainer.className.split(' ').filter(c => !c.startsWith('col-'));
-            fieldContainer.className = 'col-12 col-sm-6 ' + classes.join(' ').trim();
+            fieldContainer.className = 'col-12 ' + classes.join(' ').trim();
             row.appendChild(fieldContainer);
           });
 
