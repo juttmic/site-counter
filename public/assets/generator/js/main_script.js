@@ -52,9 +52,6 @@ function enforceMinTargetDateTime() {
   const pad = (n) => n.toString().padStart(2, '0');
   const minVal = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
   input.min = minVal;
-  if (input.value && input.value < minVal) {
-    input.value = minVal;
-  }
 }
 
 function findFieldByKey(key) {
