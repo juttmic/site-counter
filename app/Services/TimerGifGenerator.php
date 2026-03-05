@@ -350,16 +350,12 @@ class TimerGifGenerator
     private function buildFramesCapped(int $startingRemaining, int $animateSeconds, array $skin, ?string $customText, string $textPosition): array
     {
         $frames = [];
-        $showFinalMessage = (bool) ($skin['show_final_message'] ?? false);
         
-        // If nothing to animate, show final state(s)
+        // If nothing to animate, show the instantaneous timer state (no final screen here)
         if ($startingRemaining <= 0) {
-            if ($showFinalMessage) {
-                $frames[] = $this->renderFinalFrame($skin, $customText, $textPosition);
-            } else {
-                // Show 0 seconds instead of final message
-                $frames[] = $this->renderPngFrame(0, $skin, $customText, $textPosition);
-            }
+            // Always show 0-second frame here; any final "Time's Up" screen is handled by callers
+            // (e.g., generateAndStore / regenerateForCache) based on remaining time thresholds.
+            $frames[] = $this->renderPngFrame(0, $skin, $customText, $textPosition);
             return $frames;
         }
         $animateSeconds = max(0, min(60, $animateSeconds));
@@ -386,13 +382,7 @@ class TimerGifGenerator
         // Always include the last animated second frame
         $lastRemaining = max(0, $startingRemaining - $animateSeconds);
         $frames[] = $this->renderPngFrame($lastRemaining, $skin, $customText, $textPosition);
-        
-        // Only add final frame if show_final_message is enabled
-        // If disabled: reload-based timers will loop naturally, fixed-date will show 0 seconds
-        if ($lastRemaining === 0 && $showFinalMessage) {
-            // If we reached zero and final message is enabled, include the Time's Up frame
-            $frames[] = $this->renderFinalFrame($skin, $customText, $textPosition);
-        }
+
         return $frames;
     }
 
