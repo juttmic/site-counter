@@ -261,6 +261,37 @@ document.addEventListener('DOMContentLoaded', function() {
     distanceInput.addEventListener('input', handleDistanceChange);
   }
 
+  // Sync font select to skin_overrides when changed
+  const fontSelect = document.querySelector('select[name="customTextFont"]');
+  if (fontSelect) {
+    fontSelect.addEventListener('change', syncOverrides);
+  }
+
+  // Fetch fonts and populate font select
+  (async function loadFontsIntoSelect() {
+    const fontSelect = document.getElementById('customTextFont');
+    if (!fontSelect) return;
+    try {
+      const res = await fetch('/api/fonts', { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+      if (!res.ok) return;
+      const json = await res.json();
+      const fonts = json.fonts || [];
+      fonts.forEach(f => {
+        const opt = document.createElement('option');
+        opt.value = f;
+        opt.textContent = f;
+        fontSelect.appendChild(opt);
+      });
+      const saved = fontSelect.dataset.savedValue;
+      if (saved && fonts.includes(saved)) {
+        fontSelect.value = saved;
+      }
+      syncOverrides();
+    } catch (e) {
+      // Silently ignore - font list stays as Default only
+    }
+  })();
+
   // If timer height changes, re-clamp distance
   ['outputHeight'].forEach(name => {
     const el = document.querySelector(`[data-key="${name}"]`) || document.querySelector(`input[name="${name}"]`);
@@ -659,7 +690,7 @@ function renderFields(metadata, savedOverrides = {}) {
   // Note: If a field is explicitly listed in the fields array with a group, it should be shown.
   // Only hide fields that are truly internal/not user-editable (fontPath, custom text fields)
   // Fields like showDays, layout, animation, width, height can now be shown if specified in skin JSON
-  const alwaysHiddenFields = new Set(['fontPath', 'font', 'customTextColor', 'customTextDistance', 'custom_text', 'text_position', 'finalBackground', 'finalTextColor', 'width', 'height']);
+  const alwaysHiddenFields = new Set(['fontPath', 'font', 'customTextColor', 'customTextDistance', 'customTextFont', 'custom_text', 'text_position', 'finalBackground', 'finalTextColor', 'width', 'height']);
   alwaysHiddenFields.forEach(key => {
     if (savedOverrides[key] !== undefined) {
       currentHiddenOverrides[key] = savedOverrides[key];
@@ -1297,6 +1328,11 @@ function syncOverrides() {
     }
   }
   
+  const customTextFontInput = document.querySelector('select[name="customTextFont"]');
+  if (customTextFontInput && customTextFontInput.value) {
+    data['customTextFont'] = customTextFontInput.value;
+  }
+  
   // Include show_final_message toggle
   const showFinalMessageInput = document.querySelector('input[name="show_final_message"]');
   if (showFinalMessageInput) {
@@ -1565,6 +1601,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (savedOverrides.customTextDistance !== undefined) {
           const distanceInput = document.querySelector('input[name="customTextDistance"]');
           if (distanceInput) distanceInput.value = savedOverrides.customTextDistance;
+        }
+        if (savedOverrides.customTextFont) {
+          const fontSelect = document.querySelector('select[name="customTextFont"]');
+          if (fontSelect) fontSelect.value = savedOverrides.customTextFont;
         }
         
         document.getElementById('selected_skin_label').textContent = current;

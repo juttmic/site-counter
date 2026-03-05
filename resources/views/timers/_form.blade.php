@@ -590,6 +590,16 @@
                                     <label class="form-label small mb-1">Custom Text</label>
                                     <input type="text" name="custom_text" class="form-control" maxlength="255" value="{{ old('custom_text', $timer->custom_text ?? '') }}">
                                 </div>
+                                @php
+                                  $customTextFont = old('customTextFont', $overrides['customTextFont'] ?? '');
+                                @endphp
+                                <div class="col-12 col-sm-6">
+                                  <label class="form-label small mb-1">Font</label>
+                                  <select name="customTextFont" id="customTextFont" class="form-select form-select-sm" data-saved-value="{{ $customTextFont ?? '' }}">
+                                      <option value="">Default</option>
+                                      {{-- Populated via JS from /api/fonts --}}
+                                  </select>
+                              </div>
                                     <div class="col-12 col-sm-6">
                                         <label class="form-label small mb-1">Position</label>
                                         <select name="text_position" class="form-select">
