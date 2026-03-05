@@ -94,7 +94,7 @@
       { "key": "width", "label": "Width", "type": "number", "min": 100, "max": 2000, "step": 10, "group": "Dimensions", "groupOrder": 2, "order": 1 },
       { "key": "height", "label": "Height", "type": "number", "min": 80, "max": 1000, "step": 5, "group": "Dimensions", "order": 2 },
   
-      { "key": "background", "label": "Background Color", "type": "color", "group": "Appearance", "groupOrder": 1, "order": 1 },
+      { "key": "background", "label": "Background", "type": "color", "group": "Appearance", "groupOrder": 1, "order": 1 },
       { "key": "frameRadius", "label": "Frame Radius", "type": "number", "min": 0, "max": 40, "step": 1, "group": "Appearance", "order": 2 },
       { "key": "borderWidth", "label": "Frame Border Width", "type": "number", "min": 0, "max": 20, "step": 1, "group": "Appearance", "order": 3 },
       { "key": "borderColor", "label": "Frame Border Color", "type": "color", "group": "Appearance", "order": 4 },

@@ -85,7 +85,7 @@
         },
         {
             "key": "background",
-            "label": "Background Color",
+            "label": "Background",
             "type": "color",
             "group": "Appearance",
             "groupOrder": 1,

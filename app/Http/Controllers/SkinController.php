@@ -150,7 +150,7 @@ class SkinController extends Controller
 
         $add('width', 'Width', 'number', ['min' => 100, 'max' => 2000, 'step' => 10]);
         $add('height', 'Height', 'number', ['min' => 50, 'max' => 1000, 'step' => 5]);
-        $add('background', 'Background Color', 'color');
+        $add('background', 'Background', 'color');
         $add('textColor', 'Text Color', 'color');
         $add('accentColor', 'Accent Color', 'color');
         $add('separatorColor', 'Separator Color', 'color');
