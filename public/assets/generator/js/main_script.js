@@ -345,12 +345,18 @@ document.addEventListener('DOMContentLoaded', function() {
           const family = toFamilyName(value);
           const nameText = data.text || '';
 
-          // Return explicit HTML so the inline style is visible on the element
+          // Truncate long names with ellipsis for nicer display
+          const maxLen = 24;
+          let label = nameText;
+          if (label.length > maxLen) {
+            label = label.slice(0, maxLen - 1) + '…';
+          }
+
+          // Apply the font only on the 123ABC sample, not on the name
           return `
-            <span class="font-option d-flex justify-content-between align-items-center"
-                  style="font-family: '${family}';">
-              <span>${nameText}</span>
-              <span style="margin-left: 0.75rem;">123ABC</span>
+            <span class="font-option d-flex justify-content-between align-items-center">
+              <span class="font-name">${label}</span>
+              <span class="font-sample" style="margin-left: 0.75rem; font-family: '${family}';">123ABC</span>
             </span>
           `;
         };
