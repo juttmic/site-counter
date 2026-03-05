@@ -63,12 +63,33 @@ class TimerGifGenerator
         }
         $skin = $this->applyFinalColorDefaults($skin);
 
-        $frameLimit = $this->resolveFrameLimit($timer);
-        // Cap animation length to configured limit but start from actual remaining
-        $animateFor = min($frameLimit, max(0, $durationForGif));
-        $frames = $this->buildFramesCapped($remaining, $animateFor, $skin, $timer->custom_text, $timer->text_position);
+        $showFinalMessage = (bool) ($skin['show_final_message'] ?? false);
 
-        $this->encodeAnimatedGif($frames, $fullPath, $animateFor);
+        // Special handling when a final "Time's Up" screen is configured
+        if ($showFinalMessage) {
+            if ($remaining <= 5) {
+                // Remaining time is 5s or less: only render the final screen as a static GIF
+                $framePng = $this->renderFinalFrame($skin, $timer->custom_text, $timer->text_position ?? 'none');
+                // Use a minimal non-zero duration so encoders behave correctly
+                $this->encodeAnimatedGif([$framePng], $fullPath, 1);
+            } else {
+                // Remaining time is more than 5s: generate countdown frames without the final screen
+                $frameLimit = $this->resolveFrameLimit($timer);
+                $animateFor = min($frameLimit, max(0, $durationForGif));
+                // Temporarily disable final message so buildFramesCapped does not append the final frame
+                $skinForFrames = $skin;
+                $skinForFrames['show_final_message'] = false;
+                $frames = $this->buildFramesCapped($remaining, $animateFor, $skinForFrames, $timer->custom_text, $timer->text_position);
+                $this->encodeAnimatedGif($frames, $fullPath, $animateFor);
+            }
+        } else {
+            // No final screen configured: keep existing behavior
+            $frameLimit = $this->resolveFrameLimit($timer);
+            // Cap animation length to configured limit but start from actual remaining
+            $animateFor = min($frameLimit, max(0, $durationForGif));
+            $frames = $this->buildFramesCapped($remaining, $animateFor, $skin, $timer->custom_text, $timer->text_position);
+            $this->encodeAnimatedGif($frames, $fullPath, $animateFor);
+        }
 
         $url = "/timers/{$userId}/{$filename}";
         return $url;
@@ -99,11 +120,30 @@ class TimerGifGenerator
             $skin = array_replace_recursive($skin, $timer->skin_overrides);
         }
         $skin = $this->applyFinalColorDefaults($skin);
+        $showFinalMessage = (bool) ($skin['show_final_message'] ?? false);
         
-        $frameLimit = $this->resolveFrameLimit($timer);
-        $animateFor = min($frameLimit, $maxAnimateFor, max(0, $durationForGif));
-        $frames = $this->buildFramesCapped($remaining, $animateFor, $skin, $timer->custom_text, $timer->text_position);
-        $this->encodeAnimatedGif($frames, $targetPath, $animateFor);
+        if ($showFinalMessage) {
+            if ($remaining <= 5) {
+                // Remaining time is 5s or less: only render the final screen as a static GIF
+                $framePng = $this->renderFinalFrame($skin, $timer->custom_text, $timer->text_position ?? 'none');
+                $this->encodeAnimatedGif([$framePng], $targetPath, 1);
+                return;
+            }
+
+            // Remaining time is more than 5s: generate countdown frames without the final screen
+            $frameLimit = $this->resolveFrameLimit($timer);
+            $animateFor = min($frameLimit, $maxAnimateFor, max(0, $durationForGif));
+            $skinForFrames = $skin;
+            $skinForFrames['show_final_message'] = false;
+            $frames = $this->buildFramesCapped($remaining, $animateFor, $skinForFrames, $timer->custom_text, $timer->text_position);
+            $this->encodeAnimatedGif($frames, $targetPath, $animateFor);
+        } else {
+            // No final screen configured: keep existing behavior
+            $frameLimit = $this->resolveFrameLimit($timer);
+            $animateFor = min($frameLimit, $maxAnimateFor, max(0, $durationForGif));
+            $frames = $this->buildFramesCapped($remaining, $animateFor, $skin, $timer->custom_text, $timer->text_position);
+            $this->encodeAnimatedGif($frames, $targetPath, $animateFor);
+        }
     }
 
     /**
