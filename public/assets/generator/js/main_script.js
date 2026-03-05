@@ -261,6 +261,16 @@ document.addEventListener('DOMContentLoaded', function() {
     distanceInput.addEventListener('input', handleDistanceChange);
   }
 
+  // Sync custom text font size to skin_overrides when changed
+  const customTextFontSizeInput = document.querySelector('input[name="customTextFontSize"]');
+  if (customTextFontSizeInput) {
+    const handleFontSizeChange = () => {
+      syncOverrides();
+    };
+    customTextFontSizeInput.addEventListener('change', handleFontSizeChange);
+    customTextFontSizeInput.addEventListener('input', handleFontSizeChange);
+  }
+
   // Sync font select to skin_overrides when changed
   const fontSelect = document.querySelector('select[name="customTextFont"]');
   if (fontSelect) {
@@ -1377,6 +1387,14 @@ function syncOverrides() {
       data['customTextDistance'] = dist;
     }
   }
+
+  const customTextFontSizeInput = document.querySelector('input[name="customTextFontSize"]');
+  if (customTextFontSizeInput && customTextFontSizeInput.value !== '') {
+    const size = Number(customTextFontSizeInput.value);
+    if (!isNaN(size)) {
+      data['customTextFontSize'] = size;
+    }
+  }
   
   const customTextFontInput = document.querySelector('select[name="customTextFont"]');
   if (customTextFontInput && customTextFontInput.value) {
@@ -1651,6 +1669,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (savedOverrides.customTextDistance !== undefined) {
           const distanceInput = document.querySelector('input[name="customTextDistance"]');
           if (distanceInput) distanceInput.value = savedOverrides.customTextDistance;
+        }
+        if (savedOverrides.customTextFontSize !== undefined) {
+          const sizeInput = document.querySelector('input[name="customTextFontSize"]');
+          if (sizeInput) sizeInput.value = savedOverrides.customTextFontSize;
         }
         if (savedOverrides.customTextFont) {
           const fontSelect = document.querySelector('select[name="customTextFont"]');

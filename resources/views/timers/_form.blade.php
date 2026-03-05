@@ -592,17 +592,22 @@
                                   <div class="col-12 col-sm-6">
                                     <label class="form-label small mb-1">Custom Text</label>
                                     <input type="text" name="custom_text" class="form-control" maxlength="255" value="{{ old('custom_text', $timer->custom_text ?? '') }}">
-                                </div>
-                                @php
-                                  $customTextFont = old('customTextFont', $overrides['customTextFont'] ?? '');
-                                @endphp
-                                <div class="col-12 col-sm-6">
-                                  <label class="form-label small mb-1">Font</label>
-                                  <select name="customTextFont" id="customTextFont" class="form-select form-select-sm" data-saved-value="{{ $customTextFont ?? '' }}">
-                                      <option value="">Default</option>
-                                      {{-- Populated via JS from /api/fonts --}}
-                                  </select>
-                              </div>
+                                  </div>
+                                  @php
+                                      $overrides = ($isEdit && isset($timer) && is_array($timer->skin_overrides ?? null)) ? $timer->skin_overrides : [];
+                                      $customTextFont = old('customTextFont', $overrides['customTextFont'] ?? '');
+                                      $customTextFontSize = old('customTextFontSize', $overrides['customTextFontSize'] ?? '');
+                                      $legacyMargin = $overrides['customTextMarginTop'] ?? 0;
+                                      $distanceValue = old('customTextDistance', $overrides['customTextDistance'] ?? $legacyMargin ?? 0);
+                                  @endphp
+                                  <div class="col-12 col-sm-6">
+                                    <label class="form-label small mb-1">Font</label>
+                                    <select name="customTextFont" id="customTextFont" class="form-select form-select-sm" data-saved-value="{{ $customTextFont ?? '' }}">
+                                        <option value="">Default</option>
+                                        {{-- Populated via JS from /api/fonts --}}
+                                    </select>
+                                  </div>
+                                  
                                     <div class="col-12 col-sm-6">
                                         <label class="form-label small mb-1">Position</label>
                                         <select name="text_position" class="form-select">
@@ -634,15 +639,23 @@
                                         </div>
                                     </div>
                                     <div class="col-12 col-sm-6">
-                                        @php
-                                            $overrides = ($isEdit && isset($timer) && is_array($timer->skin_overrides ?? null)) ? $timer->skin_overrides : [];
-                                            $legacyMargin = $overrides['customTextMarginTop'] ?? 0;
-                                            $distanceValue = old('customTextDistance', $overrides['customTextDistance'] ?? $legacyMargin ?? 0);
-                                        @endphp
                                         <label class="form-label small mb-1">Padding</label>
                                         <input type="number" name="customTextDistance" class="form-control form-control-sm" min="0" max="400" step="1" value="{{ $distanceValue }}">
                                         <div class="form-text small">Space between the custom text and the counter.</div>
                                     </div>
+                                    <div class="col-12 col-sm-6">
+                                      <label class="form-label small mb-1">Font Size</label>
+                                      <input
+                                          type="number"
+                                          name="customTextFontSize"
+                                          class="form-control form-control-sm"
+                                          min="8"
+                                          max="200"
+                                          step="1"
+                                          value="{{ $customTextFontSize }}"
+                                      >
+                                      <div class="form-text small">Optional size override for the custom text.</div>
+                                  </div>
                                 </div>
                             </div>
                         </div>

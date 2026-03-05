@@ -389,7 +389,7 @@ class TimerGifGenerator
         [$ar, $ag, $ab] = $this->hexToRgb($skin['accentColor'] ?? '#FFCC00');
         $font = $skin['fontPath'] ?? '';
         $fontSize = (int) ($skin['fontSize'] ?? 36);
-        // Optional override: use a different font for custom text if provided
+        // Optional overrides: custom font and custom font size for the custom text
         $customFont = $this->resolveCustomTextFont($skin, (string) $font);
 
         // Render timer into off-screen surface
@@ -478,7 +478,9 @@ class TimerGifGenerator
         // Custom text measurement
         $hasText = ($customText !== null && $customText !== '' && $textPosition !== 'none');
         $padX = 10; // horizontal padding when text is wider than timer
-        $textW = 0; $textH = 0; $textSize = max(12, (int) round($fontSize * 0.5));
+        $textW = 0; $textH = 0;
+        $customTextSize = isset($skin['customTextFontSize']) ? (int) $skin['customTextFontSize'] : null;
+        $textSize = max(12, (int) ($customTextSize ?: round($fontSize * 0.5)));
         $textAscent = 0; // Height from baseline to top of text
         $textDescent = 0; // Height below baseline
         if ($hasText) {
@@ -1269,7 +1271,8 @@ class TimerGifGenerator
         // Custom text measurement
         $hasText = ($customText !== null && $customText !== '' && $textPosition !== 'none');
         $textW = 0; $textH = 0; $textAscent = 0; $textDescent = 0;
-        $textSize = max(12, (int) round($fontSize * 0.5));
+        $customTextSize = isset($skin['customTextFontSize']) ? (int) $skin['customTextFontSize'] : null;
+        $textSize = max(12, (int) ($customTextSize ?: round($fontSize * 0.5)));
         // Optional override: use a different font for custom text if provided
         $customFont = $this->resolveCustomTextFont($skin, (string) $font);
         if ($hasText) {
