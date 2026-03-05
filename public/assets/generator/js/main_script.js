@@ -1168,24 +1168,33 @@ function renderFields(metadata, savedOverrides = {}) {
       const visibilityToggles = group.fields.filter(field => visibilityToggleKeys.has(field.key));
       const remainingFields = group.fields.filter(field => !visibilityToggleKeys.has(field.key));
 
-      if (visibilityToggles.length > 0) {
-        const visibilityRow = document.getElementById('visibility_toggles_row');
-        if (visibilityRow) {
-          // Clear any previous toggles when switching skins
-          visibilityRow.innerHTML = '';
-          const row = document.createElement('div');
-          row.className = 'row g-3';
+      const togglesCol = document.getElementById('visibility_toggles_col');
+      const fontCol = document.getElementById('font_field_col');
 
+      if (togglesCol) {
+        // Clear any previous toggles when switching skins
+        togglesCol.innerHTML = '';
+
+        if (visibilityToggles.length > 0) {
           visibilityToggles.forEach(field => {
             const value = resolveFieldValue(field);
             const fieldContainer = createFieldInput(field, value, { useSwitch: true });
-            // Stack toggles vertically in a single column
+            // Make each toggle full width within the column (no Bootstrap grid classes)
             const classes = fieldContainer.className.split(' ').filter(c => !c.startsWith('col-'));
-            fieldContainer.className = 'col-12 ' + classes.join(' ').trim();
-            row.appendChild(fieldContainer);
+            fieldContainer.className = classes.join(' ').trim();
+            togglesCol.appendChild(fieldContainer);
           });
+        }
+      }
 
-          visibilityRow.appendChild(row);
+      // Adjust layout: if we have visibility toggles, use two columns; otherwise font spans full width
+      if (togglesCol && fontCol) {
+        if (visibilityToggles.length > 0) {
+          togglesCol.className = 'col-12 col-lg-6';
+          fontCol.className = 'col-12 col-lg-6';
+        } else {
+          togglesCol.className = 'd-none';
+          fontCol.className = 'col-12';
         }
       }
 

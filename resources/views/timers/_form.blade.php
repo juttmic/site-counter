@@ -643,20 +643,22 @@
                                     </div>
                                 </div>
 
-                                {{-- Per-skin visibility toggles (e.g., show Days / Seconds) --}}
-                                <div id="visibility_toggles_row" class="mt-2"></div>
-
-                                {{-- Global font override for all timer text (digits, labels, custom text) --}}
+                                {{-- Per-skin visibility toggles (e.g., show Days / Seconds) and global font override --}}
                                 @php
                                     $overrides = ($isEdit && isset($timer) && is_array($timer->skin_overrides ?? null)) ? $timer->skin_overrides : [];
                                     $customTextFont = old('customTextFont', $overrides['customTextFont'] ?? '');
                                 @endphp
-                                <div class="mt-2 col-md-6">
-                                    <label class="form-label small mb-1">Font</label>
-                                    <select name="customTextFont" id="customTextFont" class="form-select form-select-sm" data-saved-value="{{ $customTextFont ?? '' }}">
-                                        <option value="">Default</option>
-                                        {{-- Populated via JS from /api/fonts --}}
-                                    </select>
+                                <div class="row g-3 mt-2" id="visibility_font_row">
+                                    <div class="col-12 col-lg-6" id="visibility_toggles_col">
+                                        {{-- Visibility toggles will be injected here --}}
+                                    </div>
+                                    <div class="col-12 col-lg-6" id="font_field_col">
+                                        <label class="form-label small mb-1">Font</label>
+                                        <select name="customTextFont" id="customTextFont" class="form-select form-select-sm" data-saved-value="{{ $customTextFont ?? '' }}">
+                                            <option value="">Default</option>
+                                            {{-- Populated via JS from /api/fonts --}}
+                                        </select>
+                                    </div>
                                 </div>
 
                                 <div class="mt-3 d-none">
