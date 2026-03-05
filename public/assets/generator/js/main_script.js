@@ -1056,7 +1056,8 @@ function renderFields(metadata, savedOverrides = {}) {
     const header = document.createElement('div');
     header.className = 'card-header bg-light py-2 collapsible-header';
     header.dataset.target = `#${bodyId}`;
-    header.innerHTML = `<span class="text-uppercase text-muted fw-semibold small">${group.title}</span><i class="bi bi-chevron-down collapse-icon float-end"></i>`;
+    const displayTitle = (group.name === 'Appearance' || group.title === 'Appearance') ? 'Design' : group.title;
+    header.innerHTML = `<span class="text-uppercase text-muted fw-semibold small">${displayTitle}</span><i class="bi bi-chevron-down collapse-icon float-end"></i>`;
     
     const body = document.createElement('div');
     body.className = 'card-body collapsible-body';
