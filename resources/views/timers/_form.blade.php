@@ -573,7 +573,7 @@
                                     $overrides = ($isEdit && isset($timer) && is_array($timer->skin_overrides ?? null)) ? $timer->skin_overrides : [];
                                     $customTextFont = old('customTextFont', $overrides['customTextFont'] ?? '');
                                 @endphp
-                                <div class="mt-2">
+                                <div class="mt-2 col-md-6">
                                     <label class="form-label small mb-1">Font</label>
                                     <select name="customTextFont" id="customTextFont" class="form-select form-select-sm" data-saved-value="{{ $customTextFont ?? '' }}">
                                         <option value="">Default</option>
@@ -764,5 +764,9 @@
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
 <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+  window.COUNTER_FONT_BASE_URL = "{{ rtrim(asset('assets/fonts'), '/') }}";
+</script>
 
 <script src="{{ asset('assets/generator/js/main_script.js') }}" defer></script>

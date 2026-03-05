@@ -302,6 +302,8 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       let css = styleEl.textContent || '';
 
+      const fontBaseUrl = (window.COUNTER_FONT_BASE_URL || '/assets/fonts').replace(/\/+$/, '');
+
       fonts.forEach(f => {
         const opt = document.createElement('option');
         opt.value = f;
@@ -314,11 +316,14 @@ document.addEventListener('DOMContentLoaded', function() {
           const ext = (f.split('.').pop() || '').toLowerCase();
           let format = 'truetype';
           if (ext === 'otf') format = 'opentype';
-          else if (ext === 'woff' || ext === 'woff2') format = 'woff';
+          else if (ext === 'woff') format = 'woff';
+          else if (ext === 'woff2') format = 'woff2';
+          const encodedName = encodeURIComponent(f).replace(/%2F/gi, '/');
+          const srcUrl = `${fontBaseUrl}/${encodedName}`;
           css += `
 @font-face {
   font-family: '${family}';
-  src: url('/assets/fonts/${f}') format('${format}');
+  src: url('${srcUrl}') format('${format}');
   font-weight: normal;
   font-style: normal;
 }
@@ -338,20 +343,16 @@ document.addEventListener('DOMContentLoaded', function() {
           }
           const value = data.id;
           const family = toFamilyName(value);
-          const container = document.createElement('span');
-          container.className = 'font-option d-flex justify-content-between align-items-center';
+          const nameText = data.text || '';
 
-          const nameSpan = document.createElement('span');
-          nameSpan.textContent = data.text || '';
-
-          const sampleSpan = document.createElement('span');
-          sampleSpan.textContent = '123ABC';
-          sampleSpan.style.marginLeft = '0.75rem';
-          sampleSpan.style.fontFamily = `'${family}', inherit`;
-
-          container.appendChild(nameSpan);
-          container.appendChild(sampleSpan);
-          return $(container);
+          // Return explicit HTML so the inline style is visible on the element
+          return `
+            <span class="font-option d-flex justify-content-between align-items-center"
+                  style="font-family: '${family}';">
+              <span>${nameText}</span>
+              <span style="margin-left: 0.75rem;">123ABC</span>
+            </span>
+          `;
         };
 
         const $fontSelect = $(fontSelect).select2({
