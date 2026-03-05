@@ -868,6 +868,8 @@ function renderFields(metadata, savedOverrides = {}) {
       label = 'Height';
     } else if (key === 'outputWidth') {
       label = 'Width';
+    } else if (key === 'finalMessage') {
+      label = 'Text';
     }
     const type = field.type || 'text';
     const useSwitch = options.useSwitch === true;
@@ -1056,7 +1058,9 @@ function renderFields(metadata, savedOverrides = {}) {
     const header = document.createElement('div');
     header.className = 'card-header bg-light py-2 collapsible-header';
     header.dataset.target = `#${bodyId}`;
-    const displayTitle = (group.name === 'Appearance' || group.title === 'Appearance') ? 'Design' : group.title;
+    let displayTitle = group.title;
+    if (group.name === 'Appearance' || group.title === 'Appearance') displayTitle = 'Design';
+    else if (group.name === 'Final Screen' || group.title === 'Final Screen' || group.path?.some(p => String(p).toLowerCase().includes('final'))) displayTitle = 'End Message';
     header.innerHTML = `<span class="text-uppercase text-muted fw-semibold small">${displayTitle}</span><i class="bi bi-chevron-down collapse-icon float-end"></i>`;
     
     const body = document.createElement('div');
@@ -1130,7 +1134,7 @@ function renderFields(metadata, savedOverrides = {}) {
         }
       } else {
         // For all other groups: use existing logic
-        // Visibility group: use form-switch toggles like "Show Time's Up Screen", one per row
+        // Visibility group: use form-switch toggles like "Time's Up Message", one per row
         const row = document.createElement('div');
         row.className = 'row g-3';
         group.fields.forEach(field => {
@@ -1158,7 +1162,7 @@ function renderFields(metadata, savedOverrides = {}) {
         <div class="form-check form-switch">
           <input class="form-check-input" type="checkbox" name="show_final_message" id="show_final_message" value="1" ${showFinalMessage ? 'checked' : ''} data-key="show_final_message">
           <label class="form-check-label" for="show_final_message">
-            <strong>Show Time's Up Screen</strong>
+            <strong>Time's Up Message</strong>
           </label>
         </div>
       `;

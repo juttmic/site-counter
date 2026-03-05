@@ -1711,7 +1711,7 @@ function renderFields(metadata, savedOverrides = {}) {
         <div class="form-check form-switch">
           <input class="form-check-input" type="checkbox" name="show_final_message" id="show_final_message" value="1" ${showFinalMessage ? 'checked' : ''} data-key="show_final_message">
           <label class="form-check-label" for="show_final_message">
-            <strong>Show Time's Up Screen</strong>
+            <strong>Time's Up Message</strong>
           </label>
         </div>
       `;
