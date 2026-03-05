@@ -609,7 +609,7 @@ class TimerGifGenerator
         imagedestroy($timerIm);
 
         if ($hasText) {
-            if (is_file($customFont)) {
+            if (is_file($font)) {
                 $tx = (int) (($canvasW - $textW) / 2);
                 $ty = ($textPosition === 'top')
                     ? (int) ($topPadding + $textAscent)
@@ -619,13 +619,13 @@ class TimerGifGenerator
                     'text' => $customText,
                     'x' => $tx,
                     'y' => $ty,
-                    'font' => $customFont,
+                    'font' => $font,
                     'font_size' => $textSize,
                     'width' => $textW,
                     'height' => $textH,
                     'position' => $textPosition,
                 ]);
-                imagettftext($im, $textSize, 0, $tx, $ty, $customTxtCol, $customFont, $customText);
+                imagettftext($im, $textSize, 0, $tx, $ty, $customTxtCol, $font, $customText);
             } else {
                 $bi2 = 3;
                 $builtInTextH = imagefontheight($bi2);
