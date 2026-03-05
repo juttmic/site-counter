@@ -387,10 +387,18 @@ class TimerGifGenerator
         [$br, $bg, $bb] = $this->hexToRgb($skin['background'] ?? '#000000');
         [$tr, $tg, $tb] = $this->hexToRgb($skin['textColor'] ?? '#FFFFFF');
         [$ar, $ag, $ab] = $this->hexToRgb($skin['accentColor'] ?? '#FFCC00');
-        $font = $skin['fontPath'] ?? '';
+        $font = (string) ($skin['fontPath'] ?? '');
         $fontSize = (int) ($skin['fontSize'] ?? 36);
-        // Optional overrides: custom font and custom font size for the custom text
-        $customFont = $this->resolveCustomTextFont($skin, (string) $font);
+        // Optional global font override: apply selected font to all timer text (digits, labels, custom text)
+        if (!empty($skin['customTextFont'])) {
+            $resolved = $this->resolveCustomTextFont($skin, $font);
+            if (is_file($resolved)) {
+                $font = $resolved;
+                $skin['fontPath'] = $resolved;
+                // Many renderers use numberFontPath when present; mirror the override there too
+                $skin['numberFontPath'] = $resolved;
+            }
+        }
 
         // Render timer into off-screen surface
         $timerIm = imagecreatetruecolor($timerW, $timerH);
@@ -484,8 +492,8 @@ class TimerGifGenerator
         $textAscent = 0; // Height from baseline to top of text
         $textDescent = 0; // Height below baseline
         if ($hasText) {
-            if (is_file($customFont)) {
-                $box = imagettfbbox($textSize, 0, $customFont, $customText);
+            if (is_file($font)) {
+                $box = imagettfbbox($textSize, 0, $font, $customText);
                 $xCoords = [$box[0], $box[2], $box[4], $box[6]];
                 $yCoords = [$box[1], $box[3], $box[5], $box[7]];
                 $textW = (int) (max($xCoords) - min($xCoords));
@@ -1260,7 +1268,7 @@ class TimerGifGenerator
         $timerW = max(120, (int) ($skin['width'] ?? 400));
         $timerH = max(80, (int) ($skin['height'] ?? 160));
         $padX = 10;
-        $font = $skin['fontPath'];
+        $font = (string) ($skin['fontPath'] ?? '');
         $fontSize = (int) ($skin['fontSize'] ?? 36);
         $msg = (string) ($skin['finalMessage'] ?? "Time's Up");
         $requestedW = isset($skin['outputWidth']) ? (int) $skin['outputWidth'] : null;
@@ -1273,11 +1281,9 @@ class TimerGifGenerator
         $textW = 0; $textH = 0; $textAscent = 0; $textDescent = 0;
         $customTextSize = isset($skin['customTextFontSize']) ? (int) $skin['customTextFontSize'] : null;
         $textSize = max(12, (int) ($customTextSize ?: round($fontSize * 0.5)));
-        // Optional override: use a different font for custom text if provided
-        $customFont = $this->resolveCustomTextFont($skin, (string) $font);
         if ($hasText) {
-            if (is_file($customFont)) {
-                $box = imagettfbbox($textSize, 0, $customFont, $customText);
+            if (is_file($font)) {
+                $box = imagettfbbox($textSize, 0, $font, $customText);
                 $xCoords = [$box[0], $box[2], $box[4], $box[6]];
                 $yCoords = [$box[1], $box[3], $box[5], $box[7]];
                 $textW = (int) (max($xCoords) - min($xCoords));

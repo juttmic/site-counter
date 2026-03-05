@@ -568,7 +568,18 @@
                                 {{-- Per-skin visibility toggles (e.g., show Days / Seconds) --}}
                                 <div id="visibility_toggles_row" class="mt-2"></div>
 
-                                
+                                {{-- Global font override for all timer text (digits, labels, custom text) --}}
+                                @php
+                                    $overrides = ($isEdit && isset($timer) && is_array($timer->skin_overrides ?? null)) ? $timer->skin_overrides : [];
+                                    $customTextFont = old('customTextFont', $overrides['customTextFont'] ?? '');
+                                @endphp
+                                <div class="mt-2">
+                                    <label class="form-label small mb-1">Font</label>
+                                    <select name="customTextFont" id="customTextFont" class="form-select form-select-sm" data-saved-value="{{ $customTextFont ?? '' }}">
+                                        <option value="">Default</option>
+                                        {{-- Populated via JS from /api/fonts --}}
+                                    </select>
+                                </div>
 
                                 <div class="mt-3 d-none">
                                     <label class="form-label">Selected Skin</label>
@@ -594,20 +605,11 @@
                                     <input type="text" name="custom_text" class="form-control" maxlength="255" value="{{ old('custom_text', $timer->custom_text ?? '') }}">
                                   </div>
                                   @php
-                                      $overrides = ($isEdit && isset($timer) && is_array($timer->skin_overrides ?? null)) ? $timer->skin_overrides : [];
-                                      $customTextFont = old('customTextFont', $overrides['customTextFont'] ?? '');
                                       $customTextFontSize = old('customTextFontSize', $overrides['customTextFontSize'] ?? '');
                                       $legacyMargin = $overrides['customTextMarginTop'] ?? 0;
                                       $distanceValue = old('customTextDistance', $overrides['customTextDistance'] ?? $legacyMargin ?? 0);
                                   @endphp
-                                  <div class="col-12 col-sm-6">
-                                    <label class="form-label small mb-1">Font</label>
-                                    <select name="customTextFont" id="customTextFont" class="form-select form-select-sm" data-saved-value="{{ $customTextFont ?? '' }}">
-                                        <option value="">Default</option>
-                                        {{-- Populated via JS from /api/fonts --}}
-                                    </select>
-                                  </div>
-                                  
+
                                     <div class="col-12 col-sm-6">
                                         <label class="form-label small mb-1">Position</label>
                                         <select name="text_position" class="form-select">
