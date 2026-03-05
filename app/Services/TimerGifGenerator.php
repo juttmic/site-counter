@@ -123,7 +123,7 @@ class TimerGifGenerator
         $showFinalMessage = (bool) ($skin['show_final_message'] ?? false);
         
         if ($showFinalMessage) {
-            if ($remaining <= 5) {
+            if ($remaining <= 35) {
                 // Remaining time is 5s or less: only render the final screen as a static GIF
                 $framePng = $this->renderFinalFrame($skin, $timer->custom_text, $timer->text_position ?? 'none');
                 $this->encodeAnimatedGif([$framePng], $targetPath, 1);
