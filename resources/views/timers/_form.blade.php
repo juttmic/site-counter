@@ -479,7 +479,7 @@
                 <div class="col-12">
                     <div class="card">
                         <div class="card-body">
-                            <label class="form-label d-block mb-2">Choose a Skin</label>
+                            <label class="form-label d-block mb-2">Select a Template</label>
                             <input type="hidden" name="skin" id="skin_key" value="{{ $isEdit ? $timer->skin : '' }}" />
                             <div class="position-relative" style="min-height: 120px;">
                                 <div class="overflow-hidden">
@@ -528,13 +528,13 @@
                                 </div>
 
                                 <div class="row g-3 mt-1">
-                                    <label class="form-label">Counter Expiry</label>
+                                    <label class="form-label">Counter Expires</label>
                                     <div class="col-12 col-lg-6 type-pill type-toggle" style="
     display: flex;
     flex-direction: column;
     align-items: center;">
                                         <div class="toggle-pill-group" data-toggle-select="timer_type">
-                                            <button type="button" class="toggle-pill" data-value="fixed_date">Ends</button>
+                                            <button type="button" class="toggle-pill" data-value="fixed_date">On Date</button>
                                             <button type="button" class="toggle-pill" data-value="reload_based">EverGreen</button>
                                         </div>
                                         <select name="timer_type" id="timer_type" class="form-select d-none" aria-hidden="true" onchange="toggleInputs(false)">
@@ -553,14 +553,14 @@
                                     <input type="datetime-local" name="target_datetime" class="form-control"
                                            min="{{ now()->format('Y-m-d\\TH:i') }}"
                                            value="{{ old('target_datetime', $isEdit && $timer->target_datetime ? $timer->target_datetime->format('Y-m-d\\TH:i') : ($isEdit ? '' : now()->addDays(3)->format('Y-m-d\\TH:i'))) }}">
-                                           <div class="form-text small">Select the date and time when the counter stops.</div>
+                                           <div class="form-text small">Select the (UTC) date and time when the counter stops.</div>
                                 </div>
 
                                 <div id="duration_input" class="{{ ($isEdit && $timer->timer_type !== 'reload_based') || !$isEdit ? 'd-none' : '' }}">
                                     {{-- <label class="form-label">Duration (seconds)</label> --}}
                                     <input type="number" name="duration_seconds" class="form-control" min="1" max="604800"
                                            value="{{ old('duration_seconds', $timer->duration_seconds ?? '') }}">
-                                           <div class="form-text small">Enter how long the counter runs before restarting e.g. Enter 120 for 2 minutes.</div>
+                                           <div class="form-text small">Enter how long the counter runs before restarting<br>e.g. Enter 120 for 2 minutes.</div>
                                 </div>
                                     </div>
                                 </div>
@@ -581,23 +581,24 @@
                         <!-- TEXT ( optional ) -->
                         <div class="card">
                             <div class="card-header d-flex justify-content-between align-items-center py-2 collapsible-header" data-target="#text_optional_body">
-                                <span class="fw-semibold small text-uppercase text-muted">TEXT ( <span class="text-lowercase">optional</span> )</span>
+                                <span class="fw-semibold small text-uppercase text-muted">HEADING ( <span class="text-lowercase">optional</span> )</span>
                                 <i class="bi bi-chevron-down collapse-icon"></i>
                             </div>
                             <div class="card-body collapsible-body" id="text_optional_body">
                                 <div class="row g-3">
+                                  <div class="col-12 col-sm-6">
+                                    <label class="form-label small mb-1">Custom Text</label>
+                                    <input type="text" name="custom_text" class="form-control" maxlength="255" value="{{ old('custom_text', $timer->custom_text ?? '') }}">
+                                </div>
                                     <div class="col-12 col-sm-6">
-                                        <label class="form-label small mb-1">Text Position</label>
+                                        <label class="form-label small mb-1">Position</label>
                                         <select name="text_position" class="form-select">
                                             <option value="none" {{ ($isEdit && $timer->text_position === 'none') || !$isEdit ? 'selected' : '' }}>None</option>
                                             <option value="top" {{ $isEdit && $timer->text_position === 'top' ? 'selected' : '' }}>Top</option>
                                             <option value="bottom" {{ $isEdit && $timer->text_position === 'bottom' ? 'selected' : '' }}>Bottom</option>
                                         </select>
                                     </div>
-                                    <div class="col-12 col-sm-6">
-                                        <label class="form-label small mb-1">Custom Text</label>
-                                        <input type="text" name="custom_text" class="form-control" maxlength="255" value="{{ old('custom_text', $timer->custom_text ?? '') }}">
-                                    </div>
+                                    
                                     <div class="col-12 col-sm-6">
                                         @php
                                             $customTextColor = old(
@@ -607,7 +608,7 @@
                                                     : '#000000'
                                             );
                                         @endphp
-                                        <label class="form-label small mb-1">Custom Text Color</label>
+                                        <label class="form-label small mb-1">Text Color</label>
                                         <div class="modern-color-picker">
                                             <div class="color-picker-swatch" style="--swatch-color: {{ $customTextColor }};"></div>
                                             <div class="color-picker-input-wrapper">
@@ -625,7 +626,7 @@
                                             $legacyMargin = $overrides['customTextMarginTop'] ?? 0;
                                             $distanceValue = old('customTextDistance', $overrides['customTextDistance'] ?? $legacyMargin ?? 0);
                                         @endphp
-                                        <label class="form-label small mb-1">Distance from Counter</label>
+                                        <label class="form-label small mb-1">Padding</label>
                                         <input type="number" name="customTextDistance" class="form-control form-control-sm" min="0" max="400" step="1" value="{{ $distanceValue }}">
                                         <div class="form-text small">Space between the custom text and the counter.</div>
                                     </div>
