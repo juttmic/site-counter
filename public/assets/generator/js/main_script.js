@@ -1653,6 +1653,17 @@ async function selectSkin(key) {
       appliedFormDefaults = {};
     }
     
+    // In edit mode when switching skin, make the form's "server" width reflect the new skin's
+    // default so the Timer Width field (and any logic using dataset.timerWidth) uses the new
+    // dimensions instead of the old timer's saved width.
+    if (isEdit && isSwitchingToDifferentSkin && meta?.defaults) {
+      const defW = meta.defaults.outputWidth ?? meta.defaults.width;
+      if (defW !== undefined && defW !== null && defW !== '') {
+        form.dataset.timerOutputWidth = String(defW);
+        form.dataset.timerWidth = String(defW);
+      }
+    }
+    
     // When changing skin, apply the latest user overrides (carry settings across skins)
     renderFields(meta, baseOverrides);
     
@@ -1671,8 +1682,17 @@ async function selectSkin(key) {
       prevEl.src = meta.preview_url;
       prevEl.classList.remove('d-none');
     }
-    // Generate preview frame after skin change
-    generatePreviewFrame();
+    // When switching skin (especially in edit mode), sync overrides from the newly rendered
+    // form so the hidden skin_overrides input has the new skin's dimensions. Otherwise the
+    // preview request would still send the old dimensions and the new skin preview would
+    // not be fully visible.
+    if (isSwitchingToDifferentSkin) {
+      setTimeout(() => {
+        syncOverrides();
+      }, 100);
+    } else {
+      generatePreviewFrame();
+    }
   } catch (e) {
     console.error(e);
   }

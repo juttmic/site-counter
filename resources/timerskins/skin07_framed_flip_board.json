@@ -115,7 +115,7 @@
       { "key": "hingeHeight", "label": "Hinge Height", "type": "number", "min": 0, "max": 40, "step": 1, "group": "Layout", "order": 5 },
       { "key": "basePlateHeight", "label": "Base Plate Height", "type": "number", "min": 0, "max": 40, "step": 1, "group": "Layout", "order": 6 },
   
-      { "key": "showLabelDots", "label": "Show Label Dots", "type": "boolean", "group": "Visibility", "groupOrder": 4, "order": 1 },
+      
       { "key": "showDays", "label": "Show Days", "type": "boolean", "group": "Visibility", "order": 2 },
       { "key": "showSeconds", "label": "Show Seconds", "type": "boolean", "group": "Visibility", "order": 3 },
   
