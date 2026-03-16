@@ -60,15 +60,20 @@ class FramedFlipBoardRenderer implements SkinRendererInterface
 
         $labelFontSize = (int) ($skin['labelFontSize'] ?? 11);
         $labelGap = (int) ($skin['labelGap'] ?? 10);
-        $bottomRegionH = $labelFontSize + $labelGap;
-        $topPad = 8;
         $tileGap = max(4, (int) round($innerW * 0.015));
         $tileWidth = (int) (($innerW - ($segments - 1) * $tileGap) / $segments);
-        $availableHeight = (int) ($innerH - $topPad - $bottomRegionH);
+        $availableHeight = (int) ($innerH * 0.8);
         $rawHeight = min($availableHeight, (int) ($tileWidth * 0.85));
         $tileHeight = (int) ($rawHeight * 0.8);
         $tileGap = max(4, (int) (($innerW - $segments * $tileWidth) / max(1, $segments - 1)));
-        $tileY = $innerY + $topPad;
+
+        // Match the vertical layout used in renderTimeText so that
+        // distance from canvas top to tiles and from labels to bottom is equal.
+        $approxLabelHeight = max($labelFontSize, (int) round($labelFontSize * 1.1));
+        $totalBlockHeight = $tileHeight + $labelGap + $approxLabelHeight;
+        $topMargin = max(4, (int) floor(($height - $totalBlockHeight) / 2));
+
+        $tileY = $topMargin;
         $startX = (int) ($innerX + ($innerW - ($segments * $tileWidth + ($segments - 1) * $tileGap)) / 2);
 
         // No outer frame: just draw the tiles and their shadows directly.
@@ -201,21 +206,23 @@ class FramedFlipBoardRenderer implements SkinRendererInterface
         $innerH = $frameH - 2 * $framePadding;
 
         $labelGap = (int) ($skin['labelGap'] ?? 10);
-        $topPad = 8;
-        $bottomRegionH = $labelFontSize + $labelGap;
         $tileGap = max(4, (int) round($innerW * 0.015));
         $tileWidth = (int) (($innerW - ($segments - 1) * $tileGap) / $segments);
-        $availableHeight = (int) ($innerH - $topPad - $bottomRegionH);
+        $availableHeight = (int) ($innerH * 0.8);
         $rawHeight = min($availableHeight, (int) ($tileWidth * 0.85));
         $tileHeight = (int) ($rawHeight * 0.8);
         $tileGap = max(4, (int) (($innerW - $segments * $tileWidth) / max(1, $segments - 1)));
-        $tileY = $innerY + $topPad;
+
+        // Compute a layout where the distance from the canvas top to the tiles
+        // and from the bottom of the labels to the canvas bottom are the same.
+        $approxLabelHeight = max($labelFontSize, (int) round($labelFontSize * 1.1));
+        $totalBlockHeight = $tileHeight + $labelGap + $approxLabelHeight;
+        $topMargin = max(4, (int) floor(($height - $totalBlockHeight) / 2));
+
+        $tileY = $topMargin;
         $startX = (int) ($innerX + ($innerW - ($segments * $tileWidth + ($segments - 1) * $tileGap)) / 2);
 
         $fontSize = (int) max(18, min(42, (int) round($tileHeight * 0.52)));
-
-        $numberCenterY = $tileY + $tileHeight / 2;
-        $labelCenterY = $tileY + $tileHeight + $labelGap + $labelFontSize / 2;
 
         $numberFont = $this->resolveNumberFont($skin);
 
@@ -228,12 +235,28 @@ class FramedFlipBoardRenderer implements SkinRendererInterface
                 $label = $units[$i]['label'];
                 $isDays = ($label === 'DAYS');
                 $numberText = $isDays ? (string) $value : sprintf('%02d', $value);
+
+                // Label metrics for precise centering in its allocated region
+                $labBox = imagettfbbox($labelFontSize, 0, $font, $label) ?: [0,0,0,0,0,0,0,0];
+                $labMinY = min($labBox[1], $labBox[3], $labBox[5], $labBox[7]);
+                $labMaxY = max($labBox[1], $labBox[3], $labBox[5], $labBox[7]);
+                $labHeight = $labMaxY - $labMinY;
+                $labCenterOffset = ($labBox[1] + $labBox[7]) / 2.0;
+
+                // Number centered within the tile
+                $numberCenterY = $tileY + $tileHeight / 2.0;
+                $numCenterOffset = $this->textVerticalCenterOffset($numberText, $numberFont, $fontSize);
+                $numberBaseline = (int) round($numberCenterY - $numCenterOffset);
+
+                // Label centered within its own box just below the tile
+                $labelRegionTop = $tileY + $tileHeight + $labelGap;
+                $labelRegionCenterY = $labelRegionTop + $approxLabelHeight / 2.0;
+                $labelBaseline = (int) round($labelRegionCenterY - $labCenterOffset);
+
                 $numberWidth = $this->textBoxWidth($numberText, $numberFont, $fontSize);
-                $numberBaseline = (int) round($numberCenterY - $this->textVerticalCenterOffset($numberText, $numberFont, $fontSize));
                 imagettftext($im, $fontSize, 0, (int) ($centerX - $numberWidth / 2), $numberBaseline, $textCol, $numberFont, $numberText);
 
                 $labelWidth = $this->textBoxWidth($label, $font, $labelFontSize);
-                $labelBaseline = (int) round($labelCenterY - $this->textVerticalCenterOffset($label, $font, $labelFontSize));
                 imagettftext($im, $labelFontSize, 0, (int) ($centerX - $labelWidth / 2), $labelBaseline, $labelCol, $font, $label);
             }
         } else {
