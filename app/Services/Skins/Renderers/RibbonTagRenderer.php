@@ -62,20 +62,40 @@ class RibbonTagRenderer implements SkinRendererInterface
             for ($i = 0; $i < $segments; $i++) {
                 $x = $gap + $i * ($unitWidth + $gap);
                 $cx = (int) ($x + ($unitWidth - 12) / 2);
-                $cy = (int) ($y + $tagH / 2);
 
-                $num = sprintf('%02d', $units[$i]['value']);
-                $nW = $this->textBoxWidth($num, $font, $fontSize);
-                // Shift number slightly below geometric center
-                $numBaseline = (int) round($cy + $fontSize * 0.10);
-                imagettftext($im, $fontSize, 0, (int)($cx - $nW / 2), $numBaseline, $textCol, $font, $num);
+                // Compute combined block (number + gap + label) height and
+                // center that entire block vertically within the ribbon tag.
+                $numText = sprintf('%02d', $units[$i]['value']);
+                $labText = $units[$i]['label'];
 
-                $lab = $units[$i]['label'];
-                $lW = $this->textBoxWidth($lab, $font, $labelSize);
-                // Keep label below the number, but move it up slightly so
-                // the combined number+label block is vertically centered
-                $labelBaseline = (int) round($cy + $fontSize * 0.65);
-                imagettftext($im, $labelSize, 0, (int)($cx - $lW / 2), $labelBaseline, $textCol, $font, $lab);
+                $numBox = imagettfbbox($fontSize, 0, $font, $numText) ?: [0,0,0,0,0,0,0,0];
+                $labBox = imagettfbbox($labelSize, 0, $font, $labText) ?: [0,0,0,0,0,0,0,0];
+
+                $numMinY = min($numBox[1], $numBox[3], $numBox[5], $numBox[7]);
+                $numMaxY = max($numBox[1], $numBox[3], $numBox[5], $numBox[7]);
+                $numHeight = $numMaxY - $numMinY;
+                $numCenterOffset = ($numBox[1] + $numBox[7]) / 2.0;
+
+                $labMinY = min($labBox[1], $labBox[3], $labBox[5], $labBox[7]);
+                $labMaxY = max($labBox[1], $labBox[3], $labBox[5], $labBox[7]);
+                $labHeight = $labMaxY - $labMinY;
+                $labCenterOffset = ($labBox[1] + $labBox[7]) / 2.0;
+
+                $gapBetween = max(4, (int) round($fontSize * 0.25));
+                $blockHeight = $numHeight + $gapBetween + $labHeight;
+
+                $blockTop = $y + (int) round(($tagH - $blockHeight) / 2);
+                $numCenterY = $blockTop + $numHeight / 2.0;
+                $labCenterY = $numCenterY + $numHeight / 2.0 + $gapBetween + $labHeight / 2.0;
+
+                $numBaseline = (int) round($numCenterY - $numCenterOffset);
+                $labBaseline = (int) round($labCenterY - $labCenterOffset);
+
+                $numWidth = $this->textBoxWidth($numText, $font, $fontSize);
+                imagettftext($im, $fontSize, 0, (int) ($cx - $numWidth / 2), $numBaseline, $textCol, $font, $numText);
+
+                $labWidth = $this->textBoxWidth($labText, $font, $labelSize);
+                imagettftext($im, $labelSize, 0, (int) ($cx - $labWidth / 2), $labBaseline, $textCol, $font, $labText);
             }
         } else {
             $built = 5;
