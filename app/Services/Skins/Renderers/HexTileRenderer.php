@@ -37,21 +37,21 @@ class HexTileRenderer implements SkinRendererInterface
         // Thin red rectangular border color for each hex tile
         $borderColor = imagecolorallocate($im, 219, 0, 0);
 
-        // for ($i = 0; $i < $segments; $i++) {
-        //     $centerX = $gap + $radius + $i * ($diameter + $gap);
-        //     $centerY = $tileY + $radius;
-        //     $points = $this->regularHexagonPoints($centerX, $centerY, $radius);
+        for ($i = 0; $i < $segments; $i++) {
+            $centerX = $gap + $radius + $i * ($diameter + $gap);
+            $centerY = $tileY + $radius;
+            $points = $this->regularHexagonPoints($centerX, $centerY, $radius);
 
-        //     // Filled hex tile
-        //     imagefilledpolygon($im, $points, 6, $accentCol);
+            // Filled hex tile
+            imagefilledpolygon($im, $points, 6, $accentCol);
 
-        //     // Thin red rectangular border around the hex tile
-        //     $leftX = $centerX - $radius;
-        //     $rightX = $centerX + $radius;
-        //     $topY = $tileY;
-        //     $bottomY = $tileY + 2 * $radius;
-        //     imagerectangle($im, $leftX, $topY, $rightX, $bottomY, $borderColor);
-        // }
+            // Thin red rectangular border around the hex tile
+            // $leftX = $centerX - $radius;
+            // $rightX = $centerX + $radius;
+            // $topY = $tileY;
+            // $bottomY = $tileY + 2 * $radius;
+            // imagerectangle($im, $leftX, $topY, $rightX, $bottomY, $borderColor);
+        }
     }
 
     public function renderTimeText($im, int $secondsRemaining, array $skin, int $width, int $height, int $textCol, int $accentCol): bool
