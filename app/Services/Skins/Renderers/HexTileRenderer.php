@@ -19,14 +19,16 @@ class HexTileRenderer implements SkinRendererInterface
         $gap = max(6, (int) round($width * 0.012));
         $unitWidth = (int) floor(($width - ($segments + 1) * $gap) / $segments);
 
-        // Compute a regular flat-topped hexagon: height = sqrt(3)/2 * width
-        $hexWidth = min($unitWidth, $height - 2 * $gap);
-        $hexHeight = (int) round($hexWidth * sqrt(3) / 2);
+        // Compute a regular pointy-topped hexagon using a single radius.
+        $maxSize = min($unitWidth, $height - 2 * $gap);
+        $radius = (int) floor($maxSize / 2);
+        $hexHeight = $radius * 2;
         $tileY = (int) (($height - $hexHeight) / 2);
 
         for ($i = 0; $i < $segments; $i++) {
-            $tileX = $gap + $i * ($unitWidth + $gap) + (int) floor(($unitWidth - $hexWidth) / 2);
-            $points = $this->regularHexagonPoints($tileX, $tileY, $hexWidth, $hexHeight);
+            $centerX = $gap + $i * ($unitWidth + $gap) + (int) floor($unitWidth / 2);
+            $centerY = $tileY + $radius;
+            $points = $this->regularHexagonPoints($centerX, $centerY, $radius);
             imagefilledpolygon($im, $points, 6, $accentCol);
         }
     }
@@ -51,8 +53,9 @@ class HexTileRenderer implements SkinRendererInterface
         $gap = max(6, (int) round($width * 0.012));
         $unitWidth = (int) floor(($width - ($segments + 1) * $gap) / $segments);
 
-        $hexWidth = min($unitWidth, $height - 2 * $gap);
-        $hexHeight = (int) round($hexWidth * sqrt(3) / 2);
+        $maxSize = min($unitWidth, $height - 2 * $gap);
+        $radius = (int) floor($maxSize / 2);
+        $hexHeight = $radius * 2;
         $tileY = (int) (($height - $hexHeight) / 2);
 
         // Gap factor to control distance between number and label
@@ -60,9 +63,8 @@ class HexTileRenderer implements SkinRendererInterface
 
         if (is_file($font)) {
             for ($i = 0; $i < $segments; $i++) {
-                $tileX = $gap + $i * ($unitWidth + $gap) + (int) floor(($unitWidth - $hexWidth) / 2);
-                $centerX = (int) ($tileX + $hexWidth / 2);
-                $centerY = (int) ($tileY + $hexHeight / 2);
+                $centerX = $gap + $i * ($unitWidth + $gap) + (int) floor($unitWidth / 2);
+                $centerY = $tileY + $radius;
 
                 $numberText = sprintf('%02d', $units[$i]['value']);
                 $labelText = $units[$i]['label'];
@@ -118,9 +120,8 @@ class HexTileRenderer implements SkinRendererInterface
             $numberFontId = 5;
             $labelFontId = 3;
             for ($i = 0; $i < $segments; $i++) {
-                $tileX = $gap + $i * ($unitWidth + $gap) + (int) floor(($unitWidth - $hexWidth) / 2);
-                $centerX = (int) ($tileX + $hexWidth / 2);
-                $centerY = (int) ($tileY + $hexHeight / 2);
+                $centerX = $gap + $i * ($unitWidth + $gap) + (int) floor($unitWidth / 2);
+                $centerY = $tileY + $radius;
 
                 $numberText = sprintf('%02d', $units[$i]['value']);
                 $labelText = $units[$i]['label'];
@@ -160,34 +161,18 @@ class HexTileRenderer implements SkinRendererInterface
         return true;
     }
 
-    private function regularHexagonPoints(int $x, int $y, int $width, int $height): array
+    private function regularHexagonPoints(int $centerX, int $centerY, int $radius): array
     {
-        // Flat-topped regular hexagon centered in the given width/height box.
-        $radiusX = $width / 2;
-        $radiusY = $height / 2;
-        $centerX = $x + $radiusX;
-        $centerY = $y + $radiusY;
-
         $points = [];
-
-        // Right
-        $points[] = (int) round($centerX + $radiusX);
-        $points[] = (int) round($centerY);
-        // Top-right
-        $points[] = (int) round($centerX + $radiusX / 2);
-        $points[] = (int) round($centerY - $radiusY);
-        // Top-left
-        $points[] = (int) round($centerX - $radiusX / 2);
-        $points[] = (int) round($centerY - $radiusY);
-        // Left
-        $points[] = (int) round($centerX - $radiusX);
-        $points[] = (int) round($centerY);
-        // Bottom-left
-        $points[] = (int) round($centerX - $radiusX / 2);
-        $points[] = (int) round($centerY + $radiusY);
-        // Bottom-right
-        $points[] = (int) round($centerX + $radiusX / 2);
-        $points[] = (int) round($centerY + $radiusY);
+        // Pointy-topped regular hexagon: one vertex at top, one at bottom,
+        // vertical corners at left and right. All six sides share the same radius.
+        for ($i = 0; $i < 6; $i++) {
+            $angle = deg2rad(60 * $i - 90);
+            $x = $centerX + $radius * cos($angle);
+            $y = $centerY + $radius * sin($angle);
+            $points[] = (int) round($x);
+            $points[] = (int) round($y);
+        }
 
         return $points;
     }
