@@ -63,25 +63,37 @@ class RibbonTagRenderer implements SkinRendererInterface
                 $x = $gap + $i * ($unitWidth + $gap);
                 $cx = (int) ($x + ($unitWidth - 12) / 2);
                 $cy = (int) ($y + $tagH / 2);
+
                 $num = sprintf('%02d', $units[$i]['value']);
                 $nW = $this->textBoxWidth($num, $font, $fontSize);
-                imagettftext($im, $fontSize, 0, (int)($cx - $nW / 2), (int)($cy - 4), $textCol, $font, $num);
+                // Shift number slightly below geometric center
+                $numBaseline = (int) round($cy + $fontSize * 0.10);
+                imagettftext($im, $fontSize, 0, (int)($cx - $nW / 2), $numBaseline, $textCol, $font, $num);
+
                 $lab = $units[$i]['label'];
                 $lW = $this->textBoxWidth($lab, $font, $labelSize);
-                imagettftext($im, $labelSize, 0, (int)($cx - $lW / 2), (int)($cy + (int) round($fontSize * 0.9)), $textCol, $font, $lab);
+                // Keep label below the number, but move it up slightly so
+                // the combined number+label block is vertically centered
+                $labelBaseline = (int) round($cy + $fontSize * 0.65);
+                imagettftext($im, $labelSize, 0, (int)($cx - $lW / 2), $labelBaseline, $textCol, $font, $lab);
             }
         } else {
-            $built=5;$lbl=3;
-            for ($i=0;$i<$segments;$i++) {
+            $built = 5;
+            $lbl = 3;
+            for ($i = 0; $i < $segments; $i++) {
                 $x = $gap + $i * ($unitWidth + $gap);
-                $cx=(int)($x + ($unitWidth-12)/2);
-                $cy=(int)($y + $tagH/2);
-                $num=sprintf('%02d',$units[$i]['value']);
-                $nW=imagefontwidth($built)*strlen($num);
-                imagestring($im,$built,(int)($cx-$nW/2),(int)($cy-8),$num,$textCol);
-                $lab=$units[$i]['label'];
-                $lW=imagefontwidth($lbl)*strlen($lab);
-                imagestring($im,$lbl,(int)($cx-$lW/2),(int)($cy+10),$lab,$textCol);
+                $cx = (int) ($x + ($unitWidth - 12) / 2);
+                $cy = (int) ($y + $tagH / 2);
+
+                $num = sprintf('%02d', $units[$i]['value']);
+                $nW = imagefontwidth($built) * strlen($num);
+                $numY = (int) round($cy - imagefontheight($built) * 0.8);
+                imagestring($im, $built, (int) ($cx - $nW / 2), $numY, $num, $textCol);
+
+                $lab = $units[$i]['label'];
+                $lW = imagefontwidth($lbl) * strlen($lab);
+                $labelY = (int) round($cy + imagefontheight($lbl) * 0.4);
+                imagestring($im, $lbl, (int) ($cx - $lW / 2), $labelY, $lab, $textCol);
             }
         }
 
