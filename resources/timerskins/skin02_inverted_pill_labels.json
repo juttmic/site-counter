@@ -62,7 +62,7 @@
   "formDefaults": {
         "background": "#FFFFFF",
         "textColor": "#FFFFFF",
-        "tileColor": "#DB0000"
+        "tileColor": "#2F7A8A"
     },
   "fields": [
     { "key": "width", "label": "Width", "type": "number", "min": 100, "max": 2000, "step": 10, "group": "Dimensions", "groupOrder": 2, "order": 2 },

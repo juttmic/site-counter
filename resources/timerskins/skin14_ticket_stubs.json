@@ -33,7 +33,7 @@
   "formDefaults": {
         "background": "#FFFFFF",
         "textColor": "#FFFFFF",
-        "accentColor": "#DB0000"
+        "accentColor": "#F59E0B"
     },
   "fields": [
     { "key": "width", "label": "Width", "type": "number", "min": 100, "max": 2000, "step": 10, "group": "Dimensions", "groupOrder": 2, "order": 2 },

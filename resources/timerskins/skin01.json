@@ -59,7 +59,7 @@
 
     "formDefaults": {
         "background": "#FFFFFF",
-        "textColor": "#DB0000"
+        "textColor": "#000000"
     },
     "fields": [
         {
