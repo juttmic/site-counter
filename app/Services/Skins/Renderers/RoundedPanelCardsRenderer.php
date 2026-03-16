@@ -117,7 +117,10 @@ class RoundedPanelCardsRenderer implements SkinRendererInterface
         }
 
         $numberCenterY = $layout['cardY'] + $layout['boxPadY'] + $layout['boxH'] / 2;
-        $labelY = $layout['cardY'] + $layout['boxPadY'] + $layout['boxH'] + 30; //label y margin
+        // Place labels using a proportional gap so the combined
+        // number + label block is vertically centered within the card.
+        $labelGap = (int) round($layout['cardHeight'] * 0.16);
+        $labelY = $layout['cardY'] + $layout['boxPadY'] + $layout['boxH'] + $labelGap;
 
         if (is_file($font)) {
             for ($i = 0; $i < $segments; $i++) {
@@ -180,17 +183,19 @@ class RoundedPanelCardsRenderer implements SkinRendererInterface
         $contentW = $panel['panelW'] - 2 * ($panel['borderWidth'] + $innerPad);
         $contentH = $panel['panelH'] - 2 * ($panel['borderWidth'] + $innerPad);
 
-        // Cards: medium-sized, ~72% of panel content height, balanced width
-        $cardHeight = (int) ($contentH );
+        // Cards: slightly shorter than full content height so that
+        // number boxes and labels together sit more vertically centered.
+        $cardHeight = (int) round($contentH * 0.82);
         $totalGap = ($segments - 1) * $segmentGap;
         $cardWidth = (int) (($contentW - $totalGap) / $segments)-30;
-        $cardY = $contentY + (int) (($contentH - $cardHeight) * 0.08);
+        // Center card block vertically within content area
+        $cardY = $contentY + (int) round(($contentH - $cardHeight) / 2);
 
-        // Number box: balanced padding, digits centered with top/bottom room
+        // Number box: balanced padding, leave more room below for label text
         $boxPadX = (int) round($cardWidth * 0.08);
-        $boxPadY = (int) round($cardHeight * 0.08);
+        $boxPadY = (int) round($cardHeight * 0.16);
         $boxW = $cardWidth - 2 * $boxPadX;
-        $boxH = (int) round($cardHeight * 0.55); //boxheight
+        $boxH = (int) round($cardHeight * 0.50); // box height – leave more room for labels
         $cardX = $contentX + (int) (($contentW - ($segments * $cardWidth + $totalGap)) / 2);
 
         return array_merge($panel, [
