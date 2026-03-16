@@ -79,19 +79,47 @@ class TealCircleBadgesRenderer implements SkinRendererInterface
         $gap = (int) floor($availableWidth / max(1, $segments + 1));
 
         if (is_file($font)) {
+            // Gap factor to control vertical spacing between number and label
+            $gapFactor = 0.22;
+
             for ($i = 0; $i < $segments; $i++) {
                 $unitX = $gap + $radius + $i * ($diameter + $gap);
+
                 $numberText = sprintf('%d', $units[$i]['value']);
+                $labelText = $units[$i]['label'];
+
+                // Measure number and label boxes
+                $numberBox = imagettfbbox($fontSize, 0, $font, $numberText) ?: [0, 0, 0, 0, 0, 0, 0, 0];
+                $labelBox = imagettfbbox($labelSize, 0, $font, $labelText) ?: [0, 0, 0, 0, 0, 0, 0, 0];
+
+                $numberMinY = min($numberBox[1], $numberBox[3], $numberBox[5], $numberBox[7]);
+                $numberMaxY = max($numberBox[1], $numberBox[3], $numberBox[5], $numberBox[7]);
+                $numberHeight = $numberMaxY - $numberMinY;
+                $numberCenterOffset = ($numberBox[1] + $numberBox[7]) / 2.0;
+
+                $labelMinY = min($labelBox[1], $labelBox[3], $labelBox[5], $labelBox[7]);
+                $labelMaxY = max($labelBox[1], $labelBox[3], $labelBox[5], $labelBox[7]);
+                $labelHeight = $labelMaxY - $labelMinY;
+                $labelCenterOffset = ($labelBox[1] + $labelBox[7]) / 2.0;
+
+                $gapBetween = max(3, (int) round($fontSize * $gapFactor));
+                $blockHeight = $numberHeight + $gapBetween + $labelHeight;
+
+                // Center combined number+label block vertically around centerY
+                $blockTop = $centerY - (int) round($blockHeight / 2);
+                $numberCenterY = $blockTop + $numberHeight / 2.0;
+                $labelCenterY = $numberCenterY + $numberHeight / 2.0 + $gapBetween + $labelHeight / 2.0;
+
+                $numberBaseline = (int) round($numberCenterY - $numberCenterOffset);
+                $labelBaseline = (int) round($labelCenterY - $labelCenterOffset);
+
                 $numberWidth = $this->textBoxWidth($numberText, $font, $fontSize);
                 $numberX = (int) ($unitX - $numberWidth / 2);
-                $numberY = (int) ($centerY - 6);
-                imagettftext($im, $fontSize, 0, $numberX, $numberY, $textCol, $font, $numberText);
+                imagettftext($im, $fontSize, 0, $numberX, $numberBaseline, $textCol, $font, $numberText);
 
-                $label = $units[$i]['label'];
-                $labelWidth = $this->textBoxWidth($label, $font, $labelSize);
+                $labelWidth = $this->textBoxWidth($labelText, $font, $labelSize);
                 $labelX = (int) ($unitX - $labelWidth / 2);
-                $labelY = (int) ($centerY + (int) round($fontSize * 0.9));
-                imagettftext($im, $labelSize, 0, $labelX, $labelY, $textCol, $font, $label);
+                imagettftext($im, $labelSize, 0, $labelX, $labelBaseline, $textCol, $font, $labelText);
             }
         } else {
             $builtIn = 5; // bigger
