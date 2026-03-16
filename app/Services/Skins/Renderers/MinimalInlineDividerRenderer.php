@@ -26,38 +26,41 @@ class MinimalInlineDividerRenderer implements SkinRendererInterface
         if ($showSeconds) { $units[] = 's'; }
         if (empty($units)) { $units = ['s']; }
 
-        // Horizontal spacing between sections (Days/Hours/Minutes/Seconds).
-        // Use a very small default gap so red segment borders are nearly touching.
-        $segmentGap = max(0, (int) ($skin['segmentGap'] ?? 0));
+        // Horizontal geometry: segments and separators with zero gap so that
+        // each divider touches the adjacent segment boxes on both sides.
+        $segmentGap = 0;
         $separatorWidth = max(1, (int) ($skin['separatorWidth'] ?? 2));
         $separatorHeight = max(10, (int) ($skin['separatorHeight'] ?? 86));
         $separatorCol = $this->allocColor($im, $skin['separatorColor'] ?? '#CBD3DC');
 
         $segments = count($units);
-        $totalGap = ($segments - 1) * ($segmentGap + $separatorWidth);
-        // When segmentGap is 0, segmentWidth partitions the full width so
-        // borders from adjacent segments can meet cleanly.
-        $segmentWidth = (int) floor(($width - $totalGap) / $segments);
+        $totalSeparatorWidth = ($segments - 1) * $separatorWidth;
+        $segmentWidth = (int) floor(($width - $totalSeparatorWidth) / $segments);
+        $usedWidth = $segments * $segmentWidth + $totalSeparatorWidth;
+        $leftOffset = (int) floor(($width - $usedWidth) / 2);
+
         $centerY = (int) ($height / 2);
         $sepTop = (int) ($centerY - $separatorHeight / 2);
         $sepBottom = (int) ($centerY + $separatorHeight / 2);
 
-        // Draw vertical separators between segments.
+        // Draw vertical separators between segments with zero horizontal gap
+        // to the neighboring segments.
         for ($i = 0; $i < $segments - 1; $i++) {
-            $sepX = (int) (
-                ($i + 1) * $segmentWidth
-                + ($i + 1) * $segmentGap
-                + $i * $separatorWidth
-                + $separatorWidth / 2
+            $sepLeft = $leftOffset + ($i + 1) * $segmentWidth + $i * $separatorWidth;
+            imagefilledrectangle(
+                $im,
+                $sepLeft,
+                $sepTop,
+                $sepLeft + $separatorWidth - 1,
+                $sepBottom,
+                $separatorCol
             );
-            $sepLeft = (int) ($sepX - $separatorWidth / 2);
-            imagefilledrectangle($im, $sepLeft, $sepTop, $sepLeft + $separatorWidth, $sepBottom, $separatorCol);
         }
 
         // Draw a thin red border around each segment area.
         $borderColor = imagecolorallocate($im, 219, 0, 0);
         for ($i = 0; $i < $segments; $i++) {
-            $segmentLeft = $i * ($segmentWidth + $segmentGap + $separatorWidth);
+            $segmentLeft = $leftOffset + $i * ($segmentWidth + $separatorWidth);
             $segmentRight = $segmentLeft + $segmentWidth - 1;
             $segmentTop = 0;
             $segmentBottom = $height - 1;
@@ -90,11 +93,13 @@ class MinimalInlineDividerRenderer implements SkinRendererInterface
         if (empty($units)) { $units[] = ['value' => $seconds, 'label' => 'SECONDS']; }
 
         // Match spacing with renderStyle so dividers and text align.
-        $segmentGap = max(0, (int) ($skin['segmentGap'] ?? 0));
+        $segmentGap = 0;
         $separatorWidth = max(1, (int) ($skin['separatorWidth'] ?? 2));
         $segments = count($units);
-        $totalGap = ($segments - 1) * ($segmentGap + $separatorWidth);
-        $segmentWidth = (int) floor(($width - $totalGap) / $segments);
+        $totalSeparatorWidth = ($segments - 1) * $separatorWidth;
+        $segmentWidth = (int) floor(($width - $totalSeparatorWidth) / $segments);
+        $usedWidth = $segments * $segmentWidth + $totalSeparatorWidth;
+        $leftOffset = (int) floor(($width - $usedWidth) / 2);
 
         if (is_file($font)) {
             $numberSample = '00';
@@ -110,8 +115,8 @@ class MinimalInlineDividerRenderer implements SkinRendererInterface
             $labelCenterY = $blockTop + $numberHeight + $gap + $labelHeight / 2;
 
             for ($i = 0; $i < $segments; $i++) {
-                $segX = $i * ($segmentWidth + $segmentGap + $separatorWidth);
-                $centerX = (int) ($segX + $segmentWidth / 2);
+                $segmentLeft = $leftOffset + $i * ($segmentWidth + $separatorWidth);
+                $centerX = (int) ($segmentLeft + $segmentWidth / 2);
 
                 $numberText = sprintf('%02d', $units[$i]['value']);
                 $numberWidth = $this->textBoxWidth($numberText, $font, $fontSize);
@@ -134,8 +139,8 @@ class MinimalInlineDividerRenderer implements SkinRendererInterface
             $numberY = $blockTop;
             $labelY = $blockTop + $numH + $gap;
             for ($i = 0; $i < $segments; $i++) {
-                $segX = $i * ($segmentWidth + $segmentGap + $separatorWidth);
-                $centerX = (int) ($segX + $segmentWidth / 2);
+                $segmentLeft = $leftOffset + $i * ($segmentWidth + $separatorWidth);
+                $centerX = (int) ($segmentLeft + $segmentWidth / 2);
 
                 $numberText = sprintf('%02d', $units[$i]['value']);
                 $nW = imagefontwidth($builtIn) * strlen($numberText);
