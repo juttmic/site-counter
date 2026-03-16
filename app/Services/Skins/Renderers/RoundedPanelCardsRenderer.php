@@ -37,24 +37,7 @@ class RoundedPanelCardsRenderer implements SkinRendererInterface
             return;
         }
 
-        // 1) Panel shadow (soft, diffused - draw inner then outer for layered effect)
-        $shadowCol = $this->allocColor($im, $skin['shadowColor'] ?? '#D9E3EB');
-        $shadowOffsetY = (int) ($skin['shadowOffsetY'] ?? 8);
-        $this->fillRoundedRect($im, $layout['panelX'] + 3, $layout['panelY'] + $shadowOffsetY + 2, $layout['panelW'], $layout['panelH'], $layout['panelR'], $shadowCol);
-        $this->fillRoundedRect($im, $layout['panelX'] + 2, $layout['panelY'] + $shadowOffsetY, $layout['panelW'], $layout['panelH'], $layout['panelR'], $shadowCol);
-
-        // 2) Outer panel fill
-        $panelFillCol = $bgCol;
-        $this->fillRoundedRect($im, $layout['panelX'], $layout['panelY'], $layout['panelW'], $layout['panelH'], $layout['panelR'], $panelFillCol);
-
-        // 3) Outer panel border (thin, refined - max 1px for clean look)
-        $borderWidth = max(0, min(1, (int) ($skin['borderWidth'] ?? 1)));
-        if ($borderWidth > 0) {
-            $borderCol = $this->allocColor($im, $skin['borderColor'] ?? '#D8E0E8');
-            $this->strokeRoundedRect($im, $layout['panelX'], $layout['panelY'], $layout['panelW'], $layout['panelH'], $layout['panelR'], $borderCol, $borderWidth);
-        }
-
-        // 4) Cards
+        // Cards only – no outer rounded panel/background box
         $cardBg = $this->allocColor($im, $skin['cardBackground'] ?? '#EDF1F5');
         $numberBoxBg = $this->allocColor($im, $skin['numberBoxBackground'] ?? '#FFFFFF');
         $accentBorderCol = $this->allocColor($im, (string) ($skin['numberBoxBorderColor'] ?? $skin['accentColor'] ?? '#69B7CB'));
@@ -180,17 +163,9 @@ class RoundedPanelCardsRenderer implements SkinRendererInterface
 
     private function drawPanelOnly($im, array $skin, int $width, int $height, int $bgCol): void
     {
-        $layout = $this->computePanelBounds($skin, $width, $height);
-        $shadowCol = $this->allocColor($im, $skin['shadowColor'] ?? '#D9E3EB');
-        $shadowOffsetY = (int) ($skin['shadowOffsetY'] ?? 8);
-        $this->fillRoundedRect($im, $layout['panelX'] + 3, $layout['panelY'] + $shadowOffsetY + 2, $layout['panelW'], $layout['panelH'], $layout['panelR'], $shadowCol);
-        $this->fillRoundedRect($im, $layout['panelX'] + 2, $layout['panelY'] + $shadowOffsetY, $layout['panelW'], $layout['panelH'], $layout['panelR'], $shadowCol);
-        $this->fillRoundedRect($im, $layout['panelX'], $layout['panelY'], $layout['panelW'], $layout['panelH'], $layout['panelR'], $bgCol);
-        $borderWidth = $layout['borderWidth'];
-        if ($borderWidth > 0) {
-            $borderCol = $this->allocColor($im, $skin['borderColor'] ?? '#D8E0E8');
-            $this->strokeRoundedRect($im, $layout['panelX'], $layout['panelY'], $layout['panelW'], $layout['panelH'], $layout['panelR'], $borderCol, $borderWidth);
-        }
+        // For this style we no longer render a separate rounded panel; just leave the flat background.
+        // So nothing extra to draw here beyond the already-filled canvas.
+        return;
     }
 
     private function computeLayout(array $skin, int $width, int $height, int $segments): ?array

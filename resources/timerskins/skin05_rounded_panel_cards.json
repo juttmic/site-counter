@@ -6,7 +6,7 @@
     "width": 920,
     "height": 240,
   
-    "background": "#F4F6F8",
+    "background": "#FFFFFF",
     "textColor": "#24384D",
     "accentColor": "#69B7CB",
   
@@ -30,7 +30,7 @@
     "finalBackground": null,
     "finalTextColor": null,
   
-    "borderWidth": 2,
+    "borderWidth": 0,
     "borderColor": "#D8E0E8",
   
     "panelRadius": 28,
@@ -41,8 +41,8 @@
     "cardBackground": "#EDF1F5",
     "numberBoxBackground": "#FFFFFF",
     "shadowColor": "#D9E3EB",
-    "shadowBlur": 18,
-    "shadowOffsetY": 8,
+    "shadowBlur": 0,
+    "shadowOffsetY": 0,
     "segmentGap": 22,
     "labelColor": "#3D5268",
   
@@ -94,7 +94,7 @@
     },
   
     "formDefaults": {
-      "background": "#F4F6F8",
+      "background": "#FFFFFF",
       "textColor": "#24384D",
       "accentColor": "#69B7CB"
     },
