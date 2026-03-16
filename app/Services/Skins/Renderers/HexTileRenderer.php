@@ -14,22 +14,43 @@ class HexTileRenderer implements SkinRendererInterface
         $showHours = ($skin['showHours'] ?? true) === true;
         $showMinutes = ($skin['showMinutes'] ?? true) === true;
         $showSeconds = ($skin['showSeconds'] ?? true) === true;
-        $segments = ($showDays ? 1 : 0) + ($showHours ? 1 : 0) + ($showMinutes ? 1 : 0) + ($showSeconds ? 1 : 0);
-        if ($segments < 1) { $segments = 1; }
-        $gap = max(6, (int) round($width * 0.012));
-        $unitWidth = (int) floor(($width - ($segments + 1) * $gap) / $segments);
+        $segments = ($showDays ? 1 : 0)
+            + ($showHours ? 1 : 0)
+            + ($showMinutes ? 1 : 0)
+            + ($showSeconds ? 1 : 0);
 
-        // Compute a regular pointy-topped hexagon using a single radius.
-        $maxSize = min($unitWidth, $height - 2 * $gap);
-        $radius = (int) floor($maxSize / 2);
-        $hexHeight = $radius * 2;
-        $tileY = (int) (($height - $hexHeight) / 2);
+        if ($segments < 1) {
+            $segments = 1;
+        }
+
+        // Fix hex tile size based on available height only, then derive minimal gap from width.
+        $verticalMargin = max(4, (int) round($height * 0.08));
+        $diameter = max(10, $height - 2 * $verticalMargin);
+        $radius = (int) floor($diameter / 2);
+
+        // totalWidth = segments * diameter + (segments + 1) * gap  =>  gap = (width - segments*diameter)/(segments+1)
+        $rawGap = (int) floor(($width - $segments * $diameter) / max(1, $segments + 1));
+        $gap = max(0, $rawGap);
+
+        $tileY = $verticalMargin;
+
+        // Thin red rectangular border color for each hex tile
+        $borderColor = imagecolorallocate($im, 219, 0, 0);
 
         for ($i = 0; $i < $segments; $i++) {
-            $centerX = $gap + $i * ($unitWidth + $gap) + (int) floor($unitWidth / 2);
+            $centerX = $gap + $radius + $i * ($diameter + $gap);
             $centerY = $tileY + $radius;
             $points = $this->regularHexagonPoints($centerX, $centerY, $radius);
+
+            // Filled hex tile
             imagefilledpolygon($im, $points, 6, $accentCol);
+
+            // Thin red rectangular border around the hex tile
+            $leftX = $centerX - $radius;
+            $rightX = $centerX + $radius;
+            $topY = $tileY;
+            $bottomY = $tileY + 2 * $radius;
+            imagerectangle($im, $leftX, $topY, $rightX, $bottomY, $borderColor);
         }
     }
 
@@ -50,20 +71,23 @@ class HexTileRenderer implements SkinRendererInterface
         if (empty($units)) { $units[] = ['value'=>$seconds,'label'=>'SECONDS']; }
 
         $segments = count($units);
-        $gap = max(6, (int) round($width * 0.012));
-        $unitWidth = (int) floor(($width - ($segments + 1) * $gap) / $segments);
 
-        $maxSize = min($unitWidth, $height - 2 * $gap);
-        $radius = (int) floor($maxSize / 2);
-        $hexHeight = $radius * 2;
-        $tileY = (int) (($height - $hexHeight) / 2);
+        // Match spacing and sizing with renderStyle so geometry stays consistent.
+        $verticalMargin = max(4, (int) round($height * 0.08));
+        $diameter = max(10, $height - 2 * $verticalMargin);
+        $radius = (int) floor($diameter / 2);
+
+        $rawGap = (int) floor(($width - $segments * $diameter) / max(1, $segments + 1));
+        $gap = max(0, $rawGap);
+
+        $tileY = $verticalMargin;
 
         // Gap factor to control distance between number and label
         $gapFactor = 0.55;
 
         if (is_file($font)) {
             for ($i = 0; $i < $segments; $i++) {
-                $centerX = $gap + $i * ($unitWidth + $gap) + (int) floor($unitWidth / 2);
+                $centerX = $gap + $radius + $i * ($diameter + $gap);
                 $centerY = $tileY + $radius;
 
                 $numberText = sprintf('%02d', $units[$i]['value']);
@@ -120,7 +144,7 @@ class HexTileRenderer implements SkinRendererInterface
             $numberFontId = 5;
             $labelFontId = 3;
             for ($i = 0; $i < $segments; $i++) {
-                $centerX = $gap + $i * ($unitWidth + $gap) + (int) floor($unitWidth / 2);
+                $centerX = $gap + $radius + $i * ($diameter + $gap);
                 $centerY = $tileY + $radius;
 
                 $numberText = sprintf('%02d', $units[$i]['value']);
