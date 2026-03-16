@@ -16,17 +16,27 @@ class TealCircleBadgesRenderer implements SkinRendererInterface
         $showHours = ($skin['showHours'] ?? true) === true;
         $showMinutes = ($skin['showMinutes'] ?? true) === true;
         $showSeconds = ($skin['showSeconds'] ?? true) === true;
-        $segments = ($showDays ? 1 : 0) + ($showHours ? 1 : 0) + ($showMinutes ? 1 : 0) + ($showSeconds ? 1 : 0);
+        $segments = ($showDays ? 1 : 0)
+            + ($showHours ? 1 : 0)
+            + ($showMinutes ? 1 : 0)
+            + ($showSeconds ? 1 : 0);
         if ($segments < 1) {
             $segments = 1;
         }
-        $unitWidth = $width / $segments;
+
         $centerY = (int) round($height / 2);
+        $unitWidth = $width / $segments;
         $radius = (int) round(min($unitWidth / 2.6, $height / 2.2));
+        $diameter = $radius * 2;
+
+        // Compute a tighter gap between circles while keeping radius unchanged.
+        $totalCircleWidth = $segments * $diameter;
+        $availableWidth = max(0, $width - $totalCircleWidth);
+        $gap = (int) floor($availableWidth / max(1, $segments + 1));
         $stroke = (int) max(2, (int) ($skin['circleStroke'] ?? 6));
 
         for ($i = 0; $i < $segments; $i++) {
-            $centerX = (int) round($unitWidth * $i + $unitWidth / 2);
+            $centerX = $gap + $radius + $i * ($diameter + $gap);
             // White (or bg) circle fill
             imagefilledellipse($im, $centerX, $centerY, $radius * 2, $radius * 2, imagecolorallocatealpha($im, 255, 255, 255, 0));
             // Draw border using smooth vector-style circle if Imagick available
@@ -61,9 +71,16 @@ class TealCircleBadgesRenderer implements SkinRendererInterface
         $unitWidth = $width / max(1, $segments);
         $centerY = (int) round($height / 2);
 
+        // Match circle layout from renderStyle so spacing is consistent.
+        $radius = (int) round(min($unitWidth / 2.6, $height / 2.2));
+        $diameter = $radius * 2;
+        $totalCircleWidth = $segments * $diameter;
+        $availableWidth = max(0, $width - $totalCircleWidth);
+        $gap = (int) floor($availableWidth / max(1, $segments + 1));
+
         if (is_file($font)) {
             for ($i = 0; $i < $segments; $i++) {
-                $unitX = (int) round($unitWidth * $i + $unitWidth / 2);
+                $unitX = $gap + $radius + $i * ($diameter + $gap);
                 $numberText = sprintf('%d', $units[$i]['value']);
                 $numberWidth = $this->textBoxWidth($numberText, $font, $fontSize);
                 $numberX = (int) ($unitX - $numberWidth / 2);
@@ -80,7 +97,7 @@ class TealCircleBadgesRenderer implements SkinRendererInterface
             $builtIn = 5; // bigger
             $labelBuiltIn = 3;
             for ($i = 0; $i < $segments; $i++) {
-                $unitX = (int) round($unitWidth * $i + $unitWidth / 2);
+                $unitX = $gap + $radius + $i * ($diameter + $gap);
                 $numberText = sprintf('%d', $units[$i]['value']);
                 $nW = imagefontwidth($builtIn) * strlen($numberText);
                 $nH = imagefontheight($builtIn);
