@@ -14,5 +14,3 @@ Route::get('/status', [EmpirelyController::class, 'statusCheck'])->name('status'
 
 
 Route::get('/fonts', [FontController::class, 'index'])->name('fonts.index');
-
-    
