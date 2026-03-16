@@ -8,16 +8,17 @@ class SlateRoundedBarRenderer implements SkinRendererInterface
 {
     public function renderStyle($im, array $skin, int $width, int $height, int $bgCol, int $textCol, int $accentCol, int $secondsRemaining): void
     {
-        // Single rounded bar across with vertical dividers
+        // Background already filled by caller; draw just the rounded bar with dividers
         imagefilledrectangle($im, 0, 0, $width, $height, $bgCol);
         
-        // Calculate reduced bar height (60% of canvas height) and center it vertically
+        // Calculate reduced bar height (~40% of canvas height) and center it vertically
         $barHeight = (int) round($height * 0.40);
         $barY = (int) (($height - $barHeight) / 2);
         $barPaddingX = 6;
         $barWidth = $width - (2 * $barPaddingX);
         
-        $radius = (int) max(10, round($barHeight / 2.8));
+        // Use stronger rounding for the bar corners for a pill-like look
+        $radius = (int) max(12, round($barHeight / 2.0));
         $barCol = $accentCol;
         $this->fillRoundedRect($im, $barPaddingX, $barY, $barWidth, $barHeight, $radius, $barCol);
 
@@ -59,20 +60,49 @@ class SlateRoundedBarRenderer implements SkinRendererInterface
 
         $segments = count($units);
         $unitWidth = $width / $segments;
-        // Center text within the reduced-height bar
+        // Use same bar geometry as renderStyle
         $barHeight = (int) round($height * 0.40);
         $barY = (int) (($height - $barHeight) / 2);
         $centerY = (int) ($barY + ($barHeight / 2));
 
         if (is_file($font)) {
-            for ($i=0;$i<$segments;$i++) {
+            for ($i = 0; $i < $segments; $i++) {
                 $cx = (int) ($unitWidth * $i + $unitWidth / 2);
-                $num = sprintf('%02d', $units[$i]['value']);
-                $nW = $this->textBoxWidth($num, $font, $fontSize);
-                imagettftext($im, $fontSize, 0, (int)($cx - $nW/2), (int)($centerY - 4), $textCol, $font, $num);
-                $lab = $units[$i]['label'];
-                $lW = $this->textBoxWidth($lab, $font, $labelSize);
-                imagettftext($im, $labelSize, 0, (int)($cx - $lW/2), (int)($centerY + (int) round($fontSize*0.9)), $textCol, $font, $lab);
+
+                $numText = sprintf('%02d', $units[$i]['value']);
+                $labText = $units[$i]['label'];
+
+                // Measure number and label
+                $numBox = imagettfbbox($fontSize, 0, $font, $numText) ?: [0,0,0,0,0,0,0,0];
+                $labBox = imagettfbbox($labelSize, 0, $font, $labText) ?: [0,0,0,0,0,0,0,0];
+
+                $numMinY = min($numBox[1], $numBox[3], $numBox[5], $numBox[7]);
+                $numMaxY = max($numBox[1], $numBox[3], $numBox[5], $numBox[7]);
+                $numHeight = $numMaxY - $numMinY;
+                $numCenterOffset = ($numBox[1] + $numBox[7]) / 2.0;
+
+                $labMinY = min($labBox[1], $labBox[3], $labBox[5], $labBox[7]);
+                $labMaxY = max($labBox[1], $labBox[3], $labBox[5], $labBox[7]);
+                $labHeight = $labMaxY - $labMinY;
+                $labCenterOffset = ($labBox[1] + $labBox[7]) / 2.0;
+
+                // Small gap between number and label inside the bar
+                $gapBetween = max(2, (int) round($fontSize * 0.15));
+                $blockHeight = $numHeight + $gapBetween + $labHeight;
+
+                // Center combined number+label block within the bar height
+                $blockTop = $barY + (int) round(($barHeight - $blockHeight) / 2);
+                $numCenterY = $blockTop + $numHeight / 2.0;
+                $labCenterY = $numCenterY + $numHeight / 2.0 + $gapBetween + $labHeight / 2.0;
+
+                $numBaseline = (int) round($numCenterY - $numCenterOffset);
+                $labBaseline = (int) round($labCenterY - $labCenterOffset);
+
+                $nW = $this->textBoxWidth($numText, $font, $fontSize);
+                imagettftext($im, $fontSize, 0, (int) ($cx - $nW / 2), $numBaseline, $textCol, $font, $numText);
+
+                $lW = $this->textBoxWidth($labText, $font, $labelSize);
+                imagettftext($im, $labelSize, 0, (int) ($cx - $lW / 2), $labBaseline, $textCol, $font, $labText);
             }
         } else {
             $built=5;$lbl=3;
