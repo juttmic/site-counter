@@ -27,14 +27,23 @@ class SlateRoundedBarRenderer implements SkinRendererInterface
         $showHours = ($skin['showHours'] ?? true) === true;
         $showMinutes = ($skin['showMinutes'] ?? true) === true;
         $showSeconds = ($skin['showSeconds'] ?? true) === true;
-        $segments = ($showDays ? 1 : 0) + ($showHours ? 1 : 0) + ($showMinutes ? 1 : 0) + ($showSeconds ? 1 : 0);
+        $segments = ($showDays ? 1 : 0)
+            + ($showHours ? 1 : 0)
+            + ($showMinutes ? 1 : 0)
+            + ($showSeconds ? 1 : 0);
         if ($segments < 1) {
             $segments = 1;
         }
-        $unitWidth = $width / $segments;
+
+        // Use a narrower content width inside the bar to bring segments closer.
+        $contentInset = (int) round($barWidth * 0.10);
+        $contentStartX = $barPaddingX + $contentInset;
+        $contentWidth = max(1, $barWidth - 2 * $contentInset);
+        $unitWidth = $contentWidth / $segments;
+
         $sepCol = imagecolorallocatealpha($im, 255, 255, 255, 70);
         for ($i = 1; $i < $segments; $i++) {
-            $x = (int) round($unitWidth * $i);
+            $x = (int) round($contentStartX + $unitWidth * $i);
             imageline($im, $x, $barY + 4, $x, $barY + $barHeight - 4, $sepCol);
         }
     }
@@ -59,15 +68,21 @@ class SlateRoundedBarRenderer implements SkinRendererInterface
         if (empty($units)) { $units[] = ['value'=>$seconds,'label'=>'SECONDS']; }
 
         $segments = count($units);
-        $unitWidth = $width / $segments;
-        // Use same bar geometry as renderStyle
+
+        // Use same bar geometry and inner content width as renderStyle
         $barHeight = (int) round($height * 0.40);
         $barY = (int) (($height - $barHeight) / 2);
         $centerY = (int) ($barY + ($barHeight / 2));
+        $barPaddingX = 6;
+        $barWidth = $width - (2 * $barPaddingX);
+        $contentInset = (int) round($barWidth * 0.10);
+        $contentStartX = $barPaddingX + $contentInset;
+        $contentWidth = max(1, $barWidth - 2 * $contentInset);
+        $unitWidth = $contentWidth / $segments;
 
         if (is_file($font)) {
             for ($i = 0; $i < $segments; $i++) {
-                $cx = (int) ($unitWidth * $i + $unitWidth / 2);
+                $cx = (int) ($contentStartX + $unitWidth * $i + $unitWidth / 2);
 
                 $numText = sprintf('%02d', $units[$i]['value']);
                 $labText = $units[$i]['label'];
