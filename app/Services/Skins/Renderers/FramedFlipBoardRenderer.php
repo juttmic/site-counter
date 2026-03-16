@@ -33,9 +33,9 @@ class FramedFlipBoardRenderer implements SkinRendererInterface
 
         $framePadding = max(0, (int) ($skin['framePadding'] ?? 12));
         $frameRadius = max(4, min(8, (int) ($skin['frameRadius'] ?? 6)));
-        $outerMargin = max(16, (int) round(min($width, $height) * 0.05));
+        $outerMargin = 0;
         $frameFillHex = $skin['frameFillColor'] ?? null;
-        $frameFillCol = ($frameFillHex !== null && $frameFillHex !== '') ? $this->allocColor($im, $frameFillHex) : $bgCol;
+        $frameFillCol = $bgCol;
         $tileBg = $this->allocColor($im, $skin['tileBackground'] ?? '#F5F6F8');
         $tileBorderCol = $this->allocColor($im, $skin['tileBorderColor'] ?? '#E5E7ED');
         $tileBorderWidth = max(0, (int) ($skin['tileBorderWidth'] ?? 1));
@@ -71,8 +71,7 @@ class FramedFlipBoardRenderer implements SkinRendererInterface
         $tileY = $innerY + $topPad;
         $startX = (int) ($innerX + ($innerW - ($segments * $tileWidth + ($segments - 1) * $tileGap)) / 2);
 
-        $this->fillRoundedRect($im, $frameX, $frameY, $frameW, $frameH, $frameR, $frameFillCol);
-
+        // No outer frame: just draw the tiles and their shadows directly.
         for ($i = 0; $i < $segments; $i++) {
             $tileX = $startX + $i * ($tileWidth + $tileGap);
             $this->fillRoundedRect($im, $tileX + $tileShadowOffset, $tileY + $tileShadowOffset, $tileWidth, $tileHeight, $tileRadius, $tileShadowCol);
@@ -189,7 +188,7 @@ class FramedFlipBoardRenderer implements SkinRendererInterface
         }
 
         $framePadding = max(0, (int) ($skin['framePadding'] ?? 12));
-        $outerMargin = max(16, (int) round(min($width, $height) * 0.05));
+        $outerMargin = 0;
 
         $frameX = $outerMargin;
         $frameY = $outerMargin;

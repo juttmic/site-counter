@@ -2,7 +2,7 @@
     "name": "Framed Flip Board",
     "width": 860,
     "height": 260,
-    "background": "#F7F7F9",
+    "background": "#FFFFFF",
     "textColor": "#263A4F",
     "accentColor": "#C9D4DE",
     "fontSize": 58,
@@ -20,7 +20,7 @@
     "finalBackground": null,
     "finalTextColor": null,
   
-    "borderWidth": 3,
+    "borderWidth": 0,
     "borderColor": "#D5DEE7",
   
     "frameRadius": 10,
@@ -85,7 +85,7 @@
     },
   
     "formDefaults": {
-      "background": "#F7F7F9",
+      "background": "#FFFFFF",
       "textColor": "#263A4F",
       "accentColor": "#C9D4DE"
     },
