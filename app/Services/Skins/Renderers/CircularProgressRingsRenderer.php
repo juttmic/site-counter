@@ -136,34 +136,81 @@ class CircularProgressRingsRenderer implements SkinRendererInterface
         $availableWidth = $width - 2 * $padX;
         $unitWidth = (int) floor($availableWidth / $segments);
         $centerY = (int) ($height / 2);
-        $numberY = (int) ($centerY - 1);
-        $labelY = (int) ($centerY + (int) round($fontSize * 0.6));
 
         if (is_file($font)) {
+            // Compute a vertical layout where the combined number + label block
+            // is centered within the ring. Keep a comfortable gap between them.
+            $numberSample = '00';
+            $labelSample = 'HOURS';
+            $numBox = imagettfbbox($fontSize, 0, $font, $numberSample) ?: [0, 0, 0, 0, 0, 0, 0, 0];
+            $labBox = imagettfbbox($labelFontSize, 0, $font, $labelSample) ?: [0, 0, 0, 0, 0, 0, 0, 0];
+
+            $numberHeight = (float) ($numBox[1] - $numBox[7]);
+            $labelHeight = (float) ($labBox[1] - $labBox[7]);
+            $gap = (int) round($fontSize * 0.18);
+            $totalBlockHeight = $numberHeight + $gap + $labelHeight;
+
+            $blockTop = (float) max(0, $centerY - $totalBlockHeight / 2.0);
+            $numberCenterY = $blockTop + $numberHeight / 2.0;
+            $labelCenterY = $blockTop + $numberHeight + $gap + $labelHeight / 2.0;
+
             for ($i = 0; $i < $segments; $i++) {
                 $cx = (int) ($padX + $unitWidth * $i + $unitWidth / 2);
 
                 $numberText = sprintf('%02d', $units[$i]['value']);
                 $numberWidth = $this->textBoxWidth($numberText, $font, $fontSize);
-                imagettftext($im, $fontSize, 0, (int) ($cx - $numberWidth / 2), $numberY, $textCol, $font, $numberText);
+                $numberBaseline = (int) round(
+                    $numberCenterY - $this->textVerticalCenterOffset($numberText, $font, $fontSize)
+                );
+                imagettftext(
+                    $im,
+                    $fontSize,
+                    0,
+                    (int) ($cx - $numberWidth / 2),
+                    $numberBaseline,
+                    $textCol,
+                    $font,
+                    $numberText
+                );
 
                 $label = $units[$i]['label'];
                 $labelWidth = $this->textBoxWidth($label, $font, $labelFontSize);
-                imagettftext($im, $labelFontSize, 0, (int) ($cx - $labelWidth / 2), $labelY, $labelCol, $font, $label);
+                $labelBaseline = (int) round(
+                    $labelCenterY - $this->textVerticalCenterOffset($label, $font, $labelFontSize)
+                );
+                imagettftext(
+                    $im,
+                    $labelFontSize,
+                    0,
+                    (int) ($cx - $labelWidth / 2),
+                    $labelBaseline,
+                    $labelCol,
+                    $font,
+                    $label
+                );
             }
         } else {
             $builtIn = 5;
             $labelBuiltIn = 3;
+
+            $numH = imagefontheight($builtIn);
+            $labH = imagefontheight($labelBuiltIn);
+            $gap = 8;
+            $totalBlockHeight = $numH + $gap + $labH;
+            $blockTop = (int) max(0, $centerY - $totalBlockHeight / 2.0);
+            $numberY = $blockTop;
+            $labelY = $blockTop + $numH + $gap;
+
             for ($i = 0; $i < $segments; $i++) {
                 $cx = (int) ($padX + $unitWidth * $i + $unitWidth / 2);
 
                 $numberText = sprintf('%02d', $units[$i]['value']);
                 $nW = imagefontwidth($builtIn) * strlen($numberText);
-                imagestring($im, $builtIn, (int) ($cx - $nW / 2), $numberY - 12, $numberText, $textCol);
+                imagestring($im, $builtIn, (int) ($cx - $nW / 2), $numberY, $numberText, $textCol);
 
                 $label = $units[$i]['label'];
                 $lW = imagefontwidth($labelBuiltIn) * strlen($label);
-                imagestring($im, $labelBuiltIn, (int) ($cx - $lW / 2), $labelY - 10, $label, $labelCol);
+                imagestring($im, $labelBuiltIn, (int) ($cx - $lW / 2), $labelY, $label, $labelCol);
             }
         }
 
@@ -272,5 +319,16 @@ class CircularProgressRingsRenderer implements SkinRendererInterface
         $minX = min($box[0], $box[2], $box[4], $box[6]);
         $maxX = max($box[0], $box[2], $box[4], $box[6]);
         return (int) ($maxX - $minX);
+    }
+
+    /**
+     * Compute the vertical center offset of text relative to the baseline.
+     * This is used to align text vertically by its visual center.
+     */
+    private function textVerticalCenterOffset(string $text, string $fontPath, int $fontSize): float
+    {
+        $box = imagettfbbox($fontSize, 0, $fontPath, $text) ?: [0, 0, 0, 0, 0, 0, 0, 0];
+        // Average of top and bottom Y coordinates of the bounding box.
+        return ($box[7] + $box[1]) / 2.0;
     }
 }
