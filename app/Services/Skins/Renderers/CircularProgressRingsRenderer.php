@@ -150,7 +150,9 @@ class CircularProgressRingsRenderer implements SkinRendererInterface
             $gap = (int) round($fontSize * 0.18);
             $totalBlockHeight = $numberHeight + $gap + $labelHeight;
 
-            $blockTop = (float) max(0, $centerY - $totalBlockHeight / 2.0);
+            // Slight upward bias so top and bottom spacing inside the ring feel equal.
+            $verticalBias = (float) ($fontSize * 0.15);
+            $blockTop = (float) max(0, $centerY - $totalBlockHeight / 2.0 - $verticalBias);
             $numberCenterY = $blockTop + $numberHeight / 2.0;
             $labelCenterY = $blockTop + $numberHeight + $gap + $labelHeight / 2.0;
 
