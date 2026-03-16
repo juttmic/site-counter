@@ -26,22 +26,42 @@ class MinimalInlineDividerRenderer implements SkinRendererInterface
         if ($showSeconds) { $units[] = 's'; }
         if (empty($units)) { $units = ['s']; }
 
-        $segmentGap = max(0, (int) ($skin['segmentGap'] ?? 36));
+        // Horizontal spacing between sections (Days/Hours/Minutes/Seconds).
+        // Use a very small default gap so red segment borders are nearly touching.
+        $segmentGap = max(0, (int) ($skin['segmentGap'] ?? 0));
         $separatorWidth = max(1, (int) ($skin['separatorWidth'] ?? 2));
         $separatorHeight = max(10, (int) ($skin['separatorHeight'] ?? 86));
         $separatorCol = $this->allocColor($im, $skin['separatorColor'] ?? '#CBD3DC');
 
         $segments = count($units);
         $totalGap = ($segments - 1) * ($segmentGap + $separatorWidth);
+        // When segmentGap is 0, segmentWidth partitions the full width so
+        // borders from adjacent segments can meet cleanly.
         $segmentWidth = (int) floor(($width - $totalGap) / $segments);
         $centerY = (int) ($height / 2);
         $sepTop = (int) ($centerY - $separatorHeight / 2);
         $sepBottom = (int) ($centerY + $separatorHeight / 2);
 
+        // Draw vertical separators between segments.
         for ($i = 0; $i < $segments - 1; $i++) {
-            $sepX = (int) (($i + 1) * $segmentWidth + ($i + 1) * $segmentGap + $i * $separatorWidth + $separatorWidth / 2);
+            $sepX = (int) (
+                ($i + 1) * $segmentWidth
+                + ($i + 1) * $segmentGap
+                + $i * $separatorWidth
+                + $separatorWidth / 2
+            );
             $sepLeft = (int) ($sepX - $separatorWidth / 2);
             imagefilledrectangle($im, $sepLeft, $sepTop, $sepLeft + $separatorWidth, $sepBottom, $separatorCol);
+        }
+
+        // Draw a thin red border around each segment area.
+        $borderColor = imagecolorallocate($im, 219, 0, 0);
+        for ($i = 0; $i < $segments; $i++) {
+            $segmentLeft = $i * ($segmentWidth + $segmentGap + $separatorWidth);
+            $segmentRight = $segmentLeft + $segmentWidth - 1;
+            $segmentTop = 0;
+            $segmentBottom = $height - 1;
+            imagerectangle($im, $segmentLeft, $segmentTop, $segmentRight, $segmentBottom, $borderColor);
         }
     }
 
@@ -69,7 +89,8 @@ class MinimalInlineDividerRenderer implements SkinRendererInterface
         if ($showSeconds) { $units[] = ['value' => $seconds, 'label' => 'SECONDS']; }
         if (empty($units)) { $units[] = ['value' => $seconds, 'label' => 'SECONDS']; }
 
-        $segmentGap = max(0, (int) ($skin['segmentGap'] ?? 36));
+        // Match spacing with renderStyle so dividers and text align.
+        $segmentGap = max(0, (int) ($skin['segmentGap'] ?? 0));
         $separatorWidth = max(1, (int) ($skin['separatorWidth'] ?? 2));
         $segments = count($units);
         $totalGap = ($segments - 1) * ($segmentGap + $separatorWidth);
