@@ -20,13 +20,10 @@ class RibbonTagRenderer implements SkinRendererInterface
         $unitWidth = (int) floor(($width - ($segments + 1) * $gap) / $segments);
         $tagH = (int) ($height * 0.7);
         $y = (int) (($height - $tagH) / 2);
-        $shadow = imagecolorallocatealpha($im, 0, 0, 0, 90);
 
         for ($i = 0; $i < $segments; $i++) {
             $x = $gap + $i * ($unitWidth + $gap);
-            // shadow
-            imagefilledrectangle($im, $x + 3, $y + 3, $x + $unitWidth + 3, $y + $tagH + 3, $shadow);
-            // main tag body
+            // main tag body (5-corner ribbon shape only; no rectangular background)
             imagefilledrectangle($im, $x, $y, $x + $unitWidth - 12, $y + $tagH, $accentCol);
             // notch triangle
             $points = [
