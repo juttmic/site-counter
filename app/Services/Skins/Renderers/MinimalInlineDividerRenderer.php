@@ -26,7 +26,7 @@ class MinimalInlineDividerRenderer implements SkinRendererInterface
         if ($showSeconds) { $units[] = 's'; }
         if (empty($units)) { $units = ['s']; }
 
-        // Horizontal geometry: segments and separators with zero gap so that
+        // Horizontal geometry: segments and separators with zero external gap so that
         // each divider touches the adjacent segment boxes on both sides.
         $segmentGap = 0;
         $separatorWidth = max(1, (int) ($skin['separatorWidth'] ?? 2));
@@ -39,14 +39,37 @@ class MinimalInlineDividerRenderer implements SkinRendererInterface
         $usedWidth = $segments * $segmentWidth + $totalSeparatorWidth;
         $leftOffset = (int) floor(($width - $usedWidth) / 2);
 
+        // Inner horizontal padding to visually reduce space inside each segment box
+        // while keeping outer margins unchanged.
+        $innerPadding = max(0, (int) ($skin['innerPadding'] ?? 6));
+
         $centerY = (int) ($height / 2);
         $sepTop = (int) ($centerY - $separatorHeight / 2);
         $sepBottom = (int) ($centerY + $separatorHeight / 2);
 
-        // Draw vertical separators between segments with zero horizontal gap
-        // to the neighboring segments.
+        // Precompute inner bounds for each segment (after trimming inner padding).
+        $innerLeft = [];
+        $innerRight = [];
+        for ($i = 0; $i < $segments; $i++) {
+            $segmentOuterLeft = $leftOffset + $i * ($segmentWidth + $separatorWidth);
+            $segmentOuterRight = $segmentOuterLeft + $segmentWidth - 1;
+
+            $leftTrim = ($i === 0) ? 0 : $innerPadding;
+            $rightTrim = ($i === $segments - 1) ? 0 : $innerPadding;
+
+            $innerLeft[$i] = $segmentOuterLeft + $leftTrim;
+            $innerRight[$i] = $segmentOuterRight - $rightTrim;
+        }
+
+        // Draw vertical separators between segments so they stay centered between
+        // the trimmed segment boxes (zero distance to both inner edges).
         for ($i = 0; $i < $segments - 1; $i++) {
-            $sepLeft = $leftOffset + ($i + 1) * $segmentWidth + $i * $separatorWidth;
+            $leftInnerRight = $innerRight[$i];
+            $rightInnerLeft = $innerLeft[$i + 1];
+            $gapSpan = max(0, $rightInnerLeft - $leftInnerRight - 1);
+            $gapCenter = (int) round($leftInnerRight + 1 + $gapSpan / 2.0);
+            $sepLeft = $gapCenter - (int) floor($separatorWidth / 2);
+
             imagefilledrectangle(
                 $im,
                 $sepLeft,
@@ -57,15 +80,8 @@ class MinimalInlineDividerRenderer implements SkinRendererInterface
             );
         }
 
-        // Draw a thin red border around each segment area.
-        $borderColor = imagecolorallocate($im, 219, 0, 0);
-        for ($i = 0; $i < $segments; $i++) {
-            $segmentLeft = $leftOffset + $i * ($segmentWidth + $separatorWidth);
-            $segmentRight = $segmentLeft + $segmentWidth - 1;
-            $segmentTop = 0;
-            $segmentBottom = $height - 1;
-            imagerectangle($im, $segmentLeft, $segmentTop, $segmentRight, $segmentBottom, $borderColor);
-        }
+        // Red borders around segments were only for debugging/layout tuning and have been removed.
+        
     }
 
     public function renderTimeText($im, int $secondsRemaining, array $skin, int $width, int $height, int $textCol, int $accentCol): bool
@@ -92,7 +108,7 @@ class MinimalInlineDividerRenderer implements SkinRendererInterface
         if ($showSeconds) { $units[] = ['value' => $seconds, 'label' => 'SECONDS']; }
         if (empty($units)) { $units[] = ['value' => $seconds, 'label' => 'SECONDS']; }
 
-        // Match spacing with renderStyle so dividers and text align.
+        // Match spacing and trimming with renderStyle so dividers and text align.
         $segmentGap = 0;
         $separatorWidth = max(1, (int) ($skin['separatorWidth'] ?? 2));
         $segments = count($units);
@@ -100,6 +116,21 @@ class MinimalInlineDividerRenderer implements SkinRendererInterface
         $segmentWidth = (int) floor(($width - $totalSeparatorWidth) / $segments);
         $usedWidth = $segments * $segmentWidth + $totalSeparatorWidth;
         $leftOffset = (int) floor(($width - $usedWidth) / 2);
+
+        $innerPadding = max(0, (int) ($skin['innerPadding'] ?? 6));
+
+        $innerLeft = [];
+        $innerRight = [];
+        for ($i = 0; $i < $segments; $i++) {
+            $segmentOuterLeft = $leftOffset + $i * ($segmentWidth + $separatorWidth);
+            $segmentOuterRight = $segmentOuterLeft + $segmentWidth - 1;
+
+            $leftTrim = ($i === 0) ? 0 : $innerPadding;
+            $rightTrim = ($i === $segments - 1) ? 0 : $innerPadding;
+
+            $innerLeft[$i] = $segmentOuterLeft + $leftTrim;
+            $innerRight[$i] = $segmentOuterRight - $rightTrim;
+        }
 
         if (is_file($font)) {
             $numberSample = '00';
@@ -115,8 +146,7 @@ class MinimalInlineDividerRenderer implements SkinRendererInterface
             $labelCenterY = $blockTop + $numberHeight + $gap + $labelHeight / 2;
 
             for ($i = 0; $i < $segments; $i++) {
-                $segmentLeft = $leftOffset + $i * ($segmentWidth + $separatorWidth);
-                $centerX = (int) ($segmentLeft + $segmentWidth / 2);
+                $centerX = (int) (($innerLeft[$i] + $innerRight[$i]) / 2);
 
                 $numberText = sprintf('%02d', $units[$i]['value']);
                 $numberWidth = $this->textBoxWidth($numberText, $font, $fontSize);
@@ -139,8 +169,7 @@ class MinimalInlineDividerRenderer implements SkinRendererInterface
             $numberY = $blockTop;
             $labelY = $blockTop + $numH + $gap;
             for ($i = 0; $i < $segments; $i++) {
-                $segmentLeft = $leftOffset + $i * ($segmentWidth + $separatorWidth);
-                $centerX = (int) ($segmentLeft + $segmentWidth / 2);
+                $centerX = (int) (($innerLeft[$i] + $innerRight[$i]) / 2);
 
                 $numberText = sprintf('%02d', $units[$i]['value']);
                 $nW = imagefontwidth($builtIn) * strlen($numberText);
