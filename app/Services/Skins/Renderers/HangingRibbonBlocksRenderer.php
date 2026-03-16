@@ -49,7 +49,7 @@ class HangingRibbonBlocksRenderer implements SkinRendererInterface
         $tileBorderWidth = max(0, (int) ($skin['tileBorderWidth'] ?? 2));
         $showBottomLabelBar = ($skin['showBottomLabelBar'] ?? true) === true;
         $shadowCol = $this->allocColor($im, $skin['shadowColor'] ?? '#D7E0E8');
-        $shadowOffsetY = (int) ($skin['shadowOffsetY'] ?? 8);
+        $shadowOffsetY = (int) ($skin['shadowOffsetY'] ?? 0);
 
         $bottomBarRatio = 0.30;
         $bottomBarHeight = $showBottomLabelBar ? max(18, (int) round($tileHeight * $bottomBarRatio)) : 0;
@@ -60,11 +60,7 @@ class HangingRibbonBlocksRenderer implements SkinRendererInterface
             $isLastVisible = ($i === $segments - 1);
             $barCol = $isLastVisible ? $tileBottomColAlt : $tileBottomCol;
 
-            // 2) Shadow (beneath full tile)
-            $shadowY = $tileY + $shadowOffsetY;
-            $this->fillRoundedRect($im, $tileX, $shadowY, $tileWidth, $tileHeight, $tileRadius, $shadowCol);
-
-            // 3) Unified tile: one outer rounded box for both digit and label areas
+            // Unified tile: one outer rounded box for both digit and label areas
             //    Fill full tile with label bar color, then overlay white for number area
             if ($showBottomLabelBar && $bottomBarHeight > 0) {
                 $this->fillRoundedRect($im, $tileX, $tileY, $tileWidth, $tileHeight, $tileRadius, $barCol);
@@ -73,18 +69,13 @@ class HangingRibbonBlocksRenderer implements SkinRendererInterface
                 $this->fillRoundedRect($im, $tileX, $tileY, $tileWidth, $tileHeight, $tileRadius, $tileBg);
             }
 
-            // 4) Tile border (around full unified tile)
+            // Tile border (around full unified tile)
             if ($tileBorderWidth > 0) {
                 $this->strokeRoundedRect($im, $tileX, $tileY, $tileWidth, $tileHeight, $tileRadius, $tileBorderCol, $tileBorderWidth);
             }
         }
 
-        // Outer border
-        $borderWidth = max(0, (int) ($skin['borderWidth'] ?? 2));
-        if ($borderWidth > 0) {
-            $borderCol = $this->allocColor($im, $skin['borderColor'] ?? '#8DB0C8');
-            $this->strokeRect($im, 0, 0, $width, $height, $borderCol, $borderWidth);
-        }
+        // No outer border around the entire canvas – only the tiles themselves are visible.
     }
 
     public function renderTimeText($im, int $secondsRemaining, array $skin, int $width, int $height, int $textCol, int $accentCol): bool

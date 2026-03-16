@@ -2,7 +2,7 @@
     "name": "Hanging Ribbon Blocks",
     "width": 760,
     "height": 170,
-    "background": "#F7F8FA",
+    "background": "#FFFFFF",
     "textColor": "#24384D",
     "accentColor": "#74AFCF",
     "fontSize": 48,
@@ -20,7 +20,7 @@
     "finalBackground": null,
     "finalTextColor": null,
   
-    "borderWidth": 2,
+    "borderWidth": 0,
     "borderColor": "#8DB0C8",
   
     "tileBackground": "#FFFFFF",
@@ -36,8 +36,8 @@
     "showBottomLabelBar": true,
     "segmentGap": 18,
     "shadowColor": "#D7E0E8",
-    "shadowBlur": 12,
-    "shadowOffsetY": 8,
+    "shadowBlur": 0,
+    "shadowOffsetY": 0,
   
     "visibilityLayouts": {
       "allVisible": {
@@ -83,7 +83,7 @@
     },
   
     "formDefaults": {
-      "background": "#F7F8FA",
+      "background": "#FFFFFF",
       "textColor": "#24384D",
       "accentColor": "#74AFCF"
     },
