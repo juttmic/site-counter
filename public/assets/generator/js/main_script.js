@@ -750,8 +750,9 @@ function renderFields(metadata, savedOverrides = {}) {
   const formEl = document.getElementById('timer_form');
   const isEdit = formEl && formEl.dataset.isEdit === '1';
   if (!isEdit) {
-    if (defaults.borderWidth === undefined || defaults.borderWidth === null || Number(defaults.borderWidth) === 0) {
-      defaults.borderWidth = 1;
+    // Do not force a visible border for new timers; respect the skin's default.
+    if (defaults.borderWidth === undefined || defaults.borderWidth === null) {
+      defaults.borderWidth = 0;
     }
     const bg = defaults.background || '#000000';
     const bgNorm = (bg || '').toString().trim().toLowerCase();
@@ -762,7 +763,7 @@ function renderFields(metadata, savedOverrides = {}) {
   } else {
     // Edit: respect saved values; if missing, still ensure a sane fallback
     if (defaults.borderWidth === undefined || defaults.borderWidth === null) {
-      defaults.borderWidth = 1;
+      defaults.borderWidth = 0;
     }
     if (!defaults.borderColor || defaults.borderColor === '') {
       defaults.borderColor = '#FFFFFF';

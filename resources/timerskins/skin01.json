@@ -2,7 +2,7 @@
     "name": "Minimal Black Countdown",
     "width": 400,
     "height": 160,
-    "background": "#FFFFFF",
+    "background": "#D6D6D6",
     "textColor": "#000000",
     "separatorColor": "#000000",
     "fontSize": 30,
@@ -58,7 +58,7 @@
     },
 
     "formDefaults": {
-        "background": "#FFFFFF",
+        "background": "#D6D6D6",
         "textColor": "#000000"
     },
     "fields": [
