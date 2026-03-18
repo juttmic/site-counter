@@ -10,7 +10,7 @@
     "textColor": "#24384D",
     "accentColor": "#69B7CB",
   
-    // Main number font size
+    // Main digit font size
     "fontSize": 52,
   
     // Label font size like DAYS / HOURS / MINUTES / SECONDS
@@ -105,12 +105,12 @@
   
       { "key": "background", "label": "Background", "type": "color", "group": "Appearance", "groupOrder": 1, "order": 1 },
       { "key": "cardBackground", "label": "Card Background", "type": "color", "group": "Appearance", "order": 2 },
-      { "key": "numberBoxBackground", "label": "Number Box Background", "type": "color", "group": "Appearance", "order": 3 },
+      { "key": "numberBoxBackground", "label": "Digit Box Background", "type": "color", "group": "Appearance", "order": 3 },
       { "key": "textColor", "label": "Digit", "type": "color", "group": "Appearance", "order": 4 },
       { "key": "labelColor", "label": "Label Color", "type": "color", "group": "Appearance", "order": 5 },
       { "key": "accentColor", "label": "Highlight Border Color", "type": "color", "group": "Appearance", "order": 6 },
   
-      { "key": "fontSize", "label": "Number Font Size", "type": "number", "min": 8, "max": 200, "step": 1, "group": "Appearance", "order": 7 },
+      { "key": "fontSize", "label": "Digit Font Size", "type": "number", "min": 8, "max": 200, "step": 1, "group": "Appearance", "order": 7 },
       { "key": "labelFontSize", "label": "Label Font Size", "type": "number", "min": 8, "max": 100, "step": 1, "group": "Appearance", "order": 8 },
   
       { "key": "borderWidth", "label": "Outer Border Width", "type": "number", "min": 0, "max": 20, "step": 1, "group": "Appearance", "order": 9 },
@@ -118,8 +118,8 @@
   
       { "key": "panelRadius", "label": "Panel Radius", "type": "number", "min": 0, "max": 80, "step": 1, "group": "Layout", "groupOrder": 3, "order": 1 },
       { "key": "cardRadius", "label": "Card Radius", "type": "number", "min": 0, "max": 50, "step": 1, "group": "Layout", "order": 2 },
-      { "key": "numberBoxRadius", "label": "Number Box Radius", "type": "number", "min": 0, "max": 50, "step": 1, "group": "Layout", "order": 3 },
-      { "key": "numberBoxBorderWidth", "label": "Number Box Border Width", "type": "number", "min": 0, "max": 10, "step": 1, "group": "Layout", "order": 4 },
+      { "key": "numberBoxRadius", "label": "Digit Box Radius", "type": "number", "min": 0, "max": 50, "step": 1, "group": "Layout", "order": 3 },
+      { "key": "numberBoxBorderWidth", "label": "Digit Box Border Width", "type": "number", "min": 0, "max": 10, "step": 1, "group": "Layout", "order": 4 },
       { "key": "segmentGap", "label": "Segment Gap", "type": "number", "min": 0, "max": 80, "step": 1, "group": "Layout", "order": 5 },
   
       // Visibility fields (days and seconds only; hours/minutes always shown)
