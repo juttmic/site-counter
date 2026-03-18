@@ -3,8 +3,8 @@
     "name": "Rounded Panel Cards",
   
     // Default canvas size when all 4 units are visible
-    "width": 920,
-    "height": 240,
+    "width": 980,
+    "height": 274,
   
     "background": "#D6D6D6",
     "textColor": "#24384D",
