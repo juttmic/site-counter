@@ -127,7 +127,7 @@ class SkinController extends Controller
             File::ensureDirectoryExists($outDir);
             $outPath = $outDir . DIRECTORY_SEPARATOR . $key . '.gif';
             // Force 30-second preview regeneration
-            $generator->renderSkinGifPreview($key, $outPath, 30);
+            $generator->renderSkinGifPreview($key, $outPath, TimerGifGenerator::DEFAULT_PREVIEW_SECONDS, null, 'none', null, [], 30);
             $url = url('/skin-previews/' . $key . '.gif') . '?v=' . time();
             return response()->json(['ok' => true, 'url' => $url]);
         } catch (\Throwable $e) {

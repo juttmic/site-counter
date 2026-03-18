@@ -12,6 +12,11 @@ use Illuminate\Support\Facades\Log;
 
 class TimerGifGenerator
 {
+    /**
+     * Default sample countdown value used for skin previews: 1d 1h 10m 50s.
+     */
+    public const DEFAULT_PREVIEW_SECONDS = 90650;
+
     public function generateAndStore(Timer $timer): string
     {
         $userId = $timer->user_id;
@@ -159,8 +164,7 @@ class TimerGifGenerator
             $skin = array_replace_recursive($skin, $overrides);
         }
         $skin = $this->applyFinalColorDefaults($skin);
-        // Use an illustrative sample remaining time (12h 34m 56s)
-        $sampleSeconds = (12 * 3600) + (34 * 60) + 56;
+        $sampleSeconds = self::DEFAULT_PREVIEW_SECONDS;
         $png = $this->renderPngFrame($sampleSeconds, $skin, $customText, $textPosition);
         // Normalize height across previews while preserving aspect ratio
         $targetHeight = 120; // px

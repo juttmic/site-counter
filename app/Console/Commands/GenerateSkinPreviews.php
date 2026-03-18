@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\File;
 
 class GenerateSkinPreviews extends Command
 {
+    private const DEFAULT_PREVIEW_SECONDS = 90650; // 1d 1h 10m 50s
+
     protected $signature = 'timergif:skins:previews {skin? : Optional single skin key to generate (e.g. skin07_teal_circles)} {--force : Regenerate even if files exist} {--all : Include skins without a registered renderer} {--skin=* : (Optional, legacy) Additional skin keys, comma-separated} {--seconds= : Override preview duration in seconds (default: 15)} {--text= : Optional custom text to render} {--text-position= : Text position: top|bottom|none} {--text-color= : Hex color for custom text (e.g. #FFFFFF)} {--text-distance= : Distance between custom text and counter (px)} {--text-mt= : Text margin-top (px)} {--text-mr= : Text margin-right (px)} {--text-mb= : Text margin-bottom (px)} {--text-ml= : Text margin-left (px)} {--out-width= : Output GIF width} {--out-height= : Output GIF height} {--time=* : (Deprecated)}';
     protected $description = 'Generate animated GIF previews for skins. If a skin key is provided, only that one is generated.';
 
@@ -74,11 +76,11 @@ class GenerateSkinPreviews extends Command
                 // Backward compatibility: allow --time=NN or --time=NN (legacy array) to specify starting time
                 $legacyTime = $this->option('time');
                 if (is_array($legacyTime) && count($legacyTime) > 0) {
-                    $startTime = (int) ($legacyTime[0] ?? rand(90000, 111111));
+                    $startTime = (int) ($legacyTime[0] ?? self::DEFAULT_PREVIEW_SECONDS);
                 } else if (is_string($legacyTime) && $legacyTime !== '') {
                     $startTime = (int) $legacyTime;
                 } else {
-                    $startTime = rand(90000, 111111);
+                    $startTime = self::DEFAULT_PREVIEW_SECONDS;
                 }
                 
                 // Animation duration: use --seconds option if provided, otherwise default to 30
