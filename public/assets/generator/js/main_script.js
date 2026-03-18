@@ -1090,6 +1090,9 @@ function renderFields(metadata, savedOverrides = {}) {
       label = 'Text';
     }
     const type = field.type || 'text';
+    if (type === 'number' && field.max != null) {
+      label += ` (max: ${field.max})`;
+    }
     const useSwitch = options.useSwitch === true;
     const container = document.createElement('div');
     const isSmall = type === 'color' || type === 'boolean' || smallKeys.has(key);
@@ -1173,6 +1176,17 @@ function renderFields(metadata, savedOverrides = {}) {
       if (field.step != null) input.step = field.step;
       input.value = (value ?? '');
       input.className = 'form-control' + (isMarginField ? ' form-control-sm' : '');
+      input.addEventListener('change', () => {
+        const n = Number(input.value);
+        if (!isNaN(n) && (field.min != null || field.max != null)) {
+          let clamped = n;
+          if (field.min != null && clamped < field.min) clamped = field.min;
+          if (field.max != null && clamped > field.max) clamped = field.max;
+          if (clamped !== n) {
+            input.value = clamped;
+          }
+        }
+      });
     } else if (type === 'boolean') {
       input = document.createElement('input');
       input.type = 'checkbox';
