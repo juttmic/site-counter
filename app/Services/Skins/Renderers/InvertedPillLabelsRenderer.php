@@ -17,6 +17,41 @@ use App\Services\Skins\SkinRendererInterface;
  */
 class InvertedPillLabelsRenderer implements SkinRendererInterface
 {
+    private function measureText(string $font, int $size, string $text): array
+    {
+        $box = imagettfbbox($size, 0, $font, $text);
+        $xs = [$box[0], $box[2], $box[4], $box[6]];
+        $ys = [$box[1], $box[3], $box[5], $box[7]];
+        $minX = min($xs);
+        $maxX = max($xs);
+        $minY = min($ys);
+        $maxY = max($ys);
+
+        return [
+            'minX' => $minX,
+            'maxX' => $maxX,
+            'minY' => $minY,
+            'maxY' => $maxY,
+            'width' => $maxX - $minX,
+            'height' => $maxY - $minY,
+            'ascent' => -$minY,
+            'descent' => $maxY,
+        ];
+    }
+
+    private function fitFontSizeToBox(string $font, int $desiredSize, string $sampleText, int $maxW, int $maxH, int $minSize = 8): int
+    {
+        $size = max($minSize, $desiredSize);
+        while ($size > $minSize) {
+            $m = $this->measureText($font, $size, $sampleText);
+            if ($m['width'] <= $maxW && $m['height'] <= $maxH) {
+                break;
+            }
+            $size--;
+        }
+        return $size;
+    }
+
     public function renderStyle($im, array $skin, int $width, int $height, int $bgCol, int $textCol, int $accentCol, int $secondsRemaining): void
     {
         // Fill background
@@ -137,8 +172,8 @@ class InvertedPillLabelsRenderer implements SkinRendererInterface
             return true;
         }
 
-        $fontSize  = (int)($skin['fontSize'] ?? 32);
-        $labelSize = max(12, (int) round($fontSize * 0.52));
+        $requestedFontSize  = (int)($skin['fontSize'] ?? 32);
+        $requestedLabelSize = max(10, (int) round($requestedFontSize * 0.52));
 
         $days    = (int) floor($secondsRemaining / 86400);
         $hours   = (int) floor(($secondsRemaining % 86400) / 3600);
@@ -170,6 +205,18 @@ class InvertedPillLabelsRenderer implements SkinRendererInterface
         
         $digitsCenterY  = (int) ($padTop + $digitTileH * 0.50);
 
+        // Fit digit font to tile box so large font sizes don't overlap or overflow.
+        // Use '8' as a worst-case width/height sample for most fonts.
+        $tileInset = max(2, (int) round($tileSize * 0.12));
+        $digitMaxW = max(1, $tileSize - ($tileInset * 2));
+        $digitMaxH = max(1, $tileSize - ($tileInset * 2));
+        $fontSize = $this->fitFontSizeToBox($font, $requestedFontSize, '8', $digitMaxW, $digitMaxH, 8);
+
+        // Fit label size to the reserved label area and segment width.
+        $labelGapY = max(4, (int) round($height * 0.03));
+        $labelMaxH = max(1, $height - ($padTop + $digitTileH) - $labelGapY - 6);
+        $labelSize = $this->fitFontSizeToBox($font, $requestedLabelSize, 'SECONDS', max(1, $segW - 6), $labelMaxH, 8);
+
         for ($i = 0; $i < $segments; $i++) {
             $segX1 = $gapX + $i * ($segW + $gapX);
             $segCenterX = $segX1 + ($segW / 2);
@@ -193,56 +240,33 @@ class InvertedPillLabelsRenderer implements SkinRendererInterface
             $rightTileCenterX = $rightX1 + ($tileSize / 2);
             
             // Left digit centering
-            $leftBox = imagettfbbox($fontSize, 0, $font, $leftDigit);
-            if ($leftBox !== false) {
-                // Calculate text bounding box dimensions
-                $leftTextWidth = abs($leftBox[4] - $leftBox[0]);
-                $leftTextHeight = abs($leftBox[1] - $leftBox[7]); // Top to bottom
-                $leftTextTop = min($leftBox[1], $leftBox[3], $leftBox[5], $leftBox[7]);
-                $leftTextBottom = max($leftBox[1], $leftBox[3], $leftBox[5], $leftBox[7]);
-                
-                // Center horizontally: adjust X so text center aligns with tile center
-                // imagettftext uses baseline at Y, so we need to account for the offset
-                $leftX = (int) ($leftTileCenterX - ($leftBox[0] + $leftBox[4]) / 2);
-                
-                // Center vertically: place baseline so visual center of text aligns with tile center
-                // The visual center is at (top + bottom) / 2, but baseline is at Y=0 in bbox
-                $leftTextVisualCenter = ($leftTextTop + $leftTextBottom) / 2;
-                $leftBaselineY = (int) ($tileCenterY - $leftTextVisualCenter);
-                
-                imagettftext($im, $fontSize, 0, $leftX, $leftBaselineY, $textCol, $font, $leftDigit);
-            }
+            $leftM = $this->measureText($font, $fontSize, $leftDigit);
+            $leftX = (int) round($leftTileCenterX - ($leftM['width'] / 2) - $leftM['minX']);
+            $leftBaselineY = (int) round($tileCenterY + ($leftM['height'] / 2) - $leftM['maxY']);
+            imagettftext($im, $fontSize, 0, $leftX, $leftBaselineY, $textCol, $font, $leftDigit);
             
             // Right digit centering
-            $rightBox = imagettfbbox($fontSize, 0, $font, $rightDigit);
-            if ($rightBox !== false) {
-                // Calculate text bounding box dimensions
-                $rightTextWidth = abs($rightBox[4] - $rightBox[0]);
-                $rightTextHeight = abs($rightBox[1] - $rightBox[7]);
-                $rightTextTop = min($rightBox[1], $rightBox[3], $rightBox[5], $rightBox[7]);
-                $rightTextBottom = max($rightBox[1], $rightBox[3], $rightBox[5], $rightBox[7]);
-                
-                // Center horizontally
-                $rightX = (int) ($rightTileCenterX - ($rightBox[0] + $rightBox[4]) / 2);
-                
-                // Center vertically
-                $rightTextVisualCenter = ($rightTextTop + $rightTextBottom) / 2;
-                $rightBaselineY = (int) ($tileCenterY - $rightTextVisualCenter);
-                
-                imagettftext($im, $fontSize, 0, $rightX, $rightBaselineY, $textCol, $font, $rightDigit);
-            }
+            $rightM = $this->measureText($font, $fontSize, $rightDigit);
+            $rightX = (int) round($rightTileCenterX - ($rightM['width'] / 2) - $rightM['minX']);
+            $rightBaselineY = (int) round($tileCenterY + ($rightM['height'] / 2) - $rightM['maxY']);
+            imagettftext($im, $fontSize, 0, $rightX, $rightBaselineY, $textCol, $font, $rightDigit);
 
             // Red label under the digit tiles (centered under the whole segment)
             // Position label based on actual bottom of tiles plus small gap
             $label = (string)$units[$i]['label'];
-            $lblBox = imagettfbbox($labelSize, 0, $font, $label);
-            if ($lblBox !== false) {
-                $lblW = abs($lblBox[4] - $lblBox[0]);
-                $lblX = (int) ($segX1 + ($segW - $lblW) / 2);
-                // Position label baseline just below the tiles with minimal gap (4 pixels)
-                // $tileY2 is the bottom of the tiles
-                $lblY = (int) ($tileY2 + 20);
-                imagettftext($im, $labelSize, 0, $lblX, $lblY, $accentCol, $font, $label);
+            $labelFs = $labelSize;
+            // If a particular label is too wide for the segment, shrink just for that label.
+            while ($labelFs > 8) {
+                $lm = $this->measureText($font, $labelFs, $label);
+                if ($lm['width'] <= max(1, $segW - 6) && $lm['height'] <= $labelMaxH) {
+                    $lblX = (int) round($segCenterX - ($lm['width'] / 2) - $lm['minX']);
+                    $lblBaselineY = (int) round($tileY2 + $labelGapY + $lm['ascent']);
+                    // Keep label inside canvas
+                    $lblBaselineY = min($lblBaselineY, $height - 4);
+                    imagettftext($im, $labelFs, 0, $lblX, $lblBaselineY, $accentCol, $font, $label);
+                    break;
+                }
+                $labelFs--;
             }
         }
 
