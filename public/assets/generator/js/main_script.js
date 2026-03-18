@@ -219,15 +219,6 @@ function clampCustomTextDistance() {
   const timerHeight = sizing.timerHeight;
 
   if (isNaN(gifHeight) || isNaN(timerHeight)) {
-    if (!window.__clampWarnedOnce) {
-      window.__clampWarnedOnce = true;
-      const msg = 'Set GIF height to control text distance.';
-      if (window.showToast) {
-        window.showToast(msg, 'warning');
-      } else {
-        console.warn(msg);
-      }
-    }
     return;
   }
 
