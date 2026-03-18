@@ -1932,7 +1932,7 @@ async function ajaxSaveAndPoll() {
     
     // Show confirmation dialog
     const confirmResult = await Swal.fire({
-      title: 'Generate GIF?',
+      title: '',
       text: isEdit
         ? 'This will save your counter changes and generate a new GIF.'
         : 'This will create a new counter and generate its GIF.',
