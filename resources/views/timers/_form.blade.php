@@ -642,7 +642,7 @@
                                            min="{{ now()->format('Y-m-d\\TH:i:s') }}"
                                            value="{{ $inputValue }}"
                                            data-utc="{{ $utcIso }}">
-                                           <div class="form-text small">Select the date and time when the counter stops (your local time).</div>
+                                           <div class="form-text small">Select the date and time when the counter stops.</div>
                                 </div>
 
                                 <div id="duration_input" class="{{ ($isEdit && $timer->timer_type !== 'reload_based') || !$isEdit ? 'd-none' : '' }}">
