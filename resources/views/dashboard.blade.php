@@ -26,11 +26,11 @@
                                 <div class="card shadow-sm border-0 h-100">
                                   <div class="card-body d-flex flex-column justify-content-between">
                                     <!-- Title -->
-                                    <h5 class="card-title fw-bold text-dark mb-2" style="    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;">{{ $timer->title }}</h5>
-                                    <div>
-                                      <span class="badge {{ $timer->status === 'active' ? 'bg-success' : 'bg-danger' }}">
+                                    <div class="d-flex align-items-start justify-content-between gap-2 mb-2">
+                                      <h5 class="card-title fw-bold text-dark mb-0" style="overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">
+                                        {{ $timer->title }}
+                                      </h5>
+                                      <span class="badge {{ $timer->status === 'active' ? 'bg-success' : 'bg-danger' }} flex-shrink-0">
                                         {{ ucfirst($timer->status) }}
                                       </span>
                                     </div>
