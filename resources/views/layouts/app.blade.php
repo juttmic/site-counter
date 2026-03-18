@@ -100,6 +100,39 @@
             .dark-mode-icon { display: none !important; }
             .dark .dark-mode-icon { display: inline-block !important; }
             .dark .light-mode-icon { display: none !important; }
+
+            /* Smaller SweetAlert confirm dialog for destructive actions */
+            .swal2-popup.swal2-confirm-delete {
+                width: 360px !important;
+                padding: 1rem 1.25rem !important;
+            }
+            .swal2-popup.swal2-confirm-delete .swal2-title {
+                display: none !important;
+            }
+            .swal2-popup.swal2-confirm-delete .swal2-html-container {
+                margin: 0.25rem 0 0.75rem !important;
+                font-size: 1rem !important;
+                line-height: 1.35 !important;
+            }
+            .swal2-popup.swal2-confirm-delete .swal2-icon {
+                width: 3.25rem !important;
+                height: 3.25rem !important;
+                margin: 0.25rem auto 0.5rem !important;
+                border-color: #dc3545 !important;
+                color: #dc3545 !important;
+            }
+            .swal2-popup.swal2-confirm-delete .swal2-icon i {
+                font-size: 1.5rem;
+                line-height: 3.25rem;
+            }
+            .swal2-popup.swal2-confirm-delete .swal2-actions {
+                padding: 0 0.75rem !important; /* left/right margin from popup edge */
+                gap: 0.75rem !important;
+                margin: 0.5rem 0 0 !important;
+            }
+            .swal2-popup.swal2-confirm-delete .swal2-actions .btn {
+                min-width: 110px;
+            }
         </style>
     </head>
     <body class="bg-light">
@@ -241,12 +274,21 @@
                         e.preventDefault();
                         var msg = form.getAttribute('data-confirm') || 'Are you sure?';
                         Swal.fire({
-                            title: 'Please Confirm',
                             text: msg,
                             icon: 'warning',
+                            iconHtml: '<i class="fa-solid fa-trash-can"></i>',
+                            iconColor: '#dc3545',
                             showCancelButton: true,
-                            confirmButtonText: 'Yes',
-                            cancelButtonText: 'Cancel'
+                            confirmButtonText: 'Delete',
+                            cancelButtonText: 'Cancel',
+                            reverseButtons: true,
+                            width: 360,
+                            customClass: {
+                                popup: 'swal2-confirm-delete',
+                                confirmButton: 'btn btn-danger',
+                                cancelButton: 'btn btn-secondary'
+                            },
+                            buttonsStyling: false
                         }).then(function(result){
                             if (result.isConfirmed) {
                                 form.submit();
