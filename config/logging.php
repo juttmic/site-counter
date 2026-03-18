@@ -76,6 +76,12 @@ return [
             'level' => env('LOG_LEVEL', 'debug'),
             'replace_placeholders' => true,
         ],
+        'render' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/debug/render.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'replace_placeholders' => true,
+        ],
 
         'daily' => [
             'driver' => 'daily',

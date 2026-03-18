@@ -3,6 +3,7 @@
 namespace App\Services\Skins\Renderers;
 
 use App\Services\Skins\SkinRendererInterface;
+use Illuminate\Support\Facades\Log;
 
 class MinimalBlackCountdownRenderer implements SkinRendererInterface
 {
@@ -48,7 +49,7 @@ class MinimalBlackCountdownRenderer implements SkinRendererInterface
 
             foreach ($timeUnits as $i => $unit) {
                 $unitX = $unitWidth * $i + $unitWidth / 2;
-                
+                Log::channel("render")->info("L :",[$unitX,$unitWidth, $width, $unitCount]);
                 // Main number
                 $numberText = sprintf('%02d', $unit['value']);
                 $numberBox = imagettfbbox($fontSize, 0, $font, $numberText);
@@ -56,6 +57,7 @@ class MinimalBlackCountdownRenderer implements SkinRendererInterface
                 $numberHeight = abs($numberBox[5] - $numberBox[1]);
                 $numberX = (int) ($unitX - $numberWidth / 1.5);
                 $numberY = (int) ($centerY + $numberHeight/2);
+                Log::channel("render")->info("T :",[$numberX, $numberY, $numberText]);
                 imagettftext($im, $fontSize, 0, $numberX, $numberY, $textCol, $font, $numberText);
 
                 // Small label below
@@ -64,6 +66,7 @@ class MinimalBlackCountdownRenderer implements SkinRendererInterface
                 $labelWidth = abs($labelBox[4] - $labelBox[0]);
                 $labelX = (int) ($unitX + $numberWidth / 1.5);
                 $labelY = (int) ($centerY + $numberHeight / 2);
+                Log::channel("render")->info("Labels :",[$labelX, $labelY, $labelText]);
                 imagettftext($im, $labelSize, 0, $labelX, $labelY, $textCol, $font, $labelText);
 
                 // Separator between units
