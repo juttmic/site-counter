@@ -121,7 +121,7 @@
       { "key": "dotSize", "label": "Dot Size", "type": "number", "min": 1, "max": 20, "step": 1, "group": "Layout", "order": 4 },
       { "key": "dotGap", "label": "Dot Gap", "type": "number", "min": 1, "max": 20, "step": 1, "group": "Layout", "order": 5 },
       { "key": "connectorWidth", "label": "Connector Width", "type": "number", "min": 1, "max": 20, "step": 1, "group": "Layout", "order": 6 },
-      { "key": "connectorLength", "label": "Connector Length", "type": "number", "min": 0, "max": 50, "step": 1, "group": "Layout", "order": 7 },
+      { "key": "connectorLength", "label": "Connector Height", "type": "number", "min": 0, "max": 50, "step": 1, "group": "Layout", "order": 7 },
   
       { "key": "dottedRing", "label": "Show Dotted Ring", "type": "boolean", "group": "Visibility", "groupOrder": 4, "order": 1 },
       { "key": "showDays", "label": "Show Days", "type": "boolean", "group": "Visibility", "order": 2 },
