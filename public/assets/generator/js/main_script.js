@@ -1813,7 +1813,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('timer_form');
   if (form) {
     const previewTriggerFields = [
-      'title', 'text_position', 'custom_text', 'status', 'timer_type',
+      // Title does not affect the rendered timer image; avoid regenerating preview while typing.
+      'text_position', 'custom_text', 'status', 'timer_type',
       'target_datetime', 'duration_seconds', 'animation_frame_limit'
     ];
     
