@@ -727,6 +727,23 @@ class TimerGifGenerator
         $showDays = ($skin['showDays'] ?? true) === true;
         $showSeconds = ($skin['showSeconds'] ?? true) === true;
 
+        // If the skin's base width/height were customized, scale layout width/height proportionally
+        // from the "allVisible" layout dimensions so visibilityLayouts remains consistent.
+        $scaleW = 1.0;
+        $scaleH = 1.0;
+        if (isset($layouts['allVisible']) && is_array($layouts['allVisible'])) {
+            $baseW = isset($layouts['allVisible']['width']) ? (int) $layouts['allVisible']['width'] : null;
+            $baseH = isset($layouts['allVisible']['height']) ? (int) $layouts['allVisible']['height'] : null;
+            $skinW = isset($skin['width']) ? (int) $skin['width'] : null;
+            $skinH = isset($skin['height']) ? (int) $skin['height'] : null;
+            if ($baseW && $skinW && $baseW > 0 && $skinW > 0 && $baseW !== $skinW) {
+                $scaleW = $skinW / $baseW;
+            }
+            if ($baseH && $skinH && $baseH > 0 && $skinH > 0 && $baseH !== $skinH) {
+                $scaleH = $skinH / $baseH;
+            }
+        }
+
         $layout = null;
         if (!$showDays && !$showSeconds && isset($layouts['daysAndSecondsHidden'])) {
             $layout = $layouts['daysAndSecondsHidden'];
@@ -741,7 +758,13 @@ class TimerGifGenerator
         if (is_array($layout)) {
             foreach (['width', 'height', 'segmentGap', 'horizontalPadding', 'ringSize', 'connectorLength', 'framePadding', 'separatorHeight'] as $key) {
                 if (isset($layout[$key])) {
-                    $skin[$key] = (int) $layout[$key];
+                    if ($key === 'width' && $scaleW !== 1.0) {
+                        $skin[$key] = (int) max(1, round(((int) $layout[$key]) * $scaleW));
+                    } elseif ($key === 'height' && $scaleH !== 1.0) {
+                        $skin[$key] = (int) max(1, round(((int) $layout[$key]) * $scaleH));
+                    } else {
+                        $skin[$key] = (int) $layout[$key];
+                    }
                 }
             }
         }
