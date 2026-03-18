@@ -2,7 +2,7 @@
   "name": "Hex Tile Labels",
   "width": 760,
   "height": 180,
-  "background": "#FFFFFF",
+  "background": "#D6D6D6",
   "textColor": "#FFFFFF",
   "accentColor": "#3B8C8F",
   "fontSize": 40,
@@ -31,7 +31,7 @@
   },
 
   "formDefaults": {
-        "background": "#FFFFFF",
+        "background": "#D6D6D6",
         "textColor": "#FFFFFF",
         "accentColor": "#2F7A8A"
     },

@@ -2,7 +2,7 @@
   "name": "Orbit Dots",
   "width": 760,
   "height": 200,
-  "background": "#FFFFFF",
+  "background": "#D6D6D6",
   "textColor": "#111111",
   "accentColor": "#22A699",
   "fontSize": 45,
@@ -55,7 +55,7 @@
   },
 
   "formDefaults": {
-        "background": "#FFFFFF",
+        "background": "#D6D6D6",
         "textColor": "#000000",
         "accentColor": "#000000"
     },

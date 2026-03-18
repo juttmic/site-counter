@@ -2,7 +2,7 @@
   "name": "Inverted Pill Labels",
   "width": 560,
   "height": 160,
-  "background": "#FFFFFF",
+  "background": "#D6D6D6",
   "textColor": "#FFFFFF",
   "separatorColor": "#FFFFFF",
   "accentColor": "#2F7A8A",
@@ -60,7 +60,7 @@
   },
 
   "formDefaults": {
-        "background": "#FFFFFF",
+        "background": "#D6D6D6",
         "textColor": "#FFFFFF",
         "tileColor": "#2F7A8A"
     },

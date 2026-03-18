@@ -2,7 +2,7 @@
   "name": "Teal Circle Badges",
   "width": 720,
   "height": 180,
-  "background": "#FFFFFF",
+  "background": "#D6D6D6",
   "textColor": "#0F7892",
   "accentColor": "#0F7892",
   "fontSize": 36,
@@ -56,7 +56,7 @@
   },
 
   "formDefaults": {
-        "background": "#FFFFFF",
+        "background": "#D6D6D6",
         "textColor": "#000000",
         "accentColor": "#2F7A8A"
     },

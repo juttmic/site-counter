@@ -2,7 +2,7 @@
     "name": "Minimal Inline Divider",
     "width": 860,
     "height": 140,
-    "background": "#F7F8FA",
+    "background": "#D6D6D6",
     "textColor": "#2B93BD",
     "accentColor": "#D0D7DF",
     "fontSize": 64,
@@ -78,7 +78,7 @@
     },
   
     "formDefaults": {
-      "background": "#F7F8FA",
+      "background": "#D6D6D6",
       "textColor": "#2B93BD",
       "accentColor": "#D0D7DF"
     },

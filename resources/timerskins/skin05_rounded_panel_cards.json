@@ -6,7 +6,7 @@
     "width": 920,
     "height": 240,
   
-    "background": "#FFFFFF",
+    "background": "#D6D6D6",
     "textColor": "#24384D",
     "accentColor": "#69B7CB",
   
@@ -94,7 +94,7 @@
     },
   
     "formDefaults": {
-      "background": "#FFFFFF",
+      "background": "#D6D6D6",
       "textColor": "#24384D",
       "accentColor": "#69B7CB"
     },

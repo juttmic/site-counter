@@ -2,7 +2,7 @@
     "name": "Hanging Ribbon Blocks",
     "width": 760,
     "height": 170,
-    "background": "#FFFFFF",
+    "background": "#D6D6D6",
     "textColor": "#24384D",
     "accentColor": "#74AFCF",
     "fontSize": 48,
@@ -83,7 +83,7 @@
     },
   
     "formDefaults": {
-      "background": "#FFFFFF",
+      "background": "#D6D6D6",
       "textColor": "#24384D",
       "accentColor": "#74AFCF"
     },
