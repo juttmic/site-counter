@@ -436,7 +436,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   })();
 
-  // If timer height changes, re-clamp distance
+  // If timer height changes, re-clamp distance. Use 'change' only (not 'input') so the user
+  // can type freely (e.g. clear 430 to enter 500) without validation resetting the value mid-edit.
   ['outputHeight'].forEach(name => {
     const el = document.querySelector(`[data-key="${name}"]`) || document.querySelector(`input[name="${name}"]`);
     if (el) {
@@ -445,7 +446,6 @@ document.addEventListener('DOMContentLoaded', function() {
         enforceGifHeightMinimum();
       };
       el.addEventListener('change', handler);
-      el.addEventListener('input', handler);
       el.dataset.boundGifHeight = '1';
     }
   });
@@ -1489,7 +1489,6 @@ function renderFields(metadata, savedOverrides = {}) {
       enforceGifHeightMinimum();
     };
     outputHeightField.addEventListener('change', handler);
-    outputHeightField.addEventListener('input', handler);
     outputHeightField.dataset.boundGifHeight = '1';
   }
 
