@@ -38,6 +38,35 @@ function toggleInputs(isUserAction = false) {
 
 document.addEventListener('DOMContentLoaded', () => {
   toggleInputs(false); // Initial load, don't set default
+
+  // Create page: ensure the date-time picker starts at "now" (current local time).
+  // We store the initial value so skin selection can safely replace it with the sample time
+  // only if the user hasn't edited it.
+  (function initTargetDateTimeToNow() {
+    const form = document.getElementById('timer_form');
+    const isEdit = form && form.dataset.isEdit === '1';
+    if (isEdit) return;
+
+    const input = document.querySelector('input[name="target_datetime"]');
+    if (!input) return;
+
+    const now = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    const nowVal = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+
+    // If server rendered an empty value, fill with current time.
+    if (!input.value) {
+      input.value = nowVal;
+    }
+
+    input.dataset.initialValue = input.value || nowVal;
+    input.dataset.userTouched = '0';
+
+    const markTouched = () => { input.dataset.userTouched = '1'; };
+    input.addEventListener('change', markTouched);
+    input.addEventListener('input', markTouched);
+  })();
+
   // Mark initial load as complete after a short delay to ensure all setup is done
   setTimeout(() => {
     initialLoadComplete = true;
@@ -710,6 +739,46 @@ let gifDirty = false;              // true = changes exist that are NOT in the l
 let suppressNextDirtyFlag = false; // used for initial auto-preview so it doesn't mark dirty
 let loadedSkins = new Set();       // Track which skins have been loaded (for new timers only)
 let appliedFormDefaults = {};     // Track formDefaults that were applied (to ensure they're saved)
+
+// Default sample countdown for preview/form: 1d 1h 10m 50s
+const DEFAULT_SAMPLE_SECONDS = 90650;
+
+function toLocalDateTimeInputValue(date) {
+  const pad = (n) => String(n).padStart(2, '0');
+  const yyyy = date.getFullYear();
+  const mm = pad(date.getMonth() + 1);
+  const dd = pad(date.getDate());
+  const hh = pad(date.getHours());
+  const mi = pad(date.getMinutes());
+  return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
+}
+
+function applyDefaultSampleTimeIfEmpty() {
+  const typeEl = document.getElementById('timer_type');
+  const timerType = typeEl ? typeEl.value : 'fixed_date';
+
+  const targetInput = document.querySelector('input[name="target_datetime"]');
+  const durationInput = document.querySelector('input[name="duration_seconds"]');
+
+  if (timerType === 'fixed_date') {
+    if (targetInput) {
+      const isEmpty = !targetInput.value;
+      const isInitial = targetInput.dataset.initialValue && targetInput.value === targetInput.dataset.initialValue;
+      const userTouched = targetInput.dataset.userTouched === '1';
+      if ((isEmpty || isInitial) && !userTouched) {
+      const sampleDate = new Date(Date.now() + DEFAULT_SAMPLE_SECONDS * 1000);
+      targetInput.value = toLocalDateTimeInputValue(sampleDate);
+      }
+    }
+    return;
+  }
+
+  if (timerType === 'reload_based') {
+    if (durationInput && !durationInput.value) {
+      durationInput.value = String(DEFAULT_SAMPLE_SECONDS);
+    }
+  }
+}
 
 function setupCollapsibles(root) {
   const scope = root || document;
@@ -1689,9 +1758,17 @@ async function selectSkin(key) {
     // not be fully visible.
     if (isSwitchingToDifferentSkin) {
       setTimeout(() => {
+        // For new timers, ensure a consistent sample time is applied when switching skins
+        // (only if the user hasn't entered a value yet).
+        if (!isEdit) {
+          applyDefaultSampleTimeIfEmpty();
+        }
         syncOverrides();
       }, 100);
     } else {
+      if (!isEdit) {
+        applyDefaultSampleTimeIfEmpty();
+      }
       generatePreviewFrame();
     }
   } catch (e) {
