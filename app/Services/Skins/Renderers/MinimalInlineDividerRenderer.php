@@ -146,7 +146,7 @@ class MinimalInlineDividerRenderer implements SkinRendererInterface
             $labelCenterY = $blockTop + $numberHeight + $gap + $labelHeight / 2;
 
             for ($i = 0; $i < $segments; $i++) {
-                $centerX = (int) (($innerLeft[$i] + $innerRight[$i]) / 2);
+                $centerX = (int) round(($innerLeft[$i] + $innerRight[$i]) / 2.0);
 
                 $numberText = sprintf('%02d', $units[$i]['value']);
                 $numberWidth = $this->textBoxWidth($numberText, $font, $fontSize);
@@ -169,7 +169,7 @@ class MinimalInlineDividerRenderer implements SkinRendererInterface
             $numberY = $blockTop;
             $labelY = $blockTop + $numH + $gap;
             for ($i = 0; $i < $segments; $i++) {
-                $centerX = (int) (($innerLeft[$i] + $innerRight[$i]) / 2);
+                $centerX = (int) round(($innerLeft[$i] + $innerRight[$i]) / 2.0);
 
                 $numberText = sprintf('%02d', $units[$i]['value']);
                 $nW = imagefontwidth($builtIn) * strlen($numberText);
