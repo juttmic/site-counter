@@ -59,7 +59,8 @@
                                     </div>
                               
                                     <!-- Actions -->
-                                    <div class="mt-3 d-flex justify-content-between align-items-center">
+                                    <div class="mt-3 d-flex align-items-center">
+                                      <div class="flex-grow-1"></div>
                                       <div class="btn-group" role="group">
                                         @php($embedCopyUrl = $timer->gif_url ? url('/gettimer/'.$timer->user_id.'/'.pathinfo($timer->gif_url, PATHINFO_FILENAME)).'.gif' : null)
                                         <a href="{{ route('timers.preview', $timer) }}" class="btn btn-outline-secondary btn-sm" title="Preview">
@@ -95,14 +96,15 @@
                                           </button>
                                         @endif
                                       </div>
-                                      <form action="{{ route('timers.destroy', $timer) }}" method="POST" data-confirm="Delete this counter?" class="d-inline">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-outline-danger btn-sm" title="Delete" style="    border-radius: 5px;
-  margin-left: 2px;">
-                                          <i class="bi bi-trash"></i>
-                                        </button>
-                                      </form>
+                                      <div class="flex-grow-1 d-flex justify-content-end">
+                                        <form action="{{ route('timers.destroy', $timer) }}" method="POST" data-confirm="Delete this counter?" class="d-inline">
+                                          @csrf
+                                          @method('DELETE')
+                                          <button type="submit" class="btn btn-outline-danger btn-sm" title="Delete" style="border-radius: 5px; margin-left: 2px;">
+                                            <i class="bi bi-trash"></i>
+                                          </button>
+                                        </form>
+                                      </div>
                                     </div>
                                   </div>
                                 </div>
