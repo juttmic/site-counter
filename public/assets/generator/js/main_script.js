@@ -1291,7 +1291,8 @@ function renderFields(metadata, savedOverrides = {}) {
         if (visibilityToggles.length > 0) {
           visibilityToggles.forEach(field => {
             const value = resolveFieldValue(field);
-            const fieldContainer = createFieldInput(field, value, { useSwitch: true });
+            const displayField = { ...field, label: (field.label || '').replace(/^Show\s+/i, '') };
+            const fieldContainer = createFieldInput(displayField, value, { useSwitch: true });
             // Make each toggle full width within the column (no Bootstrap grid classes)
             const classes = fieldContainer.className.split(' ').filter(c => !c.startsWith('col-'));
             fieldContainer.className = classes.join(' ').trim();
