@@ -5,8 +5,8 @@
     "background": "#D6D6D6",
     "textColor": "#2B93BD",
     "accentColor": "#D0D7DF",
-    "fontSize": 64,
-    "labelFontSize": 16,
+    "fontSize": 80,
+    "labelFontSize": 20,
     "fontPath": "resources/fonts/dejavu-sans.book.ttf",
     "style": "minimal_inline_divider",
   
@@ -94,7 +94,7 @@
   
       { "key": "fontSize", "label": "Digit Font Size", "type": "number", "min": 8, "max": 200, "step": 1, "group": "Appearance", "order": 5 },
       { "key": "labelFontSize", "label": "Label Font Size", "type": "number", "min": 8, "max": 100, "step": 1, "group": "Appearance", "order": 6 },
-      { "key": "labelLetterSpacing", "label": "Label Letter Spacing", "type": "number", "min": 0, "max": 10, "step": 0.1, "group": "Appearance", "order": 7 },
+      
   
       { "key": "segmentGap", "label": "Segment Gap", "type": "number", "min": 0, "max": 100, "step": 1, "group": "Layout", "groupOrder": 3, "order": 1 },
       { "key": "separatorWidth", "label": "Divider Width", "type": "number", "min": 1, "max": 10, "step": 1, "group": "Layout", "order": 2 },
