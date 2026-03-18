@@ -3,10 +3,29 @@
 namespace App\Services\Skins\Renderers;
 
 use App\Services\Skins\SkinRendererInterface;
-use Illuminate\Support\Facades\Log;
 
 class MinimalBlackCountdownRenderer implements SkinRendererInterface
 {
+    private function measureText(string $font, int $size, string $text): array
+    {
+        $box = imagettfbbox($size, 0, $font, $text);
+        $xs = [$box[0], $box[2], $box[4], $box[6]];
+        $ys = [$box[1], $box[3], $box[5], $box[7]];
+        $minX = min($xs);
+        $maxX = max($xs);
+        $minY = min($ys);
+        $maxY = max($ys);
+
+        return [
+            'minX' => $minX,
+            'maxX' => $maxX,
+            'minY' => $minY,
+            'maxY' => $maxY,
+            'width' => $maxX - $minX,
+            'height' => $maxY - $minY,
+        ];
+    }
+
     public function renderStyle($im, array $skin, int $width, int $height, int $bgCol, int $textCol, int $accentCol, int $secondsRemaining): void
     {
         // Clean white background (no border)
@@ -44,39 +63,61 @@ class MinimalBlackCountdownRenderer implements SkinRendererInterface
                 $sepCol = imagecolorallocate($im, $sr, $sg, $sb);
             }
             $unitCount = count($timeUnits);
-            $unitWidth = $width / $unitCount;
             $centerY = $height / 2;
 
-            foreach ($timeUnits as $i => $unit) {
-                $unitX = $unitWidth * $i + $unitWidth / 2;
-                Log::channel("render")->info("L :",[$unitX,$unitWidth, $width, $unitCount]);
-                // Main number
+            $labelGap = max(2, (int) round($fontSize * 0.12));
+            $sepText = $sepChar;
+            $sepMetrics = $this->measureText($font, $fontSize, $sepText);
+            $sepWidth = (int) $sepMetrics['width'];
+            $sepGap = max(6, (int) round($fontSize * 0.25));
+
+            $segments = [];
+            $totalWidth = 0;
+            $maxNumberHeight = 0;
+            foreach ($timeUnits as $unit) {
                 $numberText = sprintf('%02d', $unit['value']);
-                $numberBox = imagettfbbox($fontSize, 0, $font, $numberText);
-                $numberWidth = abs($numberBox[4] - $numberBox[0]);
-                $numberHeight = abs($numberBox[5] - $numberBox[1]);
-                $numberX = (int) ($unitX - $numberWidth / 1.5);
-                $numberY = (int) ($centerY + $numberHeight/2);
-                Log::channel("render")->info("T :",[$numberX, $numberY, $numberText]);
-                imagettftext($im, $fontSize, 0, $numberX, $numberY, $textCol, $font, $numberText);
+                $numberMetrics = $this->measureText($font, $fontSize, $numberText);
+                $numberWidth = (int) $numberMetrics['width'];
+                $numberHeight = (int) $numberMetrics['height'];
+                $maxNumberHeight = max($maxNumberHeight, $numberHeight);
 
-                // Small label below
                 $labelText = $unit['label'];
-                $labelBox = imagettfbbox($labelSize, 0, $font, $labelText);
-                $labelWidth = abs($labelBox[4] - $labelBox[0]);
-                $labelX = (int) ($unitX + $numberWidth / 1.5);
-                $labelY = (int) ($centerY + $numberHeight / 2);
-                Log::channel("render")->info("Labels :",[$labelX, $labelY, $labelText]);
-                imagettftext($im, $labelSize, 0, $labelX, $labelY, $textCol, $font, $labelText);
+                $labelMetrics = $this->measureText($font, $labelSize, $labelText);
+                $labelWidth = (int) $labelMetrics['width'];
 
-                // Separator between units
+                $segmentWidth = $numberWidth + $labelGap + $labelWidth;
+                $segments[] = [
+                    'numberText' => $numberText,
+                    'labelText' => $labelText,
+                    'numberMetrics' => $numberMetrics,
+                    'labelMetrics' => $labelMetrics,
+                    'segmentWidth' => $segmentWidth,
+                ];
+
+                $totalWidth += $segmentWidth;
+            }
+            if ($unitCount > 1) {
+                $totalWidth += ($unitCount - 1) * (($sepGap * 2) + $sepWidth);
+            }
+
+            $startX = (int) round(($width - $totalWidth) / 2);
+            $numberY = (int) round($centerY + ($maxNumberHeight / 2));
+
+            $x = $startX;
+            foreach ($segments as $i => $seg) {
+                $numberX = (int) round($x - $seg['numberMetrics']['minX']);
+                imagettftext($im, $fontSize, 0, $numberX, $numberY, $textCol, $font, $seg['numberText']);
+
+                $labelLeft = $x + $seg['numberMetrics']['width'] + $labelGap;
+                $labelX = (int) round($labelLeft - $seg['labelMetrics']['minX']);
+                imagettftext($im, $labelSize, 0, $labelX, $numberY, $textCol, $font, $seg['labelText']);
+
+                $x += $seg['segmentWidth'];
                 if ($i < $unitCount - 1) {
-                    $colon = $sepChar;
-                    $colonBox = imagettfbbox($fontSize, 0, $font, $colon);
-                    $colonWidth = abs($colonBox[4] - $colonBox[0]);
-                    $colonX = (int) ($unitX + $unitWidth / 2 - $colonWidth / 2);
-                    $colonY = $numberY;
-                    imagettftext($im, $fontSize, 0, $colonX, $colonY, $sepCol, $font, $colon);
+                    $x += $sepGap;
+                    $sepX = (int) round($x - $sepMetrics['minX']);
+                    imagettftext($im, $fontSize, 0, $sepX, $numberY, $sepCol, $font, $sepText);
+                    $x += $sepWidth + $sepGap;
                 }
             }
         }
