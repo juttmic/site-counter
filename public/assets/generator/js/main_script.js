@@ -39,20 +39,48 @@ function toggleInputs(isUserAction = false) {
 document.addEventListener('DOMContentLoaded', () => {
   toggleInputs(false); // Initial load, don't set default
 
+  // Persist user's timezone so backend can interpret datetime-local as local time.
+  (function initClientTimezone() {
+    const tzEl = document.getElementById('client_timezone');
+    if (!tzEl) return;
+    try {
+      tzEl.value = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+    } catch (e) {
+      tzEl.value = '';
+    }
+  })();
+
   // Create page: ensure the date-time picker starts at "now" (current local time).
   // We store the initial value so skin selection can safely replace it with the sample time
   // only if the user hasn't edited it.
   (function initTargetDateTimeToNow() {
     const form = document.getElementById('timer_form');
     const isEdit = form && form.dataset.isEdit === '1';
-    if (isEdit) return;
+    if (isEdit) {
+      const input = document.querySelector('input[name="target_datetime"]');
+      if (!input) return;
+      const utcVal = input.dataset.utc;
+      if (utcVal) {
+        try {
+          const localVal = toLocalDateTimeInputValue(new Date(utcVal));
+          if (localVal) {
+            input.value = localVal;
+          }
+        } catch (e) {}
+      }
+      input.dataset.userTouched = '0';
+      const markTouched = () => { input.dataset.userTouched = '1'; };
+      input.addEventListener('change', markTouched);
+      input.addEventListener('input', markTouched);
+      return;
+    }
 
     const input = document.querySelector('input[name="target_datetime"]');
     if (!input) return;
 
     const now = new Date();
     const pad = (n) => String(n).padStart(2, '0');
-    const nowVal = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    const nowVal = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
 
     // If server rendered an empty value, fill with current time.
     if (!input.value) {
@@ -79,7 +107,7 @@ function enforceMinTargetDateTime() {
   if (!input) return;
   const now = new Date();
   const pad = (n) => n.toString().padStart(2, '0');
-  const minVal = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  const minVal = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
   input.min = minVal;
 }
 
@@ -750,7 +778,8 @@ function toLocalDateTimeInputValue(date) {
   const dd = pad(date.getDate());
   const hh = pad(date.getHours());
   const mi = pad(date.getMinutes());
-  return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
+  const ss = pad(date.getSeconds());
+  return `${yyyy}-${mm}-${dd}T${hh}:${mi}:${ss}`;
 }
 
 function applyDefaultSampleTimeIfEmpty() {

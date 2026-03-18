@@ -551,6 +551,7 @@
             @if($isEdit)
                 @method('PUT')
             @endif
+            <input type="hidden" name="client_timezone" id="client_timezone" value="">
 
             <div class="row g-3">
                 <!-- Top skin selector bar -->
@@ -628,10 +629,20 @@
 ">
                                       <div id="fixed_date_input" class="{{ $isEdit && $timer->timer_type !== 'fixed_date' ? 'd-none' : '' }}">
                                     {{-- <label class="form-label">Target DateTime</label> --}}
-                                    <input type="datetime-local" name="target_datetime" class="form-control"
-                                           min="{{ now()->format('Y-m-d\\TH:i') }}"
-                                           value="{{ old('target_datetime', $isEdit && $timer->target_datetime ? $timer->target_datetime->format('Y-m-d\\TH:i') : ($isEdit ? '' : now()->addDays(3)->format('Y-m-d\\TH:i'))) }}">
-                                           <div class="form-text small">Select the (UTC) date and time when the counter stops.</div>
+                                    @php
+                                        $oldTarget = old('target_datetime');
+                                        $utcIso = ($isEdit && isset($timer) && $timer->target_datetime) ? $timer->target_datetime->copy()->utc()->toIso8601String() : '';
+                                        // Create: leave empty so frontend can set "now" in user's local time.
+                                        $inputValue = $oldTarget !== null ? $oldTarget : ($isEdit ? '' : '');
+                                    @endphp
+                                    <input type="datetime-local"
+                                           name="target_datetime"
+                                           class="form-control"
+                                           step="1"
+                                           min="{{ now()->format('Y-m-d\\TH:i:s') }}"
+                                           value="{{ $inputValue }}"
+                                           data-utc="{{ $utcIso }}">
+                                           <div class="form-text small">Select the date and time when the counter stops (your local time).</div>
                                 </div>
 
                                 <div id="duration_input" class="{{ ($isEdit && $timer->timer_type !== 'reload_based') || !$isEdit ? 'd-none' : '' }}">

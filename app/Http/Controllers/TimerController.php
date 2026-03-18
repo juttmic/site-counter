@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
+use DateTimeZone;
 
 class TimerController extends Controller
 {
@@ -224,7 +225,7 @@ class TimerController extends Controller
         $rules = [
             'title' => ['sometimes', 'nullable', 'string', 'max:255'],
             'timer_type' => ['sometimes', 'nullable', 'in:fixed_date,reload_based'],
-            'target_datetime' => ['sometimes', 'nullable', 'date', 'after_or_equal:now'],
+            'target_datetime' => ['sometimes', 'nullable', 'string'],
             'duration_seconds' => ['sometimes', 'nullable', 'integer', 'min:1', 'max:604800'],
             'skin' => ['sometimes', 'string'],
             'text_position' => ['sometimes', 'in:top,bottom,none'],
@@ -232,6 +233,7 @@ class TimerController extends Controller
             'status' => ['sometimes', 'in:active,inactive'],
             'skin_overrides' => ['sometimes', 'nullable', 'string'],
             'animation_frame_limit' => ['sometimes', 'nullable', 'integer', 'min:10', 'max:60'],
+            'client_timezone' => ['sometimes', 'nullable', 'string', 'max:64'],
         ];
 
         $data = $request->validate($rules);
@@ -256,12 +258,16 @@ class TimerController extends Controller
         } else {
             // Fixed date mode: use target_datetime, ignore duration_seconds for calculation
             if (!empty($data['target_datetime'])) {
-                $target = Carbon::parse($data['target_datetime']);
-                $data['target_datetime'] = $target->lt(now()) ? now()->addDays(3) : $target;
+                $tz = (string) ($data['client_timezone'] ?? $request->input('client_timezone') ?? '');
+                $targetUtc = $this->parseClientDateTimeToUtc((string) $data['target_datetime'], $tz);
+                if ($targetUtc->lt(now()->utc())) {
+                    $targetUtc = now()->utc()->addDays(3);
+                }
+                $data['target_datetime'] = $targetUtc;
             } elseif ($timer && $timer->target_datetime) {
                 $data['target_datetime'] = $timer->target_datetime;
             } else {
-                $data['target_datetime'] = now()->addDays(3);
+                $data['target_datetime'] = now()->utc()->addDays(3);
             }
             $data['duration_seconds'] = null; // Clear duration_seconds for fixed_date
         }
@@ -299,7 +305,7 @@ class TimerController extends Controller
         $rules = [
             'title' => ['required', 'string', 'max:255'],
             'timer_type' => ['nullable', 'in:fixed_date,reload_based'], // Made nullable to allow defaults
-            'target_datetime' => ['nullable', 'date', 'after_or_equal:now'],
+            'target_datetime' => ['nullable', 'string'],
             'duration_seconds' => ['nullable', 'integer', 'min:1', 'max:604800'],
             'skin' => ['required', 'string'],
             'text_position' => ['required', 'in:top,bottom,none'],
@@ -307,6 +313,7 @@ class TimerController extends Controller
             'status' => ['nullable', 'in:active,inactive'],
             'skin_overrides' => ['nullable', 'string'],
             'animation_frame_limit' => ['nullable', 'integer', 'min:10', 'max:60'],
+            'client_timezone' => ['nullable', 'string', 'max:64'],
         ];
 
         $data = $request->validate($rules);
@@ -319,12 +326,14 @@ class TimerController extends Controller
         if ($data['timer_type'] === 'fixed_date') {
             $data['duration_seconds'] = null;
             if (!empty($data['target_datetime'])) {
-                $target = Carbon::parse($data['target_datetime']);
-                if ($target->lt(now())) {
+                $tz = (string) ($data['client_timezone'] ?? $request->input('client_timezone') ?? '');
+                $targetUtc = $this->parseClientDateTimeToUtc((string) $data['target_datetime'], $tz);
+                if ($targetUtc->lt(now()->utc())) {
                     throw \Illuminate\Validation\ValidationException::withMessages([
                         'target_datetime' => 'The target date and time must be in the future.',
                     ]);
                 }
+                $data['target_datetime'] = $targetUtc;
             }
         } else {
             $data['target_datetime'] = null;
@@ -346,6 +355,38 @@ class TimerController extends Controller
             }
         }
         return $data;
+    }
+
+    private function parseClientDateTimeToUtc(string $value, string $timezone): Carbon
+    {
+        $tz = 'UTC';
+        if ($timezone !== '') {
+            try {
+                $resolved = new DateTimeZone($timezone);
+                $tz = $resolved->getName();
+            } catch (\Throwable $e) {
+                $tz = 'UTC';
+            }
+        }
+
+        $raw = trim($value);
+        if ($raw === '') {
+            return now()->utc();
+        }
+
+        foreach (['Y-m-d\TH:i', 'Y-m-d\TH:i:s'] as $fmt) {
+            try {
+                $dt = Carbon::createFromFormat($fmt, $raw, $tz);
+                if ($dt !== false) {
+                    return $dt->utc();
+                }
+            } catch (\Throwable $e) {
+                // try next format
+            }
+        }
+
+        // Fallback: let Carbon parse and assume provided timezone
+        return Carbon::parse($raw, $tz)->utc();
     }
 
     private function authorizeOwner(Timer $timer): void
