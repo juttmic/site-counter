@@ -17,14 +17,27 @@
 
                 <div class="d-flex gap-2">
                     <a href="{{ route('timers.edit', $timer) }}"
-                       class="btn btn-outline-primary btn-sm prev_btn" style="border-radius: 50%;">
+                       class="btn btn-outline-primary btn-sm prev_btn"
+                       style="border-radius: 50%;"
+                       title="Edit"
+                       data-bs-toggle="tooltip"
+                       data-bs-placement="top"
+                       aria-label="Edit">
                         <i class="bi bi-pencil"></i>
                     </a>
                     @if($timer->status === 'active')
                         @php(
                             $embedUrl = url('/gettimer/'.$timer->user_id.'/'.pathinfo($timer->gif_url, PATHINFO_FILENAME)).'.gif'
                         )
-                    <button id="preview_embed_copy" class="btn btn-outline-primary btn-sm prev_btn" style="border-radius: 50%;"><i class="bi bi-copy"></i></button>
+                    <button id="preview_embed_copy"
+                            class="btn btn-outline-primary btn-sm prev_btn"
+                            style="border-radius: 50%;"
+                            title="Embed code"
+                            data-bs-toggle="tooltip"
+                            data-bs-placement="top"
+                            aria-label="Embed code">
+                        <i class="bi bi-copy"></i>
+                    </button>
                             
                                 <input
                                     id="preview_embed_input"
@@ -36,7 +49,15 @@
                                     readonly
                                 >
                     @else
-                    <button id="preview_embed_copy"  style="border-radius: 50%;" class="btn btn-outline-primary btn-sm prev_btn"><i class="bi bi-copy"></i></button>
+                    <button id="preview_embed_copy"
+                            style="border-radius: 50%;"
+                            class="btn btn-outline-primary btn-sm prev_btn"
+                            title="Embed code"
+                            data-bs-toggle="tooltip"
+                            data-bs-placement="top"
+                            aria-label="Embed code">
+                        <i class="bi bi-copy"></i>
+                    </button>
                     @endif
                 </div>
             </div>
