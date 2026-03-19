@@ -757,14 +757,21 @@ class TimerGifGenerator
 
         if (is_array($layout)) {
             foreach (['width', 'height', 'segmentGap', 'horizontalPadding', 'ringSize', 'connectorLength', 'framePadding', 'separatorHeight'] as $key) {
-                if (isset($layout[$key])) {
-                    if ($key === 'width' && $scaleW !== 1.0) {
-                        $skin[$key] = (int) max(1, round(((int) $layout[$key]) * $scaleW));
-                    } elseif ($key === 'height' && $scaleH !== 1.0) {
-                        $skin[$key] = (int) max(1, round(((int) $layout[$key]) * $scaleH));
-                    } else {
-                        $skin[$key] = (int) $layout[$key];
-                    }
+                if (!isset($layout[$key])) {
+                    continue;
+                }
+                // Let an explicit separatorHeight on the skin (e.g. from the form)
+                // override any layout-provided default.
+                if ($key === 'separatorHeight' && isset($skin['separatorHeight'])) {
+                    continue;
+                }
+
+                if ($key === 'width' && $scaleW !== 1.0) {
+                    $skin[$key] = (int) max(1, round(((int) $layout[$key]) * $scaleW));
+                } elseif ($key === 'height' && $scaleH !== 1.0) {
+                    $skin[$key] = (int) max(1, round(((int) $layout[$key]) * $scaleH));
+                } else {
+                    $skin[$key] = (int) $layout[$key];
                 }
             }
         }

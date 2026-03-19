@@ -161,7 +161,8 @@ class MinimalInlineDividerRenderer implements SkinRendererInterface
             $labM = $this->measureText($font, $labelFontSize, $labelSample);
             $numberHeight = $numM['height'];
             $labelHeight = $labM['height'];
-            $gap = (int) round($fontSize * 0.18);
+            // Double the space between digits and labels while keeping the whole block centered.
+            $gap = (int) round($fontSize * 0.36);
             $totalBlockHeight = $numberHeight + $gap + $labelHeight;
             $blockTop = (float) max(0, ($height - $totalBlockHeight) / 2);
             $numberCenterY = $blockTop + $numberHeight / 2;

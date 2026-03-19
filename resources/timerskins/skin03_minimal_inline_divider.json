@@ -24,7 +24,7 @@
   
     "separatorColor": "#2B93BD",
     "separatorWidth": 2,
-    "separatorHeight": 86,
+    "separatorHeight": 150,
     "segmentGap": 36,
     "labelColor": "#56697C",
     "numberWeight": 700,
@@ -94,11 +94,9 @@
   
       { "key": "fontSize", "label": "Digit Font Size", "type": "number", "min": 8, "max": 200, "step": 1, "group": "Appearance", "order": 5 },
       { "key": "labelFontSize", "label": "Label Font Size", "type": "number", "min": 8, "max": 100, "step": 1, "group": "Appearance", "order": 6 },
-      
   
-      { "key": "segmentGap", "label": "Segment Gap", "type": "number", "min": 0, "max": 100, "step": 1, "group": "Layout", "groupOrder": 3, "order": 1 },
-      { "key": "separatorWidth", "label": "Divider Width", "type": "number", "min": 1, "max": 10, "step": 1, "group": "Layout", "order": 2 },
-      { "key": "separatorHeight", "label": "Divider Height", "type": "number", "min": 10, "max": 150, "step": 1, "group": "Layout", "order": 3 },
+      { "key": "separatorWidth", "label": "Divider Width", "type": "number", "min": 1, "max": 10, "step": 1, "group": "Layout", "groupOrder": 3, "order": 1 },
+      { "key": "separatorHeight", "label": "Divider Height", "type": "number", "min": 10, "max": 150, "step": 1, "group": "Layout", "order": 2 },
   
       { "key": "showDays", "label": "Show Days", "type": "boolean", "group": "Visibility", "groupOrder": 4, "order": 1 },
       { "key": "showSeconds", "label": "Show Seconds", "type": "boolean", "group": "Visibility", "order": 2 },
