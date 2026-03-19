@@ -116,11 +116,9 @@
       { "key": "borderWidth", "label": "Outer Border Width", "type": "number", "min": 0, "max": 20, "step": 1, "group": "Appearance", "order": 9 },
       { "key": "borderColor", "label": "Outer Border Color", "type": "color", "group": "Appearance", "order": 10 },
   
-      { "key": "panelRadius", "label": "Panel Radius", "type": "number", "min": 0, "max": 80, "step": 1, "group": "Layout", "groupOrder": 3, "order": 1 },
-      { "key": "cardRadius", "label": "Card Radius", "type": "number", "min": 0, "max": 50, "step": 1, "group": "Layout", "order": 2 },
-      { "key": "numberBoxRadius", "label": "Digit Box Radius", "type": "number", "min": 0, "max": 50, "step": 1, "group": "Layout", "order": 3 },
-      { "key": "numberBoxBorderWidth", "label": "Digit Box Border Width", "type": "number", "min": 0, "max": 10, "step": 1, "group": "Layout", "order": 4 },
-      { "key": "segmentGap", "label": "Segment Gap", "type": "number", "min": 0, "max": 80, "step": 1, "group": "Layout", "order": 5 },
+      { "key": "cardRadius", "label": "Card Radius", "type": "number", "min": 0, "max": 50, "step": 1, "group": "Layout", "groupOrder": 3, "order": 1 },
+      { "key": "numberBoxRadius", "label": "Digit Box Radius", "type": "number", "min": 0, "max": 50, "step": 1, "group": "Layout", "order": 2 },
+      { "key": "numberBoxBorderWidth", "label": "Digit Box Border Width", "type": "number", "min": 0, "max": 10, "step": 1, "group": "Layout", "order": 3 },
   
       // Visibility fields (days and seconds only; hours/minutes always shown)
       { "key": "showDays", "label": "Show Days", "type": "boolean", "group": "Visibility", "groupOrder": 4, "order": 1 },

@@ -113,8 +113,8 @@ class RoundedPanelCardsRenderer implements SkinRendererInterface
         $numberBoxBg = $this->allocColor($im, $skin['numberBoxBackground'] ?? '#FFFFFF');
         $accentBorderCol = $this->allocColor($im, (string) ($skin['numberBoxBorderColor'] ?? $skin['accentColor'] ?? '#69B7CB'));
         $neutralBorderCol = $this->allocColor($im, $skin['borderColor'] ?? '#D8E0E8');
-        $accentBorderWidth = max(0, min(3, (int) ($skin['numberBoxBorderWidth'] ?? 3)));
-        $neutralBorderWidth = 1;
+        // Border width should apply to every segment; only the color is "highlighted" on first segment.
+        $borderWidth = max(0, min(10, (int) ($skin['numberBoxBorderWidth'] ?? 3)));
         $numberBoxRadius = max(0, (int) ($skin['numberBoxRadius'] ?? 14));
         $cardShadowCol = $this->allocColor($im, $skin['shadowColor'] ?? '#D9E3EB');
 
@@ -135,7 +135,7 @@ class RoundedPanelCardsRenderer implements SkinRendererInterface
             $boxH = $layout['boxH'];
             $isHighlighted = ($i === 0);
             $boxBorderCol = $isHighlighted ? $accentBorderCol : $neutralBorderCol;
-            $boxBorderW = $isHighlighted ? $accentBorderWidth : $neutralBorderWidth;
+            $boxBorderW = $borderWidth;
 
             if ($boxBorderW > 0) {
                 $borderR = min($numberBoxRadius + $boxBorderW, (int) floor(min($boxW, $boxH) / 2));
