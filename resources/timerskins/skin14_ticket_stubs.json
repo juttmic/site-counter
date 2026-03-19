@@ -5,7 +5,7 @@
   "background": "#D6D6D6",
   "textColor": "#111111",
   "accentColor": "#F59E0B",
-  "fontSize": 40,
+  "fontSize": 73,
   "fontPath": "resources/fonts/dejavu-sans.book.ttf",
   "style": "ticket_stub",
   "showDays": true,

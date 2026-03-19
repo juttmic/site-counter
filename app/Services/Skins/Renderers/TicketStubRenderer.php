@@ -64,8 +64,8 @@ class TicketStubRenderer implements SkinRendererInterface
         $y = $gap;
         $h = $height - 2 * $gap;
 
-        // Shared vertical gap factor between number and label (three times the original 0.18)
-        $gapFactor = 0.54;
+        // Shared vertical gap factor between number and label (slightly increased)
+        $gapFactor = 0.62;
         if (is_file($font)) {
             for ($i = 0; $i < $segments; $i++) {
                 $x = $gap + $i * ($unitW + $gap);
