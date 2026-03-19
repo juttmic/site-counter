@@ -20,12 +20,17 @@ class MinimalInlineDividerRenderer implements SkinRendererInterface
     private function computePercentLayout(int $width, int $segments, int $innerPadding): array
     {
         $segments = max(1, $segments);
-        $segW = (int) round($width * 0.205);
-        $divSlotW = (int) round($width * 0.04);
-        $margin = (int) round($width * 0.03);
+        // Integer basis (20.5‰, 4‰, 3‰ of width) — one segW / divSlotW for every cell, no drift.
+        $segW = (int) round(($width * 205) / 1000);
+        $divSlotW = (int) round(($width * 40) / 1000);
+        $margin = (int) round(($width * 30) / 1000);
+        $segW = max(1, $segW);
+        $divSlotW = max(1, $divSlotW);
+
         $bandWidth = max(1, $width - 2 * $margin);
         $contentW = $segments * $segW + max(0, $segments - 1) * $divSlotW;
-        $startX = $margin + (int) round(($bandWidth - $contentW) / 2.0);
+        $slack = max(0, $bandWidth - $contentW);
+        $startX = $margin + intdiv($slack, 2);
 
         $segmentOuterLeft = [];
         $segmentOuterRight = [];
@@ -33,17 +38,17 @@ class MinimalInlineDividerRenderer implements SkinRendererInterface
         $innerRight = [];
         $dividerSlots = [];
 
-        $x = $startX;
+        $step = $segW + $divSlotW;
         for ($i = 0; $i < $segments; $i++) {
-            $segmentOuterLeft[$i] = $x;
-            $segmentOuterRight[$i] = $x + $segW - 1;
+            $l = $startX + $i * $step;
+            $segmentOuterLeft[$i] = $l;
+            $segmentOuterRight[$i] = $l + $segW - 1;
             $innerLeft[$i] = min($segmentOuterRight[$i], $segmentOuterLeft[$i] + $innerPadding);
             $innerRight[$i] = max($segmentOuterLeft[$i], $segmentOuterRight[$i] - $innerPadding);
-            $x += $segW;
-            if ($i < $segments - 1) {
-                $dividerSlots[] = ['left' => $x, 'right' => $x + $divSlotW - 1];
-                $x += $divSlotW;
-            }
+        }
+        for ($i = 0; $i < $segments - 1; $i++) {
+            $divLeft = $startX + $i * $step + $segW;
+            $dividerSlots[] = ['left' => $divLeft, 'right' => $divLeft + $divSlotW - 1];
         }
 
         return [
@@ -56,6 +61,25 @@ class MinimalInlineDividerRenderer implements SkinRendererInterface
             'innerLeft' => $innerLeft,
             'innerRight' => $innerRight,
             'dividerSlots' => $dividerSlots,
+        ];
+    }
+
+    /**
+     * @return array{minX: float, maxX: float, minY: float, maxY: float, width: float, height: float}
+     */
+    private function measureText(string $font, int $size, string $text): array
+    {
+        $box = imagettfbbox($size, 0, $font, $text) ?: [0, 0, 0, 0, 0, 0, 0, 0];
+        $xs = [$box[0], $box[2], $box[4], $box[6]];
+        $ys = [$box[1], $box[3], $box[5], $box[7]];
+
+        return [
+            'minX' => min($xs),
+            'maxX' => max($xs),
+            'minY' => min($ys),
+            'maxY' => max($ys),
+            'width' => max($xs) - min($xs),
+            'height' => max($ys) - min($ys),
         ];
     }
 
@@ -135,16 +159,16 @@ class MinimalInlineDividerRenderer implements SkinRendererInterface
         $innerPadding = max(0, (int) ($skin['innerPadding'] ?? 6));
         $segments = count($units);
         $layout = $this->computePercentLayout($width, $segments, $innerPadding);
-        $innerLeft = $layout['innerLeft'];
-        $innerRight = $layout['innerRight'];
+        $outerLeft = $layout['segmentOuterLeft'];
+        $outerRight = $layout['segmentOuterRight'];
 
         if (is_file($font)) {
             $numberSample = '00';
-            $labelSample = 'HOURS';
-            $numBox = imagettfbbox($fontSize, 0, $font, $numberSample) ?: [0, 0, 0, 0, 0, 0, 0, 0];
-            $labBox = imagettfbbox($labelFontSize, 0, $font, $labelSample) ?: [0, 0, 0, 0, 0, 0, 0, 0];
-            $numberHeight = (float) ($numBox[1] - $numBox[7]);
-            $labelHeight = (float) ($labBox[1] - $labBox[7]);
+            $labelSample = 'SECONDS';
+            $numM = $this->measureText($font, $fontSize, $numberSample);
+            $labM = $this->measureText($font, $labelFontSize, $labelSample);
+            $numberHeight = $numM['height'];
+            $labelHeight = $labM['height'];
             $gap = (int) round($fontSize * 0.18);
             $totalBlockHeight = $numberHeight + $gap + $labelHeight;
             $blockTop = (float) max(0, ($height - $totalBlockHeight) / 2);
@@ -152,17 +176,19 @@ class MinimalInlineDividerRenderer implements SkinRendererInterface
             $labelCenterY = $blockTop + $numberHeight + $gap + $labelHeight / 2;
 
             for ($i = 0; $i < $segments; $i++) {
-                $centerX = (int) round(($innerLeft[$i] + $innerRight[$i]) / 2.0);
+                $segmentCenterX = ($outerLeft[$i] + $outerRight[$i]) / 2.0;
 
                 $numberText = sprintf('%02d', $units[$i]['value']);
-                $numberWidth = $this->textBoxWidth($numberText, $font, $fontSize);
-                $numberBaseline = (int) round($numberCenterY - $this->textVerticalCenterOffset($numberText, $font, $fontSize));
-                imagettftext($im, $fontSize, 0, (int) ($centerX - $numberWidth / 2), $numberBaseline, $textCol, $font, $numberText);
+                $nm = $this->measureText($font, $fontSize, $numberText);
+                $nx = (int) round($segmentCenterX - ($nm['width'] / 2) - $nm['minX']);
+                $nBaseline = (int) round($numberCenterY - ($nm['minY'] + $nm['maxY']) / 2);
+                imagettftext($im, $fontSize, 0, $nx, $nBaseline, $textCol, $font, $numberText);
 
                 $label = $units[$i]['label'];
-                $labelWidth = $this->textBoxWidth($label, $font, $labelFontSize);
-                $labelBaseline = (int) round($labelCenterY - $this->textVerticalCenterOffset($label, $font, $labelFontSize));
-                imagettftext($im, $labelFontSize, 0, (int) ($centerX - $labelWidth / 2), $labelBaseline, $labelCol, $font, $label);
+                $lm = $this->measureText($font, $labelFontSize, $label);
+                $lx = (int) round($segmentCenterX - ($lm['width'] / 2) - $lm['minX']);
+                $lBaseline = (int) round($labelCenterY - ($lm['minY'] + $lm['maxY']) / 2);
+                imagettftext($im, $labelFontSize, 0, $lx, $lBaseline, $labelCol, $font, $label);
             }
         } else {
             $builtIn = 5;
@@ -175,7 +201,7 @@ class MinimalInlineDividerRenderer implements SkinRendererInterface
             $numberY = $blockTop;
             $labelY = $blockTop + $numH + $gap;
             for ($i = 0; $i < $segments; $i++) {
-                $centerX = (int) round(($innerLeft[$i] + $innerRight[$i]) / 2.0);
+                $centerX = (int) round(($outerLeft[$i] + $outerRight[$i]) / 2.0);
 
                 $numberText = sprintf('%02d', $units[$i]['value']);
                 $nW = imagefontwidth($builtIn) * strlen($numberText);
@@ -200,19 +226,5 @@ class MinimalInlineDividerRenderer implements SkinRendererInterface
             return imagecolorallocate($im, $r, $g, $b);
         }
         return imagecolorallocate($im, 255, 255, 255);
-    }
-
-    private function textBoxWidth(string $text, string $fontPath, int $fontSize): int
-    {
-        $box = imagettfbbox($fontSize, 0, $fontPath, $text) ?: [0, 0, 0, 0, 0, 0, 0, 0];
-        $minX = min($box[0], $box[2], $box[4], $box[6]);
-        $maxX = max($box[0], $box[2], $box[4], $box[6]);
-        return (int) ($maxX - $minX);
-    }
-
-    private function textVerticalCenterOffset(string $text, string $fontPath, int $fontSize): float
-    {
-        $box = imagettfbbox($fontSize, 0, $fontPath, $text) ?: [0, 0, 0, 0, 0, 0, 0, 0];
-        return ($box[7] + $box[1]) / 2.0;
     }
 }
