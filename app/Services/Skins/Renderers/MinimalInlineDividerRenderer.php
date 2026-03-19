@@ -10,6 +10,55 @@ use App\Services\Skins\SkinRendererInterface;
  */
 class MinimalInlineDividerRenderer implements SkinRendererInterface
 {
+    /**
+     * Horizontal layout (percent of full canvas width):
+     * - 3% margin left, 3% margin right (6% total)
+     * - Inner band 94%: up to 4 segments × 20.5% + up to 3 divider slots × 4% = 94%
+     * - Actual divider stroke uses skin separatorWidth; remainder of each 4% slot is padding.
+     * Visible row is centered in the inner band when fewer than 4 segments.
+     */
+    private function computePercentLayout(int $width, int $segments, int $innerPadding): array
+    {
+        $segments = max(1, $segments);
+        $segW = (int) round($width * 0.205);
+        $divSlotW = (int) round($width * 0.04);
+        $margin = (int) round($width * 0.03);
+        $bandWidth = max(1, $width - 2 * $margin);
+        $contentW = $segments * $segW + max(0, $segments - 1) * $divSlotW;
+        $startX = $margin + (int) round(($bandWidth - $contentW) / 2.0);
+
+        $segmentOuterLeft = [];
+        $segmentOuterRight = [];
+        $innerLeft = [];
+        $innerRight = [];
+        $dividerSlots = [];
+
+        $x = $startX;
+        for ($i = 0; $i < $segments; $i++) {
+            $segmentOuterLeft[$i] = $x;
+            $segmentOuterRight[$i] = $x + $segW - 1;
+            $innerLeft[$i] = min($segmentOuterRight[$i], $segmentOuterLeft[$i] + $innerPadding);
+            $innerRight[$i] = max($segmentOuterLeft[$i], $segmentOuterRight[$i] - $innerPadding);
+            $x += $segW;
+            if ($i < $segments - 1) {
+                $dividerSlots[] = ['left' => $x, 'right' => $x + $divSlotW - 1];
+                $x += $divSlotW;
+            }
+        }
+
+        return [
+            'segW' => $segW,
+            'divSlotW' => $divSlotW,
+            'margin' => $margin,
+            'startX' => $startX,
+            'segmentOuterLeft' => $segmentOuterLeft,
+            'segmentOuterRight' => $segmentOuterRight,
+            'innerLeft' => $innerLeft,
+            'innerRight' => $innerRight,
+            'dividerSlots' => $dividerSlots,
+        ];
+    }
+
     public function renderStyle($im, array $skin, int $width, int $height, int $bgCol, int $textCol, int $accentCol, int $secondsRemaining): void
     {
         imagefilledrectangle($im, 0, 0, $width, $height, $bgCol);
@@ -26,72 +75,37 @@ class MinimalInlineDividerRenderer implements SkinRendererInterface
         if ($showSeconds) { $units[] = 's'; }
         if (empty($units)) { $units = ['s']; }
 
-        // Horizontal geometry: segments and separators with zero external gap so that
-        // each divider touches the adjacent segment boxes on both sides.
-        $segmentGap = 0;
         $separatorWidth = max(1, (int) ($skin['separatorWidth'] ?? 2));
         $separatorHeight = max(10, (int) ($skin['separatorHeight'] ?? 86));
         $separatorCol = $this->allocColor($im, $skin['separatorColor'] ?? '#CBD3DC');
 
         $segments = count($units);
-        $totalSeparatorWidth = ($segments - 1) * $separatorWidth;
-        $segmentWidth = (int) floor(($width - $totalSeparatorWidth) / $segments);
-        $usedWidth = $segments * $segmentWidth + $totalSeparatorWidth;
-        $leftOffset = (int) floor(($width - $usedWidth) / 2);
-
-        // Inner horizontal padding to visually reduce space inside each segment box
-        // while keeping outer margins unchanged.
         $innerPadding = max(0, (int) ($skin['innerPadding'] ?? 6));
+        $layout = $this->computePercentLayout($width, $segments, $innerPadding);
 
         $centerY = (int) ($height / 2);
         $sepTop = (int) ($centerY - $separatorHeight / 2);
         $sepBottom = (int) ($centerY + $separatorHeight / 2);
 
-        // Precompute inner bounds for each segment (after trimming inner padding).
-        $innerLeft = [];
-        $innerRight = [];
-        for ($i = 0; $i < $segments; $i++) {
-            $segmentOuterLeft = $leftOffset + $i * ($segmentWidth + $separatorWidth);
-            $segmentOuterRight = $segmentOuterLeft + $segmentWidth - 1;
-
-            // Apply the same padding to every segment so each box looks identical.
-            // Clamp to avoid inverting bounds on very small segments.
-            $innerLeft[$i] = min($segmentOuterRight, $segmentOuterLeft + $innerPadding);
-            $innerRight[$i] = max($segmentOuterLeft, $segmentOuterRight - $innerPadding);
-        }
-
-        // Draw vertical separators between segments so they stay centered between
-        // the trimmed segment boxes (zero distance to both inner edges).
         $red = imagecolorallocate($im, 255, 0, 0);
-        for ($i = 0; $i < $segments - 1; $i++) {
-            $leftInnerRight = $innerRight[$i];
-            $rightInnerLeft = $innerLeft[$i + 1];
-            $gapSpan = max(0, $rightInnerLeft - $leftInnerRight - 1);
-            $gapCenter = (int) round($leftInnerRight + 1 + $gapSpan / 2.0);
-            $sepLeft = $gapCenter - (int) floor($separatorWidth / 2);
-            $sepRight = $sepLeft + $separatorWidth - 1;
 
-            imagefilledrectangle(
-                $im,
-                $sepLeft,
-                $sepTop,
-                $sepRight,
-                $sepBottom,
-                $separatorCol
-            );
+        foreach ($layout['dividerSlots'] as $idx => $slot) {
+            $slotLeft = $slot['left'];
+            $slotRight = $slot['right'];
+            $slotW = $slotRight - $slotLeft + 1;
+            $barW = min($separatorWidth, $slotW);
+            $sepLeft = $slotLeft + (int) floor(($slotW - $barW) / 2);
+            $sepRight = $sepLeft + $barW - 1;
 
-            // Red border around each divider
-            imagerectangle($im, $sepLeft, $sepTop, $sepRight, $sepBottom, $red);
+            imagefilledrectangle($im, $sepLeft, $sepTop, $sepRight, $sepBottom, $separatorCol);
+            imagerectangle($im, $slotLeft, $sepTop, $slotRight, $sepBottom, $red);
         }
 
-        // Red border box around each segment (requested)
-        
         for ($i = 0; $i < $segments; $i++) {
-            $segmentOuterLeft = $leftOffset + $i * ($segmentWidth + $separatorWidth);
-            $segmentOuterRight = $segmentOuterLeft + $segmentWidth - 1;
-            imagerectangle($im, $segmentOuterLeft, 0, $segmentOuterRight, $height - 1, $red);
+            $l = $layout['segmentOuterLeft'][$i];
+            $r = $layout['segmentOuterRight'][$i];
+            imagerectangle($im, $l, 0, $r, $height - 1, $red);
         }
-        
     }
 
     public function renderTimeText($im, int $secondsRemaining, array $skin, int $width, int $height, int $textCol, int $accentCol): bool
@@ -118,28 +132,11 @@ class MinimalInlineDividerRenderer implements SkinRendererInterface
         if ($showSeconds) { $units[] = ['value' => $seconds, 'label' => 'SECONDS']; }
         if (empty($units)) { $units[] = ['value' => $seconds, 'label' => 'SECONDS']; }
 
-        // Match spacing and trimming with renderStyle so dividers and text align.
-        $segmentGap = 0;
-        $separatorWidth = max(1, (int) ($skin['separatorWidth'] ?? 2));
-        $segments = count($units);
-        $totalSeparatorWidth = ($segments - 1) * $separatorWidth;
-        $segmentWidth = (int) floor(($width - $totalSeparatorWidth) / $segments);
-        $usedWidth = $segments * $segmentWidth + $totalSeparatorWidth;
-        $leftOffset = (int) floor(($width - $usedWidth) / 2);
-
         $innerPadding = max(0, (int) ($skin['innerPadding'] ?? 6));
-
-        $innerLeft = [];
-        $innerRight = [];
-        for ($i = 0; $i < $segments; $i++) {
-            $segmentOuterLeft = $leftOffset + $i * ($segmentWidth + $separatorWidth);
-            $segmentOuterRight = $segmentOuterLeft + $segmentWidth - 1;
-
-            // Apply the same padding to every segment so each box looks identical.
-            // Clamp to avoid inverting bounds on very small segments.
-            $innerLeft[$i] = min($segmentOuterRight, $segmentOuterLeft + $innerPadding);
-            $innerRight[$i] = max($segmentOuterLeft, $segmentOuterRight - $innerPadding);
-        }
+        $segments = count($units);
+        $layout = $this->computePercentLayout($width, $segments, $innerPadding);
+        $innerLeft = $layout['innerLeft'];
+        $innerRight = $layout['innerRight'];
 
         if (is_file($font)) {
             $numberSample = '00';
