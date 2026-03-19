@@ -12,7 +12,8 @@ class SlateRoundedBarRenderer implements SkinRendererInterface
         imagefilledrectangle($im, 0, 0, $width, $height, $bgCol);
         
         // Calculate reduced bar height (~40% of canvas height) and center it vertically
-        $barHeight = (int) round($height * 0.40);
+        // Increase height by 25% (relative to previous size)
+        $barHeight = (int) round($height * (0.40 * 1.25));
         $barY = (int) (($height - $barHeight) / 2);
         $barPaddingX = 6;
         $barWidth = $width - (2 * $barPaddingX);
@@ -70,7 +71,8 @@ class SlateRoundedBarRenderer implements SkinRendererInterface
         $segments = count($units);
 
         // Use same bar geometry and inner content width as renderStyle
-        $barHeight = (int) round($height * 0.40);
+        // Keep bar geometry identical to renderStyle
+        $barHeight = (int) round($height * (0.40 * 1.25));
         $barY = (int) (($height - $barHeight) / 2);
         $centerY = (int) ($barY + ($barHeight / 2));
         $barPaddingX = 6;
@@ -101,8 +103,8 @@ class SlateRoundedBarRenderer implements SkinRendererInterface
                 $labHeight = $labMaxY - $labMinY;
                 $labCenterOffset = ($labBox[1] + $labBox[7]) / 2.0;
 
-                // Small gap between number and label inside the bar
-                $gapBetween = max(2, (int) round($fontSize * 0.15));
+                // More space between number and label (while keeping the combined block centered)
+                $gapBetween = max(3, (int) round($fontSize * 0.30));
                 $blockHeight = $numHeight + $gapBetween + $labHeight;
 
                 // Center combined number+label block within the bar height
@@ -125,10 +127,15 @@ class SlateRoundedBarRenderer implements SkinRendererInterface
                 $cx=(int)($unitWidth*$i + $unitWidth/2);
                 $num=sprintf('%02d',$units[$i]['value']);
                 $nW=imagefontwidth($built)*strlen($num);
-                imagestring($im,$built,(int)($cx-$nW/2),(int)($centerY-8),$num,$textCol);
                 $lab=$units[$i]['label'];
                 $lW=imagefontwidth($lbl)*strlen($lab);
-                imagestring($im,$lbl,(int)($cx-$lW/2),(int)($centerY+10),$lab,$textCol);
+                $nH = imagefontheight($built);
+                $lH = imagefontheight($lbl);
+                $gapBetween = max(3, (int) round($nH * 0.6));
+                $blockH = $nH + $gapBetween + $lH;
+                $blockTop = (int) round($centerY - ($blockH / 2));
+                imagestring($im,$built,(int)($cx-$nW/2),$blockTop,$num,$textCol);
+                imagestring($im,$lbl,(int)($cx-$lW/2),$blockTop + $nH + $gapBetween,$lab,$textCol);
             }
         }
 
