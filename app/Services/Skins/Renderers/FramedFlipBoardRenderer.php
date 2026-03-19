@@ -12,6 +12,41 @@ use Illuminate\Support\Str;
  */
 class FramedFlipBoardRenderer implements SkinRendererInterface
 {
+    /**
+     * @return array{minX: float, maxX: float, minY: float, maxY: float, width: float, height: float}
+     */
+    private function measureText(string $font, int $size, string $text): array
+    {
+        $box = imagettfbbox($size, 0, $font, $text) ?: [0, 0, 0, 0, 0, 0, 0, 0];
+        $xs = [$box[0], $box[2], $box[4], $box[6]];
+        $ys = [$box[1], $box[3], $box[5], $box[7]];
+        $minX = min($xs);
+        $maxX = max($xs);
+        $minY = min($ys);
+        $maxY = max($ys);
+        return [
+            'minX' => $minX,
+            'maxX' => $maxX,
+            'minY' => $minY,
+            'maxY' => $maxY,
+            'width' => $maxX - $minX,
+            'height' => $maxY - $minY,
+        ];
+    }
+
+    private function fitFontSizeToBox(string $font, int $desiredSize, string $sampleText, int $maxW, int $maxH, int $minSize = 8): int
+    {
+        $size = max($minSize, $desiredSize);
+        while ($size > $minSize) {
+            $m = $this->measureText($font, $size, $sampleText);
+            if ($m['width'] <= $maxW && $m['height'] <= $maxH) {
+                break;
+            }
+            $size--;
+        }
+        return $size;
+    }
+
     public function renderStyle($im, array $skin, int $width, int $height, int $bgCol, int $textCol, int $accentCol, int $secondsRemaining): void
     {
         imagefilledrectangle($im, 0, 0, $width, $height, $bgCol);
@@ -41,7 +76,8 @@ class FramedFlipBoardRenderer implements SkinRendererInterface
         $tileBorderWidth = max(0, (int) ($skin['tileBorderWidth'] ?? 1));
         $tileBevelHighlight = $this->allocColor($im, $skin['tileBevelHighlight'] ?? '#F4F6F9');
         $tileBevelShadow = $this->allocColor($im, $skin['tileBevelShadow'] ?? '#D0D8E2');
-        $tileRadius = max(12, min(18, (int) ($skin['tileRadius'] ?? 14)));
+        // Respect Tile Radius control (0..30); clamp only for safety.
+        $tileRadius = max(0, min(30, (int) ($skin['tileRadius'] ?? 14)));
         $tileShadowCol = $this->allocColor($im, $skin['tileShadowColor'] ?? '#D6DCE4');
         $tileShadowOffset = 4;
         $hingeCol = $this->allocColor($im, $skin['hingeColor'] ?? '#FAFAFA');
@@ -222,9 +258,12 @@ class FramedFlipBoardRenderer implements SkinRendererInterface
         $tileY = $topMargin;
         $startX = (int) ($innerX + ($innerW - ($segments * $tileWidth + ($segments - 1) * $tileGap)) / 2);
 
-        $fontSize = (int) max(18, min(42, (int) round($tileHeight * 0.52)));
-
         $numberFont = $this->resolveNumberFont($skin);
+        $requestedDigitFontSize = (int) ($skin['fontSize'] ?? 36);
+        $digitPad = max(6, (int) round($tileHeight * 0.12));
+        $digitMaxW = max(1, $tileWidth - 2 * $digitPad);
+        $digitMaxH = max(1, $tileHeight - 2 * $digitPad);
+        $fontSize = $this->fitFontSizeToBox($numberFont, $requestedDigitFontSize, '88', $digitMaxW, $digitMaxH, 8);
 
         if (is_file($font)) {
             for ($i = 0; $i < $segments; $i++) {
