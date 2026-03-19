@@ -81,7 +81,9 @@ class RibbonTagRenderer implements SkinRendererInterface
                 $labHeight = $labMaxY - $labMinY;
                 $labCenterOffset = ($labBox[1] + $labBox[7]) / 2.0;
 
-                $gapBetween = max(4, (int) round($fontSize * 0.25));
+                // Slightly larger gap between digits and labels while keeping
+                // the combined block vertically centered inside the ribbon tag.
+                $gapBetween = max(4, (int) round($fontSize * 0.35));
                 $blockHeight = $numHeight + $gapBetween + $labHeight;
 
                 $blockTop = $y + (int) round(($tagH - $blockHeight) / 2);
