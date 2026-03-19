@@ -5,7 +5,7 @@
   "background": "#D6D6D6",
   "textColor": "#FFFFFF",
   "accentColor": "#2563EB",
-  "fontSize": 40,
+  "fontSize": 64,
   "fontPath": "resources/fonts/dejavu-sans.bold.ttf",
   "style": "staggered_stack",
   "showDays": true,

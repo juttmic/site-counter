@@ -67,12 +67,38 @@ class StaggeredStackRenderer implements SkinRendererInterface
                 $y = $baseY + ($i % 2 === 0 ? 0 : -$offsetStep);
                 $cx = (int) ($x + $unitWidth / 2);
                 $cy = (int) ($y + $tileH / 2);
+
                 $num = sprintf('%02d', $units[$i]['value']);
-                $nW = $this->w($num, $font, $fontSize);
-                imagettftext($im, $fontSize, 0, (int)($cx - $nW/2), (int)($cy - 6), $textCol, $font, $num);
                 $lab = $units[$i]['label'];
+
+                $numBox = imagettfbbox($fontSize, 0, $font, $num) ?: [0,0,0,0,0,0,0,0];
+                $labBox = imagettfbbox($labelSize, 0, $font, $lab) ?: [0,0,0,0,0,0,0,0];
+
+                $numMinY = min($numBox[1], $numBox[3], $numBox[5], $numBox[7]);
+                $numMaxY = max($numBox[1], $numBox[3], $numBox[5], $numBox[7]);
+                $numHeight = $numMaxY - $numMinY;
+                $numCenterOffset = ($numBox[1] + $numBox[7]) / 2.0;
+
+                $labMinY = min($labBox[1], $labBox[3], $labBox[5], $labBox[7]);
+                $labMaxY = max($labBox[1], $labBox[3], $labBox[5], $labBox[7]);
+                $labHeight = $labMaxY - $labMinY;
+                $labCenterOffset = ($labBox[1] + $labBox[7]) / 2.0;
+
+                $gapBetween = max(4, (int) round($fontSize * 0.28));
+                $blockHeight = $numHeight + $gapBetween + $labHeight;
+
+                $blockTop = $y + (int) round(($tileH - $blockHeight) / 2);
+                $numCenterY = $blockTop + $numHeight / 2.0;
+                $labCenterY = $numCenterY + $numHeight / 2.0 + $gapBetween + $labHeight / 2.0;
+
+                $numBaseline = (int) round($numCenterY - $numCenterOffset);
+                $labBaseline = (int) round($labCenterY - $labCenterOffset);
+
+                $nW = $this->w($num, $font, $fontSize);
+                imagettftext($im, $fontSize, 0, (int)($cx - $nW/2), $numBaseline, $textCol, $font, $num);
+
                 $lW = $this->w($lab, $font, $labelSize);
-                imagettftext($im, $labelSize, 0, (int)($cx - $lW/2), (int)($cy + (int) round($fontSize*0.9)), $textCol, $font, $lab);
+                imagettftext($im, $labelSize, 0, (int)($cx - $lW/2), $labBaseline, $textCol, $font, $lab);
             }
         } else {
             $built=5;$lbl=3;
@@ -80,10 +106,21 @@ class StaggeredStackRenderer implements SkinRendererInterface
                 $x = $gap + $i * ($unitWidth + $gap);
                 $y = $baseY + ($i % 2 === 0 ? 0 : -$offsetStep);
                 $cx=(int)($x + $unitWidth/2); $cy=(int)($y + $tileH/2);
-                $num=sprintf('%02d',$units[$i]['value']); $nW=imagefontwidth($built)*strlen($num);
-                imagestring($im,$built,(int)($cx-$nW/2),(int)($cy-8),$num,$textCol);
-                $lab=$units[$i]['label']; $lW=imagefontwidth($lbl)*strlen($lab);
-                imagestring($im,$lbl,(int)($cx-$lW/2),(int)($cy+10),$lab,$textCol);
+
+                $num=sprintf('%02d',$units[$i]['value']);
+                $lab=$units[$i]['label'];
+
+                $nW=imagefontwidth($built)*strlen($num);
+                $nH=imagefontheight($built);
+                $lW=imagefontwidth($lbl)*strlen($lab);
+                $lH=imagefontheight($lbl);
+
+                $gapBetween = max(4, (int) round($nH * 0.7));
+                $blockH = $nH + $gapBetween + $lH;
+                $blockTop = (int) round($cy - ($blockH / 2));
+
+                imagestring($im,$built,(int)($cx-$nW/2),$blockTop,$num,$textCol);
+                imagestring($im,$lbl,(int)($cx-$lW/2),$blockTop + $nH + $gapBetween,$lab,$textCol);
             }
         }
         return true;
