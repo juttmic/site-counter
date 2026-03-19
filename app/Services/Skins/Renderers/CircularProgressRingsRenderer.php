@@ -39,7 +39,9 @@ class CircularProgressRingsRenderer implements SkinRendererInterface
         $values = [$days, $hours, $minutes, $seconds];
         $maxes = [self::MAX_DAYS, self::MAX_HOURS, self::MAX_MINUTES, self::MAX_SECONDS];
 
-        $ringSize = max(80, (int) ($skin['ringSize'] ?? 176));
+        // Ring size control: scale radius relative to a sensible base size
+        $ringSizeControl = max(80, min(300, (int) ($skin['ringSize'] ?? 176)));
+        $ringSizeBase = 176;
         $ringStroke = max(1, (int) ($skin['ringStroke'] ?? 7));
         $ringTrackCol = $this->allocColor($im, $skin['ringTrackColor'] ?? '#D8E1E9');
         $innerCircleCol = $this->allocColor($im, $skin['innerCircleColor'] ?? '#F9FBFD');
@@ -58,7 +60,10 @@ class CircularProgressRingsRenderer implements SkinRendererInterface
         $availableWidth = $width - 2 * $padX;
         $unitWidth = (int) floor($availableWidth / $segments);
         $centerY = (int) ($height / 2);
-        $radius = (int) round(min($ringSize / 2, $unitWidth / 2.2, $height / 2.2));
+        // Base radius derived from layout, then scaled by Ring Size control
+        $baseRadius = (int) round(min($unitWidth, $height) * 0.40);
+        $scale = max(0.5, min(1.5, $ringSizeControl / $ringSizeBase));
+        $radius = max(10, (int) round($baseRadius * $scale));
 
         for ($i = 0; $i < $segments; $i++) {
             $cx = (int) ($padX + $unitWidth * $i + $unitWidth / 2);
