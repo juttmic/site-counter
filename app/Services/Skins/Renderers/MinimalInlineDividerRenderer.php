@@ -54,33 +54,43 @@ class MinimalInlineDividerRenderer implements SkinRendererInterface
             $segmentOuterLeft = $leftOffset + $i * ($segmentWidth + $separatorWidth);
             $segmentOuterRight = $segmentOuterLeft + $segmentWidth - 1;
 
-            $leftTrim = ($i === 0) ? 0 : $innerPadding;
-            $rightTrim = ($i === $segments - 1) ? 0 : $innerPadding;
-
-            $innerLeft[$i] = $segmentOuterLeft + $leftTrim;
-            $innerRight[$i] = $segmentOuterRight - $rightTrim;
+            // Apply the same padding to every segment so each box looks identical.
+            // Clamp to avoid inverting bounds on very small segments.
+            $innerLeft[$i] = min($segmentOuterRight, $segmentOuterLeft + $innerPadding);
+            $innerRight[$i] = max($segmentOuterLeft, $segmentOuterRight - $innerPadding);
         }
 
         // Draw vertical separators between segments so they stay centered between
         // the trimmed segment boxes (zero distance to both inner edges).
+        $red = imagecolorallocate($im, 255, 0, 0);
         for ($i = 0; $i < $segments - 1; $i++) {
             $leftInnerRight = $innerRight[$i];
             $rightInnerLeft = $innerLeft[$i + 1];
             $gapSpan = max(0, $rightInnerLeft - $leftInnerRight - 1);
             $gapCenter = (int) round($leftInnerRight + 1 + $gapSpan / 2.0);
             $sepLeft = $gapCenter - (int) floor($separatorWidth / 2);
+            $sepRight = $sepLeft + $separatorWidth - 1;
 
             imagefilledrectangle(
                 $im,
                 $sepLeft,
                 $sepTop,
-                $sepLeft + $separatorWidth - 1,
+                $sepRight,
                 $sepBottom,
                 $separatorCol
             );
+
+            // Red border around each divider
+            imagerectangle($im, $sepLeft, $sepTop, $sepRight, $sepBottom, $red);
         }
 
-        // Red borders around segments were only for debugging/layout tuning and have been removed.
+        // Red border box around each segment (requested)
+        
+        for ($i = 0; $i < $segments; $i++) {
+            $segmentOuterLeft = $leftOffset + $i * ($segmentWidth + $separatorWidth);
+            $segmentOuterRight = $segmentOuterLeft + $segmentWidth - 1;
+            imagerectangle($im, $segmentOuterLeft, 0, $segmentOuterRight, $height - 1, $red);
+        }
         
     }
 
@@ -125,11 +135,10 @@ class MinimalInlineDividerRenderer implements SkinRendererInterface
             $segmentOuterLeft = $leftOffset + $i * ($segmentWidth + $separatorWidth);
             $segmentOuterRight = $segmentOuterLeft + $segmentWidth - 1;
 
-            $leftTrim = ($i === 0) ? 0 : $innerPadding;
-            $rightTrim = ($i === $segments - 1) ? 0 : $innerPadding;
-
-            $innerLeft[$i] = $segmentOuterLeft + $leftTrim;
-            $innerRight[$i] = $segmentOuterRight - $rightTrim;
+            // Apply the same padding to every segment so each box looks identical.
+            // Clamp to avoid inverting bounds on very small segments.
+            $innerLeft[$i] = min($segmentOuterRight, $segmentOuterLeft + $innerPadding);
+            $innerRight[$i] = max($segmentOuterLeft, $segmentOuterRight - $innerPadding);
         }
 
         if (is_file($font)) {
