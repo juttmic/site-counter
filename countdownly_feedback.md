@@ -26,7 +26,7 @@
 (NEED MORE INFO) (28) where is the reset button if user doe snot like his design changes?
 (NEED MORE INFO) (2 ) match the font size/text
 
-17) the padding is not changing with the drop down arrows in the and also any numbe ri key in it overwrites it to 0?
-26) these messages are annoying - there is no understanding of what is happening
-29) saving failed after lot of changes why?
-8) move the good looking coloured templates to the Start/beginning
+(PENDING)        (17) the padding is not changing with the drop down arrows in the and also any numbe ri key in it overwrites it to 0?
+(PENDING)        (26) these messages are annoying - there is no understanding of what is happening
+(PENDING)        (29) saving failed after lot of changes why?
+(PENDING)        (8) move the good looking coloured templates to the Start/beginning
