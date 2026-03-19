@@ -69,8 +69,6 @@
     { "key": "borderColor", "label": "Border Color", "type": "color", "group": "Appearance", "order": 3 },
     { "key": "textColor", "label": "Text Color", "type": "color", "group": "Appearance", "order": 4 },
     { "key": "fontSize", "label": "Font Size", "type": "number", "min": 8, "max": 200, "step": 1, "group": "Appearance", "order": 5 },
-    { "key": "layout", "label": "Layout", "type": "select", "options": ["horizontal", "vertical"], "group": "Appearance", "order": 6 },
-    { "key": "animation", "label": "Animation", "type": "select", "options": ["none", "fade", "slide"], "group": "Appearance", "order": 7 },
     { "key": "showDays", "label": "Show Days", "type": "boolean", "group": "Visibility", "groupOrder": 4, "order": 3 },
     { "key": "showSeconds", "label": "Show Seconds", "type": "boolean", "group": "Visibility", "order": 4 },
     { "key": "accentColor", "label": "Bar Color", "type": "color", "group": "Appearance", "order": 8 },
