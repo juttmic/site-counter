@@ -12,6 +12,77 @@ use App\Services\Skins\SkinRendererInterface;
  */
 class RoundedPanelCardsRenderer implements SkinRendererInterface
 {
+    /**
+     * @return array{minX: float, maxX: float, minY: float, maxY: float, width: float, height: float, ascent: float}
+     */
+    private function measureText(string $font, int $size, string $text): array
+    {
+        $box = imagettfbbox($size, 0, $font, $text) ?: [0, 0, 0, 0, 0, 0, 0, 0];
+        $xs = [$box[0], $box[2], $box[4], $box[6]];
+        $ys = [$box[1], $box[3], $box[5], $box[7]];
+        $minX = min($xs);
+        $maxX = max($xs);
+        $minY = min($ys);
+        $maxY = max($ys);
+        return [
+            'minX' => $minX,
+            'maxX' => $maxX,
+            'minY' => $minY,
+            'maxY' => $maxY,
+            'width' => $maxX - $minX,
+            'height' => $maxY - $minY,
+            'ascent' => -$minY,
+        ];
+    }
+
+    private function fitFontSizeToBox(string $font, int $desiredSize, string $text, int $maxW, int $maxH, int $minSize = 8): int
+    {
+        $size = max($minSize, $desiredSize);
+        while ($size > $minSize) {
+            $m = $this->measureText($font, $size, $text);
+            if ($m['width'] <= $maxW && $m['height'] <= $maxH) {
+                break;
+            }
+            $size--;
+        }
+        return $size;
+    }
+
+    /**
+     * Try to preserve requested label font size by reducing the gap first.
+     *
+     * @return array{gap:int, fontSize:int}
+     */
+    private function resolveLabelGapAndFontSize(
+        string $font,
+        string $label,
+        int $requestedFontSize,
+        int $labelMaxW,
+        int $labelAreaTopBase,
+        int $labelAreaBottom,
+        int $desiredGap,
+        int $minGap
+    ): array {
+        $minGap = max(0, $minGap);
+        $desiredGap = max($minGap, $desiredGap);
+
+        // First try to keep requested font size by shrinking gap.
+        for ($gap = $desiredGap; $gap >= $minGap; $gap--) {
+            $labelAreaTop = $labelAreaTopBase + $gap;
+            $labelMaxH = max(1, $labelAreaBottom - $labelAreaTop);
+            $fit = $this->fitFontSizeToBox($font, $requestedFontSize, $label, $labelMaxW, $labelMaxH, 8);
+            if ($fit >= $requestedFontSize) {
+                return ['gap' => $gap, 'fontSize' => $requestedFontSize];
+            }
+        }
+
+        // Otherwise use the minimum gap and shrink the font to fit.
+        $labelAreaTop = $labelAreaTopBase + $minGap;
+        $labelMaxH = max(1, $labelAreaBottom - $labelAreaTop);
+        $fit = $this->fitFontSizeToBox($font, $requestedFontSize, $label, $labelMaxW, $labelMaxH, 8);
+        return ['gap' => $minGap, 'fontSize' => $fit];
+    }
+
     public function renderStyle($im, array $skin, int $width, int $height, int $bgCol, int $textCol, int $accentCol, int $secondsRemaining): void
     {
         imagefilledrectangle($im, 0, 0, $width, $height, $bgCol);
@@ -83,8 +154,8 @@ class RoundedPanelCardsRenderer implements SkinRendererInterface
     public function renderTimeText($im, int $secondsRemaining, array $skin, int $width, int $height, int $textCol, int $accentCol): bool
     {
         $font = (string) ($skin['fontPath'] ?? '');
-        $fontSize = (int) ($skin['fontSize'] ?? 52);
-        $labelFontSize = (int) ($skin['labelFontSize'] ?? 18);
+        $requestedFontSize = (int) ($skin['fontSize'] ?? 52);
+        $requestedLabelFontSize = (int) ($skin['labelFontSize'] ?? 18);
         $labelCol = $this->allocColor($im, $skin['labelColor'] ?? '#3D5268');
 
         if ($secondsRemaining <= 0) {
@@ -116,11 +187,13 @@ class RoundedPanelCardsRenderer implements SkinRendererInterface
             return true;
         }
 
-        $numberCenterY = $layout['cardY'] + $layout['boxPadY'] + $layout['boxH'] / 2;
-        // Place labels using a proportional gap so the combined
-        // number + label block is vertically centered within the card.
+        $boxY = $layout['cardY'] + $layout['boxPadY'];
+        $boxBottom = $boxY + $layout['boxH'];
+        $cardBottom = $layout['cardY'] + $layout['cardHeight'];
+
+        // Keep existing layout, but compute text areas inside it.
         $labelGap = (int) round($layout['cardHeight'] * 0.16);
-        $labelY = $layout['cardY'] + $layout['boxPadY'] + $layout['boxH'] + $labelGap;
+        $bottomPad = max(6, (int) round($layout['cardHeight'] * 0.10));
 
         if (is_file($font)) {
             for ($i = 0; $i < $segments; $i++) {
@@ -132,13 +205,43 @@ class RoundedPanelCardsRenderer implements SkinRendererInterface
                 $isDays = ($label === 'DAYS');
                 $numberText = $isDays ? (string) $value : sprintf('%02d', $value);
 
-                $numberWidth = $this->textBoxWidth($numberText, $font, $fontSize);
-                $numberBaseline = (int) round($numberCenterY - $this->textVerticalCenterOffset($numberText, $font, $fontSize));
-                imagettftext($im, $fontSize, 0, (int) ($centerX - $numberWidth / 2), $numberBaseline, $textCol, $font, $numberText);
+                // Keep paddings/margins as-is, but auto-fit fonts inside their allocated areas
+                $boxInnerPad = max(4, (int) round($layout['boxH'] * 0.10));
+                $numberAreaLeft = $cardX + $layout['boxPadX'] + $boxInnerPad;
+                $numberAreaRight = $cardX + $layout['boxPadX'] + $layout['boxW'] - $boxInnerPad;
+                $numberAreaTop = $boxY + $boxInnerPad;
+                $numberAreaBottom = $boxBottom - $boxInnerPad;
+                $numberMaxW = max(1, $numberAreaRight - $numberAreaLeft);
+                $numberMaxH = max(1, $numberAreaBottom - $numberAreaTop);
+                $numberFs = $this->fitFontSizeToBox($font, $requestedFontSize, $numberText, $numberMaxW, $numberMaxH, 8);
 
-                $labelWidth = $this->textBoxWidth($label, $font, $labelFontSize);
-                $labelBaseline = (int) round($labelY - $this->textVerticalCenterOffset($label, $font, $labelFontSize));
-                imagettftext($im, $labelFontSize, 0, (int) ($centerX - $labelWidth / 2), $labelBaseline, $labelCol, $font, $label);
+                $nm = $this->measureText($font, $numberFs, $numberText);
+                $numberCenterY = ($numberAreaTop + $numberAreaBottom) / 2.0;
+                $numberX = (int) round($centerX - ($nm['width'] / 2) - $nm['minX']);
+                $numberBaseline = (int) round($numberCenterY - ($nm['minY'] + $nm['maxY']) / 2);
+                imagettftext($im, $numberFs, 0, $numberX, $numberBaseline, $textCol, $font, $numberText);
+
+                $labelAreaTopBase = $boxBottom;
+                $labelAreaBottom = $cardBottom - $bottomPad;
+                $labelMaxW = max(1, $layout['cardWidth'] - 12);
+                $resolved = $this->resolveLabelGapAndFontSize(
+                    $font,
+                    $label,
+                    $requestedLabelFontSize,
+                    $labelMaxW,
+                    $labelAreaTopBase,
+                    $labelAreaBottom,
+                    $labelGap,
+                    4
+                );
+                $labelFs = $resolved['fontSize'];
+                $labelAreaTop = $labelAreaTopBase + $resolved['gap'];
+
+                $lm = $this->measureText($font, $labelFs, $label);
+                $labelCenterY = ($labelAreaTop + $labelAreaBottom) / 2.0;
+                $labelX = (int) round($centerX - ($lm['width'] / 2) - $lm['minX']);
+                $labelBaseline = (int) round($labelCenterY - ($lm['minY'] + $lm['maxY']) / 2);
+                imagettftext($im, $labelFs, 0, $labelX, $labelBaseline, $labelCol, $font, $label);
             }
         } else {
             $builtIn = 5;
