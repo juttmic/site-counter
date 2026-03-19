@@ -37,6 +37,7 @@
     "hingeHeight": 18,
     "basePlateColor": "#D6E0E8",
     "basePlateHeight": 18,
+    "labelGap": 24,
     "labelColor": "#485D71",
     "dotColor": "#B8C4D0",
     "showLabelDots": true,
