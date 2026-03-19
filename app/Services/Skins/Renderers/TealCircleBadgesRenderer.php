@@ -80,7 +80,7 @@ class TealCircleBadgesRenderer implements SkinRendererInterface
 
         if (is_file($font)) {
             // Gap factor to control vertical spacing between number and label
-            $gapFactor = 0.22;
+            $gapFactor = 0.96;
 
             for ($i = 0; $i < $segments; $i++) {
                 $unitX = $gap + $radius + $i * ($diameter + $gap);
@@ -129,11 +129,18 @@ class TealCircleBadgesRenderer implements SkinRendererInterface
                 $numberText = sprintf('%d', $units[$i]['value']);
                 $nW = imagefontwidth($builtIn) * strlen($numberText);
                 $nH = imagefontheight($builtIn);
-                imagestring($im, $builtIn, (int)($unitX - $nW / 2), (int)($centerY - $nH / 2), $numberText, $textCol);
-
                 $label = $units[$i]['label'];
                 $lW = imagefontwidth($labelBuiltIn) * strlen($label);
-                imagestring($im, $labelBuiltIn, (int)($unitX - $lW / 2), (int)($centerY + 14), $label, $textCol);
+                $lH = imagefontheight($labelBuiltIn);
+
+                $gapBetween = max(3, (int) round($nH * 0.6));
+                $blockHeight = $nH + $gapBetween + $lH;
+                $blockTop = (int) round($centerY - ($blockHeight / 2));
+                $numberY = $blockTop;
+                $labelY = $blockTop + $nH + $gapBetween;
+
+                imagestring($im, $builtIn, (int)($unitX - $nW / 2), $numberY, $numberText, $textCol);
+                imagestring($im, $labelBuiltIn, (int)($unitX - $lW / 2), $labelY, $label, $textCol);
             }
         }
 
