@@ -111,8 +111,6 @@ class MinimalInlineDividerRenderer implements SkinRendererInterface
         $sepTop = (int) ($centerY - $separatorHeight / 2);
         $sepBottom = (int) ($centerY + $separatorHeight / 2);
 
-        $red = imagecolorallocate($im, 255, 0, 0);
-
         foreach ($layout['dividerSlots'] as $idx => $slot) {
             $slotLeft = $slot['left'];
             $slotRight = $slot['right'];
@@ -122,14 +120,8 @@ class MinimalInlineDividerRenderer implements SkinRendererInterface
             $sepRight = $sepLeft + $barW - 1;
 
             imagefilledrectangle($im, $sepLeft, $sepTop, $sepRight, $sepBottom, $separatorCol);
-            imagerectangle($im, $slotLeft, $sepTop, $slotRight, $sepBottom, $red);
         }
 
-        for ($i = 0; $i < $segments; $i++) {
-            $l = $layout['segmentOuterLeft'][$i];
-            $r = $layout['segmentOuterRight'][$i];
-            imagerectangle($im, $l, 0, $r, $height - 1, $red);
-        }
     }
 
     public function renderTimeText($im, int $secondsRemaining, array $skin, int $width, int $height, int $textCol, int $accentCol): bool
