@@ -51,6 +51,12 @@
                                     <div class="mt-3 position-relative border rounded overflow-hidden bg-light timer-preview-{{ $timer->id }}" style="height: 160px;">
                                       @if($timer->gif_url)
                                         <img src="{{ url($timer->gif_url_with_cache_bust ?? $timer->gif_url) }}" alt="Timer Preview" class="img-fluid w-100 h-100 object-fit-contain timer-preview-img-{{ $timer->id }}">
+                                        @if($timer->needsGifRegeneration())
+                                          <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+                                               style="background: rgba(255,255,255,0.75);">
+                                            <small class="text-muted fw-semibold">GIF is being generated…</small>
+                                          </div>
+                                        @endif
                                       @else
                                         <div class="d-flex flex-column align-items-center justify-content-center h-100 text-muted timer-preview-placeholder-{{ $timer->id }}">
                                           <small>GIF is being created</small>
@@ -62,7 +68,7 @@
                                     <div class="mt-3 d-flex align-items-center">
                                       <div class="flex-grow-1"></div>
                                       <div class="btn-group" role="group">
-                                        @php($embedCopyUrl = $timer->gif_url ? url('/gettimer/'.$timer->user_id.'/'.pathinfo($timer->gif_url, PATHINFO_FILENAME)).'.gif' : null)
+                                        @php($embedCopyUrl = ($timer->gif_url && !$timer->needsGifRegeneration()) ? url('/gettimer/'.$timer->user_id.'/'.pathinfo($timer->gif_url, PATHINFO_FILENAME)).'.gif' : null)
                                         <a href="{{ route('timers.preview', $timer) }}" class="btn btn-outline-secondary btn-sm" title="Preview">
                                           <i class="bi bi-eye"></i>
                                         </a>
@@ -78,23 +84,6 @@
                                         <a href="{{ route('timers.edit', $timer) }}" class="btn btn-outline-primary btn-sm" title="Edit" style="margin-left: 2px;">
                                           <i class="bi bi-pencil"></i>
                                         </a>
-                                        @if($timer->needsGifRegeneration())
-                                          <button type="button" 
-                                                  class="btn btn-outline-warning btn-sm generate-gif-btn" 
-                                                  data-timer-id="{{ $timer->id }}"
-                                                  data-timer-user-id="{{ $timer->user_id }}"
-                                                  data-timer-status="{{ $timer->status }}"
-                                                  data-timer-url="{{ route('timers.generate-gif', $timer) }}"
-                                                  title="{{ $timer->gif_url ? 'Regenerate GIF' : 'Generate GIF' }}"
-                                                  style="margin-left: 2px;">
-                                            <span class="btn-content">
-                                              <i class="bi bi-play-circle"></i>
-                                            </span>
-                                            <span class="btn-loader d-none">
-                                              <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                                            </span>
-                                          </button>
-                                        @endif
                                       </div>
                                       <div class="flex-grow-1 d-flex justify-content-end">
                                         <form action="{{ route('timers.destroy', $timer) }}" method="POST" data-confirm="Delete this counter?" class="d-inline">
@@ -174,38 +163,6 @@
 
     // GIF Generation via AJAX
     (function() {
-      const activeGenerations = new Set();
-      const overlay = document.getElementById('gif-generation-overlay');
-      const messageEl = document.getElementById('gif-generation-message');
-
-      // Prevent page unload during generation
-      window.addEventListener('beforeunload', function(e) {
-        if (activeGenerations.size > 0) {
-          e.preventDefault();
-          e.returnValue = 'GIF generation is in progress. Are you sure you want to leave?';
-          return e.returnValue;
-        }
-      });
-
-      function showOverlay(timerId) {
-        activeGenerations.add(timerId);
-        messageEl.textContent = `Generating GIF for timer #${timerId}... Please wait.`;
-        overlay.classList.remove('d-none');
-        document.body.style.overflow = 'hidden';
-      }
-
-      function hideOverlay(timerId) {
-        activeGenerations.delete(timerId);
-        if (activeGenerations.size === 0) {
-          overlay.classList.add('d-none');
-          document.body.style.overflow = '';
-        } else {
-          // Update message for remaining generations
-          const remaining = Array.from(activeGenerations);
-          messageEl.textContent = `Generating GIF for timer #${remaining[0]}... (${activeGenerations.size} in queue)`;
-        }
-      }
-
       function updatePreview(timerId, gifUrl) {
         const previewContainer = document.querySelector('.timer-preview-' + timerId);
         if (!previewContainer) return;
@@ -231,7 +188,6 @@
       async function pollForGif(timerId, timerStatus, userId, maxAttempts = 60) {
         let attempts = 0;
         const embedBtn = document.querySelector('.copy-embed-btn-' + timerId);
-        const generateBtn = document.querySelector('.generate-gif-btn[data-timer-id="' + timerId + '"]');
         const interval = setInterval(async () => {
           attempts++;
           try {
@@ -244,9 +200,6 @@
             if (gifUrl) {
               clearInterval(interval);
               updatePreview(timerId, gifUrl);
-              if (generateBtn) {
-                generateBtn.style.display = 'none';
-              }
               if (embedBtn && timerStatus === 'active' && userId) {
                 const match = (gifUrl || '').match(/\/timers\/(\d+)\/([^\/]+)\.gif/);
                 if (match) {
@@ -268,79 +221,6 @@
           }
         }, 2000);
       }
-
-      document.addEventListener('click', function(e) {
-        const btn = e.target.closest('.generate-gif-btn');
-        if (!btn) return;
-
-        e.preventDefault();
-        e.stopPropagation();
-
-        const timerId = btn.getAttribute('data-timer-id');
-        const userId = btn.getAttribute('data-timer-user-id');
-        const timerStatus = btn.getAttribute('data-timer-status');
-        const url = btn.getAttribute('data-timer-url');
-        const btnContent = btn.querySelector('.btn-content');
-        const btnLoader = btn.querySelector('.btn-loader');
-
-        // Disable button and show loader
-        btn.disabled = true;
-        btnContent.classList.add('d-none');
-        btnLoader.classList.remove('d-none');
-
-        // Show global overlay
-        showOverlay(timerId);
-
-        // Make AJAX request
-        const formData = new FormData();
-        formData.append('_token', document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
-                              document.querySelector('input[name="_token"]')?.value || '');
-
-        fetch(url, {
-          method: 'POST',
-          headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-            'Accept': 'application/json'
-          },
-          body: formData
-        })
-        .then(response => {
-          if (!response.ok) {
-            throw new Error('HTTP error! status: ' + response.status);
-          }
-          return response.json();
-        })
-        .then(data => {
-          if (data.ok) {
-            // GIF generation is now async; poll until gif_url is available.
-            pollForGif(timerId, timerStatus, userId);
-
-            // Show success message
-            if (window.showToast) {
-              window.showToast(data.message || 'GIF generation queued.', 'success');
-            } else {
-              alert(data.message || 'GIF generation queued.');
-            }
-          } else {
-            throw new Error(data.message || 'Failed to generate GIF');
-          }
-        })
-        .catch(error => {
-          console.error('GIF generation error:', error);
-          if (window.showToast) {
-            window.showToast(error.message || 'Failed to generate GIF. Please try again.', 'danger');
-          } else {
-            alert(error.message || 'Failed to generate GIF. Please try again.');
-          }
-        })
-        .finally(() => {
-          // Re-enable button and hide loader
-          btn.disabled = false;
-          btnContent.classList.remove('d-none');
-          btnLoader.classList.add('d-none');
-          hideOverlay(timerId);
-        });
-      });
     })();
     </script>
 </x-app-layout>

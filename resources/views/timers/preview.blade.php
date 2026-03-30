@@ -34,7 +34,7 @@
                             aria-label="Embed code">
                         <i class="bi bi-copy"></i>
                     </button>
-                    @if($timer->status === 'active' && !empty($timer->gif_url))
+                    @if($timer->status === 'active' && !empty($timer->gif_url) && !$timer->needsGifRegeneration())
                         @php($embedUrl = url('/gettimer/'.$timer->user_id.'/'.pathinfo($timer->gif_url, PATHINFO_FILENAME)).'.gif')
                         <input
                             id="preview_embed_input"
@@ -51,6 +51,11 @@
 
             {{-- Preview Area --}}
             @if(!empty($timer->gif_url))
+                @if($timer->needsGifRegeneration())
+                    <div class="alert alert-warning text-center mb-3">
+                        GIF is being generated. Your counter changes are saved—this preview may still show the previous GIF until the new one is ready.
+                    </div>
+                @endif
                 <div class="d-flex justify-content-center mb-4">
                     <div class="bg-light rounded-3 p-3 w-100"
                          >
@@ -77,14 +82,6 @@
             <div class="d-flex justify-content-center gap-2 mt-4">
                 
 
-                @if($timer->needsGifRegeneration())
-                    <form action="{{ route('timers.generate-gif', $timer) }}" method="POST">
-                        @csrf
-                        <button type="submit" class="btn btn-primary">
-                            {{ $timer->gif_url ? 'Regenerate GIF' : 'Generate GIF' }}
-                        </button>
-                    </form>
-                @endif
             </div>
 
         </div>
