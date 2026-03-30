@@ -533,6 +533,7 @@
     min-width: 120px !important;
   }
 </style>
+
 <div class="py-1" style="border: 0px solid red; display: flex; justify-content: space-between; gap: 0.5rem; padding: inherit;">
   @if(isset($timer))
     <h2 class="font-semibold text-xl text-gray-800 leading-tight" style="font-size: 1.5rem !important">Edit Counter</h2>
@@ -802,7 +803,9 @@
                             <h4 class="h6 fw-semibold mb-2">Embed Code</h4>
                             <div class="d-flex gap-2">
                                 @if($isEdit && isset($timer->gif_url) && $timer->gif_url && $timer->status === 'active')
-                                    @php($embedUrl = url('/gettimer/'.$timer->user_id.'/'.pathinfo($timer->gif_url, PATHINFO_FILENAME)).'.gif')
+                                    @php
+                                        $embedUrl = url('/gettimer/'.$timer->user_id.'/'.pathinfo($timer->gif_url, PATHINFO_FILENAME).'.gif');
+                                    @endphp
                                     <input id="embed_input" type="text" class="form-control form-control-sm" value='<img src="{{ $embedUrl }}" alt="Countdown Counter">' readonly>
                                 @else
                                     <input id="embed_input" type="text" class="form-control form-control-sm" value="" readonly>
@@ -810,9 +813,17 @@
                                 <button id="embed_copy_btn" type="button" class="btn btn-outline-secondary btn-sm">Copy</button>
                             </div>
                         </div>
-                        <div id="embed_notice" class="mt-3 alert alert-warning py-2 px-3 small {{ $isEdit && isset($timer->status) && $timer->status !== 'active' ? '' : 'd-none' }}">
-                          {{-- Activate this timer to generate a shareable embed code. --}}
-                      </div>
+                        @php
+                          $gifReady = $isEdit && isset($timer) && !empty($timer->gif_url);
+                          $isActive = $isEdit && isset($timer) && ($timer->status ?? 'active') === 'active';
+                        @endphp
+                        <div id="embed_notice" class="mt-3 alert alert-warning py-2 px-3 small {{ ($isEdit && (!$isActive || !$gifReady)) ? '' : 'd-none' }}">
+                          @if($isEdit && !$gifReady)
+                            GIF is being created. Embed code will appear here once ready.
+                          @elseif($isEdit && !$isActive)
+                            Activate this timer to generate a shareable embed code.
+                          @endif
+                        </div>
                             {{-- <h3 class="h6 fw-semibold mb-3">Preview</h3> --}}
                             <div id="timer_preview" class="d-flex align-items-center justify-content-center rounded mb-3" style="min-height: 260px;">
                                 <div id="preview_loader" class="text-center text-muted d-none">

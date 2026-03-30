@@ -16,6 +16,9 @@ return [
     'name' => env('APP_NAME', 'Laravel'),
     'per_request_regeneration' => env('APP_PER_REQUEST_REGENERATION', false),
     'auto_login_key' => env('APP_AUTO_LOGIN_KEY', '1111'),
+    // Controls whether GIF generation runs inline (sync) or via queue/cron (queue).
+    // Supported: "sync" | "queue"
+    'gif_generation_mode' => env('GIF_GENERATION_MODE', 'queue'),
 
     /*
     |--------------------------------------------------------------------------

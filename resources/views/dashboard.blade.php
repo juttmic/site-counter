@@ -53,7 +53,7 @@
                                         <img src="{{ url($timer->gif_url_with_cache_bust ?? $timer->gif_url) }}" alt="Timer Preview" class="img-fluid w-100 h-100 object-fit-contain timer-preview-img-{{ $timer->id }}">
                                       @else
                                         <div class="d-flex flex-column align-items-center justify-content-center h-100 text-muted timer-preview-placeholder-{{ $timer->id }}">
-                                          <small>No GIF generated</small>
+                                          <small>GIF is being created</small>
                                         </div>
                                       @endif
                                     </div>
@@ -228,6 +228,47 @@
         img.src = gifUrl + separator + '_t=' + Date.now();
       }
 
+      async function pollForGif(timerId, timerStatus, userId, maxAttempts = 60) {
+        let attempts = 0;
+        const embedBtn = document.querySelector('.copy-embed-btn-' + timerId);
+        const generateBtn = document.querySelector('.generate-gif-btn[data-timer-id="' + timerId + '"]');
+        const interval = setInterval(async () => {
+          attempts++;
+          try {
+            const res = await fetch(`/timers/${encodeURIComponent(timerId)}/status`, {
+              headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+            });
+            if (!res.ok) throw new Error('status not ok');
+            const json = await res.json();
+            const gifUrl = json.gif_url_with_cache_bust || json.gif_url;
+            if (gifUrl) {
+              clearInterval(interval);
+              updatePreview(timerId, gifUrl);
+              if (generateBtn) {
+                generateBtn.style.display = 'none';
+              }
+              if (embedBtn && timerStatus === 'active' && userId) {
+                const match = (gifUrl || '').match(/\/timers\/(\d+)\/([^\/]+)\.gif/);
+                if (match) {
+                  const filename = match[2];
+                  const embedUrl = window.location.origin + '/gettimer/' + userId + '/' + filename + '.gif';
+                  embedBtn.setAttribute('data-embed-url', embedUrl);
+                  embedBtn.classList.remove('d-none');
+                }
+              }
+              return;
+            }
+            if (attempts >= maxAttempts) {
+              clearInterval(interval);
+            }
+          } catch (e) {
+            if (attempts >= maxAttempts) {
+              clearInterval(interval);
+            }
+          }
+        }, 2000);
+      }
+
       document.addEventListener('click', function(e) {
         const btn = e.target.closest('.generate-gif-btn');
         if (!btn) return;
@@ -271,46 +312,14 @@
         })
         .then(data => {
           if (data.ok) {
-            // Update preview if URL provided
-            if (data.gif_url) {
-              // Ensure URL is absolute
-              const gifUrl = data.gif_url.startsWith('http') ? data.gif_url : (window.location.origin + data.gif_url);
-              updatePreview(timerId, gifUrl);
-              
-              // Hide the generate button since GIF is now generated
-              btn.style.display = 'none';
-              
-              // Show embed copy button if timer is active
-              if (timerStatus === 'active') {
-                const embedBtn = document.querySelector('.copy-embed-btn-' + timerId);
-                if (embedBtn) {
-                  // Extract filename from gif_url to build embed URL
-                  // gif_url format: /timers/{userId}/{filename}.gif or full URL
-                  let gifPath = data.gif_url;
-                  if (gifPath.startsWith('http')) {
-                    // Extract path from full URL
-                    const urlObj = new URL(gifPath);
-                    gifPath = urlObj.pathname;
-                  }
-                  const pathParts = gifPath.split('/');
-                  const filenameWithExt = pathParts[pathParts.length - 1]; // e.g., "filename.gif"
-                  const filename = filenameWithExt.replace('.gif', ''); // Remove extension
-                  
-                  // Use userId from button data attribute
-                  if (userId && filename) {
-                    const embedUrl = window.location.origin + '/gettimer/' + userId + '/' + filename + '.gif';
-                    embedBtn.setAttribute('data-embed-url', embedUrl);
-                    embedBtn.classList.remove('d-none');
-                  }
-                }
-              }
-            }
+            // GIF generation is now async; poll until gif_url is available.
+            pollForGif(timerId, timerStatus, userId);
 
             // Show success message
             if (window.showToast) {
-              window.showToast(data.message || 'GIF generated successfully!', 'success');
+              window.showToast(data.message || 'GIF generation queued.', 'success');
             } else {
-              alert(data.message || 'GIF generated successfully!');
+              alert(data.message || 'GIF generation queued.');
             }
           } else {
             throw new Error(data.message || 'Failed to generate GIF');

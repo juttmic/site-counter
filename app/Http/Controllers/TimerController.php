@@ -55,8 +55,12 @@ class TimerController extends Controller
 
         // Optionally generate GIF immediately when requested (e.g. from Generate GIF button)
         if ($request->boolean('generate_gif')) {
-            $job = new GenerateTimerGif($timer);
-            $job->handle();
+            $mode = (string) config('app.gif_generation_mode', 'queue');
+            if ($mode === 'sync') {
+                (new GenerateTimerGif($timer))->handle();
+            } else {
+                GenerateTimerGif::dispatch($timer);
+            }
         }
 
         if ($request->expectsJson()) {
@@ -95,8 +99,12 @@ class TimerController extends Controller
 
         // Optionally generate GIF immediately when requested (e.g. from Generate GIF button)
         if ($request->boolean('generate_gif')) {
-            $job = new GenerateTimerGif($timer);
-            $job->handle();
+            $mode = (string) config('app.gif_generation_mode', 'queue');
+            if ($mode === 'sync') {
+                (new GenerateTimerGif($timer))->handle();
+            } else {
+                GenerateTimerGif::dispatch($timer);
+            }
         }
 
         if ($request->expectsJson()) {
@@ -203,21 +211,24 @@ class TimerController extends Controller
             return back()->with('status', 'GIF is already up to date.');
         }
 
-        // Generate or regenerate the GIF synchronously for now
-        $job = new GenerateTimerGif($timer);
-        $job->handle();
+        $mode = (string) config('app.gif_generation_mode', 'queue');
+        if ($mode === 'sync') {
+            (new GenerateTimerGif($timer))->handle();
+        } else {
+            GenerateTimerGif::dispatch($timer);
+        }
 
         if (request()->expectsJson()) {
-            $freshTimer = $timer->fresh();
-            $gifUrl = $freshTimer->gif_url_with_cache_bust ?? $freshTimer->gif_url;
             return response()->json([
                 'ok' => true,
-                'gif_url' => $gifUrl ? url($gifUrl) : null,
-                'message' => 'GIF generated successfully.',
+                'gif_url' => $mode === 'sync'
+                    ? (optional($timer->fresh())->gif_url_with_cache_bust ?? optional($timer->fresh())->gif_url)
+                    : null,
+                'message' => $mode === 'sync' ? 'GIF generated successfully.' : 'GIF generation queued.',
             ]);
         }
 
-        return back()->with('status', 'GIF generated successfully.');
+        return back()->with('status', $mode === 'sync' ? 'GIF generated successfully.' : 'GIF generation queued.');
     }
 
     private function validateTimerPreview(Request $request, ?Timer $timer = null): array

@@ -13,7 +13,7 @@
 (DONE)           (20) Ring size did not make any difference
 (DONE)           (21) why is inne rborder inside the inner cirlcle
 (DONE)           (15) after A the font jumps to L, P and R  - there should be more fonts available.  Also the default font disappeared. It should stay at the top?
-(DONE Fixed auto)(17) the padding is not changing with the drop down arrows in the and also any numbe ri key in it overwrites it to 0?
+(DONE auto)      (17) the padding is not changing with the drop down arrows in the and also any numbe ri key in it overwrites it to 0?
 
 (PARTIAL)        (3) Move the Active to the top tight of the counter name, Evergreen in gray colour looks bad and what does Evergreen means , you should give it a label that you use in setitngs i think it should be Counter Ends: ?
 (PARTIAL)        (9) why do you show this text every time New Counter button is clicked, you also show this text when a template is selected ( Toaster gif height for text distance error )

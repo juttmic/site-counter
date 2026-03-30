@@ -25,30 +25,6 @@
                        aria-label="Edit">
                         <i class="bi bi-pencil"></i>
                     </a>
-                    @if($timer->status === 'active')
-                        @php(
-                            $embedUrl = url('/gettimer/'.$timer->user_id.'/'.pathinfo($timer->gif_url, PATHINFO_FILENAME)).'.gif'
-                        )
-                    <button id="preview_embed_copy"
-                            class="btn btn-outline-primary btn-sm prev_btn"
-                            style="border-radius: 50%;"
-                            title="Embed code"
-                            data-bs-toggle="tooltip"
-                            data-bs-placement="top"
-                            aria-label="Embed code">
-                        <i class="bi bi-copy"></i>
-                    </button>
-                            
-                                <input
-                                    id="preview_embed_input"
-                                    type="text"
-                                    hidden
-                                    class="form-control font-monospace"
-                                    style="max-width: 640px;"
-                                    value='<img src="{{ $embedUrl }}" alt="Countdown Counter">'
-                                    readonly
-                                >
-                    @else
                     <button id="preview_embed_copy"
                             style="border-radius: 50%;"
                             class="btn btn-outline-primary btn-sm prev_btn"
@@ -58,12 +34,23 @@
                             aria-label="Embed code">
                         <i class="bi bi-copy"></i>
                     </button>
+                    @if($timer->status === 'active' && !empty($timer->gif_url))
+                        @php($embedUrl = url('/gettimer/'.$timer->user_id.'/'.pathinfo($timer->gif_url, PATHINFO_FILENAME)).'.gif')
+                        <input
+                            id="preview_embed_input"
+                            type="text"
+                            hidden
+                            class="form-control font-monospace"
+                            style="max-width: 640px;"
+                            value='<img src="{{ $embedUrl }}" alt="Countdown Counter">'
+                            readonly
+                        >
                     @endif
                 </div>
             </div>
 
             {{-- Preview Area --}}
-            @if($timer->gif_url)
+            @if(!empty($timer->gif_url))
                 <div class="d-flex justify-content-center mb-4">
                     <div class="bg-light rounded-3 p-3 w-100"
                          >
@@ -82,7 +69,7 @@
                 
             @else
                 <div class="alert alert-warning text-center mb-4">
-                    No GIF generated yet.
+                    GIF is being created. Please refresh in a moment.
                 </div>
             @endif
 
