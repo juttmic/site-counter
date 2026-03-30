@@ -12,6 +12,7 @@
 (DONE)           (7)  text labels are too high and touching the numbers ( skin previews )
 (DONE)           (20) Ring size did not make any difference
 (DONE)           (21) why is inne rborder inside the inner cirlcle
+(DONE Fixed auto)(17) the padding is not changing with the drop down arrows in the and also any numbe ri key in it overwrites it to 0?
 (PARTIAL)        (3) Move the Active to the top tight of the counter name, Evergreen in gray colour looks bad and what does Evergreen means , you should give it a label that you use in setitngs i think it should be Counter Ends: ?
 (PARTIAL)        (9) why do you show this text every time New Counter button is clicked, you also show this text when a template is selected ( Toaster gif height for text distance error )
 (PARTIAL)        (14) This visibility label is too dull.  we als need ot chnage this label to: Include  and then we need to remove the word Show from the switches. Include: Days, Seconds
@@ -26,7 +27,6 @@
 (NEED MORE INFO) (28) where is the reset button if user doe snot like his design changes?
 (NEED MORE INFO) (2 ) match the font size/text
 
-(PENDING)        (17) the padding is not changing with the drop down arrows in the and also any numbe ri key in it overwrites it to 0?
 (PENDING)        (26) these messages are annoying - there is no understanding of what is happening
 (PENDING)        (29) saving failed after lot of changes why?
 (PENDING)        (8) move the good looking coloured templates to the Start/beginning
