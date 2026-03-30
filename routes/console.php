@@ -8,6 +8,7 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Artisan::command('queue:work-gifs-once {--timeout=120} {--tries=3}', function () {
+    Log::channel('gif_queue')->info('Queue worker started', [now()] );
     $timeout = (int) $this->option('timeout');
     $tries = (int) $this->option('tries');
 
