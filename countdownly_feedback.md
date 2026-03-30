@@ -21,6 +21,8 @@
 (PARTIAL)        (27) if a user is saving the counte r- it means he wats to generate the gif - why are we asking this Question?
 (PARTIAL)        (11) and why the blue border is too short for 23 hours and for 59 minutes? ( Gear skin )
 
+(NEED APPROVAL)  (29) saving failed after lot of changes why?
+
 (NOT AN ISSUE)   (16) where is my heading text in the preview?
 
 (NEED MORE INFO) (6) why in template this goes down to 26 minute but then quickly resets to 27minutes ( circular gear timer skin)
@@ -30,4 +32,3 @@
 (NEED MORE INFO) (8) move the good looking coloured templates to the Start/beginning
 
 (PENDING)        (26) these messages are annoying - there is no understanding of what is happening
-(PENDING)        (29) saving failed after lot of changes why?
