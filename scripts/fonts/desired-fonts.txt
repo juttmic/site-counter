@@ -1,0 +1,141 @@
+Alegreya SC.ttf
+Allerta Stencil Regular.ttf
+Andada-Regular.ttf
+Andika.ttf
+Aladin Regular.ttf
+Amaranth.ttf
+Alice.ttf
+ABeeZee.ttf
+Adamina.ttf
+Allkin-Regular.ttf
+Amatic SC.ttf
+Alex Brush.ttf
+Amethysta.ttf
+Almendra SC.ttf
+Alike Angular.ttf
+Abhaya Libre Regular.ttf
+Amiko.ttf
+Amita.ttf
+Aclonica.ttf
+Angkor.ttf
+LobsterTwo-Regular.ttf
+PlaypenSansThai-Regular.ttf
+Alegreya.ttf
+Roboto-Regular.ttf
+Alef Regular.ttf
+Alegreya Sans SC.ttf
+Alfa Slab One.ttf
+Amiri.ttf
+Advent Pro Regular.ttf
+Acme.ttf
+Actor Regular.ttf
+Akronim.ttf
+Alegreya Sans.ttf
+Alike.ttf
+Allerta Regular.ttf
+Allura.ttf
+Almendra Display.ttf
+Almendra.ttf
+Amarante Regular.ttf
+Anaheim.ttf
+Abril Fatface.ttf
+Aldrich.ttf
+Annie Use Your Telescope.ttf
+Aguafina Script Regular.ttf
+Abel.ttf
+Allan.ttf
+
+Bangers-Regular.ttf
+Baskervville-Regular.ttf
+BebasNeue-Regular.ttf
+
+CormorantGaramond-Regular.ttf
+Cabin-Regular.ttf
+Cinzel-Regular.ttf
+
+DancingScript-Regular.ttf
+Domine-Regular.ttf
+Dosis-Regular.ttf
+
+Eczar-Regular.ttf
+ElMessiri-Regular.ttf
+Exo-Regular.ttf
+
+Figtree-Regular.ttf
+FjallaOne-Regular.ttf
+Forum-Regular.ttf
+
+GentiumBookPlus-Regular.ttf
+Gruppo-Regular.ttf
+GildaDisplay-Regular.ttf
+
+Hind-Regular.ttf
+Heebo-Regular.ttf
+HammersmithOne-Regular.ttf
+
+IBM Plex Sans.ttf
+Inconsolata-Regular.ttf
+Italianno-Regular.ttf
+
+JosefinSans-Regular.ttf
+Jost-Regular.ttf
+Jura-Regular.ttf
+
+Kalam-Regular.ttf
+Kanit-Regular.ttf
+Karla-Regular.ttf
+
+Merriweather-Regular.ttf
+Montserrat-Regular.ttf
+Mulish-Regular.ttf
+
+Nunito-Regular.ttf
+Newsreader-Regular.ttf
+NoticiaText-Regular.ttf
+
+Oswald-Regular.ttf
+Outfit-Regular.ttf
+Oxygen-Regular.ttf
+
+PlayfairDisplay-Regular.ttf
+Poppins-Regular.ttf
+PTSans-Regular.ttf
+
+Quattrocento-Regular.ttf
+Quicksand-Regular.ttf
+Qwigley-Regular.ttf
+
+Raleway-Regular.ttf
+Righteous-Regular.ttf
+Rubik-Regular.ttf
+
+SourceSans3-Regular.ttf
+SpaceGrotesk-Regular.ttf
+Sora-Regular.ttf
+
+Tinos-Regular.ttf
+TitilliumWeb-Regular.ttf
+Teko-Regular.ttf
+
+Ubuntu-Regular.ttf
+Urbanist-Regular.ttf
+Unna-Regular.ttf
+
+VarelaRound-Regular.ttf
+Vollkorn-Regular.ttf
+Viga-Regular.ttf
+
+WorkSans-Regular.ttf
+WixMadeforText-Regular.ttf
+Wallpoet-Regular.ttf
+
+XanhMono-Regular.ttf
+Xolonium-Regular.ttf
+
+YanoneKaffeesatz-Regular.ttf
+Yellowtail-Regular.ttf
+YesevaOne-Regular.ttf
+
+ZillaSlab-Regular.ttf
+Zeyada-Regular.ttf
+ZCOOLKuaiLe-Regular.ttf
