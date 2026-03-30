@@ -66,7 +66,9 @@ document.addEventListener('DOMContentLoaded', () => {
           if (localVal) {
             input.value = localVal;
           }
-        } catch (e) {}
+        } catch (e) {
+          console.log(e);
+        }
       }
       input.dataset.userTouched = '0';
       const markTouched = () => { input.dataset.userTouched = '1'; };
