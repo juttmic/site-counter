@@ -27,7 +27,7 @@
 (NEED MORE INFO) (24) if user sets some date in the future with X days for counter to run but then decide to hide days , does that mean the counter will also ifnore the Days or it will keep running and only hide the days - that will be a problem
 (NEED MORE INFO) (28) where is the reset button if user doe snot like his design changes?
 (NEED MORE INFO) (2 ) match the font size/text
+(NEED MORE INFO) (8) move the good looking coloured templates to the Start/beginning
 
 (PENDING)        (26) these messages are annoying - there is no understanding of what is happening
 (PENDING)        (29) saving failed after lot of changes why?
-(PENDING)        (8) move the good looking coloured templates to the Start/beginning
