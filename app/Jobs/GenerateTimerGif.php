@@ -59,8 +59,21 @@ class GenerateTimerGif implements ShouldQueue, ShouldBeUniqueUntilProcessing
 
             // If a GIF exists and is up-to-date, skip work.
             if (!$timer->needsGifRegeneration() && !empty($timer->gif_url)) {
+                Log::channel('gif_queue')->info('GIF skipped (up-to-date)', [
+                    'timer_id' => $timer->id,
+                    'user_id' => $timer->user_id,
+                    'gif_url' => $timer->gif_url,
+                    'cache_key' => $timer->cache_key,
+                ]);
                 return;
             }
+
+            Log::channel('gif_queue')->info('GIF generation started', [
+                'timer_id' => $timer->id,
+                'user_id' => $timer->user_id,
+                'timer_type' => $timer->timer_type,
+                'status' => $timer->status,
+            ]);
 
             $generator = new TimerGifGenerator();
             $gifUrl = $generator->generateAndStore($timer);
@@ -71,9 +84,18 @@ class GenerateTimerGif implements ShouldQueue, ShouldBeUniqueUntilProcessing
                 'cache_key' => 'gif_' . $timer->id . '_' . time()
             ]);
             
-            Log::info("Generated GIF for timer {$timer->id}: {$gifUrl}");
+            Log::channel('gif_queue')->info('GIF generation finished', [
+                'timer_id' => $timer->id,
+                'user_id' => $timer->user_id,
+                'gif_url' => $gifUrl,
+                'cache_key' => $timer->cache_key,
+            ]);
         } catch (\Exception $e) {
-            Log::error("Failed to generate GIF for timer {$this->timer->id}: " . $e->getMessage());
+            Log::channel('gif_queue')->error('GIF generation failed', [
+                'timer_id' => $this->timer->id ?? null,
+                'error' => $e->getMessage(),
+                'exception' => get_class($e),
+            ]);
             throw $e;
         }
     }
