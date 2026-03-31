@@ -12,8 +12,8 @@ Artisan::command('inspire', function () {
 Artisan::command('queue:work-gifs-once {--timeout=120} {--tries=3} {--max-jobs=0} {--parallel=0}', function () {
     $timeout = (int) $this->option('timeout');
     $tries = (int) $this->option('tries');
-    $maxJobs = max(1, (int) $this->option('max-jobs'));
-    $parallel = max(1, min(10, (int) $this->option('parallel')));
+    $maxJobs = max(0, (int) $this->option('max-jobs'));
+    $parallel = max(0, min(10, (int) $this->option('parallel')));
 
     // One lock per batch run: job overrun is bounded by Laravel's per-job --timeout, not max-jobs × timeout.
     $lockTtl = $timeout + 60;
