@@ -40,9 +40,9 @@
                                     <div class="small text-muted mb-3">
                                       <div class="mb-1">
                                         @if($timer->timer_type == 'fixed_date' && $timer->target_datetime)
-                                          <span class="badge bg-secondary">Ends {{ $timer->target_datetime->format('M d, Y H:i') }}</span>
+                                          <span class="badge bg-secondary">On Date {{ $timer->target_datetime->format('M d, Y H:i') }}</span>
                                         @else
-                                          <span class="badge bg-secondary">Evergreen</span>
+                                          <span class="badge bg-secondary">Counter Ends in {{  $timer->duration_seconds }} seconds</span>
                                         @endif
                                       </div>
                                     </div>
