@@ -761,6 +761,14 @@ let suppressNextDirtyFlag = false; // used for initial auto-preview so it doesn'
 let loadedSkins = new Set();       // Track which skins have been loaded (for new timers only)
 let appliedFormDefaults = {};     // Track formDefaults that were applied (to ensure they're saved)
 
+function updateResetButtonState() {
+  const btn = document.getElementById('reset_design_btn');
+  const skinKeyInput = document.getElementById('skin_key');
+  if (!btn || !skinKeyInput) return;
+  const hasSkin = !!(skinKeyInput.value || '').trim();
+  btn.disabled = !hasSkin;
+}
+
 // Default sample countdown for preview/form: 1d 1h 10m 50s
 const DEFAULT_SAMPLE_SECONDS = 90650;
 
@@ -1807,8 +1815,96 @@ async function selectSkin(key) {
       }
       generatePreviewFrame();
     }
+    updateResetButtonState();
   } catch (e) {
     console.error(e);
+  }
+}
+
+async function resetDesignToDefaults() {
+  const skinKeyInput = document.getElementById('skin_key');
+  if (!skinKeyInput) return;
+  const key = (skinKeyInput.value || '').trim();
+  if (!key) return;
+
+  const form = document.getElementById('timer_form');
+  const isEdit = form && form.dataset.isEdit === '1';
+
+  try {
+    // Load fresh skin metadata
+    const meta = await fetchJson(`/skins/${encodeURIComponent(key)}`);
+    let baseOverrides = {};
+
+    // Re-apply formDefaults (same behavior as initial selection for new timers)
+    try {
+      const formDefaultsResponse = await fetchJson(`/api/skins/${encodeURIComponent(key)}/form-defaults`);
+      if (formDefaultsResponse && formDefaultsResponse.formDefaults && Object.keys(formDefaultsResponse.formDefaults).length > 0) {
+        meta.defaults = { ...(meta.defaults || {}), ...formDefaultsResponse.formDefaults };
+        baseOverrides = { ...formDefaultsResponse.formDefaults };
+      }
+    } catch (e) {
+      // Not all skins have formDefaults; ignore
+    }
+
+    // Reset skin fields to defaults only (no per-timer overrides)
+    appliedFormDefaults = { ...baseOverrides };
+    lastSkinOverrides = { ...baseOverrides };
+    renderFields(meta, baseOverrides);
+
+    // Reset static custom text design inputs to defaults as well
+    const colorInput = document.querySelector('input[name="customTextColor"]');
+    if (colorInput) {
+      const defaultColor = '#000000';
+      colorInput.value = defaultColor;
+      const wrapper = colorInput.closest('.modern-color-picker');
+      if (wrapper) {
+        const swatch = wrapper.querySelector('.color-picker-swatch');
+        const hexSpan = wrapper.querySelector('.color-picker-hex');
+        if (swatch) swatch.style.setProperty('--swatch-color', defaultColor);
+        if (hexSpan) hexSpan.textContent = defaultColor.toUpperCase();
+      }
+    }
+    const distanceInput = document.querySelector('input[name="customTextDistance"]');
+    if (distanceInput) distanceInput.value = '0';
+    const fontSizeInput = document.querySelector('input[name="customTextFontSize"]');
+    if (fontSizeInput) fontSizeInput.value = '';
+    const fontSelect = document.querySelector('select[name="customTextFont"]');
+    if (fontSelect) fontSelect.value = '';
+
+    // For new counters, also reset heading text and expiry fields.
+    if (!isEdit) {
+      const headingInput = document.querySelector('input[name="custom_text"]');
+      if (headingInput) headingInput.value = '';
+
+      const positionSelect = document.querySelector('select[name="text_position"]');
+      if (positionSelect) positionSelect.value = 'none';
+
+      const typeEl = document.getElementById('timer_type');
+      const timerType = typeEl ? typeEl.value : 'fixed_date';
+      const targetInput = document.querySelector('input[name="target_datetime"]');
+      const durationInput = document.querySelector('input[name="duration_seconds"]');
+
+      if (timerType === 'fixed_date' && targetInput) {
+        // Recompute the same sample date we use on first skin selection.
+        const sampleDate = new Date(Date.now() + DEFAULT_SAMPLE_SECONDS * 1000);
+        const sampleVal = toLocalDateTimeInputValue(sampleDate);
+        targetInput.value = sampleVal;
+        targetInput.dataset.initialValue = sampleVal;
+        targetInput.dataset.userTouched = '0';
+      } else if (timerType === 'reload_based' && durationInput) {
+        // Reset to the skin's logical default for evergreen counters.
+        durationInput.value = '1';
+      }
+    }
+
+    if (typeof syncOverrides === 'function') {
+      syncOverrides();
+    }
+    if (typeof generatePreviewFrame === 'function') {
+      generatePreviewFrame();
+    }
+  } catch (e) {
+    console.error('Failed to reset design to defaults', e);
   }
 }
 
@@ -1920,10 +2016,19 @@ document.addEventListener('DOMContentLoaded', () => {
       // Generate initial preview
       suppressNextDirtyFlag = true;
       generatePreviewFrame();
+      updateResetButtonState();
     } catch (e) {
       // swallow to avoid noisy console during navigation
     }
   })();
+
+  const resetBtn = document.getElementById('reset_design_btn');
+  if (resetBtn) {
+    resetBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      resetDesignToDefaults();
+    });
+  }
 
 });
 
