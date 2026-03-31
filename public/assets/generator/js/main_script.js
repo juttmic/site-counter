@@ -2236,7 +2236,7 @@ async function ajaxSaveAndPoll() {
           Swal.fire({
             icon: 'success',
             title: 'Counter created',
-            text: 'Your counter is saved. The GIF is being generated—you can check it on the dashboard.',
+            text: 'Your counter is saved.',
             timer: 2000,
             showConfirmButton: false
           }).then(() => {
