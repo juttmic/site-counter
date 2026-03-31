@@ -13,21 +13,21 @@
 (DONE)           (21) why is inne rborder inside the inner cirlcle
 (DONE)           (22) i cant understand how border width and colour is applied in the preview
 (DONE)           (23) this should be connector height
+(DONE)           (24) if user sets some date in the future with X days for counter to run but then decide to hide days , does that mean the counter will also ifnore the Days or it will keep running and only hide the days - that will be a problem
 (DONE)           (25) if minimum height is 430 - then why it is not letting me enter 500 for example
+(DONE)           (29) saving failed after lot of changes why?
 
-(PARTIAL) (2 ) match the font size/text
+(PARTIAL)        (2) match the font size/text
 (PARTIAL)        (3) Move the Active to the top tight of the counter name, Evergreen in gray colour looks bad and what does Evergreen means , you should give it a label that you use in setitngs i think it should be Counter Ends: ?
 (PARTIAL)        (9) why do you show this text every time New Counter button is clicked, you also show this text when a template is selected ( Toaster gif height for text distance error )
 (PARTIAL)        (11) and why the blue border is too short for 23 hours and for 59 minutes? ( Gear skin )
 (PARTIAL)        (14) This visibility label is too dull.  we als need ot chnage this label to: Include  and then we need to remove the word Show from the switches. Include: Days, Seconds
 (PARTIAL)        (27) if a user is saving the counte r- it means he wats to generate the gif - why are we asking this Question?
 
-(NEED APPROVAL)  (29) saving failed after lot of changes why?
 
 (NOT AN ISSUE)   (16) where is my heading text in the preview?
 
 (NEED MORE INFO) (6) why in template this goes down to 26 minute but then quickly resets to 27minutes ( circular gear timer skin)
 (NEED MORE INFO) (8) move the good looking coloured templates to the Start/beginning
-(NEED MORE INFO) (24) if user sets some date in the future with X days for counter to run but then decide to hide days , does that mean the counter will also ifnore the Days or it will keep running and only hide the days - that will be a problem
 (NEED MORE INFO) (26) these messages are annoying - there is no understanding of what is happening
 (NEED MORE INFO) (28) where is the reset button if user doe snot like his design changes?
