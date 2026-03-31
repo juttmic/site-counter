@@ -12,11 +12,12 @@ Artisan::command('inspire', function () {
 Artisan::command('queue:work-gifs-once {--timeout=120} {--tries=3} {--max-jobs=1} {--parallel=1}', function () {
     $timeout = (int) $this->option('timeout');
     $tries = (int) $this->option('tries');
-    $maxJobs = max(0, (int) $this->option('max-jobs'));
-    $parallel = max(0, min(10, (int) $this->option('parallel')));
+    // max-jobs=0 means "run forever" in queue:work — never pass 0 from cron.
+    $maxJobs = max(1, min(100, (int) $this->option('max-jobs')));
+    $parallel = max(1, min(10, (int) $this->option('parallel')));
 
-    // One lock per batch run: job overrun is bounded by Laravel's per-job --timeout, not max-jobs × timeout.
-    $lockTtl = $timeout + 60;
+    // Covers one worker run: stop-when-empty exits promptly; per-job timeout is --timeout.
+    $lockTtl = max(120, $timeout + 90);
 
     $lock = null;
     $slot = null;
@@ -49,9 +50,11 @@ Artisan::command('queue:work-gifs-once {--timeout=120} {--tries=3} {--max-jobs=1
     ]);
 
     try {
+        // --stop-when-empty: without it, queue:work loops forever when the queue is idle (cron never returns, lock stuck).
         $exitCode = Artisan::call('queue:work', [
             '--max-jobs' => (string) $maxJobs,
             '--queue' => 'gifs',
+            '--stop-when-empty' => true,
             '--sleep' => 0,
             '--tries' => $tries,
             '--timeout' => $timeout,
@@ -72,6 +75,15 @@ Artisan::command('queue:work-gifs-once {--timeout=120} {--tries=3} {--max-jobs=1
 
         return is_int($exitCode) ? $exitCode : 0;
     } finally {
-        optional($lock)->release();
+        try {
+            if ($lock !== null) {
+                $lock->release();
+            }
+        } catch (\Throwable $e) {
+            Log::channel('gif_queue')->warning('GIF queue lock release failed', [
+                'error' => $e->getMessage(),
+                'slot' => $slot,
+            ]);
+        }
     }
 })->purpose('Process GIF queue (up to --max-jobs per run; up to --parallel concurrent batches; cron-safe)');
