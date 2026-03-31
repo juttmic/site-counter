@@ -1871,30 +1871,25 @@ async function resetDesignToDefaults() {
     const fontSelect = document.querySelector('select[name="customTextFont"]');
     if (fontSelect) fontSelect.value = '';
 
-    // For new counters, also reset heading text and expiry fields.
-    if (!isEdit) {
-      const headingInput = document.querySelector('input[name="custom_text"]');
-      if (headingInput) headingInput.value = '';
+    const headingInput = document.querySelector('input[name="custom_text"]');
+    const positionSelect = document.querySelector('select[name="text_position"]');
+    const timerTypeSelect = document.getElementById('timer_type');
+    const targetInput = document.querySelector('input[name="target_datetime"]');
+    const durationInput = document.querySelector('input[name="duration_seconds"]');
 
-      const positionSelect = document.querySelector('select[name="text_position"]');
-      if (positionSelect) positionSelect.value = 'none';
+    // For both create and edit: make it look like a fresh selection of this skin.
+    if (headingInput) headingInput.value = '';
+    if (positionSelect) positionSelect.value = 'none';
 
-      const typeEl = document.getElementById('timer_type');
-      const timerType = typeEl ? typeEl.value : 'fixed_date';
-      const targetInput = document.querySelector('input[name="target_datetime"]');
-      const durationInput = document.querySelector('input[name="duration_seconds"]');
-
-      if (timerType === 'fixed_date' && targetInput) {
-        // Recompute the same sample date we use on first skin selection.
-        const sampleDate = new Date(Date.now() + DEFAULT_SAMPLE_SECONDS * 1000);
-        const sampleVal = toLocalDateTimeInputValue(sampleDate);
-        targetInput.value = sampleVal;
-        targetInput.dataset.initialValue = sampleVal;
-        targetInput.dataset.userTouched = '0';
-      } else if (timerType === 'reload_based' && durationInput) {
-        // Reset to the skin's logical default for evergreen counters.
-        durationInput.value = '1';
-      }
+    const timerType = timerTypeSelect ? timerTypeSelect.value : 'fixed_date';
+    if (timerType === 'fixed_date' && targetInput) {
+      const sampleDate = new Date(Date.now() + DEFAULT_SAMPLE_SECONDS * 1000);
+      const sampleVal = toLocalDateTimeInputValue(sampleDate);
+      targetInput.value = sampleVal;
+      targetInput.dataset.initialValue = sampleVal;
+      targetInput.dataset.userTouched = '0';
+    } else if (timerType === 'reload_based' && durationInput) {
+      durationInput.value = '1';
     }
 
     if (typeof syncOverrides === 'function') {

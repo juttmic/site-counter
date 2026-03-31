@@ -547,7 +547,23 @@
 </div>
 <div class="py-4 py-md-3">
     <div class="container-fluid">
-        <form id="timer_form" method="POST" action="{{ $formAction }}" data-timer-id="{{ $isEdit ? $timer->id : '' }}" data-is-edit="{{ $isEdit ? '1' : '0' }}" data-has-gif="{{ $isEdit && !empty($timer->gif_url) ? '1' : '0' }}" data-timer-status="{{ $isEdit ? $timer->status : 'active' }}" data-user-id="{{ $isEdit ? $timer->user_id : Auth::id() }}" data-gif-url="{{ $isEdit && !empty($timer->gif_url) ? $timer->gif_url : '' }}" data-timer-width="{{ $isEdit ? ($timer->width ?? '') : '' }}" data-timer-output-width="{{ $isEdit ? ($timer->skin_overrides['outputWidth'] ?? $timer->skin_overrides['width'] ?? '') : '' }}">
+        <form id="timer_form" method="POST" action="{{ $formAction }}"
+              data-timer-id="{{ $isEdit ? $timer->id : '' }}"
+              data-is-edit="{{ $isEdit ? '1' : '0' }}"
+              data-has-gif="{{ $isEdit && !empty($timer->gif_url) ? '1' : '0' }}"
+              data-timer-status="{{ $isEdit ? $timer->status : 'active' }}"
+              data-user-id="{{ $isEdit ? $timer->user_id : Auth::id() }}"
+              data-gif-url="{{ $isEdit && !empty($timer->gif_url) ? $timer->gif_url : '' }}"
+              data-timer-width="{{ $isEdit ? ($timer->width ?? '') : '' }}"
+              data-timer-output-width="{{ $isEdit ? ($timer->skin_overrides['outputWidth'] ?? $timer->skin_overrides['width'] ?? '') : '' }}"
+              @if($isEdit)
+                  data-original-custom-text="{{ $timer->custom_text ?? '' }}"
+                  data-original-text-position="{{ $timer->text_position ?? 'none' }}"
+                  data-original-timer-type="{{ $timer->timer_type ?? 'fixed_date' }}"
+                  data-original-target-datetime-utc="{{ $timer->target_datetime ? $timer->target_datetime->copy()->utc()->toIso8601String() : '' }}"
+                  data-original-duration-seconds="{{ $timer->duration_seconds ?? '' }}"
+              @endif
+        >
             @csrf
             @if($isEdit)
                 @method('PUT')
