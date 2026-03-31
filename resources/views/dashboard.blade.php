@@ -71,6 +71,9 @@
                                       <div class="flex-grow-1"></div>
                                       <div class="btn-group" role="group">
                                         @php($embedCopyUrl = ($timer->gif_url && !$timer->needsGifRegeneration()) ? url('/gettimer/'.$timer->user_id.'/'.pathinfo($timer->gif_url, PATHINFO_FILENAME)).'.gif' : null)
+                                        @php($active = $timer->status === 'active')
+                                        @php($copyEmbedReady = $active && !$dashboardGifPending && $embedCopyUrl)
+                                        @php($copyGifPending = $active && $dashboardGifPending)
                                         <a href="{{ $dashboardGifPending ? '#' : route('timers.preview', $timer) }}"
                                            class="btn btn-outline-secondary btn-sm dashboard-preview-btn {{ $dashboardGifPending ? 'disabled' : '' }}"
                                            data-preview-url="{{ route('timers.preview', $timer) }}"
@@ -78,15 +81,15 @@
                                         >
                                           <i class="bi bi-eye"></i>
                                         </a>
-                                        @if($embedCopyUrl && $timer->status === 'active')
-                                          <button type="button" class="btn btn-outline-secondary btn-sm copy-embed-btn copy-embed-btn-{{ $timer->id }}" title="Embed code" data-embed-url="{{ $embedCopyUrl }}" style="margin-left: 2px;">
-                                            <i class="bi bi-clipboard"></i>
-                                          </button>
-                                        @else
-                                          <button type="button" class="btn btn-outline-secondary btn-sm copy-embed-btn copy-embed-btn-{{ $timer->id }} d-none" title="Embed code" data-embed-url="" style="margin-left: 2px;">
-                                            <i class="bi bi-clipboard"></i>
-                                          </button>
-                                        @endif
+                                        <button type="button"
+                                                class="btn btn-outline-secondary btn-sm copy-embed-btn copy-embed-btn-{{ $timer->id }} {{ $copyGifPending ? 'disabled' : '' }} {{ ($copyEmbedReady || $copyGifPending) ? '' : 'd-none' }}"
+                                                title="{{ $copyGifPending ? 'Processing' : 'Embed code' }}"
+                                                data-embed-url="{{ $copyEmbedReady ? $embedCopyUrl : '' }}"
+                                                style="margin-left: 2px;"
+                                                @if($copyGifPending) disabled aria-disabled="true" @endif
+                                        >
+                                          <i class="bi bi-clipboard"></i>
+                                        </button>
                                         <a href="{{ route('timers.edit', $timer) }}" class="btn btn-outline-primary btn-sm" title="Edit" style="margin-left: 2px;">
                                           <i class="bi bi-pencil"></i>
                                         </a>
@@ -129,9 +132,16 @@
       </div>
     </div>
 
+    <div id="dashboard-gif-poll-config" class="d-none" data-gif-status-url="{{ route('timers.gif-status') }}"></div>
     <script>
     document.addEventListener('click', function(e){
-      if (e.target.closest('a.dashboard-preview-btn.disabled')) e.preventDefault();
+      var prev = e.target.closest('a.dashboard-preview-btn.disabled');
+      if (prev) e.preventDefault();
+      var copyBtn = e.target.closest('.copy-embed-btn');
+      if (copyBtn && (copyBtn.disabled || copyBtn.classList.contains('disabled'))) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
     }, true);
     // Copy embed code for dashboard cards
     document.addEventListener('click', function(e){
@@ -160,6 +170,7 @@
       }
       var btn = e.target.closest('.copy-embed-btn');
       if (!btn) return;
+      if (btn.disabled || btn.classList.contains('disabled')) return;
       var url = btn.getAttribute('data-embed-url');
       if (!url) return;
       var code = `<img src="${url}" alt="Countdown Counter">`;
@@ -170,7 +181,8 @@
       });
     });
 
-    // Queue mode: one batched poll for all pending GIFs; omit timers once ready
+    // Queue mode: poll only counters on this dashboard page (current pagination slice).
+    // Batched GIF status: drop IDs from the request once they are no longer pending in the DOM.
     (function dashboardGifBatchPoll(){
       if (!document.body || document.body.getAttribute('data-gif-generation-mode') !== 'queue') return;
       var pending = [];
@@ -182,6 +194,8 @@
 
       var maxAttempts = 90;
       var attempts = 0;
+      var cfg = document.getElementById('dashboard-gif-poll-config');
+      var gifStatusUrl = (cfg && cfg.getAttribute('data-gif-status-url')) || '/timers/gif-status';
 
       function activateDashboardTimerCard(timerId, t) {
         var card = document.querySelector('[data-timer-card][data-timer-id="' + String(timerId) + '"]');
@@ -217,16 +231,22 @@
         }
         var embedBtn = card.querySelector('.copy-embed-btn-' + timerId);
         if (embedBtn && t.embed_url && t.status === 'active') {
+          embedBtn.removeAttribute('disabled');
+          embedBtn.removeAttribute('aria-disabled');
+          embedBtn.classList.remove('disabled');
           embedBtn.setAttribute('data-embed-url', t.embed_url);
+          embedBtn.setAttribute('title', 'Embed code');
           embedBtn.classList.remove('d-none');
         }
       }
 
       function tick(){
+        if (!pending.length) return;
+        if (!gifStatusUrl) return;
         attempts++;
-        if (!pending.length || attempts > maxAttempts) return;
+        if (attempts > maxAttempts) return;
         var qs = 'ids=' + encodeURIComponent(pending.join(','));
-        fetch(@json(route('timers.gif-status'))) + '?' + qs, {
+        fetch(gifStatusUrl + '?' + qs, {
           headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
         })
           .then(function(r){ return r.json(); })
@@ -246,7 +266,7 @@
             if (pending.length && attempts <= maxAttempts) setTimeout(tick, 2000);
           });
       }
-      setTimeout(tick, 1500);
+      setTimeout(tick, 800);
     })();
     </script>
 </x-app-layout>
