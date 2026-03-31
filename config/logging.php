@@ -77,8 +77,8 @@ return [
             'replace_placeholders' => true,
         ],
         'gif_queue' => [
-            'driver' => 'single',
-            'path' => storage_path('logs/gif_queue.log'),
+            'driver' => 'daily',
+            'path' => storage_path('logs/gif_queue_' . date('Y-m-d-H') . '.log'),
             'level' => env('LOG_LEVEL', 'info'),
             'replace_placeholders' => true,
         ],
