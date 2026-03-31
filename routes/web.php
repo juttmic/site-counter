@@ -52,6 +52,7 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::post('timers/{timer}/preview-frame', [TimerController::class, 'previewFrame'])->name('timers.preview-frame-with-id');
     Route::post('timers/{timer}/generate-gif', [TimerController::class, 'generateGif'])->name('timers.generate-gif');
     Route::post('timerss', [TimerController::class, 'store'])->name('timers.store');
+    Route::get('timers/gif-status', [TimerController::class, 'gifStatusBatch'])->name('timers.gif-status');
     Route::get('timers/{timer}/preview', [TimerController::class, 'preview'])->name('timers.preview');
     Route::get('timers/{timer}/status', [TimerController::class, 'status'])->name('timers.status');
     Route::resource('timers', TimerController::class)->except(['store','index', 'show']);

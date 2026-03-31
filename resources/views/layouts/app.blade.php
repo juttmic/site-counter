@@ -135,7 +135,7 @@
             }
         </style>
     </head>
-    <body class="bg-light">
+    <body class="bg-light" data-gif-generation-mode="{{ config('app.gif_generation_mode', 'queue') }}">
         <div class="min-vh-100">
             <!-- Main Content Area -->
             <div class="main-content" style="min-height: 100vh;">

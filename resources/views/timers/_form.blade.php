@@ -2,6 +2,8 @@
     $isEdit = isset($timer);
     $formAction = $isEdit ? route('timers.update', $timer) : route('timers.store');
     $formMethod = $isEdit ? 'PUT' : 'POST';
+    $gifQueueMode = config('app.gif_generation_mode', 'queue') === 'queue';
+    $gifPendingEdit = $isEdit && $gifQueueMode && ($timer->needsGifRegeneration() || empty($timer->gif_url));
 @endphp
 <style>
   .mine {
@@ -552,9 +554,13 @@
 <div class="py-1" style="border: 0px solid red; display: flex; justify-content: space-between; gap: 0.5rem; padding: inherit;">
   @if(isset($timer))
     <h2 class="font-semibold text-xl text-gray-800 leading-tight" style="font-size: 1.5rem !important">Edit Counter</h2>
-    <a href="{{ route('timers.preview', $timer) }}" class="btn btn-outline-secondary border rounded prevbtntop" style="
-    display: flex;
-    align-items: center;">Preview Counter</a>
+    <a id="form_preview_btn"
+       href="{{ $gifPendingEdit ? '#' : route('timers.preview', $timer) }}"
+       data-preview-url="{{ route('timers.preview', $timer) }}"
+       class="btn btn-outline-secondary border rounded prevbtntop {{ $gifPendingEdit ? 'disabled' : '' }}"
+       style="display: flex; align-items: center;"
+       @if($gifPendingEdit) title="Processing" tabindex="-1" aria-disabled="true" @else title="Preview counter" @endif
+    >Preview Counter</a>
   @else
     <h2 class="font-semibold text-xl text-gray-800 leading-tight" style="font-size: 1.5rem !important">Create New Counter</h2>
   @endif
@@ -565,7 +571,9 @@
         <form id="timer_form" method="POST" action="{{ $formAction }}"
               data-timer-id="{{ $isEdit ? $timer->id : '' }}"
               data-is-edit="{{ $isEdit ? '1' : '0' }}"
-              data-has-gif="{{ $isEdit && !empty($timer->gif_url) ? '1' : '0' }}"
+              data-has-gif="{{ $isEdit && !empty($timer->gif_url) && !$timer->needsGifRegeneration() ? '1' : '0' }}"
+              data-gif-pending="{{ $gifPendingEdit ? '1' : '0' }}"
+              data-gif-generation-mode="{{ $gifQueueMode ? 'queue' : 'sync' }}"
               data-timer-status="{{ $isEdit ? $timer->status : 'active' }}"
               data-user-id="{{ $isEdit ? $timer->user_id : Auth::id() }}"
               data-gif-url="{{ $isEdit && !empty($timer->gif_url) ? $timer->gif_url : '' }}"

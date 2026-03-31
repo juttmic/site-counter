@@ -2027,6 +2027,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
 });
 
+function getGifGenerationMode() {
+  const form = document.getElementById('timer_form');
+  if (form && form.dataset.gifGenerationMode) {
+    return form.dataset.gifGenerationMode;
+  }
+  const bodyMode = document.body && document.body.dataset.gifGenerationMode;
+  return bodyMode || 'queue';
+}
+
+function isGifQueueMode() {
+  return getGifGenerationMode() === 'queue';
+}
+
+function setFormPreviewButtonPending(pending) {
+  const btn = document.getElementById('form_preview_btn');
+  if (!btn) return;
+  const url = btn.getAttribute('data-preview-url');
+  if (pending) {
+    btn.classList.add('disabled');
+    btn.setAttribute('href', '#');
+    btn.setAttribute('aria-disabled', 'true');
+    btn.setAttribute('tabindex', '-1');
+    btn.setAttribute('title', 'Processing');
+  } else {
+    btn.classList.remove('disabled');
+    if (url) btn.setAttribute('href', url);
+    btn.removeAttribute('aria-disabled');
+    btn.removeAttribute('tabindex');
+    btn.setAttribute('title', 'Preview counter');
+  }
+}
+
+/** @type {ReturnType<typeof setInterval> | null} */
+let gifPollIntervalId = null;
+
 // AJAX save + preview polling
 async function ajaxSaveAndPoll() {
   const form = document.getElementById('timer_form');
@@ -2124,42 +2159,46 @@ async function ajaxSaveAndPoll() {
       const gifImg = document.getElementById('preview_gif');
       const placeholder = document.getElementById('preview_placeholder');
 
-      // If we have a GIF URL, show it immediately in the preview
       const gifUrl = json.gif_url_with_cache_bust || json.gif_url;
+      const needsRegen = !!json.needs_regen;
+      const gifReady = !!json.gif_ready;
+
       if (gifUrl && gifImg && loader && frameImg && placeholder) {
         loader.classList.add('d-none');
         placeholder.classList.add('d-none');
         if (form.dataset.isEdit === '1') {
-          // Keep showing static preview on edit; refresh PNG frame instead of GIF
           gifImg.classList.add('d-none');
           frameImg.classList.remove('d-none');
           if (typeof generatePreviewFrame === 'function') {
             generatePreviewFrame();
           }
-        } else {
+        } else if (!isGifQueueMode() || !needsRegen) {
           frameImg.classList.add('d-none');
           gifImg.src = gifUrl;
           gifImg.classList.remove('d-none');
+        } else {
+          gifImg.classList.add('d-none');
+          frameImg.classList.remove('d-none');
+          if (typeof generatePreviewFrame === 'function') {
+            generatePreviewFrame();
+          }
         }
       }
 
-      // Update embed section visibility and value based on share availability and status
       const embedSection = document.getElementById('embed_section');
       const embedInput = document.getElementById('embed_input');
       const embedNotice = document.getElementById('embed_notice');
       const statusSelect = document.querySelector('select[name="status"]');
       const isActive = statusSelect ? statusSelect.value === 'active' : false;
-      // form is already declared at the top of ajaxSaveAndPoll function (line 1496)
-      
-      // Store GIF URL in form data attribute for later use
+
       if (form && json.gif_url) {
         form.dataset.gifUrl = json.gif_url;
-        form.dataset.hasGif = '1';
       }
-      
+      form.dataset.hasGif = gifReady ? '1' : '0';
+      form.dataset.gifPending = isGifQueueMode() && needsRegen ? '1' : '0';
+
       if (embedSection && embedInput) {
-        // Show embed section only if timer is active AND has a GIF URL
-        if (json.share_available && gifUrl && isActive) {
+        if (json.share_available && gifUrl && isActive && gifReady) {
           const match = (gifUrl || '').match(/\/timers\/(\d+)\/([^\/]+)\.gif/);
           if (match) {
             const userId = match[1];
@@ -2173,11 +2212,15 @@ async function ajaxSaveAndPoll() {
           if (embedNotice) embedNotice.classList.add('d-none');
         } else {
           embedSection.classList.add('d-none');
-          // Show notice if timer is inactive or has no GIF
           if (embedNotice) {
             if (!isActive) {
+              embedNotice.textContent = 'Activate this timer to generate a shareable embed code.';
+              embedNotice.classList.remove('d-none');
+            } else if (isGifQueueMode() && needsRegen) {
+              embedNotice.textContent = 'GIF is being generated. Embed code will appear when it is ready.';
               embedNotice.classList.remove('d-none');
             } else if (!gifUrl) {
+              embedNotice.textContent = 'Generate a GIF to get the embed code.';
               embedNotice.classList.remove('d-none');
             } else {
               embedNotice.classList.add('d-none');
@@ -2186,11 +2229,22 @@ async function ajaxSaveAndPoll() {
         }
       }
 
-      // Mark GIF as up to date
       gifDirty = false;
 
-      // For create mode: redirect after save
       if (!pageRole) {
+        if (isGifQueueMode()) {
+          Swal.fire({
+            icon: 'success',
+            title: 'Counter created',
+            text: 'Your counter is saved. The GIF is being generated—you can check it on the dashboard.',
+            timer: 2000,
+            showConfirmButton: false
+          }).then(() => {
+            window.location.href = '/dashboard';
+          });
+          saveBtn.disabled = false;
+          return;
+        }
         Swal.fire({
           icon: 'success',
           title: 'Timer Created',
@@ -2202,12 +2256,28 @@ async function ajaxSaveAndPoll() {
         });
         return;
       }
-      
-      // For edit mode: show success toast, keep user on page with updated GIF
+
+      if (isGifQueueMode() && needsRegen) {
+        setFormPreviewButtonPending(true);
+        startPreviewPolling(String(timerId));
+        Swal.fire({
+          icon: 'success',
+          title: 'Counter saved',
+          text: 'Your changes are saved. The GIF is being generated.',
+          timer: 2000,
+          showConfirmButton: false
+        });
+        saveBtn.disabled = false;
+        return;
+      }
+
+      setFormPreviewButtonPending(false);
       Swal.fire({
         icon: 'success',
-        title: 'GIF Generated',
-        text: 'Your counter has been saved and the GIF has been updated.',
+        title: gifReady ? 'GIF updated' : 'Counter saved',
+        text: gifReady
+          ? 'Your counter has been saved and the GIF has been updated.'
+          : 'Your counter has been saved.',
         timer: 1500,
         showConfirmButton: false
       });
@@ -2224,145 +2294,168 @@ async function ajaxSaveAndPoll() {
   });
 }
 
-function startPreviewPolling(timerId) {
-  const previewWrap = document.getElementById('timer_preview');
-  const loader = document.getElementById('preview_loader');
-  const frameImg = document.getElementById('preview_frame');
-  const gifImg = document.getElementById('preview_gif');
-  const placeholder = document.getElementById('preview_placeholder');
-  
-  // Hide frame, show loader
-  if (frameImg) frameImg.classList.add('d-none');
-  if (gifImg) gifImg.classList.add('d-none');
-  if (placeholder) placeholder.classList.add('d-none');
-  // if (loader) loader.classList.remove('d-none');
-  
-  // Update Swal loading message if Swal is already open
+/**
+ * Poll until GIF is ready (queue mode). Keeps PNG preview visible until then.
+ * @param {string|number} timerId
+ * @param {{ silent?: boolean }} [opts]
+ */
+function startPreviewPolling(timerId, opts) {
+  const silent = !!(opts && opts.silent);
+
+  if (gifPollIntervalId) {
+    clearInterval(gifPollIntervalId);
+    gifPollIntervalId = null;
+  }
+
   if (Swal.isVisible()) {
     Swal.update({
       title: 'Generating GIF...',
       text: 'Please wait while your counter GIF is being created'
     });
   }
-  
+
+  const loader = document.getElementById('preview_loader');
+  const frameImg = document.getElementById('preview_frame');
+  const gifImg = document.getElementById('preview_gif');
+  const placeholder = document.getElementById('preview_placeholder');
+
   let attempts = 0;
-  const maxAttempts = 60; // up to ~2 minutes if interval is 2s
-  const interval = setInterval(async () => {
-    attempts++;
-    try {
-      const res = await fetch(`/timers/${encodeURIComponent(timerId)}/status`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-      const json = await res.json();
-      const form = document.getElementById('timer_form');
-      if (form && json.status) {
-        form.dataset.timerStatus = json.status;
-      }
-      const isActive = json.status === 'active';
-      const embedSection = document.getElementById('embed_section');
-      const embedInput = document.getElementById('embed_input');
-      const embedNotice = document.getElementById('embed_notice');
-      if (embedSection) embedSection.classList.toggle('d-none', !isActive);
-      if (embedNotice) embedNotice.classList.toggle('d-none', isActive);
-      if (json.gif_url) {
-        clearInterval(interval);
-        
-        // Close the loading Swal and show success (only if Swal was open)
-        if (Swal.isVisible()) {
-          Swal.fire({
-            icon: 'success',
-            title: 'Timer Updated!',
-            text: 'Your counter GIF has been generated.',
-            timer: 2000,
-            showConfirmButton: false
-          });
-        }
-        
-        // Re-enable save button
-        const saveBtn = document.getElementById('save_btn');
-        if (saveBtn) saveBtn.disabled = false;
-        
-        // Hide loader and frame, show GIF
-        if (loader) loader.classList.add('d-none');
-        if (frameImg) frameImg.classList.add('d-none');
-        if (placeholder) placeholder.classList.add('d-none');
-        if (gifImg) {
-          const previewSrc = json.gif_url_with_cache_bust || json.gif_url;
-          gifImg.src = previewSrc;
-          gifImg.classList.remove('d-none');
-        }
-        
-        // Update form hasGif attribute
-        if (form && json.gif_url) {
-          form.dataset.hasGif = '1';
-        }
-        
-        // update embed section
-        const statusSelect = document.querySelector('select[name="status"]');
-        const isActive = statusSelect ? statusSelect.value === 'active' : false;
-        
-        if (embedInput) {
-          if (!json.share_available || !isActive) {
-            embedInput.value = '';
-          }
-        }
-        if (embedSection && embedInput && embedNotice) {
-          // Extract user_id and filename from gif_url to build gettimer URL
-          const gifUrl = json.gif_url || '';
-          if (json.share_available && isActive && gifUrl) {
-            const match = gifUrl.match(/\/timers\/(\d+)\/([^\/]+)\.gif/);
-            if (match) {
-              const userId = match[1];
-              const filename = match[2];
-              const gettimerUrl = `${window.location.origin}/gettimer/${userId}/${filename}.gif`;
-              embedInput.value = `<img src="${gettimerUrl}" alt="Countdown Counter">`;
-            } else {
-              const absUrl = new URL(gifUrl, window.location.origin).href;
-              embedInput.value = `<img src="${absUrl}" alt="Countdown Counter">`;
-            }
-            embedSection.classList.remove('d-none');
-            embedNotice.classList.add('d-none');
-          } else {
-            embedSection.classList.add('d-none');
-            if (!isActive) {
-              embedNotice.textContent = 'Activate this timer to generate a shareable embed code.';
-              // embedNotice.classList.remove('d-none');
-            } else if (!gifUrl) {
-              embedNotice.textContent = 'Generate a GIF to get the embed code.';
-              // embedNotice.classList.remove('d-none');
-            } else {
-              embedNotice.classList.add('d-none');
-            }
-          }
-        }
-        // GIF is now up to date with latest changes
-        gifDirty = false;
-      } else if (attempts >= maxAttempts) {
-        clearInterval(interval);
-        if (Swal.isVisible()) {
-          Swal.fire({
-            icon: 'warning',
-            title: 'Timeout',
-            text: 'GIF generation is taking longer than expected. Please refresh the page.'
-          });
-        }
-        const saveBtn = document.getElementById('save_btn');
-        if (saveBtn) saveBtn.disabled = false;
-      }
-    } catch (e) {
-      // ignore transient errors
+  const maxAttempts = 90;
+
+  const finishOk = (json) => {
+    const form = document.getElementById('timer_form');
+    if (form) {
+      if (json.status) form.dataset.timerStatus = json.status;
+      form.dataset.hasGif = '1';
+      form.dataset.gifPending = '0';
+      if (json.gif_url) form.dataset.gifUrl = json.gif_url;
     }
-  }, 2000);
+
+    setFormPreviewButtonPending(false);
+
+    if (!silent) {
+      if (Swal.isVisible()) {
+        Swal.fire({
+          icon: 'success',
+          title: 'GIF ready',
+          text: 'Your counter GIF has been generated.',
+          timer: 2000,
+          showConfirmButton: false
+        });
+      } else if (typeof window.showToast === 'function') {
+        window.showToast('GIF is ready', 'success');
+      }
+    } else if (typeof window.showToast === 'function') {
+      window.showToast('GIF is ready', 'success');
+    }
+
+    const saveBtn = document.getElementById('save_btn');
+    if (saveBtn) saveBtn.disabled = false;
+
+    if (loader) loader.classList.add('d-none');
+    if (placeholder) placeholder.classList.add('d-none');
+    if (gifImg) {
+      gifImg.src = json.gif_url_with_cache_bust || json.gif_url;
+      gifImg.classList.remove('d-none');
+    }
+    if (frameImg) frameImg.classList.add('d-none');
+
+    const statusSelect = document.querySelector('select[name="status"]');
+    const isActive = statusSelect ? statusSelect.value === 'active' : false;
+    const embedSection = document.getElementById('embed_section');
+    const embedInput = document.getElementById('embed_input');
+    const embedNotice = document.getElementById('embed_notice');
+    const gifUrl = json.gif_url || '';
+
+    if (embedInput) {
+      if (!json.share_available || !isActive) embedInput.value = '';
+    }
+    if (embedSection && embedInput && embedNotice) {
+      if (json.share_available && isActive && gifUrl) {
+        const match = gifUrl.match(/\/timers\/(\d+)\/([^\/]+)\.gif/);
+        if (match) {
+          const gettimerUrl = `${window.location.origin}/gettimer/${match[1]}/${match[2]}.gif`;
+          embedInput.value = `<img src="${gettimerUrl}" alt="Countdown Counter">`;
+        } else {
+          embedInput.value = `<img src="${new URL(gifUrl, window.location.origin).href}" alt="Countdown Counter">`;
+        }
+        embedSection.classList.remove('d-none');
+        embedNotice.classList.add('d-none');
+      } else {
+        embedSection.classList.add('d-none');
+        if (!isActive) {
+          embedNotice.textContent = 'Activate this timer to generate a shareable embed code.';
+          embedNotice.classList.remove('d-none');
+        } else if (!gifUrl) {
+          embedNotice.textContent = 'Generate a GIF to get the embed code.';
+          embedNotice.classList.remove('d-none');
+        }
+      }
+    }
+    gifDirty = false;
+  };
+
+  const stopWithTimeout = () => {
+    if (gifPollIntervalId) {
+      clearInterval(gifPollIntervalId);
+      gifPollIntervalId = null;
+    }
+    if (Swal.isVisible()) {
+      Swal.close();
+    }
+    Swal.fire({
+      icon: 'warning',
+      title: 'Timeout',
+      text: 'GIF generation is taking longer than expected. Please refresh the page.'
+    });
+    const saveBtn = document.getElementById('save_btn');
+    if (saveBtn) saveBtn.disabled = false;
+  };
+
+  const poll = () => {
+    attempts += 1;
+    fetch(`/timers/${encodeURIComponent(timerId)}/status`, {
+      headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' }
+    })
+      .then((res) => (res.ok ? res.json() : Promise.reject()))
+      .then((json) => {
+        const gifReady = !!json.gif_ready;
+        if (gifReady) {
+          if (gifPollIntervalId) {
+            clearInterval(gifPollIntervalId);
+            gifPollIntervalId = null;
+          }
+          finishOk(json);
+          return;
+        }
+        if (attempts >= maxAttempts) {
+          stopWithTimeout();
+        }
+      })
+      .catch(() => {
+        if (attempts >= maxAttempts) stopWithTimeout();
+      });
+  };
+  poll();
+  gifPollIntervalId = setInterval(poll, 2000);
 }
 
 ajaxSaveAndPoll();
 
-// Auto-poll on edit page load when GIF not yet available
+// Auto-poll on edit page load when GIF is still processing (queue mode)
 (function autoPollOnLoad(){
   const form = document.getElementById('timer_form');
   if (!form) return;
-  if (form.dataset.isEdit === '1' && form.dataset.hasGif !== '1' && form.dataset.timerId) {
-    startPreviewPolling(form.dataset.timerId);
+  if (!isGifQueueMode()) return;
+  if (form.dataset.isEdit === '1' && form.dataset.gifPending === '1' && form.dataset.timerId) {
+    startPreviewPolling(form.dataset.timerId, { silent: true });
   }
 })();
+
+document.addEventListener('click', (e) => {
+  const a = e.target.closest('#form_preview_btn.disabled, a.dashboard-preview-btn.disabled');
+  if (a) e.preventDefault();
+}, true);
 
 // Bind copy button to use global toast
 document.addEventListener('DOMContentLoaded', function(){
@@ -2474,6 +2567,7 @@ document.addEventListener('DOMContentLoaded', function(){
               })
               .then(res => res.json())
               .then(data => {
+                if (data.needs_regen || !data.gif_ready || !data.gif_url || !embedInput) return;
                 if (data.gif_url && embedInput) {
                   // Update form data attribute
                   if (form) {

@@ -64,11 +64,16 @@ class TimerController extends Controller
         }
 
         if ($request->expectsJson()) {
+            $timer->refresh();
+            $needsRegen = $timer->needsGifRegeneration();
+
             return response()->json([
                 'id' => $timer->id,
                 'gif_url' => $timer->gif_url,
                 'gif_url_with_cache_bust' => $timer->gif_url_with_cache_bust,
-                'share_available' => $timer->isActive() && !empty($timer->gif_url),
+                'needs_regen' => $needsRegen,
+                'gif_ready' => !empty($timer->gif_url) && !$needsRegen,
+                'share_available' => $timer->isActive() && !empty($timer->gif_url) && !$needsRegen,
                 'message' => 'Timer created.',
             ]);
         }
@@ -108,11 +113,16 @@ class TimerController extends Controller
         }
 
         if ($request->expectsJson()) {
+            $timer->refresh();
+            $needsRegen = $timer->needsGifRegeneration();
+
             return response()->json([
                 'id' => $timer->id,
                 'gif_url' => $timer->gif_url,
                 'gif_url_with_cache_bust' => $timer->gif_url_with_cache_bust,
-                'share_available' => $timer->isActive() && !empty($timer->gif_url),
+                'needs_regen' => $needsRegen,
+                'gif_ready' => !empty($timer->gif_url) && !$needsRegen,
+                'share_available' => $timer->isActive() && !empty($timer->gif_url) && !$needsRegen,
                 'message' => 'Timer updated.',
             ]);
         }
@@ -139,14 +149,62 @@ class TimerController extends Controller
     public function status(Timer $timer)
     {
         $this->authorizeOwner($timer);
+        $needsRegen = $timer->needsGifRegeneration();
+
         return response()->json([
             'id' => $timer->id,
             'gif_url' => $timer->gif_url,
             'gif_url_with_cache_bust' => $timer->gif_url_with_cache_bust,
             'status' => $timer->status,
-            'share_available' => $timer->isActive() && !empty($timer->gif_url),
-            'needs_regen' => $timer->needsGifRegeneration(),
+            'needs_regen' => $needsRegen,
+            'gif_ready' => !empty($timer->gif_url) && !$needsRegen,
+            'share_available' => $timer->isActive() && !empty($timer->gif_url) && !$needsRegen,
         ]);
+    }
+
+    /**
+     * Batch GIF readiness for dashboard polling (only timers owned by the user).
+     *
+     * @param  list<int|string>|string|null  $ids
+     */
+    public function gifStatusBatch(Request $request)
+    {
+        $raw = $request->query('ids', '');
+        $ids = is_array($raw)
+            ? $raw
+            : preg_split('/\s*,\s*/', (string) $raw, -1, PREG_SPLIT_NO_EMPTY);
+        $ids = array_values(array_unique(array_filter(array_map('intval', $ids))));
+        if (count($ids) > 40) {
+            $ids = array_slice($ids, 0, 40);
+        }
+        if ($ids === []) {
+            return response()->json(['timers' => []]);
+        }
+
+        $timers = Timer::where('user_id', Auth::id())->whereIn('id', $ids)->get();
+        $out = [];
+
+        foreach ($timers as $timer) {
+            $needsRegen = $timer->needsGifRegeneration();
+            $gifReady = !empty($timer->gif_url) && !$needsRegen;
+            $key = (string) $timer->id;
+            $embedUrl = ($gifReady && $timer->status === 'active' && !empty($timer->gif_url))
+                ? url('/gettimer/'.$timer->user_id.'/'.pathinfo($timer->gif_url, PATHINFO_FILENAME)).'.gif'
+                : null;
+
+            $out[$key] = [
+                'id' => $timer->id,
+                'user_id' => $timer->user_id,
+                'gif_url' => $timer->gif_url,
+                'gif_url_with_cache_bust' => $timer->gif_url_with_cache_bust,
+                'needs_regen' => $needsRegen,
+                'gif_ready' => $gifReady,
+                'status' => $timer->status,
+                'embed_url' => $embedUrl,
+            ];
+        }
+
+        return response()->json(['timers' => $out]);
     }
 
     public function previewFrame(Request $request, TimerGifGenerator $generator, ?Timer $timer = null)

@@ -20,9 +20,11 @@
                     @if(isset($timers) && $timers->isEmpty())
                         <div class="alert alert-info">No counters yet. Create your first one!</div>
                     @else
+                        @php($gifQueueMode = config('app.gif_generation_mode', 'queue') === 'queue')
                         <div class="row g-3">
                             @foreach($timers as $timer)
-                            <div class="col-12 col-md-3">
+                            @php($dashboardGifPending = $gifQueueMode && ($timer->needsGifRegeneration() || empty($timer->gif_url)))
+                            <div class="col-12 col-md-3" data-timer-card data-timer-id="{{ $timer->id }}" @if($dashboardGifPending) data-gif-pending="1" @endif>
                                 <div class="card shadow-sm border-0 h-100">
                                   <div class="card-body d-flex flex-column justify-content-between">
                                     <!-- Title -->
@@ -69,7 +71,11 @@
                                       <div class="flex-grow-1"></div>
                                       <div class="btn-group" role="group">
                                         @php($embedCopyUrl = ($timer->gif_url && !$timer->needsGifRegeneration()) ? url('/gettimer/'.$timer->user_id.'/'.pathinfo($timer->gif_url, PATHINFO_FILENAME)).'.gif' : null)
-                                        <a href="{{ route('timers.preview', $timer) }}" class="btn btn-outline-secondary btn-sm" title="Preview">
+                                        <a href="{{ $dashboardGifPending ? '#' : route('timers.preview', $timer) }}"
+                                           class="btn btn-outline-secondary btn-sm dashboard-preview-btn {{ $dashboardGifPending ? 'disabled' : '' }}"
+                                           data-preview-url="{{ route('timers.preview', $timer) }}"
+                                           @if($dashboardGifPending) title="Processing" tabindex="-1" aria-disabled="true" @else title="Preview" @endif
+                                        >
                                           <i class="bi bi-eye"></i>
                                         </a>
                                         @if($embedCopyUrl && $timer->status === 'active')
@@ -124,6 +130,9 @@
     </div>
 
     <script>
+    document.addEventListener('click', function(e){
+      if (e.target.closest('a.dashboard-preview-btn.disabled')) e.preventDefault();
+    }, true);
     // Copy embed code for dashboard cards
     document.addEventListener('click', function(e){
       if (!window.copyToClipboard) {
@@ -161,66 +170,83 @@
       });
     });
 
-    // GIF Generation via AJAX
-    (function() {
-      function updatePreview(timerId, gifUrl) {
-        const previewContainer = document.querySelector('.timer-preview-' + timerId);
-        if (!previewContainer) return;
+    // Queue mode: one batched poll for all pending GIFs; omit timers once ready
+    (function dashboardGifBatchPoll(){
+      if (!document.body || document.body.getAttribute('data-gif-generation-mode') !== 'queue') return;
+      var pending = [];
+      document.querySelectorAll('[data-timer-card][data-gif-pending="1"]').forEach(function(card){
+        var id = card.getAttribute('data-timer-id');
+        if (id) pending.push(String(id));
+      });
+      if (!pending.length) return;
 
-        const placeholder = previewContainer.querySelector('.timer-preview-placeholder-' + timerId);
-        if (placeholder) {
-          placeholder.remove();
+      var maxAttempts = 90;
+      var attempts = 0;
+
+      function activateDashboardTimerCard(timerId, t) {
+        var card = document.querySelector('[data-timer-card][data-timer-id="' + String(timerId) + '"]');
+        if (!card) return;
+        card.removeAttribute('data-gif-pending');
+        var previewA = card.querySelector('.dashboard-preview-btn');
+        if (previewA) {
+          var pUrl = previewA.getAttribute('data-preview-url');
+          previewA.classList.remove('disabled');
+          previewA.removeAttribute('tabindex');
+          previewA.removeAttribute('aria-disabled');
+          if (pUrl) previewA.setAttribute('href', pUrl);
+          previewA.setAttribute('title', 'Preview');
         }
-
-        let img = previewContainer.querySelector('.timer-preview-img-' + timerId);
-        if (!img) {
-          img = document.createElement('img');
-          img.className = 'img-fluid w-100 h-100 object-fit-contain timer-preview-img-' + timerId;
-          img.alt = 'Timer Preview';
-          previewContainer.appendChild(img);
-        }
-
-        // Add cache busting
-        const separator = gifUrl.includes('?') ? '&' : '?';
-        img.src = gifUrl + separator + '_t=' + Date.now();
-      }
-
-      async function pollForGif(timerId, timerStatus, userId, maxAttempts = 60) {
-        let attempts = 0;
-        const embedBtn = document.querySelector('.copy-embed-btn-' + timerId);
-        const interval = setInterval(async () => {
-          attempts++;
-          try {
-            const res = await fetch(`/timers/${encodeURIComponent(timerId)}/status`, {
-              headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
-            });
-            if (!res.ok) throw new Error('status not ok');
-            const json = await res.json();
-            const gifUrl = json.gif_url_with_cache_bust || json.gif_url;
-            if (gifUrl) {
-              clearInterval(interval);
-              updatePreview(timerId, gifUrl);
-              if (embedBtn && timerStatus === 'active' && userId) {
-                const match = (gifUrl || '').match(/\/timers\/(\d+)\/([^\/]+)\.gif/);
-                if (match) {
-                  const filename = match[2];
-                  const embedUrl = window.location.origin + '/gettimer/' + userId + '/' + filename + '.gif';
-                  embedBtn.setAttribute('data-embed-url', embedUrl);
-                  embedBtn.classList.remove('d-none');
-                }
-              }
-              return;
-            }
-            if (attempts >= maxAttempts) {
-              clearInterval(interval);
-            }
-          } catch (e) {
-            if (attempts >= maxAttempts) {
-              clearInterval(interval);
-            }
+        var wrap = card.querySelector('.timer-preview-' + timerId);
+        if (wrap && (t.gif_url_with_cache_bust || t.gif_url)) {
+          var abs = t.gif_url_with_cache_bust || t.gif_url;
+          var ph = wrap.querySelector('.timer-preview-placeholder-' + timerId);
+          if (ph) ph.remove();
+          var overlay = wrap.querySelector('.position-absolute');
+          if (overlay) overlay.remove();
+          var img = wrap.querySelector('.timer-preview-img-' + timerId);
+          if (!img) {
+            wrap.innerHTML = '';
+            img = document.createElement('img');
+            img.className = 'img-fluid w-100 h-100 object-fit-contain timer-preview-img-' + timerId;
+            img.alt = 'Timer Preview';
+            wrap.appendChild(img);
           }
-        }, 2000);
+          var src = abs.indexOf('http') === 0 ? abs : (window.location.origin + (abs.charAt(0) === '/' ? abs : '/' + abs));
+          var sep = src.indexOf('?') >= 0 ? '&' : '?';
+          img.src = src + sep + '_t=' + Date.now();
+        }
+        var embedBtn = card.querySelector('.copy-embed-btn-' + timerId);
+        if (embedBtn && t.embed_url && t.status === 'active') {
+          embedBtn.setAttribute('data-embed-url', t.embed_url);
+          embedBtn.classList.remove('d-none');
+        }
       }
+
+      function tick(){
+        attempts++;
+        if (!pending.length || attempts > maxAttempts) return;
+        var qs = 'ids=' + encodeURIComponent(pending.join(','));
+        fetch(@json(route('timers.gif-status'))) + '?' + qs, {
+          headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+        })
+          .then(function(r){ return r.json(); })
+          .then(function(data){
+            var timers = data.timers || {};
+            pending = pending.filter(function(id){
+              var t = timers[id];
+              if (t && t.gif_ready) {
+                activateDashboardTimerCard(id, t);
+                return false;
+              }
+              return true;
+            });
+            if (pending.length) setTimeout(tick, 2000);
+          })
+          .catch(function(){
+            if (pending.length && attempts <= maxAttempts) setTimeout(tick, 2000);
+          });
+      }
+      setTimeout(tick, 1500);
     })();
     </script>
 </x-app-layout>
