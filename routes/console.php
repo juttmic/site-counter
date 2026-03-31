@@ -9,7 +9,7 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-Artisan::command('queue:work-gifs-once {--timeout=120} {--tries=3} {--max-jobs=2} {--parallel=1}', function () {
+Artisan::command('queue:work-gifs-once {--timeout=120} {--tries=3} {--max-jobs=1} {--parallel=1}', function () {
     $timeout = (int) $this->option('timeout');
     $tries = (int) $this->option('tries');
     $maxJobs = max(1, (int) $this->option('max-jobs'));
