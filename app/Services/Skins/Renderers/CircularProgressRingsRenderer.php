@@ -10,10 +10,8 @@ use App\Services\Skins\SkinRendererInterface;
  */
 class CircularProgressRingsRenderer implements SkinRendererInterface
 {
-    private const MAX_DAYS = 99;
-    private const MAX_HOURS = 24;
-    private const MAX_MINUTES = 60;
-    private const MAX_SECONDS = 60;
+    /** Full ring = 60 segments so the same numeric value matches the same arc for days/hours/minutes/seconds. */
+    private const RING_SEGMENTS = 60;
 
     public function renderStyle($im, array $skin, int $width, int $height, int $bgCol, int $textCol, int $accentCol, int $secondsRemaining): void
     {
@@ -37,7 +35,6 @@ class CircularProgressRingsRenderer implements SkinRendererInterface
         $seconds = $secondsRemaining % 60;
 
         $values = [$days, $hours, $minutes, $seconds];
-        $maxes = [self::MAX_DAYS, self::MAX_HOURS, self::MAX_MINUTES, self::MAX_SECONDS];
 
         // Ring size control: scale radius relative to a sensible base size
         $ringSizeControl = max(80, min(300, (int) ($skin['ringSize'] ?? 176)));
@@ -69,8 +66,7 @@ class CircularProgressRingsRenderer implements SkinRendererInterface
             $cx = (int) ($padX + $unitWidth * $i + $unitWidth / 2);
             $unitIdx = ['d' => 0, 'h' => 1, 'm' => 2, 's' => 3][$units[$i]] ?? 0;
             $value = $values[$unitIdx];
-            $max = $maxes[$unitIdx];
-            $progress = min(1.0, (float) $value / max(1, $max));
+            $progress = min(1.0, max(0.0, (float) $value / self::RING_SEGMENTS));
 
             // Track (full circle background)
             $this->thickArc($im, $cx, $centerY, $radius, 0, 360, $ringTrackCol, $ringStroke);
