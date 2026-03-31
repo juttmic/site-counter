@@ -15,6 +15,7 @@
 (DONE)           (23) this should be connector height
 (DONE)           (25) if minimum height is 430 - then why it is not letting me enter 500 for example
 
+(PARTIAL) (2 ) match the font size/text
 (PARTIAL)        (3) Move the Active to the top tight of the counter name, Evergreen in gray colour looks bad and what does Evergreen means , you should give it a label that you use in setitngs i think it should be Counter Ends: ?
 (PARTIAL)        (9) why do you show this text every time New Counter button is clicked, you also show this text when a template is selected ( Toaster gif height for text distance error )
 (PARTIAL)        (11) and why the blue border is too short for 23 hours and for 59 minutes? ( Gear skin )
@@ -25,7 +26,6 @@
 
 (NOT AN ISSUE)   (16) where is my heading text in the preview?
 
-(NEED MORE INFO) (2 ) match the font size/text
 (NEED MORE INFO) (6) why in template this goes down to 26 minute but then quickly resets to 27minutes ( circular gear timer skin)
 (NEED MORE INFO) (8) move the good looking coloured templates to the Start/beginning
 (NEED MORE INFO) (24) if user sets some date in the future with X days for counter to run but then decide to hide days , does that mean the counter will also ifnore the Days or it will keep running and only hide the days - that will be a problem
