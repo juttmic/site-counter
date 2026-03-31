@@ -417,6 +417,21 @@
     font-weight: 600;
     color: #4b5563;
   }
+
+  /* Dark mode: form block loads after global CSS — explicit overrides for label/contrast */
+  .dark .form-label {
+    color: #f1f5f9;
+  }
+  .dark .form-label.small {
+    color: #e2e8f0;
+  }
+  .dark .form-text,
+  .dark .form-text.small {
+    color: #cbd5e1;
+  }
+  .dark .card-body .fw-semibold.small.text-uppercase.text-muted {
+    color: #94a3b8 !important;
+  }
   
   /* Input group enhancements */
   .card-body .form-label:first-child {

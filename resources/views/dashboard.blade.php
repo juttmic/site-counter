@@ -110,7 +110,7 @@
     <!-- Global Loader Overlay -->
     <div id="gif-generation-overlay" class="d-none position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-50" style="z-index: 9999;">
       <div class="d-flex flex-column align-items-center justify-content-center h-100">
-        <div class="bg-white rounded p-4 shadow-lg text-center" style="max-width: 400px;">
+        <div class="bg-white rounded p-4 shadow-lg text-center gif-generation-panel" style="max-width: 400px;">
           <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
             <span class="visually-hidden">Loading...</span>
           </div>
