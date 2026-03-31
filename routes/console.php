@@ -2,34 +2,51 @@
 
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-Artisan::command('queue:work-gifs-once {--timeout=120} {--tries=3} {--max-jobs=5}', function () {
+Artisan::command('queue:work-gifs-once {--timeout=120} {--tries=3} {--max-jobs=5} {--parallel=3}', function () {
     $timeout = (int) $this->option('timeout');
     $tries = (int) $this->option('tries');
     $maxJobs = max(1, (int) $this->option('max-jobs'));
+    $parallel = max(1, min(10, (int) $this->option('parallel')));
 
-    Log::channel('gif_queue')->info('GIF queue worker started', [
-        'max_jobs' => $maxJobs,
-        'timeout' => $timeout,
-        'tries' => $tries,
-        'at' => now()->toIso8601String(),
-    ]);
+    // One lock per batch run: job overrun is bounded by Laravel's per-job --timeout, not max-jobs × timeout.
+    $lockTtl = $timeout + 60;
 
-    // Hold lock long enough for worst case: each job may run up to $timeout seconds.
-    $lockTtl = max(120, ($maxJobs * $timeout) + 90);
+    $lock = null;
+    $slot = null;
+    for ($i = 0; $i < $parallel; $i++) {
+        $candidate = Cache::lock("gif-queue-worker-slot-{$i}", $lockTtl);
+        if ($candidate->get()) {
+            $lock = $candidate;
+            $slot = $i;
+            break;
+        }
+    }
 
-    $lock = \Illuminate\Support\Facades\Cache::lock('queue:work-gifs-once', $lockTtl);
-    if (!$lock->get()) {
-        $this->info('Another GIF worker is already running. Skipping.');
-        Log::channel('gif_queue')->info('GIF queue worker skipped (lock held)');
+    if ($lock === null) {
+        $this->info("All {$parallel} GIF worker slots are busy. Skipping.");
+        Log::channel('gif_queue')->info('GIF queue worker skipped (all slots busy)', [
+            'parallel' => $parallel,
+        ]);
 
         return 0;
     }
+
+    Log::channel('gif_queue')->info('GIF queue worker started', [
+        'slot' => $slot,
+        'parallel_slots' => $parallel,
+        'max_jobs' => $maxJobs,
+        'timeout' => $timeout,
+        'lock_ttl' => $lockTtl,
+        'tries' => $tries,
+        'at' => now()->toIso8601String(),
+    ]);
 
     try {
         $exitCode = Artisan::call('queue:work', [
@@ -47,6 +64,7 @@ Artisan::command('queue:work-gifs-once {--timeout=120} {--tries=3} {--max-jobs=5
         }
 
         Log::channel('gif_queue')->info('GIF queue worker finished batch', [
+            'slot' => $slot,
             'max_jobs' => $maxJobs,
             'exit_code' => $exitCode,
             'at' => now()->toIso8601String(),
@@ -56,4 +74,4 @@ Artisan::command('queue:work-gifs-once {--timeout=120} {--tries=3} {--max-jobs=5
     } finally {
         optional($lock)->release();
     }
-})->purpose('Process up to five GIF queue jobs per run (cron-safe; use --max-jobs to override)');
+})->purpose('Process GIF queue (up to --max-jobs per run; up to --parallel concurrent batches; cron-safe)');
