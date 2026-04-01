@@ -10,7 +10,6 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-// Schedule::command('queue:work-gifs-once')->everyThirtySeconds();
 
 Artisan::command('queue:work-gifs-once {--timeout=120} {--tries=3} {--max-jobs=3} {--parallel=3}', function () {
     Log::channel('gif_queue')->info('Time here : ', [now()]);
