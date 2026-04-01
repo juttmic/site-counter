@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // only if the user hasn't edited it.
   (function initTargetDateTimeToNow() {
     const form = document.getElementById('timer_form');
-    const isEdit = form && form.dataset.isEdit === '1';
+    const isEdit = form?.dataset.isEdit === '1';
     if (isEdit) {
       const input = document.querySelector('input[name="target_datetime"]');
       if (!input) return;
@@ -383,7 +383,7 @@ document.addEventListener('DOMContentLoaded', function() {
         fontSelect.value = saved;
       }
       // Enhance font select with Select2 if available (searchable dropdown)
-      if (window.$ && $.fn && $.fn.select2) {
+      if (window.$?.fn?.select2) {
         const formatFontOption = (data) => {
           if (!data.id) {
             return data.text || '';
@@ -1282,174 +1282,116 @@ function renderFields(metadata, savedOverrides = {}) {
   })();
   let finalCardRef = null;
 
-  // Recursive function to render groups and subgroups
-  function renderGroup(group, parentContainer, level = 0) {
-    // Skip empty groups (except for final which has special handling)
-    // But always render groups that have children (subgroups), even if they have no direct fields
-    const isFinalGroup = group.path.some(p => p.toLowerCase().includes('final'));
-    const isVisibilityGroup = group.name === 'Visibility' || group.path.some(p => p.toLowerCase() === 'visibility');
+  function relocateVisibilityTogglesFromGroup(group) {
+    const visibilityToggles = group.fields.filter(field => visibilityToggleKeys.has(field.key));
+    const remainingFields = group.fields.filter(field => !visibilityToggleKeys.has(field.key));
+    const togglesCol = document.getElementById('visibility_toggles_col');
+    const togglesInner = document.getElementById('visibility_toggles_inner') || togglesCol;
+    const fontCol = document.getElementById('font_field_col');
 
-    // For the Visibility group, move the main showDays/showSeconds toggles into the General card
-    // under the "Counter Expires" section, and keep any remaining visibility fields in their own group.
-    if (isVisibilityGroup && Array.isArray(group.fields) && group.fields.length > 0) {
-      const visibilityToggles = group.fields.filter(field => visibilityToggleKeys.has(field.key));
-      const remainingFields = group.fields.filter(field => !visibilityToggleKeys.has(field.key));
-
-      const togglesCol = document.getElementById('visibility_toggles_col');
-      const togglesInner = document.getElementById('visibility_toggles_inner') || togglesCol;
-      const fontCol = document.getElementById('font_field_col');
-
-      if (togglesInner) {
-        // Clear any previous toggles when switching skins
-        togglesInner.innerHTML = '';
-
-        if (visibilityToggles.length > 0) {
-          visibilityToggles.forEach(field => {
-            const value = resolveFieldValue(field);
-            const displayField = { ...field, label: (field.label || '').replace(/^Show\s+/i, '') };
-            const fieldContainer = createFieldInput(displayField, value, { useSwitch: true });
-            // Make each toggle full width within the column (no Bootstrap grid classes)
-            const classes = fieldContainer.className.split(' ').filter(c => !c.startsWith('col-'));
-            fieldContainer.className = classes.join(' ').trim();
-            togglesInner.appendChild(fieldContainer);
-          });
-        }
-      }
-
-      // Adjust layout: if we have visibility toggles, use two columns; otherwise font spans full width
-      if (togglesCol && fontCol) {
-        if (visibilityToggles.length > 0) {
-          togglesCol.className = 'col-12 col-lg-6';
-          fontCol.className = 'col-12 col-lg-6';
-        } else {
-          togglesCol.className = 'd-none';
-          fontCol.className = 'col-12';
-        }
-      }
-
-      // Only keep non-toggle visibility fields in the Template card's Visibility group
-      group.fields = remainingFields;
-    }
-
-    const hasChildren = group.children && group.children.length > 0;
-    if (!group.fields.length && !hasChildren && !isFinalGroup) return;
-    
-    const col = document.createElement('div');
-    col.className = 'col-12';
-    // Visibility group: show whenever the skin has visibility fields (e.g. other visibility options).
-    const showVisibilityGroup = (group.fields && group.fields.length > 0);
-    if (isVisibilityGroup && !showVisibilityGroup) {
-      col.classList.add('d-none');
-    }
-    
-    const card = document.createElement('div');
-    card.className = 'card border shadow-sm mb-3';
-    const bodyId = `skin_group_${group.pathKey.replace(/\./g, '_').replace(/[^a-zA-Z0-9_]/g, '_')}`;
-    
-    const header = document.createElement('div');
-    header.className = 'card-header bg-light py-2 collapsible-header';
-    header.dataset.target = `#${bodyId}`;
-    let displayTitle = group.title;
-    if (group.name === 'Appearance' || group.title === 'Appearance') displayTitle = 'Design';
-    else if (group.name === 'Final Screen' || group.title === 'Final Screen' || group.path?.some(p => String(p).toLowerCase().includes('final'))) displayTitle = 'End Message';
-    header.innerHTML = `<span class="text-uppercase text-muted fw-semibold small">${displayTitle}</span><i class="bi bi-chevron-down collapse-icon float-end"></i>`;
-    
-    const body = document.createElement('div');
-    body.className = 'card-body collapsible-body';
-    body.id = bodyId;
-    
-    // If this group has children (subgroups), render them first
-    if (group.children && group.children.length > 0) {
-      group.children.forEach(childGroup => {
-        renderGroup(childGroup, body, level + 1);
-      });
-    }
-    
-    // Add fields for this group (even if hidden, fields are still created so their values are applied)
-    if (group.fields.length > 0) {
-      const isAppearanceGroup = group.name === 'Appearance' || group.path.some(p => p.toLowerCase() === 'appearance');
-      const isDimensionsGroup = group.name === 'Dimensions' || group.path.some(p => p.toLowerCase() === 'dimensions');
-      
-      if (isAppearanceGroup && group.fields.length > 0) {
-        // For Appearance group: first 3 fields in one row (col-12 col-sm-4), then 2 per row (col-12 col-sm-6)
-        
-        // First row: first 3 fields
-        if (group.fields.length > 0) {
-          const firstRow = document.createElement('div');
-          firstRow.className = 'row g-3';
-          
-          group.fields.slice(0, 3).forEach(field => {
-            const value = resolveFieldValue(field);
-            const fieldContainer = createFieldInput(field, value);
-            // Override column classes: remove all col-* classes and add col-12 col-sm-4
-            const classes = fieldContainer.className.split(' ').filter(c => !c.startsWith('col-'));
-            fieldContainer.className = 'col-12 col-sm-4 ' + classes.join(' ').trim();
-            firstRow.appendChild(fieldContainer);
-          });
-          body.appendChild(firstRow);
-        }
-        
-        // Subsequent rows: remaining fields, 2 per row
-        const remainingFields = group.fields.slice(3);
-        for (let i = 0; i < remainingFields.length; i += 2) {
-          const row = document.createElement('div');
-          row.className = 'row g-3';
-          
-          const fieldsToAdd = remainingFields.slice(i, i + 2);
-          fieldsToAdd.forEach(field => {
-            const value = resolveFieldValue(field);
-            const fieldContainer = createFieldInput(field, value);
-            // Override column classes: remove all col-* classes and add col-12 col-sm-6
-            const classes = fieldContainer.className.split(' ').filter(c => !c.startsWith('col-'));
-            fieldContainer.className = 'col-12 col-sm-6 ' + classes.join(' ').trim();
-            row.appendChild(fieldContainer);
-          });
-          body.appendChild(row);
-        }
-      } else if (isDimensionsGroup && group.fields.length > 0) {
-        // For Dimensions group: all fields 2 per row (col-12 col-sm-6)
-        for (let i = 0; i < group.fields.length; i += 2) {
-          const row = document.createElement('div');
-          row.className = 'row g-3';
-          
-          const fieldsToAdd = group.fields.slice(i, i + 2);
-          fieldsToAdd.forEach(field => {
-            const value = resolveFieldValue(field);
-            const fieldContainer = createFieldInput(field, value);
-            // Override column classes: remove all col-* classes and add col-12 col-sm-6
-            const classes = fieldContainer.className.split(' ').filter(c => !c.startsWith('col-'));
-            fieldContainer.className = 'col-12 col-sm-6 ' + classes.join(' ').trim();
-            row.appendChild(fieldContainer);
-          });
-          body.appendChild(row);
-        }
-      } else {
-        // For all other groups: use existing logic
-        // Visibility group: use form-switch toggles like "Time's Up Message", one per row
-        const row = document.createElement('div');
-        row.className = 'row g-3';
-        group.fields.forEach(field => {
+    if (togglesInner) {
+      togglesInner.innerHTML = '';
+      if (visibilityToggles.length > 0) {
+        visibilityToggles.forEach(field => {
           const value = resolveFieldValue(field);
-          const fieldContainer = createFieldInput(field, value, { useSwitch: isVisibilityGroup });
-          if (isVisibilityGroup) {
-            const classes = fieldContainer.className.split(' ').filter(c => !c.startsWith('col-'));
-            fieldContainer.className = 'col-12 ' + classes.join(' ').trim();
-          }
-          row.appendChild(fieldContainer);
+          const displayField = { ...field, label: (field.label || '').replace(/^Show\s+/i, '') };
+          const fieldContainer = createFieldInput(displayField, value, { useSwitch: true });
+          const classes = fieldContainer.className.split(' ').filter(c => !c.startsWith('col-'));
+          fieldContainer.className = classes.join(' ').trim();
+          togglesInner.appendChild(fieldContainer);
         });
-        body.appendChild(row);
       }
     }
-    
-    card.appendChild(header);
-    card.appendChild(body);
-    col.appendChild(card);
 
-    // Special handling for final screen group
-    if (isFinalGroup && level === 0) {
-      const toggleCol = document.createElement('div');
-      toggleCol.className = 'col-12 mb-0';
-      toggleCol.innerHTML = `
+    if (togglesCol && fontCol) {
+      if (visibilityToggles.length > 0) {
+        togglesCol.className = 'col-12 col-lg-6';
+        fontCol.className = 'col-12 col-lg-6';
+      } else {
+        togglesCol.className = 'd-none';
+        fontCol.className = 'col-12';
+      }
+    }
+
+    group.fields = remainingFields;
+  }
+
+  function renderAppearanceGroupBody(body, fields) {
+    if (fields.length === 0) return;
+    const firstRow = document.createElement('div');
+    firstRow.className = 'row g-3';
+    fields.slice(0, 3).forEach(field => {
+      const value = resolveFieldValue(field);
+      const fieldContainer = createFieldInput(field, value);
+      const classes = fieldContainer.className.split(' ').filter(c => !c.startsWith('col-'));
+      fieldContainer.className = 'col-12 col-sm-4 ' + classes.join(' ').trim();
+      firstRow.appendChild(fieldContainer);
+    });
+    body.appendChild(firstRow);
+
+    const tail = fields.slice(3);
+    for (let i = 0; i < tail.length; i += 2) {
+      const row = document.createElement('div');
+      row.className = 'row g-3';
+      tail.slice(i, i + 2).forEach(field => {
+        const value = resolveFieldValue(field);
+        const fieldContainer = createFieldInput(field, value);
+        const classes = fieldContainer.className.split(' ').filter(c => !c.startsWith('col-'));
+        fieldContainer.className = 'col-12 col-sm-6 ' + classes.join(' ').trim();
+        row.appendChild(fieldContainer);
+      });
+      body.appendChild(row);
+    }
+  }
+
+  function renderDimensionsGroupBody(body, fields) {
+    for (let i = 0; i < fields.length; i += 2) {
+      const row = document.createElement('div');
+      row.className = 'row g-3';
+      fields.slice(i, i + 2).forEach(field => {
+        const value = resolveFieldValue(field);
+        const fieldContainer = createFieldInput(field, value);
+        const classes = fieldContainer.className.split(' ').filter(c => !c.startsWith('col-'));
+        fieldContainer.className = 'col-12 col-sm-6 ' + classes.join(' ').trim();
+        row.appendChild(fieldContainer);
+      });
+      body.appendChild(row);
+    }
+  }
+
+  function renderDefaultGroupBody(body, fields, isVisibilityGroup) {
+    const row = document.createElement('div');
+    row.className = 'row g-3';
+    fields.forEach(field => {
+      const value = resolveFieldValue(field);
+      const fieldContainer = createFieldInput(field, value, { useSwitch: isVisibilityGroup });
+      if (isVisibilityGroup) {
+        const classes = fieldContainer.className.split(' ').filter(c => !c.startsWith('col-'));
+        fieldContainer.className = 'col-12 ' + classes.join(' ').trim();
+      }
+      row.appendChild(fieldContainer);
+    });
+    body.appendChild(row);
+  }
+
+  function renderGroupFieldsForCategory(body, group, isVisibilityGroup) {
+    if (group.fields.length === 0) return;
+    const isAppearanceGroup = group.name === 'Appearance' || group.path.some(p => p.toLowerCase() === 'appearance');
+    const isDimensionsGroup = group.name === 'Dimensions' || group.path.some(p => p.toLowerCase() === 'dimensions');
+    if (isAppearanceGroup) {
+      renderAppearanceGroupBody(body, group.fields);
+    } else if (isDimensionsGroup) {
+      renderDimensionsGroupBody(body, group.fields);
+    } else {
+      renderDefaultGroupBody(body, group.fields, isVisibilityGroup);
+    }
+  }
+
+  function wireFinalScreenGroupUi(parentContainer, col, card, level, isFinalGroup) {
+    if (!isFinalGroup || level !== 0) return;
+    const toggleCol = document.createElement('div');
+    toggleCol.className = 'col-12 mb-0';
+    toggleCol.innerHTML = `
         <div class="form-check form-switch">
           <input class="form-check-input" type="checkbox" name="show_final_message" id="show_final_message" value="1" ${showFinalMessage ? 'checked' : ''} data-key="show_final_message">
           <label class="form-check-label" for="show_final_message">
@@ -1457,24 +1399,69 @@ function renderFields(metadata, savedOverrides = {}) {
           </label>
         </div>
       `;
-      parentContainer.appendChild(toggleCol);
+    parentContainer.appendChild(toggleCol);
+    const toggleInput = toggleCol.querySelector('#show_final_message');
+    if (toggleInput) {
+      toggleInput.addEventListener('change', () => {
+        if (finalCardRef) {
+          finalCardRef.classList.toggle('d-none', !toggleInput.checked);
+          finalCardRef.querySelector('.card')?.classList.toggle('d-none', !toggleInput.checked);
+        }
+        syncOverrides();
+      });
+    }
+    col.classList.toggle('d-none', !showFinalMessage);
+    card.classList.toggle('d-none', !showFinalMessage);
+    finalCardRef = col;
+  }
 
-      const toggleInput = toggleCol.querySelector('#show_final_message');
-      if (toggleInput) {
-        toggleInput.addEventListener('change', () => {
-          if (finalCardRef) {
-            finalCardRef.classList.toggle('d-none', !toggleInput.checked);
-            finalCardRef.querySelector('.card')?.classList.toggle('d-none', !toggleInput.checked);
-          }
-          syncOverrides();
-        });
-      }
+  // Recursive function to render groups and subgroups
+  function renderGroup(group, parentContainer, level = 0) {
+    const isFinalGroup = group.path.some(p => p.toLowerCase().includes('final'));
+    const isVisibilityGroup = group.name === 'Visibility' || group.path.some(p => p.toLowerCase() === 'visibility');
 
-      col.classList.toggle('d-none', !showFinalMessage);
-      card.classList.toggle('d-none', !showFinalMessage);
-      finalCardRef = col;
+    if (isVisibilityGroup && Array.isArray(group.fields) && group.fields.length > 0) {
+      relocateVisibilityTogglesFromGroup(group);
     }
 
+    const hasChildren = group.children && group.children.length > 0;
+    if (!group.fields.length && !hasChildren && !isFinalGroup) return;
+
+    const col = document.createElement('div');
+    col.className = 'col-12';
+    const showVisibilityGroup = (group.fields && group.fields.length > 0);
+    if (isVisibilityGroup && !showVisibilityGroup) {
+      col.classList.add('d-none');
+    }
+
+    const card = document.createElement('div');
+    card.className = 'card border shadow-sm mb-3';
+    const bodyId = `skin_group_${group.pathKey.replace(/\./g, '_').replace(/[^a-zA-Z0-9_]/g, '_')}`;
+
+    const header = document.createElement('div');
+    header.className = 'card-header bg-light py-2 collapsible-header';
+    header.dataset.target = `#${bodyId}`;
+    let displayTitle = group.title;
+    if (group.name === 'Appearance' || group.title === 'Appearance') displayTitle = 'Design';
+    else if (group.name === 'Final Screen' || group.title === 'Final Screen' || group.path?.some(p => String(p).toLowerCase().includes('final'))) displayTitle = 'End Message';
+    header.innerHTML = `<span class="text-uppercase text-muted fw-semibold small">${displayTitle}</span><i class="bi bi-chevron-down collapse-icon float-end"></i>`;
+
+    const body = document.createElement('div');
+    body.className = 'card-body collapsible-body';
+    body.id = bodyId;
+
+    if (group.children && group.children.length > 0) {
+      group.children.forEach(childGroup => {
+        renderGroup(childGroup, body, level + 1);
+      });
+    }
+
+    renderGroupFieldsForCategory(body, group, isVisibilityGroup);
+
+    card.appendChild(header);
+    card.appendChild(body);
+    col.appendChild(card);
+    wireFinalScreenGroupUi(parentContainer, col, card, level, isFinalGroup);
     parentContainer.appendChild(col);
   }
 
@@ -1513,6 +1500,14 @@ function renderFields(metadata, savedOverrides = {}) {
   setupCollapsibles(fieldsWrap);
   clampCustomTextDistance();
   enforceGifHeightMinimum();
+}
+
+/** @param {Record<string, unknown>} data */
+function appendCustomTextFontToOverrides(data) {
+  const customTextFontInput = document.querySelector('select[name="customTextFont"]');
+  if (customTextFontInput?.value) {
+    data['customTextFont'] = customTextFontInput.value;
+  }
 }
 
 function syncOverrides() {
@@ -1597,11 +1592,8 @@ function syncOverrides() {
     }
   }
   
-  const customTextFontInput = document.querySelector('select[name="customTextFont"]');
-  if (customTextFontInput && customTextFontInput.value) {
-    data['customTextFont'] = customTextFontInput.value;
-  }
-  
+  appendCustomTextFontToOverrides(data);
+
   // Include show_final_message toggle
   const showFinalMessageInput = document.querySelector('input[name="show_final_message"]');
   if (showFinalMessageInput) {
@@ -1706,118 +1698,158 @@ async function generatePreviewFrame() {
   }, 300);
 }
 
+function updateSkinScrollBarSelection(key) {
+  const bar = document.getElementById('skin_scroll_bar');
+  if (!bar) return;
+  bar.querySelectorAll('.skin-card').forEach(card => {
+    const checkmark = card.querySelector('.skin-checkmark');
+    if (card.dataset.skinKey === key) {
+      card.classList.add('selected-skin');
+      checkmark?.classList.add('selected-checkmark');
+    } else {
+      card.classList.remove('selected-skin');
+      checkmark?.classList.remove('selected-checkmark');
+    }
+  });
+}
+
+/** @returns {Promise<Record<string, unknown> | null>} */
+async function fetchSkinFormDefaultOverrides(key, opts) {
+  const logErrors = opts?.logErrors !== false;
+  try {
+    const formDefaultsResponse = await fetchJson(`/api/skins/${encodeURIComponent(key)}/form-defaults`);
+    const fd = formDefaultsResponse?.formDefaults;
+    if (fd && Object.keys(fd).length > 0) {
+      return { ...fd };
+    }
+  } catch (e) {
+    if (logErrors) {
+      console.warn('Failed to fetch form defaults:', e);
+    }
+  }
+  return null;
+}
+
+function syncEditModeTimerWidthFromSkinDefaults(form, meta) {
+  if (!form || !meta?.defaults) return;
+  const defW = meta.defaults.outputWidth ?? meta.defaults.width;
+  if (defW !== undefined && defW !== null && defW !== '') {
+    form.dataset.timerOutputWidth = String(defW);
+    form.dataset.timerWidth = String(defW);
+  }
+}
+
+function schedulePostSkinSelectSync(isSwitchingToDifferentSkin, isEdit) {
+  if (isSwitchingToDifferentSkin) {
+    setTimeout(() => {
+      if (!isEdit) {
+        applyDefaultSampleTimeIfEmpty();
+      }
+      syncOverrides();
+    }, 100);
+  } else {
+    if (!isEdit) {
+      applyDefaultSampleTimeIfEmpty();
+    }
+    generatePreviewFrame();
+  }
+}
+
 async function selectSkin(key) {
   const previousKey = document.getElementById('skin_key').value || '';
   const isSwitchingToDifferentSkin = previousKey && previousKey !== key;
 
   document.getElementById('skin_key').value = key;
   document.getElementById('selected_skin_label').textContent = key;
-  
-  // Update visual selection in scroll bar
-  const bar = document.getElementById('skin_scroll_bar');
-  if (bar) {
-    bar.querySelectorAll('.skin-card').forEach(card => {
-      const checkmark = card.querySelector('.skin-checkmark');
-      if (card.dataset.skinKey === key) {
-        card.classList.add('selected-skin');
-        if (checkmark) {
-          checkmark.classList.add('selected-checkmark');
-        }
-      } else {
-        card.classList.remove('selected-skin');
-        if (checkmark) {
-          checkmark.classList.remove('selected-checkmark');
-        }
-      }
-    });
-  }
-  
+  updateSkinScrollBarSelection(key);
+
   try {
     const form = document.getElementById('timer_form');
-    const isEdit = form && form.dataset.isEdit === '1';
+    const isEdit = form?.dataset.isEdit === '1';
     const isFirstLoad = !isEdit && !loadedSkins.has(key);
-    
+
     const meta = await fetchJson(`/skins/${encodeURIComponent(key)}`);
-    
-    // When switching to a different skin, use empty overrides so the new skin's defaults
-    // (including dimensions, visibility toggles, etc.) are applied. Carrying over the previous
-    // skin's overrides caused wrong dimensions and missing fields (e.g. visibility toggles).
+
     let baseOverrides = (isSwitchingToDifferentSkin ? {} : (lastSkinOverrides || {}));
-    
-    // For new timers, fetch and apply formDefaults on first skin load
+
     if (isFirstLoad) {
-      try {
-        const formDefaultsResponse = await fetchJson(`/api/skins/${encodeURIComponent(key)}/form-defaults`);
-        if (formDefaultsResponse && formDefaultsResponse.formDefaults && Object.keys(formDefaultsResponse.formDefaults).length > 0) {
-          // Store applied formDefaults so they're always saved (even if they match original defaults)
-          appliedFormDefaults = { ...formDefaultsResponse.formDefaults };
-          // Merge formDefaults into metadata.defaults so they appear in form fields
-          // This ensures the form fields show the formDefaults values
-          meta.defaults = { ...meta.defaults, ...formDefaultsResponse.formDefaults };
-          // Also set as baseOverrides so they're saved
-          baseOverrides = { ...formDefaultsResponse.formDefaults };
-          // Mark this skin as loaded
-          loadedSkins.add(key);
-        }
-      } catch (e) {
-        console.warn('Failed to fetch form defaults:', e);
+      const fdOverrides = await fetchSkinFormDefaultOverrides(key);
+      if (fdOverrides) {
+        appliedFormDefaults = { ...fdOverrides };
+        meta.defaults = { ...meta.defaults, ...fdOverrides };
+        baseOverrides = { ...fdOverrides };
+        loadedSkins.add(key);
       }
     } else {
-      // Clear appliedFormDefaults when switching to a different skin
       appliedFormDefaults = {};
     }
-    
-    // In edit mode when switching skin, make the form's "server" width reflect the new skin's
-    // default so the Timer Width field (and any logic using dataset.timerWidth) uses the new
-    // dimensions instead of the old timer's saved width.
-    if (isEdit && isSwitchingToDifferentSkin && meta?.defaults) {
-      const defW = meta.defaults.outputWidth ?? meta.defaults.width;
-      if (defW !== undefined && defW !== null && defW !== '') {
-        form.dataset.timerOutputWidth = String(defW);
-        form.dataset.timerWidth = String(defW);
-      }
+
+    if (isEdit && isSwitchingToDifferentSkin) {
+      syncEditModeTimerWidthFromSkinDefaults(form, meta);
     }
-    
-    // When changing skin, apply the latest user overrides (carry settings across skins)
+
     renderFields(meta, baseOverrides);
-    
-    // If we applied formDefaults, sync them to the hidden input immediately
+
     if (isFirstLoad && Object.keys(baseOverrides).length > 0) {
-      // Update lastSkinOverrides so they get saved
       lastSkinOverrides = { ...baseOverrides };
-      // Small delay to ensure form fields are rendered before syncing
       setTimeout(() => {
         syncOverrides();
       }, 100);
     }
-    
+
     const prevEl = document.getElementById('selected_skin_preview');
-    if (meta && meta.preview_url) {
+    if (meta?.preview_url) {
       prevEl.src = meta.preview_url;
       prevEl.classList.remove('d-none');
     }
-    // When switching skin (especially in edit mode), sync overrides from the newly rendered
-    // form so the hidden skin_overrides input has the new skin's dimensions. Otherwise the
-    // preview request would still send the old dimensions and the new skin preview would
-    // not be fully visible.
-    if (isSwitchingToDifferentSkin) {
-      setTimeout(() => {
-        // For new timers, ensure a consistent sample time is applied when switching skins
-        // (only if the user hasn't entered a value yet).
-        if (!isEdit) {
-          applyDefaultSampleTimeIfEmpty();
-        }
-        syncOverrides();
-      }, 100);
-    } else {
-      if (!isEdit) {
-        applyDefaultSampleTimeIfEmpty();
-      }
-      generatePreviewFrame();
-    }
+
+    schedulePostSkinSelectSync(isSwitchingToDifferentSkin, isEdit);
     updateResetButtonState();
   } catch (e) {
     console.error(e);
+  }
+}
+
+function resetStaticCustomTextInputsToDefault() {
+  const colorInput = document.querySelector('input[name="customTextColor"]');
+  if (colorInput) {
+    const defaultColor = '#000000';
+    colorInput.value = defaultColor;
+    const wrapper = colorInput.closest('.modern-color-picker');
+    if (wrapper) {
+      const swatch = wrapper.querySelector('.color-picker-swatch');
+      const hexSpan = wrapper.querySelector('.color-picker-hex');
+      if (swatch) swatch.style.setProperty('--swatch-color', defaultColor);
+      if (hexSpan) hexSpan.textContent = defaultColor.toUpperCase();
+    }
+  }
+  const distanceInput = document.querySelector('input[name="customTextDistance"]');
+  if (distanceInput) distanceInput.value = '0';
+  const fontSizeInput = document.querySelector('input[name="customTextFontSize"]');
+  if (fontSizeInput) fontSizeInput.value = '';
+  const fontSelect = document.querySelector('select[name="customTextFont"]');
+  if (fontSelect) fontSelect.value = '';
+}
+
+function resetHeadingTimerTypeAndTargetsToDefault() {
+  const headingInput = document.querySelector('input[name="custom_text"]');
+  const positionSelect = document.querySelector('select[name="text_position"]');
+  const timerTypeSelect = document.getElementById('timer_type');
+  const targetInput = document.querySelector('input[name="target_datetime"]');
+  const durationInput = document.querySelector('input[name="duration_seconds"]');
+
+  if (headingInput) headingInput.value = '';
+  if (positionSelect) positionSelect.value = 'none';
+
+  const timerType = timerTypeSelect ? timerTypeSelect.value : 'fixed_date';
+  if (timerType === 'fixed_date' && targetInput) {
+    const sampleDate = new Date(Date.now() + DEFAULT_SAMPLE_SECONDS * 1000);
+    const sampleVal = toLocalDateTimeInputValue(sampleDate);
+    targetInput.value = sampleVal;
+    targetInput.dataset.initialValue = sampleVal;
+    targetInput.dataset.userTouched = '0';
+  } else if (timerType === 'reload_based' && durationInput) {
+    durationInput.value = '1';
   }
 }
 
@@ -1827,70 +1859,20 @@ async function resetDesignToDefaults() {
   const key = (skinKeyInput.value || '').trim();
   if (!key) return;
 
-  const form = document.getElementById('timer_form');
-  const isEdit = form && form.dataset.isEdit === '1';
-
   try {
-    // Load fresh skin metadata
     const meta = await fetchJson(`/skins/${encodeURIComponent(key)}`);
-    let baseOverrides = {};
+    const baseOverrides = (await fetchSkinFormDefaultOverrides(key, { logErrors: false })) || {};
 
-    // Re-apply formDefaults (same behavior as initial selection for new timers)
-    try {
-      const formDefaultsResponse = await fetchJson(`/api/skins/${encodeURIComponent(key)}/form-defaults`);
-      if (formDefaultsResponse && formDefaultsResponse.formDefaults && Object.keys(formDefaultsResponse.formDefaults).length > 0) {
-        meta.defaults = { ...(meta.defaults || {}), ...formDefaultsResponse.formDefaults };
-        baseOverrides = { ...formDefaultsResponse.formDefaults };
-      }
-    } catch (e) {
-      // Not all skins have formDefaults; ignore
+    if (Object.keys(baseOverrides).length > 0) {
+      meta.defaults = { ...meta.defaults, ...baseOverrides };
     }
 
-    // Reset skin fields to defaults only (no per-timer overrides)
     appliedFormDefaults = { ...baseOverrides };
     lastSkinOverrides = { ...baseOverrides };
     renderFields(meta, baseOverrides);
 
-    // Reset static custom text design inputs to defaults as well
-    const colorInput = document.querySelector('input[name="customTextColor"]');
-    if (colorInput) {
-      const defaultColor = '#000000';
-      colorInput.value = defaultColor;
-      const wrapper = colorInput.closest('.modern-color-picker');
-      if (wrapper) {
-        const swatch = wrapper.querySelector('.color-picker-swatch');
-        const hexSpan = wrapper.querySelector('.color-picker-hex');
-        if (swatch) swatch.style.setProperty('--swatch-color', defaultColor);
-        if (hexSpan) hexSpan.textContent = defaultColor.toUpperCase();
-      }
-    }
-    const distanceInput = document.querySelector('input[name="customTextDistance"]');
-    if (distanceInput) distanceInput.value = '0';
-    const fontSizeInput = document.querySelector('input[name="customTextFontSize"]');
-    if (fontSizeInput) fontSizeInput.value = '';
-    const fontSelect = document.querySelector('select[name="customTextFont"]');
-    if (fontSelect) fontSelect.value = '';
-
-    const headingInput = document.querySelector('input[name="custom_text"]');
-    const positionSelect = document.querySelector('select[name="text_position"]');
-    const timerTypeSelect = document.getElementById('timer_type');
-    const targetInput = document.querySelector('input[name="target_datetime"]');
-    const durationInput = document.querySelector('input[name="duration_seconds"]');
-
-    // For both create and edit: make it look like a fresh selection of this skin.
-    if (headingInput) headingInput.value = '';
-    if (positionSelect) positionSelect.value = 'none';
-
-    const timerType = timerTypeSelect ? timerTypeSelect.value : 'fixed_date';
-    if (timerType === 'fixed_date' && targetInput) {
-      const sampleDate = new Date(Date.now() + DEFAULT_SAMPLE_SECONDS * 1000);
-      const sampleVal = toLocalDateTimeInputValue(sampleDate);
-      targetInput.value = sampleVal;
-      targetInput.dataset.initialValue = sampleVal;
-      targetInput.dataset.userTouched = '0';
-    } else if (timerType === 'reload_based' && durationInput) {
-      durationInput.value = '1';
-    }
+    resetStaticCustomTextInputsToDefault();
+    resetHeadingTimerTypeAndTargetsToDefault();
 
     if (typeof syncOverrides === 'function') {
       syncOverrides();
@@ -1955,8 +1937,8 @@ document.addEventListener('DOMContentLoaded', () => {
       
       if (current) {
         const form = document.getElementById('timer_form');
-        const isEdit = form && form.dataset.isEdit === '1';
-        
+        const isEdit = form?.dataset.isEdit === '1';
+
         if (isEdit) {
         // Edit mode: load existing skin with saved overrides
         const meta = await fetchJson(`/skins/${encodeURIComponent(current)}`);
@@ -2029,10 +2011,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function getGifGenerationMode() {
   const form = document.getElementById('timer_form');
-  if (form && form.dataset.gifGenerationMode) {
-    return form.dataset.gifGenerationMode;
+  const fromForm = form?.dataset.gifGenerationMode;
+  if (fromForm) {
+    return fromForm;
   }
-  const bodyMode = document.body && document.body.dataset.gifGenerationMode;
+  const bodyMode = document.body?.dataset.gifGenerationMode;
   return bodyMode || 'queue';
 }
 
@@ -2043,7 +2026,7 @@ function isGifQueueMode() {
 function setFormPreviewButtonPending(pending) {
   const btn = document.getElementById('form_preview_btn');
   if (!btn) return;
-  const url = btn.getAttribute('data-preview-url');
+  const url = btn.dataset.previewUrl;
   if (pending) {
     btn.classList.add('disabled');
     btn.setAttribute('href', '#');
@@ -2098,7 +2081,6 @@ async function ajaxSaveAndPoll() {
     }
     
     // Show loading indicator
-    const pageRole = isEdit;
     Swal.fire({
       title: isEdit ? 'Updating counter...' : 'Creating counter...',
       text: 'Please wait',
@@ -2176,22 +2158,18 @@ async function ajaxSaveAndPoll() {
       if (gifUrl && gifImg && loader && frameImg && placeholder) {
         loader.classList.add('d-none');
         placeholder.classList.add('d-none');
-        if (form.dataset.isEdit === '1') {
+        const showFrameInsteadOfGif =
+          form.dataset.isEdit === '1' || (isGifQueueMode() && needsRegen);
+        if (showFrameInsteadOfGif) {
           gifImg.classList.add('d-none');
           frameImg.classList.remove('d-none');
           if (typeof generatePreviewFrame === 'function') {
             generatePreviewFrame();
           }
-        } else if (!isGifQueueMode() || !needsRegen) {
+        } else {
           frameImg.classList.add('d-none');
           gifImg.src = gifUrl;
           gifImg.classList.remove('d-none');
-        } else {
-          gifImg.classList.add('d-none');
-          frameImg.classList.remove('d-none');
-          if (typeof generatePreviewFrame === 'function') {
-            generatePreviewFrame();
-          }
         }
       }
 
@@ -2310,7 +2288,7 @@ async function ajaxSaveAndPoll() {
  * @param {{ silent?: boolean }} [opts]
  */
 function startPreviewPolling(timerId, opts) {
-  const silent = !!(opts && opts.silent);
+  const silent = !!opts?.silent;
 
   clearGifPollTimer();
 
@@ -2410,9 +2388,9 @@ function startPreviewPolling(timerId, opts) {
     fetch(`/timers/${encodeURIComponent(timerId)}/status`, {
       headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' }
     })
-      .then((res) => (res.ok ? res.json() : Promise.reject()))
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error(`GIF status HTTP ${res.status}`))))
       .then((json) => {
-        if (json && json.gif_ready) {
+        if (json?.gif_ready) {
           finishOk(json);
           return;
         }
