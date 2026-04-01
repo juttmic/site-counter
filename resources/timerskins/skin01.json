@@ -2,7 +2,7 @@
     "name": "Minimal Black Countdown",
     "width": 980,
     "height": 274,
-    "background": "#D6D6D6",
+    "background": "#FFFFFF",
     "textColor": "#000000",
     "separatorColor": "#000000",
     "fontSize": 95,
