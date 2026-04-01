@@ -176,10 +176,11 @@
                                         <span class="fw-semibold text-uppercase small d-flex align-items-center justify-content-center" style="width: 100%; height: 100%;">{{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}</span>
                                     </button>
                                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenuDropdown">
-                                        <li class="dropdown-header d-flex align-items-center gap-2">
+                                        
+                                        <button type="submit" class="dropdown-item d-flex align-items-center gap-2 text-sm leading-4 font-medium">
                                             <i class="bi bi-person-circle"></i>
                                             <span class="text-sm leading-4 font-medium">{{ Auth::user()->name }}</span>
-                                        </li>
+                                        </button>
                                         <li><hr class="dropdown-divider"></li>
                                         <li>
                                             <form method="POST" action="{{ route('logout') }}">
