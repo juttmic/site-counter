@@ -192,8 +192,7 @@
       });
       if (!pending.length) return;
 
-      var maxAttempts = 90;
-      var attempts = 0;
+      var pollGapMs = 2800;
       var cfg = document.getElementById('dashboard-gif-poll-config');
       var gifStatusUrl = (cfg && cfg.getAttribute('data-gif-status-url')) || '/timers/gif-status';
 
@@ -243,8 +242,6 @@
       function tick(){
         if (!pending.length) return;
         if (!gifStatusUrl) return;
-        attempts++;
-        if (attempts > maxAttempts) return;
         var qs = 'ids=' + encodeURIComponent(pending.join(','));
         fetch(gifStatusUrl + '?' + qs, {
           headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
@@ -260,10 +257,10 @@
               }
               return true;
             });
-            if (pending.length) setTimeout(tick, 2000);
+            if (pending.length) setTimeout(tick, pollGapMs);
           })
           .catch(function(){
-            if (pending.length && attempts <= maxAttempts) setTimeout(tick, 2000);
+            if (pending.length) setTimeout(tick, pollGapMs);
           });
       }
       setTimeout(tick, 800);

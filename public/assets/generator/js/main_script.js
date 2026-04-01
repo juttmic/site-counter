@@ -2059,8 +2059,18 @@ function setFormPreviewButtonPending(pending) {
   }
 }
 
-/** @type {ReturnType<typeof setInterval> | null} */
-let gifPollIntervalId = null;
+/** @type {ReturnType<typeof setTimeout> | null} */
+let gifPollTimerId = null;
+
+function clearGifPollTimer() {
+  if (gifPollTimerId !== null) {
+    clearTimeout(gifPollTimerId);
+    gifPollTimerId = null;
+  }
+}
+
+/** Pause after each status response before the next request (ms). */
+const GIF_STATUS_POLL_GAP_MS = 2800;
 
 // AJAX save + preview polling
 async function ajaxSaveAndPoll() {
@@ -2302,10 +2312,7 @@ async function ajaxSaveAndPoll() {
 function startPreviewPolling(timerId, opts) {
   const silent = !!(opts && opts.silent);
 
-  if (gifPollIntervalId) {
-    clearInterval(gifPollIntervalId);
-    gifPollIntervalId = null;
-  }
+  clearGifPollTimer();
 
   if (Swal.isVisible()) {
     Swal.update({
@@ -2319,10 +2326,8 @@ function startPreviewPolling(timerId, opts) {
   const gifImg = document.getElementById('preview_gif');
   const placeholder = document.getElementById('preview_placeholder');
 
-  let attempts = 0;
-  const maxAttempts = 90;
-
   const finishOk = (json) => {
+    clearGifPollTimer();
     const form = document.getElementById('timer_form');
     if (form) {
       if (json.status) form.dataset.timerStatus = json.status;
@@ -2395,49 +2400,30 @@ function startPreviewPolling(timerId, opts) {
     gifDirty = false;
   };
 
-  const stopWithTimeout = () => {
-    if (gifPollIntervalId) {
-      clearInterval(gifPollIntervalId);
-      gifPollIntervalId = null;
-    }
-    if (Swal.isVisible()) {
-      Swal.close();
-    }
-    Swal.fire({
-      icon: 'warning',
-      title: 'Timeout',
-      text: 'GIF generation is taking longer than expected. Please refresh the page.'
-    });
-    const saveBtn = document.getElementById('save_btn');
-    if (saveBtn) saveBtn.disabled = false;
+  const scheduleNextPoll = () => {
+    clearGifPollTimer();
+    gifPollTimerId = setTimeout(runPoll, GIF_STATUS_POLL_GAP_MS);
   };
 
-  const poll = () => {
-    attempts += 1;
+  const runPoll = () => {
+    gifPollTimerId = null;
     fetch(`/timers/${encodeURIComponent(timerId)}/status`, {
       headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' }
     })
       .then((res) => (res.ok ? res.json() : Promise.reject()))
       .then((json) => {
-        const gifReady = !!json.gif_ready;
-        if (gifReady) {
-          if (gifPollIntervalId) {
-            clearInterval(gifPollIntervalId);
-            gifPollIntervalId = null;
-          }
+        if (json && json.gif_ready) {
           finishOk(json);
           return;
         }
-        if (attempts >= maxAttempts) {
-          stopWithTimeout();
-        }
+        scheduleNextPoll();
       })
       .catch(() => {
-        if (attempts >= maxAttempts) stopWithTimeout();
+        scheduleNextPoll();
       });
   };
-  poll();
-  gifPollIntervalId = setInterval(poll, 2000);
+
+  gifPollTimerId = setTimeout(runPoll, 600);
 }
 
 ajaxSaveAndPoll();
