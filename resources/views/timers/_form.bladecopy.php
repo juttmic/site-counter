@@ -2340,12 +2340,10 @@ function startPreviewPolling(timerId) {
     });
   }
   
-  let attempts = 0;
-  const maxAttempts = 60; // up to ~2 minutes if interval is 2s
   const interval = setInterval(async () => {
-    attempts++;
     try {
-      const res = await fetch(`/timers/${encodeURIComponent(timerId)}/status`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+      const res = await fetch(`/timers/${encodeURIComponent(timerId)}/status`, { headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' } });
+      if (!res.ok) return;
       const json = await res.json();
       const form = document.getElementById('timer_form');
       if (form && json.status) {
@@ -2357,7 +2355,8 @@ function startPreviewPolling(timerId) {
       const embedNotice = document.getElementById('embed_notice');
       if (embedSection) embedSection.classList.toggle('d-none', !isActive);
       if (embedNotice) embedNotice.classList.toggle('d-none', isActive);
-      if (json.gif_url) {
+      // Match TimerController::status: ready only when URL exists and not stale
+      if (json.gif_ready && json.gif_url) {
         clearInterval(interval);
         
         // Close the loading Swal and show success (only if Swal was open)
@@ -2388,6 +2387,7 @@ function startPreviewPolling(timerId) {
         // Update form hasGif attribute
         if (form && json.gif_url) {
           form.dataset.hasGif = '1';
+          form.dataset.gifPending = '0';
         }
         
         // update embed section
@@ -2430,17 +2430,6 @@ function startPreviewPolling(timerId) {
         }
         // GIF is now up to date with latest changes
         gifDirty = false;
-      } else if (attempts >= maxAttempts) {
-        clearInterval(interval);
-        if (Swal.isVisible()) {
-          Swal.fire({
-            icon: 'warning',
-            title: 'Timeout',
-            text: 'GIF generation is taking longer than expected. Please refresh the page.'
-          });
-        }
-        const saveBtn = document.getElementById('save_btn');
-        if (saveBtn) saveBtn.disabled = false;
       }
     } catch (e) {
       // ignore transient errors

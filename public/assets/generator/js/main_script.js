@@ -1627,6 +1627,13 @@ async function generatePreviewFrame() {
     const gifImg = document.getElementById('preview_gif');
     const placeholder = document.getElementById('preview_placeholder');
 
+    const skinKey = (document.getElementById('skin_key')?.value || '').trim();
+    if (!skinKey) {
+      loader.classList.add('d-none');
+      placeholder.classList.remove('d-none');
+      return;
+    }
+
     // Hide all, show loader
     frameImg.classList.add('d-none');
     gifImg.classList.add('d-none');
@@ -1635,8 +1642,8 @@ async function generatePreviewFrame() {
 
     try {
       const formData = new FormData(form);
-      formData.append('skin', document.getElementById('skin_key').value || '');
-      formData.append('skin_overrides', document.getElementById('skin_overrides_input').value || '{}');
+      formData.set('skin', skinKey);
+      formData.set('skin_overrides', document.getElementById('skin_overrides_input')?.value || '{}');
 
       // Build URL with optional timer ID
       let timerId = form.dataset.timerId;
@@ -1667,13 +1674,34 @@ async function generatePreviewFrame() {
         body: formData
       });
 
+      const rawText = await response.text();
+
       if (!response.ok) {
-        throw new Error('Failed to generate preview');
+        let detail = `${response.status} ${response.statusText}`;
+        const ct = response.headers.get('Content-Type') || '';
+        if (ct.includes('application/json')) {
+          try {
+            const errBody = JSON.parse(rawText);
+            if (errBody.errors) {
+              detail = Object.entries(errBody.errors)
+                .map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(' ') : v}`)
+                .join('; ');
+            } else if (errBody.message) {
+              detail = errBody.message;
+            }
+          } catch {
+            /* use status-based detail */
+          }
+        } else {
+          const t = rawText.trim();
+          if (t) detail = t.slice(0, 300);
+        }
+        throw new Error(`Failed to generate preview (${detail})`);
       }
 
       // Response body is plain text containing the URL to the saved PNG.
       // On local, PHP warnings may be printed before the URL, so take the last non-empty line.
-      const text = await response.text();
+      const text = rawText;
       const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
       const url = lines[lines.length - 1];
 
@@ -2063,7 +2091,9 @@ async function ajaxSaveAndPoll() {
 
   saveBtn.addEventListener('click', async () => {
     const isEdit = form.dataset.isEdit === '1';
-    
+    /** Preserve create flow after first save mutates dataset.isEdit to "1" */
+    const wasCreating = !isEdit;
+
     // Show confirmation dialog
     const confirmResult = await Swal.fire({
       title: '',
@@ -2219,7 +2249,7 @@ async function ajaxSaveAndPoll() {
 
       gifDirty = false;
 
-      if (!pageRole) {
+      if (wasCreating) {
         if (isGifQueueMode()) {
           Swal.fire({
             icon: 'success',

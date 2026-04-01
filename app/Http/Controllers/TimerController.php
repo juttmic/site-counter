@@ -291,13 +291,24 @@ class TimerController extends Controller
 
     private function validateTimerPreview(Request $request, ?Timer $timer = null): array
     {
+        // Empty strings from HTML inputs fail `integer` / `in` rules; normalize before validation.
+        $patch = [];
+        foreach (['duration_seconds', 'animation_frame_limit', 'text_position', 'target_datetime', 'custom_text', 'title'] as $key) {
+            if ($request->has($key) && $request->input($key) === '') {
+                $patch[$key] = null;
+            }
+        }
+        if ($patch !== []) {
+            $request->merge($patch);
+        }
+
         $rules = [
             'title' => ['sometimes', 'nullable', 'string', 'max:255'],
             'timer_type' => ['sometimes', 'nullable', 'in:fixed_date,reload_based'],
             'target_datetime' => ['sometimes', 'nullable', 'string'],
             'duration_seconds' => ['sometimes', 'nullable', 'integer', 'min:1', 'max:604800'],
             'skin' => ['sometimes', 'string'],
-            'text_position' => ['sometimes', 'in:top,bottom,none'],
+            'text_position' => ['sometimes', 'nullable', 'in:top,bottom,none'],
             'custom_text' => ['sometimes', 'nullable', 'string', 'max:255'],
             'status' => ['sometimes', 'in:active,inactive'],
             'skin_overrides' => ['sometimes', 'nullable', 'string'],

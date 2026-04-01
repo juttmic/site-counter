@@ -77,12 +77,19 @@ class GenerateTimerGif implements ShouldQueue, ShouldBeUniqueUntilProcessing
 
             $generator = new TimerGifGenerator();
             $gifUrl = $generator->generateAndStore($timer);
-            
-            // Update the timer with the generated GIF URL
+
+            // Persist GIF URL first so cache_key can use the same second as updated_at.
+            // Pairing cache_key's timestamp with updated_at avoids needsGifRegeneration()
+            // staying true when time() ran a second before the row was written.
             $timer->update([
                 'gif_url' => $gifUrl,
-                'cache_key' => 'gif_' . $timer->id . '_' . time()
             ]);
+            $timer->refresh();
+            $ts = (int) $timer->updated_at->timestamp;
+            $timer->timestamps = false;
+            $timer->cache_key = 'gif_' . $timer->id . '_' . $ts;
+            $timer->save();
+            $timer->timestamps = true;
             
             Log::channel('gif_queue')->info('GIF generation finished', [
                 'timer_id' => $timer->id,
