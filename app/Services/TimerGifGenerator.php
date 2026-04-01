@@ -301,9 +301,8 @@ class TimerGifGenerator
             $fontPath = resource_path('fonts/dejavu-sans.book.ttf');
         }
         $skin['fontPath'] = $fontPath;
-        // Normalize borderWidth
+        // Normalize borderWidth (0 = no canvas border; omitted key still defaults to 1 via merge above)
         $bw = (int) ($skin['borderWidth'] ?? 1);
-        if ($bw === 0) { $bw = 1; }
         $skin['borderWidth'] = max(0, min(50, $bw));
         if (empty($skin['borderColor']) || !is_string($skin['borderColor'])) {
             $skin['borderColor'] = '#FFFFFF';

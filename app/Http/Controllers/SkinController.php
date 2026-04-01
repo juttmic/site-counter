@@ -37,8 +37,8 @@ class SkinController extends Controller
         if ($json === null) {
             return response()->json(['message' => 'Skin not found'], 404);
         }
-        // Default border to 1 if not provided or provided as zero (for creation)
-        if (!array_key_exists('borderWidth', $json) || (int) $json['borderWidth'] === 0) {
+        // Default border to 1 only when the skin file omits it; 0 means no border
+        if (!array_key_exists('borderWidth', $json)) {
             $json['borderWidth'] = 1;
         }
         if (!array_key_exists('borderColor', $json) || empty($json['borderColor'])) {
