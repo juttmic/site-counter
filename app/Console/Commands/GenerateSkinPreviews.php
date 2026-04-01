@@ -10,9 +10,7 @@ use Illuminate\Support\Facades\File;
 
 class GenerateSkinPreviews extends Command
 {
-    private const DEFAULT_PREVIEW_SECONDS = 90650; // 1d 1h 10m 50s
-
-    protected $signature = 'timergif:skins:previews {skin? : Optional single skin key to generate (e.g. skin07_teal_circles)} {--force : Regenerate even if files exist} {--all : Include skins without a registered renderer} {--skin=* : (Optional, legacy) Additional skin keys, comma-separated} {--seconds= : Override preview duration in seconds (default: 15)} {--text= : Optional custom text to render} {--text-position= : Text position: top|bottom|none} {--text-color= : Hex color for custom text (e.g. #FFFFFF)} {--text-distance= : Distance between custom text and counter (px)} {--text-mt= : Text margin-top (px)} {--text-mr= : Text margin-right (px)} {--text-mb= : Text margin-bottom (px)} {--text-ml= : Text margin-left (px)} {--out-width= : Output GIF width} {--out-height= : Output GIF height} {--time=* : (Deprecated)}';
+    protected $signature = 'timergif:skins:previews {skin? : Optional single skin key to generate (e.g. skin07_teal_circles)} {--force : Regenerate even if files exist} {--all : Include skins without a registered renderer} {--skin=* : (Optional, legacy) Additional skin keys, comma-separated} {--seconds= : Override GIF frame count (1s per frame); default 55, max 55 for template previews} {--text= : Optional custom text to render} {--text-position= : Text position: top|bottom|none} {--text-color= : Hex color for custom text (e.g. #FFFFFF)} {--text-distance= : Distance between custom text and counter (px)} {--text-mt= : Text margin-top (px)} {--text-mr= : Text margin-right (px)} {--text-mb= : Text margin-bottom (px)} {--text-ml= : Text margin-left (px)} {--out-width= : Output GIF width} {--out-height= : Output GIF height} {--time=* : (Deprecated)}';
     protected $description = 'Generate animated GIF previews for skins. If a skin key is provided, only that one is generated.';
 
     public function handle(TimerGifGenerator $generator): int
@@ -76,14 +74,14 @@ class GenerateSkinPreviews extends Command
                 // Backward compatibility: allow --time=NN or --time=NN (legacy array) to specify starting time
                 $legacyTime = $this->option('time');
                 if (is_array($legacyTime) && count($legacyTime) > 0) {
-                    $startTime = (int) ($legacyTime[0] ?? self::DEFAULT_PREVIEW_SECONDS);
+                    $startTime = (int) ($legacyTime[0] ?? TimerGifGenerator::DEFAULT_PREVIEW_SECONDS);
                 } else if (is_string($legacyTime) && $legacyTime !== '') {
                     $startTime = (int) $legacyTime;
                 } else {
-                    $startTime = self::DEFAULT_PREVIEW_SECONDS;
+                    $startTime = TimerGifGenerator::DEFAULT_PREVIEW_SECONDS;
                 }
-                
-                // Animation duration: use --seconds option if provided, otherwise default to 30
+
+                // GIF frame count: --seconds if set; else renderSkinGifPreview default (55)
                 $animateDuration = null;
                 if ($secondsOpt !== null && $secondsOpt !== false && $secondsOpt !== '') {
                     $animateDuration = (int) $secondsOpt;

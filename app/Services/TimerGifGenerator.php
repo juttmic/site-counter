@@ -17,6 +17,11 @@ class TimerGifGenerator
      */
     public const DEFAULT_PREVIEW_SECONDS = 90650;
 
+    /**
+     * Sample template preview GIF only: frame count (1 frame per second). Not used for live timer GIFs.
+     */
+    public const SAMPLE_SKIN_GIF_FRAME_COUNT = 45;
+
     public function generateAndStore(Timer $timer): string
     {
         $userId = $timer->user_id;
@@ -187,12 +192,11 @@ class TimerGifGenerator
     }
 
     /**
-     * Render a short animated GIF preview for a given skin.
-     * Generates a looping countdown preview that restarts after the animation duration.
-     * Never shows "Time's Up" - instead loops continuously by counting down and restarting.
-     * 
-     * @param int $seconds Starting countdown time in seconds (e.g., 90000 for ~25 hours)
-     * @param int $animateFor Duration to animate in seconds (default 30, max 60)
+     * Render a short animated GIF preview for a given skin (template thumbnails only).
+     * Never shows "Time's Up" — loops by counting down then restarting.
+     *
+     * @param int $seconds Starting remaining seconds (sample templates use {@see DEFAULT_PREVIEW_SECONDS})
+     * @param int|null $frameCount Number of frames (1 per second); default/max {@see SAMPLE_SKIN_GIF_FRAME_COUNT} (55), not 60
      */
     public function renderSkinGifPreview(string $skinName, string $outputPath, int $seconds = 6, ?string $customText = null, string $textPosition = 'none', ?string $customTextColor = null, array $overrides = [], ?int $animateFor = null): void
     {
@@ -203,32 +207,22 @@ class TimerGifGenerator
         if (!empty($overrides)) {
             $skin = array_replace_recursive($skin, $overrides);
         }
-        
-        // Use provided seconds as starting countdown time
+
         $start = max(1, $seconds);
-        
-        // Use provided animateFor or default to 30 seconds (max 60 for previews)
-        $animationDuration = $animateFor ?? 30;
-        $animationDuration = min(60, max(1, $animationDuration));
-        
-        // Build frames counting down from start for animationDuration seconds
+
+        $cap = self::SAMPLE_SKIN_GIF_FRAME_COUNT;
+        $frameCount = $animateFor ?? $cap;
+        $frameCount = min($cap, max(1, $frameCount));
+
         $frames = [];
-        $step = 1; // 1 second per frame for smooth preview
-        
-        // Count down from start for animationDuration seconds
-        // This will show: start, start-1, start-2, ..., start-animationDuration
-        // The GIF will loop naturally back to the first frame (start value)
-        for ($elapsed = 0; $elapsed <= $animationDuration; $elapsed += $step) {
+        $step = 1;
+        for ($elapsed = 0; $elapsed < $frameCount; $elapsed += $step) {
             $remaining = max(0, $start - $elapsed);
-            // Never show "Time's Up" - just show the countdown, even if it reaches 0
             $frames[] = $this->renderPngFrame($remaining, $skin, $customText, $textPosition);
         }
-        
-        // The GIF will loop naturally back to the first frame (start value)
-        // This creates a continuous countdown that restarts seamlessly
-        
+
         \Illuminate\Support\Facades\File::ensureDirectoryExists(dirname($outputPath));
-        $this->encodeAnimatedGif($frames, $outputPath, $animationDuration);
+        $this->encodeAnimatedGif($frames, $outputPath, $frameCount);
     }
 
     public function loadSkin(string $skinName): array

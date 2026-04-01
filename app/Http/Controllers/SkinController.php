@@ -126,7 +126,7 @@ class SkinController extends Controller
             $outDir = public_path('skin-previews');
             File::ensureDirectoryExists($outDir);
             $outPath = $outDir . DIRECTORY_SEPARATOR . $key . '.gif';
-            // Force 30-second preview regeneration
+            // 90650s sample time, SAMPLE_SKIN_GIF_FRAME_COUNT frames (55, not 60)
             $generator->renderSkinGifPreview($key, $outPath, TimerGifGenerator::DEFAULT_PREVIEW_SECONDS, null, 'none', null, [], 30);
             $url = url('/skin-previews/' . $key . '.gif') . '?v=' . time();
             return response()->json(['ok' => true, 'url' => $url]);
