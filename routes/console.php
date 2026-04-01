@@ -4,12 +4,16 @@ use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schedule;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-Artisan::command('queue:work-gifs-once {--timeout=120} {--tries=3} {--max-jobs=1} {--parallel=1}', function () {
+// Schedule::command('queue:work-gifs-once')->everyThirtySeconds();
+
+Artisan::command('queue:work-gifs-once {--timeout=120} {--tries=3} {--max-jobs=3} {--parallel=3}', function () {
+    Log::channel('gif_queue')->info('Time here : ', [now()]);
     $timeout = (int) $this->option('timeout');
     $tries = (int) $this->option('tries');
     // max-jobs=0 means "run forever" in queue:work — never pass 0 from cron.
