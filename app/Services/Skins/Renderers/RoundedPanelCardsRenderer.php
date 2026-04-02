@@ -279,7 +279,7 @@ class RoundedPanelCardsRenderer implements SkinRendererInterface
         $panel = $this->computePanelBounds($skin, $width, $height);
         $segmentGap = max(12, (int) round(($skin['segmentGap'] ?? 22) * 0.75));
         $cardRadius = max(0, (int) ($skin['cardRadius'] ?? 16));
-        $innerPad = 12;
+        $innerPad = 16;
 
         $contentX = $panel['panelX'] + $panel['borderWidth'] + $innerPad;
         $contentY = $panel['panelY'] + $panel['borderWidth'] + $innerPad;
@@ -288,10 +288,9 @@ class RoundedPanelCardsRenderer implements SkinRendererInterface
 
         // Cards: slightly shorter than full content height so that
         // number boxes and labels together sit more vertically centered.
-        // (0.88 uses more vertical space than legacy 0.82; inner/outer proportions unchanged.)
-        $cardHeight = (int) round($contentH * 0.98);
+        $cardHeight = (int) round($contentH * 0.82);
         $totalGap = ($segments - 1) * $segmentGap;
-        $cardWidth = (int) (($contentW - $totalGap) / $segments);
+        $cardWidth = (int) (($contentW - $totalGap) / $segments)-30;
         // Center card block vertically within content area
         $cardY = $contentY + (int) round(($contentH - $cardHeight) / 2);
 

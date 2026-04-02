@@ -11,10 +11,10 @@
     "accentColor": "#69B7CB",
   
     // Main digit font size
-    "fontSize": 97,
-
+    "fontSize": 52,
+  
     // Label font size like DAYS / HOURS / MINUTES / SECONDS
-    "labelFontSize": 23,
+    "labelFontSize": 18,
   
     "fontPath": "resources/fonts/dejavu-sans.book.ttf",
     "style": "rounded_panel_cards",
@@ -33,9 +33,9 @@
     "borderWidth": 0,
     "borderColor": "#D8E0E8",
   
-    "panelRadius": 30,
-    "cardRadius": 17,
-    "numberBoxRadius": 15,
+    "panelRadius": 28,
+    "cardRadius": 16,
+    "numberBoxRadius": 14,
     "numberBoxBorderWidth": 3,
     "numberBoxBorderColor": "#69B7CB",
     "cardBackground": "#EDF1F5",
@@ -43,7 +43,7 @@
     "shadowColor": "#D9E3EB",
     "shadowBlur": 0,
     "shadowOffsetY": 0,
-    "segmentGap": 24,
+    "segmentGap": 22,
     "labelColor": "#3D5268",
   
     // IMPORTANT:
@@ -51,33 +51,33 @@
     // depending on showDays and showSeconds values.
     "visibilityLayouts": {
       "allVisible": {
-        "width": 960,
-        "height": 256,
+        "width": 920,
+        "height": 240,
         "visibleUnits": 4,
-        "segmentGap": 24,
+        "segmentGap": 22,
         "note": "Default layout for Days, Hours, Minutes, Seconds"
       },
       "daysHidden": {
-        "width": 960,
-        "height": 256,
+        "width": 920,
+        "height": 240,
         "visibleUnits": 3,
-        "segmentGap": 28,
+        "segmentGap": 26,
         "stretchRemainingUnits": true,
         "note": "Hide Days only, keep same canvas size"
       },
       "secondsHidden": {
-        "width": 960,
-        "height": 256,
+        "width": 920,
+        "height": 240,
         "visibleUnits": 3,
-        "segmentGap": 28,
+        "segmentGap": 26,
         "stretchRemainingUnits": true,
         "note": "Hide Seconds only, keep same canvas size"
       },
       "daysAndSecondsHidden": {
-        "width": 730,
-        "height": 224,
+        "width": 700,
+        "height": 210,
         "visibleUnits": 2,
-        "segmentGap": 30,
+        "segmentGap": 28,
         "stretchRemainingUnits": true,
         "note": "Only Hours and Minutes visible, compact layout"
       }
