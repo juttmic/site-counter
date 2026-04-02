@@ -48,7 +48,10 @@ class TealCircleBadgesRenderer implements SkinRendererInterface
     {
         $font = (string) ($skin['fontPath'] ?? '');
         $fontSize = (int) ($skin['fontSize'] ?? 34);
-        $labelSize = max(10, (int) round($fontSize * 0.38));
+        $labelFsRaw = $skin['labelFontSize'] ?? null;
+        $labelSize = ($labelFsRaw !== null && $labelFsRaw !== '')
+            ? max(8, (int) $labelFsRaw)
+            : max(10, (int) round($fontSize * 0.38));
 
         $showDays    = ($skin['showDays'] ?? true) === true;
         $showHours   = ($skin['showHours'] ?? true) === true;
@@ -85,7 +88,7 @@ class TealCircleBadgesRenderer implements SkinRendererInterface
             for ($i = 0; $i < $segments; $i++) {
                 $unitX = $gap + $radius + $i * ($diameter + $gap);
 
-                $numberText = sprintf('%d', $units[$i]['value']);
+                $numberText = sprintf('%02d', $units[$i]['value']);
                 $labelText = $units[$i]['label'];
 
                 // Measure number and label boxes
@@ -126,7 +129,7 @@ class TealCircleBadgesRenderer implements SkinRendererInterface
             $labelBuiltIn = 3;
             for ($i = 0; $i < $segments; $i++) {
                 $unitX = $gap + $radius + $i * ($diameter + $gap);
-                $numberText = sprintf('%d', $units[$i]['value']);
+                $numberText = sprintf('%02d', $units[$i]['value']);
                 $nW = imagefontwidth($builtIn) * strlen($numberText);
                 $nH = imagefontheight($builtIn);
                 $label = $units[$i]['label'];
