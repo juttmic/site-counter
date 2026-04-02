@@ -21,7 +21,7 @@ class SkinController extends Controller
             $skins[] = [
                 'key' => $key,
                 'name' => $json['name'] ?? $key,
-                'preview_url' => url('/skin-previews/' . $key . '.gif'),
+                'preview_url' => $this->skinPreviewUrl($key),
             ];
         }
         return response()->json($skins);
@@ -54,7 +54,7 @@ class SkinController extends Controller
             'name' => $json['name'] ?? $key,
             'defaults' => $json,
             'fields' => $fields,
-            'preview_url' => url('/skin-previews/' . $key . '.gif'),
+            'preview_url' => $this->skinPreviewUrl($key),
         ];
         return response()->json($exposed);
     }
@@ -110,7 +110,7 @@ class SkinController extends Controller
             }
             return [
                 'key' => $key,
-                'url' => url('skin-previews/' . $file),
+                'url' => $this->skinPreviewUrl($key),
             ];
         })->filter();
         
@@ -128,11 +128,22 @@ class SkinController extends Controller
             $outPath = $outDir . DIRECTORY_SEPARATOR . $key . '.gif';
             // 90650s sample time, SAMPLE_SKIN_GIF_FRAME_COUNT frames (55, not 60)
             $generator->renderSkinGifPreview($key, $outPath, TimerGifGenerator::DEFAULT_PREVIEW_SECONDS, null, 'none', null, [], 30);
-            $url = url('/skin-previews/' . $key . '.gif') . '?v=' . time();
-            return response()->json(['ok' => true, 'url' => $url]);
+            return response()->json(['ok' => true, 'url' => $this->skinPreviewUrl($key)]);
         } catch (\Throwable $e) {
             return response()->json(['ok' => false, 'message' => 'Failed to regenerate: ' . $e->getMessage()], 500);
         }
+    }
+
+    /**
+     * Public URL for a skin template preview GIF (?v= file mtime for cache busting).
+     */
+    private function skinPreviewUrl(string $key): string
+    {
+        $base = url('/skin-previews/' . $key . '.gif');
+        $path = public_path('skin-previews/' . $key . '.gif');
+        $v = is_file($path) ? (string) filemtime($path) : '0';
+
+        return $base . '?v=' . $v;
     }
 
     /**
