@@ -6,7 +6,7 @@
   "textColor": "#0F7892",
   "accentColor": "#0F7892",
   "fontSize": 65,
-  "labelFontSize": 15,
+  "labelFontSize": 18,
   "fontPath": "resources/fonts/dejavu-sans.book.ttf",
   "style": "teal_circle_badges",
   "showDays": true,

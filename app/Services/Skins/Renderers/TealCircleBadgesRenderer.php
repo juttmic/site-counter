@@ -82,8 +82,8 @@ class TealCircleBadgesRenderer implements SkinRendererInterface
         $gap = (int) floor($availableWidth / max(1, $segments + 1));
 
         if (is_file($font)) {
-            // Gap factor to control vertical spacing between number and label
-            $gapFactor = 0.96;
+            // Tight vertical spacing between digit and label; block stays centered on $centerY.
+            $gapFactor = 0.22;
 
             for ($i = 0; $i < $segments; $i++) {
                 $unitX = $gap + $radius + $i * ($diameter + $gap);
@@ -105,7 +105,7 @@ class TealCircleBadgesRenderer implements SkinRendererInterface
                 $labelHeight = $labelMaxY - $labelMinY;
                 $labelCenterOffset = ($labelBox[1] + $labelBox[7]) / 2.0;
 
-                $gapBetween = max(3, (int) round($fontSize * $gapFactor));
+                $gapBetween = max(2, (int) round($fontSize * $gapFactor));
                 $blockHeight = $numberHeight + $gapBetween + $labelHeight;
 
                 // Center combined number+label block vertically around centerY
@@ -136,7 +136,7 @@ class TealCircleBadgesRenderer implements SkinRendererInterface
                 $lW = imagefontwidth($labelBuiltIn) * strlen($label);
                 $lH = imagefontheight($labelBuiltIn);
 
-                $gapBetween = max(3, (int) round($nH * 0.6));
+                $gapBetween = max(2, (int) round($nH * 0.22));
                 $blockHeight = $nH + $gapBetween + $lH;
                 $blockTop = (int) round($centerY - ($blockHeight / 2));
                 $numberY = $blockTop;
