@@ -526,7 +526,7 @@ async function loadSkinsIntoScrollBar() {
     // Define helper functions before creating cards
     const getCardWidth = () => {
       const firstCard = bar.querySelector('.skin-card');
-      if (!firstCard) return 296; // fallback: 280px card + 16px gap
+      if (!firstCard) return 360; // fallback: 344px card + 16px gap
       // Get actual rendered width including padding and border
       const cardRect = firstCard.getBoundingClientRect();
       const cardWidth = cardRect.width;
@@ -538,21 +538,23 @@ async function loadSkinsIntoScrollBar() {
 
     skins.forEach(s => {
       const wrapper = document.createElement('div');
-      wrapper.className = 'skin-card mine d-flex flex-column align-items-center text-center rounded bg-white flex-shrink-0';
-      wrapper.style.width = '280px';
+      wrapper.className =
+        'skin-card mine d-flex flex-column align-items-stretch text-center rounded bg-white flex-shrink-0';
+      wrapper.style.boxSizing = 'border-box';
+      wrapper.style.width = '344px';
+      wrapper.style.height = '102px';
       wrapper.style.cursor = 'pointer';
       wrapper.dataset.skinKey = s.key;
 
       const preview = document.createElement('div');
-      preview.className = 'd-flex align-items-center justify-content-center rounded w-100';
-      preview.style.height = '96px';
+      preview.className =
+        'skin-card-preview d-flex align-items-center justify-content-center rounded w-100';
       preview.style.position = 'relative';
 
       const img = document.createElement('img');
       img.src = s.preview_url;
       img.alt = s.name;
       img.className = 'img-fluid';
-      img.style.maxHeight = '92px';
       img.style.objectFit = 'contain';
       preview.appendChild(img);
 

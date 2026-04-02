@@ -10,6 +10,8 @@
     padding: 3px !important;
     position: relative;
     border: 2px solid transparent;
+    box-sizing: border-box;
+    overflow: hidden;
   }
   .mine:hover {
     border: 2px solid #29b672 !important;
@@ -51,6 +53,19 @@
   .skin-card {
     scroll-snap-align: start;
     scroll-snap-stop: always;
+  }
+  #skin_scroll_bar .skin-card.mine .skin-card-preview {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+  }
+  #skin_scroll_bar .skin-card.mine .skin-card-preview img {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    vertical-align: middle;
   }
   .scrollbar-hide {
     -ms-overflow-style: none;
@@ -553,7 +568,7 @@
 
 <div class="py-1" style="border: 0px solid red; display: flex; justify-content: space-between; gap: 0.5rem; padding: inherit;">
   @if(isset($timer))
-    <h2 class="font-semibold text-xl text-gray-800 leading-tight" style="font-size: 1.5rem !important">Edit Counter</h2>
+    {{-- <h2 class="font-semibold text-xl text-gray-800 leading-tight" style="font-size: 1.5rem !important">Edit Counter</h2> --}}
     <a id="form_preview_btn"
        href="{{ $gifPendingEdit ? '#' : route('timers.preview', $timer) }}"
        data-preview-url="{{ route('timers.preview', $timer) }}"
@@ -562,7 +577,7 @@
        @if($gifPendingEdit) title="Processing" tabindex="-1" aria-disabled="true" @else title="Preview counter" @endif
     >Preview Counter</a>
   @else
-    <h2 class="font-semibold text-xl text-gray-800 leading-tight" style="font-size: 1.5rem !important">Create New Counter</h2>
+    {{-- <h2 class="font-semibold text-xl text-gray-800 leading-tight" style="font-size: 1.5rem !important">Create New Counter</h2> --}}
   @endif
   
 </div>
@@ -596,22 +611,22 @@
             <div class="row g-3">
                 <!-- Top skin selector bar -->
                 <div class="col-12">
-                    <div class="card">
+                    <div class="card" style="height:202px">
                         <div class="card-body">
                             <label class="form-label d-block mb-2">Select a Template</label>
                             <input type="hidden" name="skin" id="skin_key" value="{{ $isEdit ? $timer->skin : '' }}" />
-                            <div class="position-relative" style="min-height: 120px;">
+                            <div class="position-relative" style="min-height: 102px;">
                                 <div class="overflow-hidden">
                                     <div id="skin_scroll_bar" class="d-flex gap-3 flex-nowrap overflow-auto scrollbar-hide py-1 w-100">
                                         <!-- Skins will be injected here -->
                                     </div>
                                 </div>
                             </div>
-                            <div class="owl-nav d-flex justify-content-between align-items-center mt-2">
+                            <div class="owl-nav d-flex justify-content-between align-items-center">
                               <div class="owl-prev" style="cursor: pointer;">
-                                <i class="bi bi-arrow-left-circle me-1"></i> Prev
+                                <i class="bi bi-arrow-left-circle me-1"></i> <b>Prev</b>
                               </div>
-                              <div class="owl-next" style="cursor: pointer;">Next <i class="bi bi-arrow-right-circle ms-1"></i>
+                              <div class="owl-next" style="cursor: pointer;"><b>Next</b> <i class="bi bi-arrow-right-circle ms-1"></i>
                               </div>
                             </div>
                         </div>

@@ -5,8 +5,8 @@
     "background": "#FFFFFF",
     "textColor": "#2B93BD",
     "accentColor": "#D0D7DF",
-    "fontSize": 80,
-    "labelFontSize": 20,
+    "fontSize": 87,
+    "labelFontSize": 30,
     "fontPath": "resources/fonts/dejavu-sans.book.ttf",
     "style": "minimal_inline_divider",
   
@@ -26,7 +26,7 @@
     "separatorWidth": 2,
     "separatorHeight": 150,
     "segmentGap": 36,
-    "labelColor": "#56697C",
+    "labelColor": "#2b93bd",
     "numberWeight": 700,
     "labelLetterSpacing": 1.2,
   
