@@ -6,6 +6,47 @@ use App\Services\Skins\SkinRendererInterface;
 
 class OrbitDotsRenderer implements SkinRendererInterface
 {
+    private const ORBIT_DIVISOR_BASE = 2.6;
+
+    private const REFERENCE_DIGIT_FONT_SIZE = 45.0;
+
+    /**
+     * Orbit radius grows with digit font size (smaller divisor for larger fonts),
+     * then is clamped so all dotted rings still fit the canvas width.
+     *
+     * @return array{radius: int, gap: int, centerY: int, dotDiameter: int}
+     */
+    private function computeOrbitLayout(array $skin, int $width, int $height, int $segmentCount): array
+    {
+        $segments = max(1, $segmentCount);
+        $digitFs = max(8, (int) ($skin['fontSize'] ?? 45));
+        $orbitDivisor = self::ORBIT_DIVISOR_BASE * (self::REFERENCE_DIGIT_FONT_SIZE / $digitFs);
+        $orbitDivisor = max(1.35, min(3.2, $orbitDivisor));
+
+        $centerY = (int) ($height / 2);
+        $maxRadiusFromHeight = (int) round($height / $orbitDivisor);
+        $maxRadiusFromWidth = (int) floor(($width / $segments) / $orbitDivisor);
+        $radius = (int) max(6, min($maxRadiusFromHeight, $maxRadiusFromWidth));
+
+        $minGap = max(8, (int) round($width * 0.015));
+        $packMaxR = (int) floor(($width - ($segments + 1) * $minGap) / (2 * $segments));
+        $radius = min($radius, max(6, $packMaxR));
+
+        $diameter = $radius * 2;
+        $totalCircleWidth = $segments * $diameter;
+        $availableWidth = max(0, $width - $totalCircleWidth);
+        $gap = (int) floor($availableWidth / max(1, $segments + 1));
+
+        $dotDiameter = (int) max(2, round(3 * sqrt($digitFs / self::REFERENCE_DIGIT_FONT_SIZE)));
+
+        return [
+            'radius' => $radius,
+            'gap' => $gap,
+            'centerY' => $centerY,
+            'dotDiameter' => $dotDiameter,
+        ];
+    }
+
     public function renderStyle($im, array $skin, int $width, int $height, int $bgCol, int $textCol, int $accentCol, int $secondsRemaining): void
     {
         // Dotted orbits around each unit; respect visibility (days and seconds only toggled)
@@ -22,17 +63,13 @@ class OrbitDotsRenderer implements SkinRendererInterface
             $segments = 1;
         }
 
-        $centerY = (int) ($height / 2);
-
-        // Fix orbit radius from height so reducing spacing does not change circle size.
-        $maxRadiusFromHeight = (int) round($height / 2.6);
-        $maxRadiusFromWidth = (int) floor(($width / $segments) / 2.6);
-        $radius = (int) max(6, min($maxRadiusFromHeight, $maxRadiusFromWidth));
+        $layout = $this->computeOrbitLayout($skin, $width, $height, $segments);
+        $radius = $layout['radius'];
+        $gap = $layout['gap'];
+        $centerY = $layout['centerY'];
+        $dotD = $layout['dotDiameter'];
 
         $diameter = $radius * 2;
-        $totalCircleWidth = $segments * $diameter;
-        $availableWidth = max(0, $width - $totalCircleWidth);
-        $gap = (int) floor($availableWidth / max(1, $segments + 1));
 
         $dotColor = $accentCol;
         $dotCount = 24;
@@ -43,7 +80,7 @@ class OrbitDotsRenderer implements SkinRendererInterface
                 $angle = ($k / $dotCount) * 2 * M_PI;
                 $x = (int) round($centerX + cos($angle) * $radius);
                 $y = (int) round($centerY + sin($angle) * $radius);
-                imagefilledellipse($im, $x, $y, 3, 3, $dotColor);
+                imagefilledellipse($im, $x, $y, $dotD, $dotD, $dotColor);
             }
         }
     }
@@ -52,7 +89,10 @@ class OrbitDotsRenderer implements SkinRendererInterface
     {
         $font = (string) ($skin['fontPath'] ?? '');
         $fs = (int) ($skin['fontSize'] ?? 30);
-        $ls = max(10, (int) round($fs * 0.3));
+        $labelFsRaw = $skin['labelFontSize'] ?? null;
+        $ls = ($labelFsRaw !== null && $labelFsRaw !== '')
+            ? max(8, (int) $labelFsRaw)
+            : max(10, (int) round($fs * 0.3));
 
         $days = intdiv($secondsRemaining, 86400);
         $hours = intdiv($secondsRemaining % 86400, 3600);
@@ -77,16 +117,11 @@ class OrbitDotsRenderer implements SkinRendererInterface
         }
 
         $segmentCount = count($units);
-        $centerY = (int) ($height / 2);
-
-        // Reuse the same radius and spacing logic as renderStyle for tight layout.
-        $maxRadiusFromHeight = (int) round($height / 2.6);
-        $maxRadiusFromWidth = (int) floor(($width / max(1, $segmentCount)) / 2.6);
-        $radius = (int) max(6, min($maxRadiusFromHeight, $maxRadiusFromWidth));
+        $layout = $this->computeOrbitLayout($skin, $width, $height, $segmentCount);
+        $radius = $layout['radius'];
+        $gap = $layout['gap'];
+        $centerY = $layout['centerY'];
         $diameter = $radius * 2;
-        $totalCircleWidth = $segmentCount * $diameter;
-        $availableWidth = max(0, $width - $totalCircleWidth);
-        $gap = (int) floor($availableWidth / max(1, $segmentCount + 1));
 
         if (is_file($font)) {
             // Maintain the original vertical gap between number and label,
