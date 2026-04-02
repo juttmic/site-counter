@@ -272,8 +272,7 @@ class FramedFlipBoardRenderer implements SkinRendererInterface
 
                 $value = $units[$i]['value'];
                 $label = $units[$i]['label'];
-                $isDays = ($label === 'DAYS');
-                $numberText = $isDays ? (string) $value : sprintf('%02d', $value);
+                $numberText = sprintf('%02d', $value);
 
                 // Label metrics for precise centering in its allocated region
                 $labBox = imagettfbbox($labelFontSize, 0, $font, $label) ?: [0,0,0,0,0,0,0,0];
@@ -308,8 +307,7 @@ class FramedFlipBoardRenderer implements SkinRendererInterface
 
                 $value = $units[$i]['value'];
                 $label = $units[$i]['label'];
-                $isDays = ($label === 'DAYS');
-                $numberText = $isDays ? (string) $value : sprintf('%02d', $value);
+                $numberText = sprintf('%02d', $value);
                 $nW = imagefontwidth($builtIn) * strlen($numberText);
                 imagestring($im, $builtIn, (int) ($centerX - $nW / 2), $numberY, $numberText, $textCol);
 

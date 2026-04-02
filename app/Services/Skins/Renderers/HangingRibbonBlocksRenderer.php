@@ -137,8 +137,7 @@ class HangingRibbonBlocksRenderer implements SkinRendererInterface
 
                 $value = $units[$i]['value'];
                 $label = $units[$i]['label'];
-                $isDays = ($label === 'DAYS');
-                $numberText = $isDays ? (string) $value : sprintf('%02d', $value);
+                $numberText = sprintf('%02d', $value);
                 $numberWidth = $this->textBoxWidth($numberText, $font, $fontSize);
                 $numberBaseline = (int) ($numberCenterY - $this->textVerticalCenterOffset($numberText, $font, $fontSize));
                 imagettftext($im, $fontSize, 0, (int) ($centerX - $numberWidth / 2), $numberBaseline, $numberCol, $font, $numberText);
@@ -157,8 +156,7 @@ class HangingRibbonBlocksRenderer implements SkinRendererInterface
                 $centerX = (int) ($tileX + $tileWidth / 2);
                 $value = $units[$i]['value'];
                 $label = $units[$i]['label'];
-                $isDays = ($label === 'DAYS');
-                $numberText = $isDays ? (string) $value : sprintf('%02d', $value);
+                $numberText = sprintf('%02d', $value);
                 $nW = imagefontwidth($builtIn) * strlen($numberText);
                 imagestring($im, $builtIn, (int) ($centerX - $nW / 2), $numberY, $numberText, $numberCol);
                 $lW = imagefontwidth($labelBuiltIn) * strlen($label);

@@ -5,8 +5,8 @@
     "background": "#FFFFFF",
     "textColor": "#24384D",
     "accentColor": "#74AFCF",
-    "fontSize": 48,
-    "labelFontSize": 16,
+    "fontSize": 102,
+    "labelFontSize": 27,
     "fontPath": "resources/fonts/dejavu-sans.book.ttf",
     "style": "hanging_ribbon_blocks",
   

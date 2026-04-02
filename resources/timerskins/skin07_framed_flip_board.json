@@ -5,8 +5,8 @@
     "background": "#FFFFFF",
     "textColor": "#263A4F",
     "accentColor": "#C9D4DE",
-    "fontSize": 58,
-    "labelFontSize": 18,
+    "fontSize": 100,
+    "labelFontSize": 30,
     "fontPath": "resources/fonts/dejavu-sans.book.ttf",
     "style": "framed_flip_board",
   
