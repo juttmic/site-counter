@@ -6,14 +6,15 @@ use App\Services\Skins\SkinRendererInterface;
 
 class SlateRoundedBarRenderer implements SkinRendererInterface
 {
+    /** Share of canvas height for the ribbon; bar is vertically centered. */
+    private const BAR_HEIGHT_RATIO = 0.78;
+
     public function renderStyle($im, array $skin, int $width, int $height, int $bgCol, int $textCol, int $accentCol, int $secondsRemaining): void
     {
         // Background already filled by caller; draw just the rounded bar with dividers
         imagefilledrectangle($im, 0, 0, $width, $height, $bgCol);
-        
-        // Calculate reduced bar height (~40% of canvas height) and center it vertically
-        // Increase height by 25% (relative to previous size)
-        $barHeight = (int) round($height * (0.40 * 1.25));
+
+        $barHeight = (int) round($height * self::BAR_HEIGHT_RATIO);
         $barY = (int) (($height - $barHeight) / 2);
         $barPaddingX = 6;
         $barWidth = $width - (2 * $barPaddingX);
@@ -43,9 +44,10 @@ class SlateRoundedBarRenderer implements SkinRendererInterface
         $unitWidth = $contentWidth / $segments;
 
         $sepCol = imagecolorallocatealpha($im, 255, 255, 255, 70);
+        $sepInset = (int) max(4, round($barHeight * 0.065));
         for ($i = 1; $i < $segments; $i++) {
             $x = (int) round($contentStartX + $unitWidth * $i);
-            imageline($im, $x, $barY + 4, $x, $barY + $barHeight - 4, $sepCol);
+            imageline($im, $x, $barY + $sepInset, $x, $barY + $barHeight - $sepInset, $sepCol);
         }
     }
 
@@ -70,9 +72,8 @@ class SlateRoundedBarRenderer implements SkinRendererInterface
 
         $segments = count($units);
 
-        // Use same bar geometry and inner content width as renderStyle
-        // Keep bar geometry identical to renderStyle
-        $barHeight = (int) round($height * (0.40 * 1.25));
+        // Same bar geometry as renderStyle
+        $barHeight = (int) round($height * self::BAR_HEIGHT_RATIO);
         $barY = (int) (($height - $barHeight) / 2);
         $centerY = (int) ($barY + ($barHeight / 2));
         $barPaddingX = 6;

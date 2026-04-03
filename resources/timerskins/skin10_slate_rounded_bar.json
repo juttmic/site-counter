@@ -5,7 +5,7 @@
   "background": "#FFFFFF",
   "textColor": "#FFFFFF",
   "accentColor": "#2C7A8B",
-  "fontSize": 56,
+  "fontSize": 73,
   "fontPath": "resources/fonts/dejavu-sans.book.ttf",
   "style": "slate_rounded_bar",
   "showDays": true,
