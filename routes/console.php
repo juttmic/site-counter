@@ -11,16 +11,16 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 
-Artisan::command('queue:work-gifs-once {--timeout=120} {--tries=3} {--max-jobs=3} {--parallel=3}', function () {
+Artisan::command('queue:work-gifs-once {--timeout=120} {--tries=10} {--max-jobs=3} {--parallel=3}', function () {
     Log::channel('gif_queue')->info('Time here : ', [now()]);
     $timeout = (int) $this->option('timeout');
-    $tries = (int) $this->option('tries');
+    $tries = max(1, (int) $this->option('tries'));
     // max-jobs=0 means "run forever" in queue:work — never pass 0 from cron.
     $maxJobs = max(1, min(100, (int) $this->option('max-jobs')));
     $parallel = max(1, min(10, (int) $this->option('parallel')));
 
-    // Covers one worker run: stop-when-empty exits promptly; per-job timeout is --timeout.
-    $lockTtl = max(120, $timeout + 90);
+    // Lock must cover a full batch: up to max-jobs × timeout per worker, not a single job's timeout.
+    $lockTtl = max(300, $maxJobs * $timeout + 180);
 
     $lock = null;
     $slot = null;

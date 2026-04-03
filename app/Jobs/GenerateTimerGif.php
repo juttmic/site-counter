@@ -18,10 +18,17 @@ class GenerateTimerGif implements ShouldQueue, ShouldBeUniqueUntilProcessing
     protected $timer;
     
     /**
-     * The number of times the job may be attempted.
+     * The number of times the job may be attempted (queue:work --tries should match or exceed).
      */
-    public $tries = 3;
-    
+    public $tries = 10;
+
+    /**
+     * Seconds to wait before retrying after each failure (index = attempt zero-based after first failure).
+     *
+     * @var list<int>
+     */
+    public $backoff = [15, 30, 60, 120, 120, 180, 180, 300, 300];
+
     /**
      * The maximum number of seconds the job can run.
      */
