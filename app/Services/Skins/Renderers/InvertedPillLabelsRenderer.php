@@ -52,6 +52,18 @@ class InvertedPillLabelsRenderer implements SkinRendererInterface
         return $size;
     }
 
+    /**
+     * @return array{labelGapY: int, digitBandCenterNudge: int}
+     */
+    private function tileLabelVerticalSpacing(int $height): array
+    {
+        $labelGapY = max(16, (int) round($height * 0.062));
+        // Shift digit band (and colons) up so extra label gap does not drag the whole stack downward.
+        $digitBandCenterNudge = - (int) round($labelGapY * 0.48);
+
+        return ['labelGapY' => $labelGapY, 'digitBandCenterNudge' => $digitBandCenterNudge];
+    }
+
     public function renderStyle($im, array $skin, int $width, int $height, int $bgCol, int $textCol, int $accentCol, int $secondsRemaining): void
     {
         // Fill background
@@ -79,6 +91,9 @@ class InvertedPillLabelsRenderer implements SkinRendererInterface
         $tileW = (int) floor($availableTileW * 0.72);
         $tileH = (int) floor($availableTileH * 0.72);
 
+        $vSpace = $this->tileLabelVerticalSpacing($height);
+        $digitBandCenterNudge = $vSpace['digitBandCenterNudge'];
+
         // Colors
         [$br, $bg_, $bb] = $this->hexToRgb($skin['background'] ?? '#FFFFFF'); // unused aside from $bgCol param
         [$tr, $tg, $tb]  = $this->hexToRgb($skin['textColor'] ?? '#FFFFFF'); // digits color
@@ -99,9 +114,9 @@ class InvertedPillLabelsRenderer implements SkinRendererInterface
             $segX2 = $segX1 + $segW;
             $segY2 = $segY1 + $digitTileH;
 
-            // Center the digit tiles within the segment
+            // Center the digit tiles within the segment (nudge keeps tile+label stack visually centered)
             $segCenterX = $segX1 + ($segW / 2);
-            $segCenterY = $segY1 + ($digitTileH / 2);
+            $segCenterY = (int) ($segY1 + ($digitTileH / 2) + $digitBandCenterNudge);
             
             // Left tile: fixed width, full digit-row height (taller than square when width-limited)
             $leftX1 = (int) ($segCenterX - $tileW - ($innerGap / 2));
@@ -150,7 +165,7 @@ class InvertedPillLabelsRenderer implements SkinRendererInterface
             }
             for ($i = 0; $i < $segments - 1; $i++) {
                 $cx = $gapX + ($i + 1) * $segW + $i * $gapX + (int) ($gapX / 2);
-                $cy = (int)($padTop + $digitTileH * 0.50); // Center vertically in tile area
+                $cy = (int) ($padTop + $digitTileH * 0.50 + $digitBandCenterNudge);
                 $colon = $sepChar;
                 $box = imagettfbbox($fontSize, 0, $font, $colon);
                 // precise centering uses bbox min/max, not just width
@@ -203,7 +218,9 @@ class InvertedPillLabelsRenderer implements SkinRendererInterface
         $tileW = (int) floor($availableTileW * 0.72);
         $tileH = (int) floor($availableTileH * 0.72);
 
-        $digitsCenterY = (int) ($padTop + $digitTileH * 0.50);
+        $vSpace = $this->tileLabelVerticalSpacing($height);
+        $labelGapY = $vSpace['labelGapY'];
+        $digitBandCenterNudge = $vSpace['digitBandCenterNudge'];
 
         // Fit digit font to tile box so large font sizes don't overlap or overflow.
         // Use '8' as a worst-case width/height sample for most fonts.
@@ -214,7 +231,6 @@ class InvertedPillLabelsRenderer implements SkinRendererInterface
         $fontSize = $this->fitFontSizeToBox($font, $requestedFontSize, '8', $digitMaxW, $digitMaxH, 8);
 
         // Fit label size to the reserved label area and segment width.
-        $labelGapY = max(3, (int) round($height * 0.022));
         $labelMaxH = max(1, $height - ($padTop + $digitTileH) - $labelGapY - 6);
         $labelSize = $this->fitFontSizeToBox($font, $requestedLabelSize, 'SECONDS', max(1, $segW - 6), $labelMaxH, 8);
 
@@ -227,7 +243,7 @@ class InvertedPillLabelsRenderer implements SkinRendererInterface
             $leftX2 = $leftX1 + $tileW;
             $rightX1 = (int) ($segCenterX + ($innerGap / 2));
             $rightX2 = $rightX1 + $tileW;
-            $tileCenterY = (int) ($padTop + $digitTileH * 0.50);
+            $tileCenterY = (int) ($padTop + $digitTileH * 0.50 + $digitBandCenterNudge);
             $tileY1 = (int) ($tileCenterY - ($tileH / 2));
             $tileY2 = $tileY1 + $tileH;
 
