@@ -58,9 +58,19 @@ class CircularProgressRingsRenderer implements SkinRendererInterface
         $unitWidth = (int) floor($availableWidth / $segments);
         $centerY = (int) ($height / 2);
         // Base radius derived from layout, then scaled by Ring Size control
-        $baseRadius = (int) round(min($unitWidth, $height) * 0.40);
-        $scale = max(0.5, min(1.5, $ringSizeControl / $ringSizeBase));
+        $baseRadius = (int) round(min($unitWidth, $height) * 0.47);
+        $scale = max(0.5, min(1.65, $ringSizeControl / $ringSizeBase));
         $radius = max(10, (int) round($baseRadius * $scale));
+
+        // Keep rings from overlapping: outer edge includes stroke + optional dotted ring.
+        $strokeHalf = (int) ceil($ringStroke / 2);
+        $dotExtent = ($dottedRing ? (int) ceil($dotSize / 2) + 1 : 0);
+        $outerMargin = $strokeHalf + $dotExtent;
+        $interRingGap = max(10, (int) round($unitWidth * 0.09));
+        $maxRadiusByColumn = (int) floor(($unitWidth - $interRingGap) / 2 - $outerMargin);
+        $vertGap = max(12, (int) round($height * 0.07));
+        $maxRadiusByHeight = (int) floor(($height - $vertGap) / 2 - $outerMargin);
+        $radius = min($radius, max(12, min($maxRadiusByColumn, $maxRadiusByHeight)));
 
         for ($i = 0; $i < $segments; $i++) {
             $cx = (int) ($padX + $unitWidth * $i + $unitWidth / 2);
