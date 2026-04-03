@@ -85,6 +85,16 @@ class GenerateTimerGif implements ShouldQueue, ShouldBeUniqueUntilProcessing
             $generator = new TimerGifGenerator();
             $gifUrl = $generator->generateAndStore($timer);
 
+            $gifPath = $this->publicPathFromTimerGifUrl($gifUrl);
+            $gifBytes = $gifPath !== null && is_file($gifPath) ? filesize($gifPath) : false;
+            if ($gifPath === null || $gifBytes === false || $gifBytes < 1) {
+                throw new \RuntimeException(sprintf(
+                    'GIF output missing or empty after generation (url=%s, resolved_path=%s)',
+                    $gifUrl,
+                    $gifPath ?? '(unresolved)'
+                ));
+            }
+
             // Persist GIF URL first so cache_key can use the same second as updated_at.
             // Pairing cache_key's timestamp with updated_at avoids needsGifRegeneration()
             // staying true when time() ran a second before the row was written.
@@ -131,6 +141,27 @@ class GenerateTimerGif implements ShouldQueue, ShouldBeUniqueUntilProcessing
                 'max_tries' => $this->tries,
             ]);
         }
+    }
+
+    /**
+     * Resolve a stored gif_url (/timers/...) to an absolute path under public/.
+     */
+    private function publicPathFromTimerGifUrl(string $gifUrl): ?string
+    {
+        $trimmed = trim($gifUrl);
+        if ($trimmed === '') {
+            return null;
+        }
+        $path = parse_url($trimmed, PHP_URL_PATH);
+        if (!is_string($path) || $path === '') {
+            $path = $trimmed;
+        }
+        $relative = ltrim($path, '/\\');
+        if ($relative === '') {
+            return null;
+        }
+
+        return public_path($relative);
     }
 
     private function logAttemptFailure(\Throwable $e): void
