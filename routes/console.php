@@ -33,7 +33,7 @@ Artisan::command('queue:work-gifs-once {--timeout=120} {--tries=10} {--max-jobs=
             break;
         }
     }
-
+Log::channel("fixer")->info("Fixed : ", [$lock, $lockTtl]);
     if ($lock === null) {
         $this->info("All {$parallel} GIF worker slots are busy. Skipping.");
         Log::channel('gif_queue')->info('GIF queue worker skipped (all slots busy)', [
