@@ -235,8 +235,12 @@ class InvertedPillLabelsRenderer implements SkinRendererInterface
         $digitMaxH = max(1, $tileH - ($tileInsetH * 2));
         $fontSize = $this->fitFontSizeToBox($font, $requestedFontSize, '8', $digitMaxW, $digitMaxH, 8);
 
-        // Fit label size to the reserved label area and segment width.
-        $labelMaxH = max(1, $height - ($padTop + $digitTileH) - $labelGapY - 6);
+        // Digit tiles vertical placement (same for every segment in horizontal layout).
+        $tileCenterY = (int) ($padTop + $digitTileH * 0.50 + $digitBandCenterNudge);
+        $tileY1 = (int) ($tileCenterY - ($tileH / 2));
+        $tileY2 = $tileY1 + $tileH;
+        // Bottom margin below labels ≈ distance from canvas top to top of tiles (tileY1).
+        $labelMaxH = max(1, ($height - $tileY1) - $tileY2 - $labelGapY - 2);
         $labelSize = $this->fitFontSizeToBox($font, $requestedLabelSize, 'SECONDS', max(1, $segW - 6), $labelMaxH, 8);
 
         for ($i = 0; $i < $segments; $i++) {
@@ -248,9 +252,6 @@ class InvertedPillLabelsRenderer implements SkinRendererInterface
             $leftX2 = $leftX1 + $tileW;
             $rightX1 = (int) ($segCenterX + ($innerGap / 2));
             $rightX2 = $rightX1 + $tileW;
-            $tileCenterY = (int) ($padTop + $digitTileH * 0.50 + $digitBandCenterNudge);
-            $tileY1 = (int) ($tileCenterY - ($tileH / 2));
-            $tileY2 = $tileY1 + $tileH;
 
             $num = sprintf('%02d', $units[$i]['value']);
             $leftDigit  = $num[0];
@@ -282,8 +283,10 @@ class InvertedPillLabelsRenderer implements SkinRendererInterface
                 $lm = $this->measureText($font, $labelFs, $label);
                 if ($lm['width'] <= max(1, $segW - 6) && $lm['height'] <= $labelMaxH) {
                     $lblX = (int) round($segCenterX - ($lm['width'] / 2) - $lm['minX']);
-                    $lblBaselineY = (int) round($tileY2 + $labelGapY + $lm['ascent']);
-                    // Keep label inside canvas
+                    // Align label descender so bottom margin matches top margin (tileY1); stay clear of tiles.
+                    $targetBaseline = (int) round($height - $tileY1 - $lm['maxY']);
+                    $minBaseline = (int) ceil($tileY2 + $labelGapY - $lm['minY']);
+                    $lblBaselineY = max($minBaseline, $targetBaseline);
                     $lblBaselineY = min($lblBaselineY, $height - 4);
                     imagettftext($im, $labelFs, 0, $lblX, $lblBaselineY, $accentCol, $font, $label);
                     break;
