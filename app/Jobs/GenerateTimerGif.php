@@ -15,12 +15,15 @@ class GenerateTimerGif implements ShouldQueue, ShouldBeUniqueUntilProcessing
     use Queueable, InteractsWithQueue;
 
     /**
-     * Use the timer id only — not a serialized {@see Timer}. Laravel restores serialized models
-     * during unserialize (before handle()). If that load fails, handle() never runs and nothing
-     * in this job can log; passing an id defers loading until inside handle().
+     * Timer primary key only (never a {@see Timer} model on the job). {@see UniqueLock} calls
+     * {@see uniqueId()} again when releasing the unique lock — that runs outside {@see handle()},
+     * so a serialized model must not be used here.
      */
-    public function __construct(public int $timerId)
+    public int $timerId;
+
+    public function __construct(int $timerId)
     {
+        $this->timerId = $timerId;
         $this->onQueue('gifs');
     }
     
@@ -46,6 +49,7 @@ class GenerateTimerGif implements ShouldQueue, ShouldBeUniqueUntilProcessing
      */
     public function uniqueId(): string
     {
+        // Only $this->timerId — do not use a Timer model (it is not loaded when UniqueLock::release runs).
         return 'timer-gif:' . $this->timerId;
     }
 
