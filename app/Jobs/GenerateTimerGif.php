@@ -8,14 +8,21 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Contracts\Queue\ShouldBeUniqueUntilProcessing;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 
 class GenerateTimerGif implements ShouldQueue, ShouldBeUniqueUntilProcessing
 {
-    use Queueable, InteractsWithQueue, SerializesModels;
+    use Queueable, InteractsWithQueue;
 
-    protected $timer;
+    /**
+     * Use the timer id only — not a serialized {@see Timer}. Laravel restores serialized models
+     * during unserialize (before handle()). If that load fails, handle() never runs and nothing
+     * in this job can log; passing an id defers loading until inside handle().
+     */
+    public function __construct(public int $timerId)
+    {
+        $this->onQueue('gifs');
+    }
     
     /**
      * The number of times the job may be attempted (queue:work --tries should match or exceed).
@@ -35,21 +42,11 @@ class GenerateTimerGif implements ShouldQueue, ShouldBeUniqueUntilProcessing
     public $timeout = 120;
 
     /**
-     * Create a new job instance.
-     */
-    public function __construct(Timer $timer)
-    {
-        $this->timer = $timer;
-        // Route all GIF generation through a dedicated queue.
-        $this->onQueue('gifs');
-    }
-
-    /**
      * Ensure we don't enqueue duplicate jobs per timer while one is pending.
      */
     public function uniqueId(): string
     {
-        return 'timer-gif:' . $this->timer->id;
+        return 'timer-gif:' . $this->timerId;
     }
 
     /**
@@ -58,9 +55,18 @@ class GenerateTimerGif implements ShouldQueue, ShouldBeUniqueUntilProcessing
     public function handle(): void
     {
         try {
-            // Always re-load latest timer state when processing.
-            $timer = $this->timer->fresh();
-            if (!$timer) {
+            Log::channel('gif_queue')->info('GIF job handle started', [
+                'timer_id' => $this->timerId,
+                'attempt' => $this->attempts(),
+            ]);
+
+            $timer = Timer::query()->find($this->timerId);
+            if ($timer === null) {
+                Log::channel('gif_queue')->warning('GIF job skipped (timer missing)', [
+                    'timer_id' => $this->timerId,
+                    'attempt' => $this->attempts(),
+                ]);
+
                 return;
             }
 
@@ -128,7 +134,7 @@ class GenerateTimerGif implements ShouldQueue, ShouldBeUniqueUntilProcessing
     {
         if ($exception !== null) {
             Log::channel('gif_queue')->error('GIF job exhausted retries or was not retried', [
-                'timer_id' => $this->timer->id ?? null,
+                'timer_id' => $this->timerId,
                 'max_tries' => $this->tries,
                 'exception_class' => $exception::class,
                 'message' => $exception->getMessage(),
@@ -137,7 +143,7 @@ class GenerateTimerGif implements ShouldQueue, ShouldBeUniqueUntilProcessing
             ]);
         } else {
             Log::channel('gif_queue')->error('GIF job failed permanently (no exception captured)', [
-                'timer_id' => $this->timer->id ?? null,
+                'timer_id' => $this->timerId,
                 'max_tries' => $this->tries,
             ]);
         }
@@ -172,7 +178,7 @@ class GenerateTimerGif implements ShouldQueue, ShouldBeUniqueUntilProcessing
         }
 
         Log::channel('gif_queue')->error('GIF generation attempt failed', [
-            'timer_id' => $this->timer->id ?? null,
+            'timer_id' => $this->timerId,
             'attempt' => $this->attempts(),
             'max_tries' => $this->tries,
             'exception_class' => $e::class,

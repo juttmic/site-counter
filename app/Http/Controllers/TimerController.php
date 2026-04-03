@@ -57,9 +57,9 @@ class TimerController extends Controller
         if ($request->boolean('generate_gif')) {
             $mode = (string) config('app.gif_generation_mode', 'queue');
             if ($mode === 'sync') {
-                (new GenerateTimerGif($timer))->handle();
+                (new GenerateTimerGif($timer->id))->handle();
             } else {
-                GenerateTimerGif::dispatch($timer);
+                GenerateTimerGif::dispatch($timer->id);
             }
         }
 
@@ -106,9 +106,9 @@ class TimerController extends Controller
         if ($request->boolean('generate_gif')) {
             $mode = (string) config('app.gif_generation_mode', 'queue');
             if ($mode === 'sync') {
-                (new GenerateTimerGif($timer))->handle();
+                (new GenerateTimerGif($timer->id))->handle();
             } else {
-                GenerateTimerGif::dispatch($timer);
+                GenerateTimerGif::dispatch($timer->id);
             }
         }
 
@@ -270,7 +270,7 @@ class TimerController extends Controller
         }
 
         // Explicit embed/GIF regeneration must complete in this request (not queued), regardless of GIF_GENERATION_MODE.
-        (new GenerateTimerGif($timer))->handle();
+        (new GenerateTimerGif($timer->id))->handle();
         $timer->refresh();
 
         if (request()->expectsJson()) {
