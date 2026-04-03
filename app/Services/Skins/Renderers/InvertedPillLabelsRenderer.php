@@ -76,8 +76,8 @@ class InvertedPillLabelsRenderer implements SkinRendererInterface
 
         $availableTileW = (int) floor(($segW - $innerGap) / 2);
         $availableTileH = $digitTileH;
-        $tileW = (int) floor($availableTileW * 0.88);
-        $tileH = (int) floor($availableTileH * 0.88);
+        $tileW = (int) floor($availableTileW * 0.72);
+        $tileH = (int) floor($availableTileH * 0.72);
 
         // Colors
         [$br, $bg_, $bb] = $this->hexToRgb($skin['background'] ?? '#FFFFFF'); // unused aside from $bgCol param
@@ -200,8 +200,8 @@ class InvertedPillLabelsRenderer implements SkinRendererInterface
 
         $availableTileW = (int) floor(($segW - $innerGap) / 2);
         $availableTileH = $digitTileH;
-        $tileW = (int) floor($availableTileW * 0.88);
-        $tileH = (int) floor($availableTileH * 0.88);
+        $tileW = (int) floor($availableTileW * 0.72);
+        $tileH = (int) floor($availableTileH * 0.72);
 
         $digitsCenterY = (int) ($padTop + $digitTileH * 0.50);
 
