@@ -11,7 +11,7 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 
-Artisan::command('queue:work-gifs-once {--timeout=120} {--tries=10} {--max-jobs=3} {--parallel=3}', function () {
+Artisan::command('queue:work-gifs-once {--timeout=120} {--tries=10} {--max-jobs=1} {--parallel=1}', function () {
     Log::channel('gif_queue')->info('Time here : ', [now()]);
     $timeout = (int) $this->option('timeout');
     $tries = max(1, (int) $this->option('tries'));
