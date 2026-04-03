@@ -104,13 +104,52 @@ class GenerateTimerGif implements ShouldQueue, ShouldBeUniqueUntilProcessing
                 'gif_url' => $gifUrl,
                 'cache_key' => $timer->cache_key,
             ]);
-        } catch (\Exception $e) {
-            Log::channel('gif_queue')->error('GIF generation failed', [
-                'timer_id' => $this->timer->id ?? null,
-                'error' => $e->getMessage(),
-                'exception' => get_class($e),
-            ]);
+        } catch (\Throwable $e) {
+            $this->logAttemptFailure($e);
             throw $e;
         }
+    }
+
+    /**
+     * Called after the job has exhausted all retries (timeout, etc.). Each thrown attempt is
+     * already logged in handle(); this records the terminal outcome without duplicating full traces.
+     */
+    public function failed(?\Throwable $exception = null): void
+    {
+        if ($exception !== null) {
+            Log::channel('gif_queue')->error('GIF job exhausted retries or was not retried', [
+                'timer_id' => $this->timer->id ?? null,
+                'max_tries' => $this->tries,
+                'exception_class' => $exception::class,
+                'message' => $exception->getMessage(),
+                'file' => $exception->getFile(),
+                'line' => $exception->getLine(),
+            ]);
+        } else {
+            Log::channel('gif_queue')->error('GIF job failed permanently (no exception captured)', [
+                'timer_id' => $this->timer->id ?? null,
+                'max_tries' => $this->tries,
+            ]);
+        }
+    }
+
+    private function logAttemptFailure(\Throwable $e): void
+    {
+        $trace = $e->getTraceAsString();
+        if (strlen($trace) > 8000) {
+            $trace = substr($trace, 0, 8000) . '…(truncated)';
+        }
+
+        Log::channel('gif_queue')->error('GIF generation attempt failed', [
+            'timer_id' => $this->timer->id ?? null,
+            'attempt' => $this->attempts(),
+            'max_tries' => $this->tries,
+            'exception_class' => $e::class,
+            'message' => $e->getMessage(),
+            'code' => $e->getCode(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+            'trace' => $trace,
+        ]);
     }
 }

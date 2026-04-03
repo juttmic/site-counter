@@ -76,10 +76,12 @@ return [
             'level' => env('LOG_LEVEL', 'debug'),
             'replace_placeholders' => true,
         ],
+        // Daily driver appends -Y-m-d to the basename; do not embed date() in path or names double up.
         'gif_queue' => [
             'driver' => 'daily',
-            'path' => storage_path('logs/gif_queue_' . date('Y-m-d-H') . '.log'),
+            'path' => storage_path('logs/gif-queue/gif_queue.log'),
             'level' => env('LOG_LEVEL', 'info'),
+            'days' => (int) env('GIF_QUEUE_LOG_DAYS', 14),
             'replace_placeholders' => true,
         ],
         'render' => [
