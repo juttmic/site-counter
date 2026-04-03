@@ -12,11 +12,13 @@ use App\Services\Skins\SkinRendererInterface;
  *
  * Recognized skin keys (with fallbacks):
  *  - width, height, background, textColor (digit color), accentColor (label/divider color)
- *  - fontPath, fontSize
+ *  - fontPath, fontSize (digits), labelFontSize (labels); separator uses a fixed pixel size.
  *  - tileColor (optional; defaults to #000000)
  */
 class InvertedPillLabelsRenderer implements SkinRendererInterface
 {
+    /** Separator glyph size in px — independent of digit/label fontSize controls. */
+    private const SEPARATOR_FONT_SIZE = 70;
     private function measureText(string $font, int $size, string $text): array
     {
         $box = imagettfbbox($size, 0, $font, $text);
@@ -149,9 +151,9 @@ class InvertedPillLabelsRenderer implements SkinRendererInterface
             imagefilledellipse($im, $rightX2 - $r, $rightY2 - $r, $r * 2, $r * 2, $tileCol);
         }
 
-        // Colon separators between tiles
+        // Colon separators between tiles (fixed size; not tied to digit or label fontSize)
         $font = $skin['fontPath'] ?? '';
-        $fontSize = (int)($skin['fontSize'] ?? 32);
+        $sepFontSize = self::SEPARATOR_FONT_SIZE;
         if (is_file($font)) {
             $sep = (string)($skin['separator'] ?? ':');
             if ($sep === '') { $sep = ':'; }
@@ -167,7 +169,7 @@ class InvertedPillLabelsRenderer implements SkinRendererInterface
                 $cx = $gapX + ($i + 1) * $segW + $i * $gapX + (int) ($gapX / 2);
                 $cy = (int) ($padTop + $digitTileH * 0.50 + $digitBandCenterNudge);
                 $colon = $sepChar;
-                $box = imagettfbbox($fontSize, 0, $font, $colon);
+                $box = imagettfbbox($sepFontSize, 0, $font, $colon);
                 // precise centering uses bbox min/max, not just width
                 $minX = min($box[0], $box[2], $box[4], $box[6]);
                 $maxX = max($box[0], $box[2], $box[4], $box[6]);
@@ -175,7 +177,7 @@ class InvertedPillLabelsRenderer implements SkinRendererInterface
                 $maxY = max($box[1], $box[3], $box[5], $box[7]);
                 $x    = (int)($cx - ($minX + $maxX) / 2);
                 $y    = (int)($cy - ($minY + $maxY) / 2); // center vertically relative to baseline
-                imagettftext($im, $fontSize, 0, $x+1, $y, $sepCol, $font, $colon);
+                imagettftext($im, $sepFontSize, 0, $x+1, $y, $sepCol, $font, $colon);
             }
         }
     }
@@ -187,8 +189,11 @@ class InvertedPillLabelsRenderer implements SkinRendererInterface
             return true;
         }
 
-        $requestedFontSize  = (int)($skin['fontSize'] ?? 32);
-        $requestedLabelSize = max(10, (int) round($requestedFontSize * 0.52));
+        $requestedFontSize = (int) ($skin['fontSize'] ?? 32);
+        $labelFsRaw = $skin['labelFontSize'] ?? null;
+        $requestedLabelSize = ($labelFsRaw !== null && $labelFsRaw !== '')
+            ? max(8, (int) $labelFsRaw)
+            : max(10, (int) round($requestedFontSize * 0.52));
 
         $days    = (int) floor($secondsRemaining / 86400);
         $hours   = (int) floor(($secondsRemaining % 86400) / 3600);
