@@ -13,7 +13,7 @@ Artisan::command('inspire', function () {
 
 Schedule::command("queue:work-gifs-once")->everyThirtySeconds();
 Artisan::command('queue:work-gifs-once {--timeout=120} {--tries=10} {--max-jobs=5} {--parallel=3}', function () {
-    Log::channel('gif_queue')->info('Time here : ', [now()]);
+    // Log::channel('gif_queue')->info('Time here : ', [now()]);
     $timeout = (int) $this->option('timeout');
     $tries = max(1, (int) $this->option('tries'));
     // max-jobs=0 means "run forever" in queue:work — never pass 0 from cron.
@@ -28,7 +28,7 @@ Artisan::command('queue:work-gifs-once {--timeout=120} {--tries=10} {--max-jobs=
     for ($i = 0; $i < $parallel; $i++) {
         $candidate = Cache::lock("gif-queue-worker-slot-{$i}", $lockTtl);
         if ($candidate->get()) {
-            Log::channel("fixer")->info("Fixed : ", [$candidate, $lockTtl, $i]);
+            // Log::channel("fixer")->info("Fixed : ", [$candidate, $lockTtl, $i]);
             $lock = $candidate;
             $slot = $i;
             break;
@@ -37,22 +37,22 @@ Artisan::command('queue:work-gifs-once {--timeout=120} {--tries=10} {--max-jobs=
 Log::channel("fixer")->info("Fixed : ", [$lock, $lockTtl]);
     if ($lock === null) {
         $this->info("All {$parallel} GIF worker slots are busy. Skipping.");
-        Log::channel('gif_queue')->info('GIF queue worker skipped (all slots busy)', [
-            'parallel' => $parallel,
-        ]);
+        // Log::channel('gif_queue')->info('GIF queue worker skipped (all slots busy)', [
+        //     'parallel' => $parallel,
+        // ]);
 
         return 0;
     }
 
-    Log::channel('gif_queue')->info('GIF queue worker started', [
-        'slot' => $slot,
-        'parallel_slots' => $parallel,
-        'max_jobs' => $maxJobs,
-        'timeout' => $timeout,
-        'lock_ttl' => $lockTtl,
-        'tries' => $tries,
-        'at' => now()->toIso8601String(),
-    ]);
+    // Log::channel('gif_queue')->info('GIF queue worker started', [
+    //     'slot' => $slot,
+    //     'parallel_slots' => $parallel,
+    //     'max_jobs' => $maxJobs,
+    //     'timeout' => $timeout,
+    //     'lock_ttl' => $lockTtl,
+    //     'tries' => $tries,
+    //     'at' => now()->toIso8601String(),
+    // ]);
 
     try {
         // --stop-when-empty: without it, queue:work loops forever when the queue is idle (cron never returns, lock stuck).
@@ -71,12 +71,12 @@ Log::channel("fixer")->info("Fixed : ", [$lock, $lockTtl]);
             $this->output->write($out);
         }
 
-        Log::channel('gif_queue')->info('GIF queue worker finished batch', [
-            'slot' => $slot,
-            'max_jobs' => $maxJobs,
-            'exit_code' => $exitCode,
-            'at' => now()->toIso8601String(),
-        ]);
+        // Log::channel('gif_queue')->info('GIF queue worker finished batch', [
+        //     'slot' => $slot,
+        //     'max_jobs' => $maxJobs,
+        //     'exit_code' => $exitCode,
+        //     'at' => now()->toIso8601String(),
+        // ]);
 
         return is_int($exitCode) ? $exitCode : 0;
     } finally {
