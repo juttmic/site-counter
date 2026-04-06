@@ -258,7 +258,9 @@ function enforceGifHeightMinimum() {
 
   const required = Math.max(0, Math.ceil(sizing.combinedHeight || 0));
   if (!isNaN(required) && required > 0 && sizing.gifHeight < required) {
-    heightField.value = required;
+    const maxAttr = heightField.max !== '' && heightField.max != null ? Number(heightField.max) : Number.NaN;
+    const applied = Number.isFinite(maxAttr) ? Math.min(required, maxAttr) : required;
+    heightField.value = applied;
     const msg = `GIF height must be at least ${required}px to fit the timer and text.`;
     if (window.showToast) {
       window.showToast(msg, 'warning');
@@ -1091,6 +1093,20 @@ function renderFields(metadata, savedOverrides = {}) {
   const marginKeys = new Set(['customTextDistance','textMarginTop','textMarginBottom','marginTop','marginBottom','labelMarginTop','labelMarginBottom']);
   const visibilityToggleKeys = new Set(['showDays']);
 
+  /** Max width/height inputs = 2× skin default (overrides JSON max). */
+  function getDimensionCapMax(field) {
+    const key = field.key;
+    const d = defaults;
+    let base;
+    if (key === 'outputWidth') base = firstNumber(d.outputWidth, d.width);
+    else if (key === 'outputHeight') base = firstNumber(d.outputHeight, d.height);
+    else if (key === 'width') base = firstNumber(d.width);
+    else if (key === 'height') base = firstNumber(d.height);
+    else return null;
+    if (!Number.isFinite(base) || base <= 0) return null;
+    return Math.floor(base * 2);
+  }
+
   const createFieldInput = (field, value, options = {}) => {
     const key = field.key;
     let label = field.label || key;
@@ -1102,8 +1118,11 @@ function renderFields(metadata, savedOverrides = {}) {
       label = 'Text';
     }
     const type = field.type || 'text';
-    if (type === 'number' && field.max != null) {
-      label += ` (max: ${field.max})`;
+    const dimCapMax = getDimensionCapMax(field);
+    const effMax = dimCapMax == null ? field.max : dimCapMax;
+    const effMin = field.min;
+    if (type === 'number' && effMax != null) {
+      label += ` (max: ${effMax})`;
     }
     const useSwitch = options.useSwitch === true;
     const container = document.createElement('div');
@@ -1183,17 +1202,26 @@ function renderFields(metadata, savedOverrides = {}) {
     } else if (type === 'number') {
       input = document.createElement('input');
       input.type = 'number';
-      if (field.min != null) input.min = field.min;
-      if (field.max != null) input.max = field.max;
+      if (effMin != null) input.min = effMin;
+      if (effMax != null) input.max = effMax;
       if (field.step != null) input.step = field.step;
       input.value = (value ?? '');
+      (function clampInitialNumber() {
+        if (input.value === '' || input.value == null) return;
+        const n = Number(input.value);
+        if (isNaN(n)) return;
+        let c = n;
+        if (effMin != null && c < effMin) c = effMin;
+        if (effMax != null && c > effMax) c = effMax;
+        if (c !== n) input.value = String(c);
+      })();
       input.className = 'form-control' + (isMarginField ? ' form-control-sm' : '');
       input.addEventListener('change', () => {
         const n = Number(input.value);
-        if (!isNaN(n) && (field.min != null || field.max != null)) {
+        if (!isNaN(n) && (effMin != null || effMax != null)) {
           let clamped = n;
-          if (field.min != null && clamped < field.min) clamped = field.min;
-          if (field.max != null && clamped > field.max) clamped = field.max;
+          if (effMin != null && clamped < effMin) clamped = effMin;
+          if (effMax != null && clamped > effMax) clamped = effMax;
           if (clamped !== n) {
             input.value = clamped;
           }

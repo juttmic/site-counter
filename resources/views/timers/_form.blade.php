@@ -790,7 +790,7 @@
                                     <div class="col-12 col-sm-6">
                                         <label class="form-label small mb-1">Padding</label>
                                         <input type="number" name="customTextDistance" class="form-control form-control-sm" min="-400" max="400" step="1" value="{{ $distanceValue }}">
-                                        <div class="form-text small">Space between the heading and the counter. Negative values pull them closer (may overlap).</div>
+                                        <div class="form-text small">Space between the heading and the counter.</div>
                                     </div>
                                     <div class="col-12 col-sm-6">
                                       <label class="form-label small mb-1">Font Size</label>
