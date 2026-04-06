@@ -16,7 +16,7 @@
     "showSeconds": true,
   
     "circleStroke": 9,
-    "finalMessage": "Time's Up",
+    "finalMessage": "Sorry! you missed the offer.",
     "finalBackground": null,
     "finalTextColor": null,
     "borderWidth": 0,

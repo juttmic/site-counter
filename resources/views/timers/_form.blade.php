@@ -803,7 +803,7 @@
                                           step="1"
                                           value="{{ $customTextFontSize }}"
                                       >
-                                      <div class="form-text small">Optional size override for the custom text.</div>
+                                      
                                   </div>
                                 </div>
                             </div>
