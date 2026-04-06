@@ -1257,27 +1257,21 @@ function renderFields(metadata, savedOverrides = {}) {
   const groupTree = buildGroupTree(visibleFields, defaults);
   const grouped = flattenGroupTree(groupTree);
 
-  // Read saved overrides to determine initial toggle state for final screen
-  const savedOverridesForFinal = (() => {
-    try {
-      return JSON.parse(document.getElementById('skin_overrides_input').value || '{}');
-    } catch (e) {
-      return {};
-    }
-  })();
-
   // Determine whether the "Time's Up Message" toggle should start checked.
+  // Use the same `savedOverrides` object passed into renderFields (edit load, skin bar, etc.),
+  // not a re-parse of #skin_overrides_input — the hidden field can lag or fail JSON.parse after
+  // HTML escaping, which incorrectly left the toggle off even when the timer had it enabled.
   // Priority:
-  // 1) Explicit value from skin_overrides.show_final_message
-  // 2) Skin defaults.show_final_message
+  // 1) Explicit value from savedOverrides.show_final_message
+  // 2) Skin metadata.defaults.show_final_message
   // 3) Otherwise OFF by default
   const showFinalMessage = (() => {
-    if (savedOverridesForFinal.show_final_message !== undefined) {
-      return !!savedOverridesForFinal.show_final_message;
+    if (savedOverrides.show_final_message !== undefined) {
+      return !!savedOverrides.show_final_message;
     }
-    const defaults = metadata.defaults || {};
-    if (defaults.show_final_message !== undefined) {
-      return !!defaults.show_final_message;
+    const metaDefaults = metadata.defaults || {};
+    if (metaDefaults.show_final_message !== undefined) {
+      return !!metaDefaults.show_final_message;
     }
     return false;
   })();
