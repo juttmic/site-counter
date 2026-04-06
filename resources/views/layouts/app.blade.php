@@ -72,36 +72,18 @@
         <script>
             (function() {
                 try {
-                    var saved = localStorage.getItem('theme');
-                    // Default to dark mode if no saved preference
-                    if (saved === null || saved === undefined || saved === '') {
-                        document.documentElement.classList.add('dark');
-                        localStorage.setItem('theme', 'dark');
-                    } else if (saved === 'dark') {
-                        document.documentElement.classList.add('dark');
-                    } else {
-                        document.documentElement.classList.remove('dark');
-                    }
+                    document.documentElement.classList.remove('dark');
+                    localStorage.setItem('theme', 'light');
                 } catch (e) {}
             })();
             (function(){
-                function toggleTheme() {
-                    var isDark = document.documentElement.classList.toggle('dark');
-                    try { localStorage.setItem('theme', isDark ? 'dark' : 'light'); } catch (e) {}
-                }
-
-                window.toggleTheme = toggleTheme; // keep global for inline callers
-                function bindThemeButtons(){
-                    var buttons = document.querySelectorAll('[data-theme-toggle]');
-                    buttons.forEach(function(btn){
-                        btn.addEventListener('click', toggleTheme);
-                    });
-                }
-                if (document.readyState === 'loading') {
-                    document.addEventListener('DOMContentLoaded', bindThemeButtons);
-                } else {
-                    bindThemeButtons();
-                }
+                // Theme switcher removed from UI; keep stub so any stray callers stay on light mode.
+                window.toggleTheme = function() {
+                    try {
+                        document.documentElement.classList.remove('dark');
+                        localStorage.setItem('theme', 'light');
+                    } catch (e) {}
+                };
             })();
         </script>
         <style>
@@ -171,14 +153,6 @@
                                    aria-label="Create new counter">
                                     <i class="bi bi-plus-lg" style="margin-right:5px"></i> New Counter
                                 </a>
-                                <button onclick="toggleTheme()" 
-                                        type="button" 
-                                        class="btn btn-outline-secondary btn-sm d-none d-md-inline-flex align-items-center justify-content-center"
-                                        aria-label="Toggle theme">
-                                    <i class="bi bi-sun light-mode-icon"></i>
-                                    <i class="bi bi-moon-stars dark-mode-icon"></i>
-                                </button>
-                                
                                 <div class="dropdown d-none d-md-block">
                                     <button class="btn btn-outline-secondary btn-sm d-flex align-items-center justify-content-center rounded-circle p-0" type="button" id="userMenuDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="width: 38px; height: 38px;">
                                         <span class="fw-semibold text-uppercase small d-flex align-items-center justify-content-center" style="width: 100%; height: 100%;">{{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}</span>
@@ -206,20 +180,11 @@
                         <!-- Mobile collapse menu -->
                         <div class="collapse d-md-none border-top" id="mobileHeaderNav">
                             <div class="px-3 py-2 d-flex flex-column gap-2">
-                                <div class="d-flex align-items-center justify-content-between">
-                                    <div class="d-flex align-items-center gap-2">
-                                        <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-light border" style="width: 36px; height: 36px;">
-                                            <span class="fw-semibold text-uppercase small">{{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}</span>
-                                        </span>
-                                        <span class="fw-semibold text-dark">{{ Auth::user()->name }}</span>
-                                    </div>
-                                    <button onclick="toggleTheme()" 
-                                            type="button" 
-                                            class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center justify-content-center"
-                                            aria-label="Toggle theme">
-                                        <i class="bi bi-sun light-mode-icon"></i>
-                                        <i class="bi bi-moon-stars dark-mode-icon"></i>
-                                    </button>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-light border" style="width: 36px; height: 36px;">
+                                        <span class="fw-semibold text-uppercase small">{{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}</span>
+                                    </span>
+                                    <span class="fw-semibold text-dark">{{ Auth::user()->name }}</span>
                                 </div>
                                 <nav class="d-flex flex-column gap-2">
                                     {{-- Dashboard link removed --}}

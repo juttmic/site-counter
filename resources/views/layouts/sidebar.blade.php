@@ -41,13 +41,6 @@
     <!-- Footer Section -->
     <div class="border-top p-3">
         <div id="sidebarUserName" class="text-muted small mb-2 text-center" style="transition: opacity 0.3s;">{{ Auth::user()->name }}</div>
-        <button type="button" 
-                onclick="toggleTheme()" 
-                class="w-100 btn btn-light btn-sm mb-2 d-flex align-items-center justify-content-start">
-            <i class="bi bi-moon-stars me-2 d-none dark-mode-icon"></i>
-            <i class="bi bi-sun me-2 light-mode-icon"></i>
-            <span class="sidebar-text">Toggle Theme</span>
-        </button>
         <form method="POST" action="{{ route('logout') }}">
             @csrf
             <button type="submit" 
@@ -94,13 +87,6 @@
         </nav>
         <div class="border-top pt-3">
             <div class="text-muted small mb-2">{{ Auth::user()->name }}</div>
-            <button type="button" 
-                    onclick="toggleTheme()" 
-                    class="w-100 btn btn-light btn-sm mb-2">
-                <i class="bi bi-moon-stars me-2 d-none dark-mode-icon"></i>
-                <i class="bi bi-sun me-2 light-mode-icon"></i>
-                Toggle Theme
-            </button>
             <form method="POST" action="{{ route('logout') }}">
                 @csrf
                 <button type="submit" class="w-100 btn btn-light btn-sm">
@@ -128,10 +114,6 @@
             <a href="{{ route('timers.create') }}" class="btn btn-primary btn-sm">
                 <i class="bi bi-plus-lg" style="margin-right:5px"></i> New Counter
             </a>
-            <button onclick="toggleTheme()" type="button" class="btn btn-link text-dark p-2">
-                <i class="bi bi-moon-stars d-none dark-mode-icon"></i>
-                <i class="bi bi-sun light-mode-icon"></i>
-            </button>
         </div>
     </div>
 </div>
