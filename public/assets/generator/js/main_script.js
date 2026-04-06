@@ -1270,7 +1270,7 @@ function renderFields(metadata, savedOverrides = {}) {
   // Priority:
   // 1) Explicit value from skin_overrides.show_final_message
   // 2) Skin defaults.show_final_message
-  // 3) If a finalMessage text is defined, default ON (backwards-compatible)
+  // 3) Otherwise OFF by default
   const showFinalMessage = (() => {
     if (savedOverridesForFinal.show_final_message !== undefined) {
       return !!savedOverridesForFinal.show_final_message;
@@ -1279,8 +1279,7 @@ function renderFields(metadata, savedOverrides = {}) {
     if (defaults.show_final_message !== undefined) {
       return !!defaults.show_final_message;
     }
-    const fm = (defaults.finalMessage ?? metadata.finalMessage ?? '').trim();
-    return fm !== '';
+    return false;
   })();
   let finalCardRef = null;
 
