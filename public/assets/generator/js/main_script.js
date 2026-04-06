@@ -2189,38 +2189,6 @@ function startPreviewPolling(timerId, opts) {
     }
     if (frameImg) frameImg.classList.add('d-none');
 
-    const statusSelect = document.querySelector('select[name="status"]');
-    const isActive = statusSelect ? statusSelect.value === 'active' : false;
-    const embedSection = document.getElementById('embed_section');
-    const embedInput = document.getElementById('embed_input');
-    const embedNotice = document.getElementById('embed_notice');
-    const gifUrl = json.gif_url || '';
-
-    if (embedInput) {
-      if (!json.share_available || !isActive) embedInput.value = '';
-    }
-    if (embedSection && embedInput && embedNotice) {
-      if (json.share_available && isActive && gifUrl) {
-        const match = gifUrl.match(/\/timers\/(\d+)\/([^\/]+)\.gif/);
-        if (match) {
-          const gettimerUrl = `${window.location.origin}/gettimer/${match[1]}/${match[2]}.gif`;
-          embedInput.value = `<img src="${gettimerUrl}" alt="Countdown Counter">`;
-        } else {
-          embedInput.value = `<img src="${new URL(gifUrl, window.location.origin).href}" alt="Countdown Counter">`;
-        }
-        embedSection.classList.remove('d-none');
-        embedNotice.classList.add('d-none');
-      } else {
-        embedSection.classList.add('d-none');
-        if (!isActive) {
-          embedNotice.textContent = 'Activate this timer to generate a shareable embed code.';
-          embedNotice.classList.remove('d-none');
-        } else if (!gifUrl) {
-          embedNotice.textContent = 'Generate a GIF to get the embed code.';
-          embedNotice.classList.remove('d-none');
-        }
-      }
-    }
     gifDirty = false;
   };
 
@@ -2267,7 +2235,6 @@ document.addEventListener('click', (e) => {
   if (a) e.preventDefault();
 }, true);
 
-// Bind copy button to use global toast
 document.addEventListener('DOMContentLoaded', function(){
   // Toggle pill behavior for select replacements (status, timer_type)
   (function bindToggleGroups() {
@@ -2337,124 +2304,4 @@ document.addEventListener('DOMContentLoaded', function(){
       });
     };
   }
-
-  // Update embed section visibility when status changes
-  const statusSelect = document.querySelector('select[name="status"]');
-  if (statusSelect) {
-    const updateEmbedVisibility = () => {
-      const embedSection = document.getElementById('embed_section');
-      const embedNotice = document.getElementById('embed_notice');
-      const embedInput = document.getElementById('embed_input');
-      const form = document.getElementById('timer_form');
-      // Check if timer has GIF by checking if embed input has a value or if form has hasGif attribute
-      const hasGif = (form && form.dataset.hasGif === '1') || (embedInput && embedInput.value && embedInput.value.trim() !== '');
-      const isActive = statusSelect.value === 'active';
-      
-      if (embedSection && embedNotice) {
-        // Show embed section only if timer is active AND has a GIF
-        if (isActive && hasGif) {
-          embedSection.classList.remove('d-none');
-          embedNotice.classList.add('d-none');
-          
-          // If embed input is empty but we have a GIF, populate it
-          if (embedInput && (!embedInput.value || embedInput.value.trim() === '')) {
-            // Try to get GIF URL from form data attribute first
-            let gifUrl = form ? form.dataset.gifUrl : '';
-            
-            // If not in form data, try preview image
-            if (!gifUrl) {
-              const previewGif = document.getElementById('preview_gif');
-              if (previewGif && previewGif.src && !previewGif.classList.contains('d-none')) {
-                gifUrl = previewGif.src;
-              }
-            }
-            
-            // If still no GIF URL, fetch from server if we have timer ID
-            if (!gifUrl && form && form.dataset.timerId) {
-              const timerId = form.dataset.timerId;
-              fetch(`/timers/${timerId}/status`, {
-                headers: { 'X-Requested-With': 'XMLHttpRequest' }
-              })
-              .then(res => res.json())
-              .then(data => {
-                if (data.needs_regen || !data.gif_ready || !data.gif_url || !embedInput) return;
-                if (data.gif_url && embedInput) {
-                  // Update form data attribute
-                  if (form) {
-                    form.dataset.gifUrl = data.gif_url;
-                    form.dataset.hasGif = '1';
-                  }
-                  // Build embed code
-                  const match = data.gif_url.match(/\/timers\/(\d+)\/([^\/]+)\.gif/);
-                  if (match) {
-                    const userId = match[1];
-                    const filename = match[2];
-                    const gettimerUrl = `${window.location.origin}/gettimer/${userId}/${filename}.gif`;
-                    embedInput.value = `<img src="${gettimerUrl}" alt="Countdown Counter">`;
-                  } else {
-                    const absUrl = new URL(data.gif_url, window.location.origin).href;
-                    embedInput.value = `<img src="${absUrl}" alt="Countdown Counter">`;
-                  }
-                }
-              })
-              .catch(err => console.error('Failed to fetch timer status:', err));
-            } else if (gifUrl) {
-              // Build embed code from GIF URL
-              const match = gifUrl.match(/\/timers\/(\d+)\/([^\/]+)\.gif/);
-              if (match) {
-                const userId = match[1];
-                const filename = match[2];
-                const gettimerUrl = `${window.location.origin}/gettimer/${userId}/${filename}.gif`;
-                embedInput.value = `<img src="${gettimerUrl}" alt="Countdown Counter">`;
-              } else {
-                // Try to extract from full URL
-                try {
-                  const urlObj = new URL(gifUrl);
-                  const pathParts = urlObj.pathname.split('/');
-                  if (pathParts.length >= 4 && pathParts[1] === 'timers') {
-                    const userId = pathParts[2];
-                    const filename = pathParts[3].replace('.gif', '');
-                    const gettimerUrl = `${window.location.origin}/gettimer/${userId}/${filename}.gif`;
-                    embedInput.value = `<img src="${gettimerUrl}" alt="Countdown Counter">`;
-                  } else {
-                    embedInput.value = `<img src="${gifUrl}" alt="Countdown Counter">`;
-                  }
-                } catch (e) {
-                  embedInput.value = `<img src="${gifUrl}" alt="Countdown Counter">`;
-                }
-              }
-            }
-          }
-        } else {
-          embedSection.classList.add('d-none');
-          // Show notice if inactive or no GIF
-          if (!isActive) {
-            embedNotice.textContent = 'Activate this timer to generate a shareable embed code.';
-            // embedNotice.classList.remove('d-none');
-          } else if (!hasGif) {
-            embedNotice.textContent = 'Generate a GIF to get the embed code.';
-            // embedNotice.classList.remove('d-none');
-          } else {
-            embedNotice.classList.add('d-none');
-          }
-        }
-      }
-    };
-    
-    statusSelect.addEventListener('change', updateEmbedVisibility);
-    // Also update on initial load
-    updateEmbedVisibility();
-  }
-
-  var btn = document.getElementById('embed_copy_btn');
-  if (!btn) return;
-  btn.addEventListener('click', function(){
-    var inp = document.getElementById('embed_input');
-    if (!inp || !inp.value) return;
-    window.copyToClipboard(inp.value).then(function(){
-      if (window.showToast) window.showToast('Embed code copied', 'success');
-    }).catch(function(){
-      if (window.showToast) window.showToast('Copy failed', 'danger');
-    });
-  });
 });
