@@ -6,13 +6,11 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
         <title>
-            @if(isset($timer))
+            @if(request()->routeIs('timers.edit'))
                 Edit Counter |
-            @else
+            @elseif(request()->routeIs('timers.create'))
                 Create New Counter |
             @endif
-            
-            
             {{ config('app.name', 'Laravel') }}</title>
       
         <link rel="icon" type="image/png" href="{{ asset('assets/images/small_dark.png') }}">
