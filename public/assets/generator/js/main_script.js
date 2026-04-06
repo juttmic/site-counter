@@ -165,6 +165,7 @@ function resolveSizingSnapshot() {
 
   const gifHeight = firstNumber(
     findFieldByKey('outputHeight')?.value,
+    findFieldByKey('height')?.value,
     overrides.outputHeight,
     overrides.height,
     defaults.outputHeight,
@@ -247,8 +248,77 @@ function clampCustomTextDistance() {
   }
 }
 
+function findGifHeightField() {
+  return findFieldByKey('outputHeight') || findFieldByKey('height');
+}
+
+function headingWantsCustomText() {
+  const textVal = (document.querySelector('input[name="custom_text"]')?.value || '').trim();
+  const textPos = document.querySelector('select[name="text_position"]')?.value || 'none';
+  return textVal !== '' && textPos !== 'none';
+}
+
+/** Last padding value used for GIF height sync (see syncGifHeightDeltaFromPaddingInput). */
+function initPaddingHeightSyncState() {
+  const distanceInput = document.querySelector('input[name="customTextDistance"]');
+  if (!distanceInput) return;
+  const p = Number(distanceInput.value);
+  distanceInput.dataset.heightSyncPad = String(Number.isFinite(p) ? p : 0);
+}
+
+/** When heading is active, move GIF/canvas height by the same delta as padding (including while padding is negative; floor: default, cap: 2× default). */
+function syncGifHeightDeltaFromPaddingInput(distanceInput) {
+  if (!headingWantsCustomText()) {
+    initPaddingHeightSyncState();
+    return;
+  }
+
+  const hf = findGifHeightField();
+  if (!hf || !currentSkinMetadata?.defaults) return;
+
+  const d = currentSkinMetadata.defaults;
+  const defH = firstNumber(d.outputHeight, d.height);
+  if (!Number.isFinite(defH) || defH <= 0) return;
+
+  const maxH = Math.floor(defH * 2);
+
+  let curPad = Number(distanceInput.value);
+  if (!Number.isFinite(curPad)) curPad = 0;
+
+  let prevPad = Number(distanceInput.dataset.heightSyncPad);
+  if (!Number.isFinite(prevPad)) prevPad = curPad;
+
+  const delta = curPad - prevPad;
+  if (delta === 0) return;
+
+  let curH = Number(hf.value);
+  if (!Number.isFinite(curH)) curH = defH;
+
+  let nextH = curH + delta;
+  if (nextH < defH) nextH = defH;
+  if (nextH > maxH) nextH = maxH;
+
+  hf.value = String(Math.round(nextH));
+}
+
+function adjustGifHeightForPaddingClampCorrection(padDelta) {
+  if (!padDelta || !headingWantsCustomText()) return;
+  const hf = findGifHeightField();
+  if (!hf || !currentSkinMetadata?.defaults) return;
+  const d = currentSkinMetadata.defaults;
+  const defH = firstNumber(d.outputHeight, d.height);
+  if (!Number.isFinite(defH) || defH <= 0) return;
+  const maxH = Math.floor(defH * 2);
+  let h = Number(hf.value);
+  if (!Number.isFinite(h)) h = defH;
+  h += padDelta;
+  if (h < defH) h = defH;
+  if (h > maxH) h = maxH;
+  hf.value = String(Math.round(h));
+}
+
 function enforceGifHeightMinimum() {
-  const heightField = findFieldByKey('outputHeight');
+  const heightField = findGifHeightField();
   if (!heightField) return;
   const sizing = resolveSizingSnapshot();
 
@@ -307,16 +377,44 @@ document.addEventListener('DOMContentLoaded', function() {
     swatch.addEventListener('click', () => customTextColorInput.click());
   }
   
-  // Sync distance field to skin_overrides when changed
+  // Sync distance field to skin_overrides when changed; keep GIF height in sync with padding
   const distanceInput = document.querySelector('input[name="customTextDistance"]');
   if (distanceInput) {
+    initPaddingHeightSyncState();
     const handleDistanceChange = () => {
+      const beforePadN = (() => {
+        const n = Number(distanceInput.value);
+        return Number.isFinite(n) ? n : 0;
+      })();
+
+      syncGifHeightDeltaFromPaddingInput(distanceInput);
+
       clampCustomTextDistance();
+
+      const afterPadN = (() => {
+        const n = Number(distanceInput.value);
+        return Number.isFinite(n) ? n : 0;
+      })();
+
+      if (afterPadN !== beforePadN) {
+        adjustGifHeightForPaddingClampCorrection(afterPadN - beforePadN);
+      }
+      distanceInput.dataset.heightSyncPad = String(afterPadN);
+
       enforceGifHeightMinimum();
       syncOverrides();
     };
     distanceInput.addEventListener('change', handleDistanceChange);
     distanceInput.addEventListener('input', handleDistanceChange);
+  }
+
+  const headingCustomTextInput = document.querySelector('input[name="custom_text"]');
+  const headingPositionSelect = document.querySelector('select[name="text_position"]');
+  if (headingCustomTextInput) {
+    headingCustomTextInput.addEventListener('change', () => initPaddingHeightSyncState());
+  }
+  if (headingPositionSelect) {
+    headingPositionSelect.addEventListener('change', () => initPaddingHeightSyncState());
   }
 
   // Sync custom text font size to skin_overrides when changed
@@ -1518,15 +1616,17 @@ function renderFields(metadata, savedOverrides = {}) {
     }
   }
 
-  const outputHeightField = findFieldByKey('outputHeight');
-  if (outputHeightField && !outputHeightField.dataset.boundGifHeight) {
+  const gifHField = findGifHeightField();
+  if (gifHField && !gifHField.dataset.boundGifHeight) {
     const handler = () => {
       clampCustomTextDistance();
       enforceGifHeightMinimum();
     };
-    outputHeightField.addEventListener('change', handler);
-    outputHeightField.dataset.boundGifHeight = '1';
+    gifHField.addEventListener('change', handler);
+    gifHField.dataset.boundGifHeight = '1';
   }
+
+  initPaddingHeightSyncState();
 
   // Sync initial state to hidden input
   syncOverrides();
