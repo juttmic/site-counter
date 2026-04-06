@@ -896,9 +896,9 @@
                                     <p class="text-muted small">Configure your counter settings to see the preview</p>
                                 </div>
                             </div>
-                            <div class="d-flex gap-2">
-                              <button id="save_btn" type="button" class="btn btn-primary">Save Counter</button>
+                            <div class="d-flex gap-2" style="justify-content: space-between;">
                               <button id="reset_design_btn" type="button" class="btn btn-outline-secondary" disabled>Reset Design</button>
+                              <button id="save_btn" type="button" class="btn btn-primary">Save Counter</button>
                             </div>
                             
                             
