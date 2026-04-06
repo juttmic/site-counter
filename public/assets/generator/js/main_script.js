@@ -1414,6 +1414,9 @@ function renderFields(metadata, savedOverrides = {}) {
   function renderGroup(group, parentContainer, level = 0) {
     const isFinalGroup = group.path.some(p => p.toLowerCase().includes('final'));
     const isVisibilityGroup = group.name === 'Visibility' || group.path.some(p => p.toLowerCase() === 'visibility');
+    const isLayoutGroup = group.name === 'Layout' || group.path.some(p => p.toLowerCase() === 'layout');
+    /** Keep groups in DOM for overrides/sync; hide in UI (days/seconds live in top bar; layout not editable here). */
+    const hideSkinGroupCard = isVisibilityGroup || isLayoutGroup;
 
     if (isVisibilityGroup && Array.isArray(group.fields) && group.fields.length > 0) {
       relocateVisibilityTogglesFromGroup(group);
@@ -1424,8 +1427,7 @@ function renderFields(metadata, savedOverrides = {}) {
 
     const col = document.createElement('div');
     col.className = 'col-12';
-    const showVisibilityGroup = (group.fields && group.fields.length > 0);
-    if (isVisibilityGroup && !showVisibilityGroup) {
+    if (hideSkinGroupCard) {
       col.classList.add('d-none');
     }
 
