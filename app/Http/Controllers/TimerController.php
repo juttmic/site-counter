@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Jobs\GenerateTimerGif;
 use App\Models\Timer;
 use App\Services\TimerGifGenerator;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -130,13 +131,18 @@ class TimerController extends Controller
         return redirect()->route('timers.edit', $timer)->with('status', 'Timer updated!');
     }
 
-    public function destroy(Timer $timer): RedirectResponse
+    public function destroy(Request $request, Timer $timer): RedirectResponse|JsonResponse
     {
         $this->authorizeOwner($timer);
         if ($timer->cache_key) {
             Cache::forget($timer->cache_key);
         }
         $timer->delete();
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json(['message' => 'Counter deleted.']);
+        }
+
         return redirect()->route('dashboard')->with('status', 'Timer deleted');
     }
 

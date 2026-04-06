@@ -21,7 +21,7 @@
                         <div class="alert alert-info">No counters yet. Create your first one!</div>
                     @else
                         @php($gifQueueMode = config('app.gif_generation_mode', 'queue') === 'queue')
-                        <div class="row g-3">
+                        <div class="row g-3" id="dashboard-timers-row">
                             @foreach($timers as $timer)
                             @php($dashboardGifPending = $gifQueueMode && ($timer->needsGifRegeneration() || empty($timer->gif_url)))
                             <div class="col-12 col-md-3" data-timer-card data-timer-id="{{ $timer->id }}" @if($dashboardGifPending) data-gif-pending="1" @endif>
@@ -95,7 +95,7 @@
                                         </a>
                                       </div>
                                       <div class="flex-grow-1 d-flex justify-content-end">
-                                        <form action="{{ route('timers.destroy', $timer) }}" method="POST" data-confirm="Delete this counter?" class="d-inline">
+                                        <form action="{{ route('timers.destroy', $timer) }}" method="POST" data-ajax-delete class="d-inline">
                                           @csrf
                                           @method('DELETE')
                                           <button type="submit" class="btn btn-outline-danger btn-sm" title="Delete" style="border-radius: 5px; margin-left: 2px;">
@@ -134,6 +134,76 @@
 
     <div id="dashboard-gif-poll-config" class="d-none" data-gif-status-url="{{ route('timers.gif-status') }}"></div>
     <script>
+    // AJAX delete (capture phase runs before layout's data-confirm handler)
+    document.addEventListener('submit', function(e){
+      var form = e.target && e.target.matches('form[data-ajax-delete]') ? e.target : null;
+      if (!form) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      if (typeof Swal === 'undefined') {
+        if (window.confirm('Delete this counter?')) {
+          submitDashboardDelete(form);
+        }
+        return;
+      }
+      Swal.fire({
+        text: 'Delete this counter?',
+        icon: 'warning',
+        iconHtml: '<i class="fa-solid fa-trash-can"></i>',
+        iconColor: '#dc3545',
+        showCancelButton: true,
+        confirmButtonText: 'Delete',
+        cancelButtonText: 'Cancel',
+        reverseButtons: true,
+        width: 360,
+        customClass: {
+          popup: 'swal2-confirm-delete',
+          confirmButton: 'btn btn-danger',
+          cancelButton: 'btn btn-secondary'
+        },
+        buttonsStyling: false
+      }).then(function(result){
+        if (result.isConfirmed) submitDashboardDelete(form);
+      });
+    }, true);
+
+    function submitDashboardDelete(form){
+      var btn = form.querySelector('button[type="submit"]');
+      if (btn) { btn.disabled = true; }
+      fetch(form.action, {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Accept': 'application/json',
+          'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') || {}).content || ''
+        },
+        body: new FormData(form),
+        credentials: 'same-origin'
+      }).then(function(res){
+        if (res.ok) {
+          var col = form.closest('[data-timer-card]');
+          if (col) col.remove();
+          var row = document.getElementById('dashboard-timers-row');
+          if (row && !row.querySelector('[data-timer-card]')) {
+            var wrap = row.closest('.rounded');
+            if (wrap) {
+              wrap.innerHTML = '<div class="alert alert-info">No counters yet. Create your first one!</div>';
+            }
+          }
+          if (window.showToast) window.showToast('Counter deleted', 'success');
+          return;
+        }
+        return res.json().catch(function(){ return {}; }).then(function(err){
+          var msg = (err && err.message) ? err.message : 'Could not delete counter';
+          if (window.showToast) window.showToast(msg, 'danger');
+        });
+      }).catch(function(){
+        if (window.showToast) window.showToast('Could not delete counter', 'danger');
+      }).finally(function(){
+        if (btn) { btn.disabled = false; }
+      });
+    }
+
     document.addEventListener('click', function(e){
       var prev = e.target.closest('a.dashboard-preview-btn.disabled');
       if (prev) e.preventDefault();
