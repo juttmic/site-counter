@@ -189,8 +189,11 @@ function resolveSizingSnapshot() {
   const textPos = document.querySelector('select[name="text_position"]')?.value || 'none';
   const wantsText = textVal !== '' && textPos !== 'none';
 
+  const MIN_CUSTOM_TEXT_DISTANCE = -400;
+  const MAX_CUSTOM_TEXT_DISTANCE = 400;
   const distanceRaw = Number(document.querySelector('input[name="customTextDistance"]')?.value);
-  const distance = Math.max(0, isNaN(distanceRaw) ? 0 : distanceRaw);
+  let distance = isNaN(distanceRaw) ? 0 : distanceRaw;
+  distance = Math.max(MIN_CUSTOM_TEXT_DISTANCE, Math.min(MAX_CUSTOM_TEXT_DISTANCE, distance));
 
   const combinedHeight = timerHeight + (wantsText ? (textSize + distance) : 0) + (edgePad * 2);
   const maxDistance = wantsText
@@ -219,22 +222,28 @@ function clampCustomTextDistance() {
   const sizing = resolveSizingSnapshot();
   const gifHeight = sizing.gifHeight;
   const timerHeight = sizing.timerHeight;
+  const MIN_CUSTOM_TEXT_DISTANCE = -400;
+  const MAX_CUSTOM_TEXT_DISTANCE = 400;
 
   if (isNaN(gifHeight) || isNaN(timerHeight)) {
     return;
   }
 
-  // Available vertical space for distance, based on GIF (canvas) height
   const maxDistance = sizing.maxDistance;
   const desired = Number(distanceInput.value);
-  if (!isNaN(desired) && desired > maxDistance) {
-    distanceInput.value = maxDistance;
-    const msg = `Increase GIF height to add more spacing. Max distance right now is ${maxDistance}px.`;
-    if (window.showToast) {
-      window.showToast(msg, 'warning');
-    } else {
-      console.warn(msg);
-    }
+  if (isNaN(desired)) {
+    return;
+  }
+  let next = desired;
+  if (desired < MIN_CUSTOM_TEXT_DISTANCE) {
+    next = MIN_CUSTOM_TEXT_DISTANCE;
+  } else if (desired > MAX_CUSTOM_TEXT_DISTANCE) {
+    next = MAX_CUSTOM_TEXT_DISTANCE;
+  } else if (desired > maxDistance) {
+    next = maxDistance;
+  }
+  if (next !== desired) {
+    distanceInput.value = next;
   }
 }
 

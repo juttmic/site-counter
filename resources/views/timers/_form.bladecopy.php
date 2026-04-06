@@ -833,12 +833,6 @@ function clampCustomTextDistance() {
   const desired = Number(distanceInput.value);
   if (!isNaN(desired) && desired > maxDistance) {
     distanceInput.value = maxDistance;
-    const msg = `Increase GIF height to add more spacing. Max distance right now is ${maxDistance}px.`;
-    if (window.showToast) {
-      window.showToast(msg, 'warning');
-    } else {
-      console.warn(msg);
-    }
   }
 }
 

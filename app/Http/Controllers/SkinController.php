@@ -199,7 +199,7 @@ class SkinController extends Controller
             $fields[] = ['key' => 'customTextColor', 'label' => 'Custom Text Color', 'type' => 'color'];
         }
         // Custom text spacing from timer
-        if (!isset($have['customTextDistance'])) { $fields[] = ['key' => 'customTextDistance', 'label' => 'Distance from Counter', 'type' => 'number', 'min' => 0, 'max' => 400, 'step' => 1]; }
+        if (!isset($have['customTextDistance'])) { $fields[] = ['key' => 'customTextDistance', 'label' => 'Distance from Counter', 'type' => 'number', 'min' => -400, 'max' => 400, 'step' => 1]; }
         // Output canvas width/height (overall GIF)
         if (!isset($have['outputWidth']))  { $fields[] = ['key' => 'outputWidth',  'label' => 'Output Width (GIF)',  'type' => 'number', 'min' => 50, 'max' => 3000, 'step' => 1]; }
         if (!isset($have['outputHeight'])) { $fields[] = ['key' => 'outputHeight', 'label' => 'Output Height (GIF)', 'type' => 'number', 'min' => 50, 'max' => 3000, 'step' => 1]; }

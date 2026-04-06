@@ -542,10 +542,10 @@ class TimerGifGenerator
         $requestedH = isset($skin['outputHeight']) ? (int) $skin['outputHeight'] : null;
         $borderWidth = (int) ($skin['borderWidth'] ?? 0);
         $edgePad = max(2, $borderWidth); // ensure border + a small safety pad
-        // Distance between timer and custom text (applies above or below)
+        // Distance between timer and custom text (applies above or below; may be negative for overlap)
         $distance = null;
         if (isset($skin['customTextDistance'])) {
-            $distance = max(0, (int) $skin['customTextDistance']);
+            $distance = max(-400, min(400, (int) $skin['customTextDistance']));
         } elseif (isset($skin['customTextMarginTop']) || isset($skin['customTextMarginBottom'])) {
             // Backward compatibility: use the larger of legacy margins
             $legacyTop = isset($skin['customTextMarginTop']) ? max(0, (int) $skin['customTextMarginTop']) : 0;
@@ -1360,7 +1360,7 @@ class TimerGifGenerator
         // Distance for custom text
         $distance = null;
         if (isset($skin['customTextDistance'])) {
-            $distance = max(0, (int) $skin['customTextDistance']);
+            $distance = max(-400, min(400, (int) $skin['customTextDistance']));
         } elseif (isset($skin['customTextMarginTop']) || isset($skin['customTextMarginBottom'])) {
             $legacyTop = isset($skin['customTextMarginTop']) ? max(0, (int) $skin['customTextMarginTop']) : 0;
             $legacyBottom = isset($skin['customTextMarginBottom']) ? max(0, (int) $skin['customTextMarginBottom']) : 0;
