@@ -879,7 +879,7 @@ function renderFields(metadata, savedOverrides = {}) {
   // Note: If a field is explicitly listed in the fields array with a group, it should be shown.
   // Only hide fields that are truly internal/not user-editable (fontPath, custom text fields)
   // Fields like showDays, layout, animation, width, height can now be shown if specified in skin JSON
-  const alwaysHiddenFields = new Set(['fontPath', 'font', 'customTextColor', 'customTextDistance', 'customTextFont', 'custom_text', 'text_position', 'finalBackground', 'finalTextColor', 'width', 'height']);
+  const alwaysHiddenFields = new Set(['fontPath', 'font', 'customTextColor', 'customTextDistance', 'customTextFont', 'custom_text', 'text_position', 'finalBackground', 'finalTextColor', 'width', 'height', 'showSeconds']);
   alwaysHiddenFields.forEach(key => {
     if (savedOverrides[key] !== undefined) {
       currentHiddenOverrides[key] = savedOverrides[key];
@@ -1080,7 +1080,7 @@ function renderFields(metadata, savedOverrides = {}) {
   // Define field size keys for layout
   const smallKeys = new Set(['fontSize','separator','layout','animation','showDays','showHours','showMinutes','showSeconds','width','height','outputWidth','outputHeight','borderWidth','borderColor']);
   const marginKeys = new Set(['customTextDistance','textMarginTop','textMarginBottom','marginTop','marginBottom','labelMarginTop','labelMarginBottom']);
-  const visibilityToggleKeys = new Set(['showDays','showSeconds']);
+  const visibilityToggleKeys = new Set(['showDays']);
 
   const createFieldInput = (field, value, options = {}) => {
     const key = field.key;
