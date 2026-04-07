@@ -1069,6 +1069,44 @@ function setupCollapsibles(root) {
   });
 }
 
+/** Unique random #rrggbb (lowercase) for color inputs. */
+function randomDistinctHexColors(count) {
+  const used = new Set();
+  const out = [];
+  while (out.length < count) {
+    const r = Math.floor(Math.random() * 256);
+    const g = Math.floor(Math.random() * 256);
+    const b = Math.floor(Math.random() * 256);
+    const hex = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+    if (!used.has(hex)) {
+      used.add(hex);
+      out.push(hex);
+    }
+  }
+  return out;
+}
+
+/** Assigns a unique random color to each Design (Appearance) group color picker. */
+function colorizeDesignGroupColors(groupBodyEl) {
+  if (!groupBodyEl) {
+    return;
+  }
+  const inputs = groupBodyEl.querySelectorAll('input.color-picker-native[data-key]');
+  const list = Array.from(inputs);
+  if (list.length === 0) {
+    return;
+  }
+  const colors = randomDistinctHexColors(list.length);
+  list.forEach((input, i) => {
+    input.value = colors[i];
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+  if (typeof syncOverrides === 'function') {
+    syncOverrides();
+  }
+}
+
 function renderFields(metadata, savedOverrides = {}) {
   currentSkinMetadata = metadata;
   currentHiddenOverrides = {};
@@ -1695,7 +1733,10 @@ function renderFields(metadata, savedOverrides = {}) {
     let displayTitle = group.title;
     if (group.name === 'Appearance' || group.title === 'Appearance') displayTitle = 'Design';
     else if (group.name === 'Final Screen' || group.title === 'Final Screen' || group.path?.some(p => String(p).toLowerCase().includes('final'))) displayTitle = 'End Message';
-    header.innerHTML = `<span class="text-uppercase text-muted fw-semibold small">${displayTitle}</span><i class="bi bi-chevron-down collapse-icon float-end"></i>`;
+    const isDesignGroup =
+      group.name === 'Appearance' ||
+      group.title === 'Appearance' ||
+      group.path.some(p => String(p).toLowerCase() === 'appearance');
 
     const body = document.createElement('div');
     body.className = 'card-body collapsible-body';
@@ -1708,6 +1749,26 @@ function renderFields(metadata, savedOverrides = {}) {
     }
 
     renderGroupFieldsForCategory(body, group, isVisibilityGroup);
+
+    if (isDesignGroup) {
+      header.classList.add('d-flex', 'align-items-center', 'justify-content-between', 'gap-2', 'flex-wrap');
+      const titleWrap = document.createElement('div');
+      titleWrap.className = 'd-flex align-items-center gap-2';
+      titleWrap.innerHTML = `<span class="text-uppercase text-muted fw-semibold small">${displayTitle}</span><i class="bi bi-chevron-down collapse-icon"></i>`;
+      const colorizerBtn = document.createElement('button');
+      colorizerBtn.type = 'button';
+      colorizerBtn.className = 'btn btn-sm btn-outline-secondary';
+      colorizerBtn.textContent = 'Colorizer';
+      colorizerBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        colorizeDesignGroupColors(body);
+      });
+      header.appendChild(titleWrap);
+      header.appendChild(colorizerBtn);
+    } else {
+      header.innerHTML = `<span class="text-uppercase text-muted fw-semibold small">${displayTitle}</span><i class="bi bi-chevron-down collapse-icon float-end"></i>`;
+    }
 
     card.appendChild(header);
     card.appendChild(body);
