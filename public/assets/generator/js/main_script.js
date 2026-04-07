@@ -1757,8 +1757,10 @@ function renderFields(metadata, savedOverrides = {}) {
       titleWrap.innerHTML = `<span class="text-uppercase text-muted fw-semibold small">${displayTitle}</span><i class="bi bi-chevron-down collapse-icon"></i>`;
       const colorizerBtn = document.createElement('button');
       colorizerBtn.type = 'button';
-      colorizerBtn.className = 'btn btn-sm btn-outline-secondary';
-      colorizerBtn.textContent = 'Colorizer';
+      colorizerBtn.className = 'skin-colorizer-btn';
+      colorizerBtn.setAttribute('title', 'Assign random unique colors to all fields in this section');
+      colorizerBtn.innerHTML =
+        '<i class="bi bi-palette-fill" aria-hidden="true"></i><span>Colorizer</span>';
       colorizerBtn.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();

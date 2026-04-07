@@ -561,6 +561,65 @@
     color: #fff;
 }
 
+  /* Colorizer (Design group) — matches modern inputs / color picker */
+  .skin-colorizer-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.85rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    font-family: 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: #374151;
+    background: linear-gradient(180deg, #ffffff 0%, #f9fafb 100%);
+    border: 1.5px solid #e5e7eb;
+    border-radius: 999px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease, transform 0.15s ease;
+    flex-shrink: 0;
+    line-height: 1.2;
+  }
+  .skin-colorizer-btn:hover {
+    color: #1d4ed8;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12), 0 2px 6px rgba(0, 0, 0, 0.06);
+  }
+  .skin-colorizer-btn:focus-visible {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
+  }
+  .skin-colorizer-btn:active {
+    transform: scale(0.98);
+  }
+  .skin-colorizer-btn .bi {
+    font-size: 0.9rem;
+    color: #6366f1;
+    transition: color 0.2s ease;
+  }
+  .skin-colorizer-btn:hover .bi {
+    color: #2563eb;
+  }
+  .dark .skin-colorizer-btn {
+    color: #e9ecef;
+    background: linear-gradient(180deg, #3d4449 0%, #343a40 100%);
+    border-color: #495057;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  }
+  .dark .skin-colorizer-btn:hover {
+    color: #93c5fd;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2), 0 2px 6px rgba(0, 0, 0, 0.25);
+  }
+  .dark .skin-colorizer-btn .bi {
+    color: #a5b4fc;
+  }
+  .dark .skin-colorizer-btn:hover .bi {
+    color: #93c5fd;
+  }
+
   .type-toggle-top .toggle-pill-group{
     min-width: 120px !important;
   }
