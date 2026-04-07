@@ -317,6 +317,24 @@ function clampCustomTextDistance() {
   } else if (desired > maxDistance) {
     next = maxDistance;
   }
+
+  const defH = getSkinDefaultOutputHeight();
+  const hf = findGifHeightField();
+  const gifFromDom = hf?.value;
+  const gifDomN = Number(gifFromDom);
+  const effectiveGifH = Number.isFinite(gifDomN) ? gifDomN : gifHeight;
+  if (sizing.wantsText && Number.isFinite(defH) && defH > 0 && Number.isFinite(effectiveGifH)) {
+    const atDefaultHeight = effectiveGifH <= defH + 2;
+    console.log(atDefaultHeight,next, effectiveGifH, defH )
+    if (atDefaultHeight && next < 0) {
+      const floorAtDefault = Math.max(
+        MIN_CUSTOM_TEXT_DISTANCE,
+        minCustomTextDistanceAtSkinDefault(defH, sizing.edgePad, timerHeight, sizing.textSize)
+      );
+      next = Math.max(next, floorAtDefault);
+    }
+  }
+
   if (next !== desired) {
     distanceInput.value = next;
   }
@@ -324,6 +342,24 @@ function clampCustomTextDistance() {
 
 function findGifHeightField() {
   return findFieldByKey('outputHeight') || findFieldByKey('height');
+}
+
+/** Skin default GIF height (floor used by syncGifHeightDeltaFromPaddingInput). */
+function getSkinDefaultOutputHeight() {
+  const d = currentSkinMetadata?.defaults || {};
+  return firstNumber(d.outputHeight, d.height);
+}
+
+/**
+ * Minimum customTextDistance when output height is at default: layout need must not drop below defH.
+ * Matches timer + max(0, text + pad) + 2*edge === defH while text + pad >= 0 (same as TimerGifGenerator).
+ */
+function minCustomTextDistanceAtSkinDefault(defH, edgePad, timerH, textH) {
+  alert("S")
+  if (!Number.isFinite(defH) || defH <= 0 || !Number.isFinite(timerH) || !Number.isFinite(textH) || !Number.isFinite(edgePad)) {
+    return -400;
+  }
+  return Math.floor(defH - 2 * edgePad - timerH - textH);
 }
 
 function headingWantsCustomText() {
