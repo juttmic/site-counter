@@ -7,6 +7,20 @@ if (!document.getElementById('fa-cdn')) {
   document.head.appendChild(link);
 }
 
+/**
+ * Eagerly request @font-face loading. Browsers defer downloads until text uses the face;
+ * without this, Select2 sample spans often paint in the fallback face until scroll/repaint.
+ * @param {string[]} fontSpecs e.g. `16px 'CounterFont_MyFont'`
+ */
+function primeDocumentFontFaces(fontSpecs) {
+  if (!document.fonts?.load || !fontSpecs?.length) {
+    return Promise.resolve();
+  }
+  return Promise.all(
+    fontSpecs.map((spec) => document.fonts.load(spec).catch(() => {}))
+  );
+}
+
 let isInitialLoad = true;
 let initialLoadComplete = false;
 
@@ -661,6 +675,7 @@ document.addEventListener('DOMContentLoaded', function() {
 @font-face {
   font-family: '${family}';
   src: url('${srcUrl}') format('${format}');
+  font-display: swap;
   font-weight: normal;
   font-style: normal;
 }
@@ -668,6 +683,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       });
       styleEl.textContent = css;
+      const fontFaceSpecs = fonts.map((f) => `16px '${toFamilyName(f)}'`);
+      const fontsPrimePromise = primeDocumentFontFaces(fontFaceSpecs);
       const saved = fontSelect.dataset.savedValue;
       if (saved && fonts.includes(saved)) {
         fontSelect.value = saved;
@@ -705,6 +722,22 @@ document.addEventListener('DOMContentLoaded', function() {
           templateResult: formatFontOption,
           templateSelection: formatFontOption,
           escapeMarkup: (m) => m
+        });
+        const nudgeFontDropdownRepaint = () => {
+          const opts = document.querySelector('.select2-container--open .select2-results__options');
+          if (!opts) return;
+          const prev = opts.style.transform;
+          opts.style.transform = 'translateZ(0.0001px)';
+          requestAnimationFrame(() => {
+            opts.style.transform = prev;
+          });
+        };
+        $fontSelect.on('select2:open', () => {
+          fontsPrimePromise.then(() => {
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => nudgeFontDropdownRepaint());
+            });
+          });
         });
         // Ensure preview updates when selection changes via Select2
         $fontSelect.on('change select2:select select2:clear', () => {
