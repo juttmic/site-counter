@@ -402,6 +402,28 @@ class TimerGifGenerator
         return $skin;
     }
 
+    /**
+     * When the output canvas is taller than the timer + heading layout, distribute the extra height.
+     * Heading top: align layout to the canvas top (extra space below) so the title stays on the top edge
+     * while padding shrinks instead of vertically centering the block away from that edge.
+     * Heading bottom: align to the canvas bottom (extra space above). Otherwise keep the block centered.
+     */
+    private function outerTopPaddingForCanvas(int $canvasH, int $layoutHeight, bool $hasText, string $textPosition): int
+    {
+        $extra = max(0, $canvasH - $layoutHeight);
+        if ($extra === 0) {
+            return 0;
+        }
+        if ($hasText && $textPosition === 'top') {
+            return 0;
+        }
+        if ($hasText && $textPosition === 'bottom') {
+            return $extra;
+        }
+
+        return (int) floor($extra / 2);
+    }
+
     public function renderPngFrame(int $secondsRemaining, array $skin, ?string $customText, string $textPosition): string
     {
         $skin = $this->resolveVisibilityLayout($skin);
@@ -589,20 +611,17 @@ class TimerGifGenerator
         $outerTopPadding = 0;
         if ($requestedH && $requestedH > 0) {
             $canvasH = max($layoutHeight, $requestedH);
-            $outerTopPadding = max(0, (int) floor(($canvasH - $layoutHeight) / 2));
+            $outerTopPadding = $this->outerTopPaddingForCanvas($canvasH, $layoutHeight, $hasText, $textPosition);
         }
 
         $topPadding = $outerTopPadding + $innerTopPadding + $edgePad;
 
+        // Bottom: timer at topPadding; gap = effectiveDistance; then text (see ty below).
+        // Top: heading anchored at topPadding (+ ascent for TTF); timer at topPadding + textH + effectiveDistance.
+        // effectiveDistance appears only in the timer Y (top) or text Y (bottom) — not both (avoids double overlap).
         $offsetY = $topPadding;
         if ($hasText && $textPosition === 'top') {
-            // Overlap (negative distance): anchor timer like bottom text — do not shift timer upward;
-            // move the heading down by -effectiveDistance so only the text overlaps the counter.
-            if ($effectiveDistance < 0) {
-                $offsetY += $textH + $effectiveDistance;
-            } else {
-                $offsetY += $textH + $effectiveDistance;
-            }
+            $offsetY += $textH + $effectiveDistance;
         }
         // For bottom position, timer stays at topPadding; text is drawn after timer using effectiveDistance
         // If output width was not set above, fall back to natural max
@@ -651,7 +670,7 @@ class TimerGifGenerator
             if (is_file($font)) {
                 $tx = (int) (($canvasW - $textW) / 2);
                 $ty = ($textPosition === 'top')
-                    ? (int) ($topPadding + $textAscent - ($effectiveDistance < 0 ? $effectiveDistance : 0))
+                    ? (int) ($topPadding + $textAscent)
                     : (int) ($offsetY + $timerH + $effectiveDistance + $textAscent);
                 $this->logDraw('Render custom text (TTF)', [
                     'shape' => 'text',
@@ -670,7 +689,7 @@ class TimerGifGenerator
                 $builtInTextH = imagefontheight($bi2);
                 $tx = (int) (($canvasW - $textW) / 2);
                 $ty = ($textPosition === 'top')
-                    ? (int) ($topPadding - ($effectiveDistance < 0 ? $effectiveDistance : 0))
+                    ? (int) $topPadding
                     : (int) ($offsetY + $timerH + $effectiveDistance);
                 $this->logDraw('Render custom text (GD built-in)', [
                     'shape' => 'text',
@@ -1404,16 +1423,12 @@ class TimerGifGenerator
         $outerTopPadding = 0;
         if ($requestedH && $requestedH > 0) {
             $canvasH = max($layoutHeight, $requestedH);
-            $outerTopPadding = max(0, (int) floor(($canvasH - $layoutHeight) / 2));
+            $outerTopPadding = $this->outerTopPaddingForCanvas($canvasH, $layoutHeight, $hasText, $textPosition);
         }
         $topPadding = $outerTopPadding + $innerTopPadding + $edgePad;
         $offsetY = $topPadding;
         if ($hasText && $textPosition === 'top') {
-            if ($effectiveDistance < 0) {
-                $offsetY += $textH;
-            } else {
-                $offsetY += $textH + $effectiveDistance;
-            }
+            $offsetY += $textH + $effectiveDistance;
         }
 
         $im = imagecreatetruecolor($canvasW, $canvasH);

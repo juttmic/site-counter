@@ -351,9 +351,11 @@ function naturalLayoutNeedForPad(timerH, textH, edgePad, pad) {
 
 /**
  * When header text is on, GIF/canvas height tracks padding (floor: skin default, cap: 2× default).
- * Nonnegative padding: 1:1. Decreasing into negative: height decreases with padding until default;
- * deeper negative does not shrink further. Increasing from negative: height grows only when layout
- * need (timer + max(0, text + pad) + 2×edge) exceeds the skin default GIF height.
+ * Nonnegative padding: 1:1 with layout need. When padding decreases, height follows the change in
+ * natural layout need (timer + max(0, text + pad) + 2×edge) while current height is above default,
+ * so the canvas does not keep extra slack that vertically centers the stack and pulls top headings
+ * away from the top edge. At default height, further negative padding does not shrink height.
+ * Increasing from negative: height grows when layout need exceeds the skin default GIF height.
  */
 function syncGifHeightDeltaFromPaddingInput(distanceInput) {
   if (!headingWantsCustomText()) {
@@ -388,27 +390,32 @@ function syncGifHeightDeltaFromPaddingInput(distanceInput) {
   const { edgePad, timerHeight, textSize: textH } = sizing;
   const prevNeed = naturalLayoutNeedForPad(timerHeight, textH, edgePad, prevPad);
   const curNeed = naturalLayoutNeedForPad(timerHeight, textH, edgePad, curPad);
+  const needDelta = Math.round(curNeed - prevNeed);
 
-  const heightDeltaFromNegativeMotion = () =>
-    Math.round(Math.max(curNeed, defH) - Math.max(prevNeed, defH));
+  /** Shrink GIF height with layout need, but not below skin default. */
+  const shrinkTowardDefaultFollowingLayout = () => {
+    if (curH <= defH) {
+      return 0;
+    }
+    let d = needDelta;
+    if (curH + d < defH) {
+      d = defH - curH;
+    }
+    return d;
+  };
 
   let heightDelta;
   if (prevPad >= 0 && curPad >= 0) {
     heightDelta = deltaPad;
   } else if (prevPad >= 0 && curPad < 0) {
-    heightDelta = deltaPad;
-  } else if (prevPad < 0 && curPad < 0) {
-    if (deltaPad < 0) {
-      if (curH > defH) {
-        heightDelta = Math.max(deltaPad, defH - curH);
-      } else {
-        heightDelta = 0;
-      }
-    } else {
-      heightDelta = heightDeltaFromNegativeMotion();
+    heightDelta = needDelta;
+    if (curH + heightDelta < defH) {
+      heightDelta = defH - curH;
     }
+  } else if (deltaPad < 0) {
+    heightDelta = shrinkTowardDefaultFollowingLayout();
   } else {
-    heightDelta = heightDeltaFromNegativeMotion();
+    heightDelta = Math.round(Math.max(curNeed, defH) - Math.max(prevNeed, defH));
   }
 
   let nextH = curH + heightDelta;
