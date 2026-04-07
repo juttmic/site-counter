@@ -576,7 +576,13 @@ class TimerGifGenerator
 
         // Center the combined block (text + timer) within the layout height (timer-based)
         $combinedHeight = $timerH + ($hasText ? ($textH + $effectiveDistance) : 0);
-        $innerTopPadding = max(0, (int) floor(($layoutHeight - ($edgePad * 2) - $combinedHeight) / 2));
+        $innerH = $layoutHeight - ($edgePad * 2);
+        // Overlap (negative distance) with a timer-tall column: do not center using text+gap — that
+        // adds bogus vertical slack while text overlaps the counter. Full stack centering applies
+        // when layout grows past the timer (extra content height / larger output canvas).
+        $useOverlapInnerCentering = $hasText && $distance < 0 && $innerH === $timerH;
+        $centeringStackHeight = $useOverlapInnerCentering ? $timerH : $combinedHeight;
+        $innerTopPadding = max(0, (int) floor(($innerH - $centeringStackHeight) / 2));
 
         // If an explicit output height is provided, add outer padding without changing the spacing math
         $canvasH = $layoutHeight;
@@ -590,7 +596,13 @@ class TimerGifGenerator
 
         $offsetY = $topPadding;
         if ($hasText && $textPosition === 'top') {
-            $offsetY += $textH + $effectiveDistance;
+            // Overlap (negative distance): anchor timer like bottom text — do not shift timer upward;
+            // move the heading down by -effectiveDistance so only the text overlaps the counter.
+            if ($effectiveDistance < 0) {
+                $offsetY += $textH + $effectiveDistance;
+            } else {
+                $offsetY += $textH + $effectiveDistance;
+            }
         }
         // For bottom position, timer stays at topPadding; text is drawn after timer using effectiveDistance
         // If output width was not set above, fall back to natural max
@@ -639,7 +651,7 @@ class TimerGifGenerator
             if (is_file($font)) {
                 $tx = (int) (($canvasW - $textW) / 2);
                 $ty = ($textPosition === 'top')
-                    ? (int) ($topPadding + $textAscent)
+                    ? (int) ($topPadding + $textAscent - ($effectiveDistance < 0 ? $effectiveDistance : 0))
                     : (int) ($offsetY + $timerH + $effectiveDistance + $textAscent);
                 $this->logDraw('Render custom text (TTF)', [
                     'shape' => 'text',
@@ -658,7 +670,7 @@ class TimerGifGenerator
                 $builtInTextH = imagefontheight($bi2);
                 $tx = (int) (($canvasW - $textW) / 2);
                 $ty = ($textPosition === 'top')
-                    ? (int) ($topPadding)
+                    ? (int) ($topPadding - ($effectiveDistance < 0 ? $effectiveDistance : 0))
                     : (int) ($offsetY + $timerH + $effectiveDistance);
                 $this->logDraw('Render custom text (GD built-in)', [
                     'shape' => 'text',
@@ -1384,7 +1396,10 @@ class TimerGifGenerator
         }
 
         $combinedHeight = $timerH + ($hasText ? ($textH + $effectiveDistance) : 0);
-        $innerTopPadding = max(0, (int) floor(($layoutHeight - ($edgePad * 2) - $combinedHeight) / 2));
+        $innerH = $layoutHeight - ($edgePad * 2);
+        $useOverlapInnerCentering = $hasText && $distance < 0 && $innerH === $timerH;
+        $centeringStackHeight = $useOverlapInnerCentering ? $timerH : $combinedHeight;
+        $innerTopPadding = max(0, (int) floor(($innerH - $centeringStackHeight) / 2));
         $canvasH = $layoutHeight;
         $outerTopPadding = 0;
         if ($requestedH && $requestedH > 0) {
@@ -1394,7 +1409,11 @@ class TimerGifGenerator
         $topPadding = $outerTopPadding + $innerTopPadding + $edgePad;
         $offsetY = $topPadding;
         if ($hasText && $textPosition === 'top') {
-            $offsetY += $textH + $effectiveDistance;
+            if ($effectiveDistance < 0) {
+                $offsetY += $textH;
+            } else {
+                $offsetY += $textH + $effectiveDistance;
+            }
         }
 
         $im = imagecreatetruecolor($canvasW, $canvasH);
