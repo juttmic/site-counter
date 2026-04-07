@@ -452,7 +452,7 @@ function enforceGifHeightMinimum() {
     heightField.value = applied;
     const msg = `GIF height must be at least ${required}px to fit the timer and text.`;
     if (window.showToast) {
-      window.showToast(msg, 'warning');
+      // window.showToast(msg, 'warning');
     } else {
       console.warn(msg);
     }
