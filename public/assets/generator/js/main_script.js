@@ -332,6 +332,7 @@ function clampCustomTextDistance() {
         minCustomTextDistanceAtSkinDefault(defH, sizing.edgePad, timerHeight, sizing.textSize)
       );
       next = Math.max(next, floorAtDefault);
+      console.log(floorAtDefault, next)
     }
   }
 
@@ -347,7 +348,7 @@ function findGifHeightField() {
 /** Skin default GIF height (floor used by syncGifHeightDeltaFromPaddingInput). */
 function getSkinDefaultOutputHeight() {
   const d = currentSkinMetadata?.defaults || {};
-  return firstNumber(d.outputHeight, d.height);
+  return 278;//firstNumber(d.outputHeight, d.height);
 }
 
 /**
@@ -355,7 +356,7 @@ function getSkinDefaultOutputHeight() {
  * Matches timer + max(0, text + pad) + 2*edge === defH while text + pad >= 0 (same as TimerGifGenerator).
  */
 function minCustomTextDistanceAtSkinDefault(defH, edgePad, timerH, textH) {
-  alert("S")
+  
   if (!Number.isFinite(defH) || defH <= 0 || !Number.isFinite(timerH) || !Number.isFinite(textH) || !Number.isFinite(edgePad)) {
     return -400;
   }
