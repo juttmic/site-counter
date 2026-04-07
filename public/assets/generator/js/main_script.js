@@ -340,11 +340,20 @@ function initPaddingHeightSyncState() {
   distanceInput.dataset.heightSyncPad = String(Number.isFinite(p) ? p : 0);
 }
 
+/** Timer + heading stack height for a padding value (matches TimerGifGenerator layout). */
+function naturalLayoutNeedForPad(timerH, textH, edgePad, pad) {
+  const p = Number.isFinite(pad) ? pad : 0;
+  const th = Number.isFinite(timerH) ? timerH : 0;
+  const te = Number.isFinite(textH) ? textH : 0;
+  const ep = Number.isFinite(edgePad) ? edgePad : 2;
+  return th + Math.max(0, te + p) + 2 * ep;
+}
+
 /**
- * When header text is on, GIF/canvas height tracks padding (floor: default, cap: 2× default).
- * Negative padding (overlap): do not change height while padding stays below 0 or crosses into it.
- * Height only increases again once padding is back at 0 or above; then it tracks the nonnegative
- * amount (step from negative to +5 adds 5px, not the full delta from the negative value).
+ * When header text is on, GIF/canvas height tracks padding (floor: skin default, cap: 2× default).
+ * Nonnegative padding: 1:1. Decreasing into negative: height decreases with padding until default;
+ * deeper negative does not shrink further. Increasing from negative: height grows only when layout
+ * need (timer + max(0, text + pad) + 2×edge) exceeds the skin default GIF height.
  */
 function syncGifHeightDeltaFromPaddingInput(distanceInput) {
   if (!headingWantsCustomText()) {
@@ -355,8 +364,10 @@ function syncGifHeightDeltaFromPaddingInput(distanceInput) {
   const hf = findGifHeightField();
   if (!hf || !currentSkinMetadata?.defaults) return;
 
-  const d = currentSkinMetadata.defaults;
-  const defH = firstNumber(d.outputHeight, d.height);
+  const defH = firstNumber(
+    currentSkinMetadata.defaults.outputHeight,
+    currentSkinMetadata.defaults.height
+  );
   if (!Number.isFinite(defH) || defH <= 0) return;
 
   const maxH = Math.floor(defH * 2);
@@ -373,13 +384,31 @@ function syncGifHeightDeltaFromPaddingInput(distanceInput) {
   let curH = Number(hf.value);
   if (!Number.isFinite(curH)) curH = defH;
 
+  const sizing = resolveSizingSnapshot();
+  const { edgePad, timerHeight, textSize: textH } = sizing;
+  const prevNeed = naturalLayoutNeedForPad(timerHeight, textH, edgePad, prevPad);
+  const curNeed = naturalLayoutNeedForPad(timerHeight, textH, edgePad, curPad);
+
+  const heightDeltaFromNegativeMotion = () =>
+    Math.round(Math.max(curNeed, defH) - Math.max(prevNeed, defH));
+
   let heightDelta;
-  if (curPad < 0) {
-    heightDelta = 0;
-  } else if (prevPad < 0) {
-    heightDelta = curPad;
-  } else {
+  if (prevPad >= 0 && curPad >= 0) {
     heightDelta = deltaPad;
+  } else if (prevPad >= 0 && curPad < 0) {
+    heightDelta = deltaPad;
+  } else if (prevPad < 0 && curPad < 0) {
+    if (deltaPad < 0) {
+      if (curH > defH) {
+        heightDelta = Math.max(deltaPad, defH - curH);
+      } else {
+        heightDelta = 0;
+      }
+    } else {
+      heightDelta = heightDeltaFromNegativeMotion();
+    }
+  } else {
+    heightDelta = heightDeltaFromNegativeMotion();
   }
 
   let nextH = curH + heightDelta;
@@ -393,8 +422,10 @@ function adjustGifHeightForPaddingClampCorrection(padDelta) {
   if (!padDelta || !headingWantsCustomText()) return;
   const hf = findGifHeightField();
   if (!hf || !currentSkinMetadata?.defaults) return;
-  const d = currentSkinMetadata.defaults;
-  const defH = firstNumber(d.outputHeight, d.height);
+  const defH = firstNumber(
+    currentSkinMetadata.defaults.outputHeight,
+    currentSkinMetadata.defaults.height
+  );
   if (!Number.isFinite(defH) || defH <= 0) return;
   const maxH = Math.floor(defH * 2);
   let h = Number(hf.value);
