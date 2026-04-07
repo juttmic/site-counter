@@ -326,7 +326,17 @@ function clampCustomTextDistance() {
     return;
   }
 
-  const maxDistance = sizing.maxDistance;
+  const metaDefH = getSkinDefaultOutputHeight();
+  /** Upper bound for padding: room inside max GIF height (2× skin default), not current height — so positive padding can grow until sync hits maxH. */
+  let maxPositivePadding = sizing.maxDistance;
+  if (sizing.wantsText && Number.isFinite(metaDefH) && metaDefH > 0) {
+    const capH = Math.floor(metaDefH * 2);
+    maxPositivePadding = Math.max(
+      0,
+      Math.floor(capH - sizing.edgePad * 2 - timerHeight - sizing.textSize)
+    );
+  }
+
   const desired = Number(distanceInput.value);
   if (isNaN(desired)) {
     return;
@@ -336,11 +346,9 @@ function clampCustomTextDistance() {
     next = MIN_CUSTOM_TEXT_DISTANCE;
   } else if (desired > MAX_CUSTOM_TEXT_DISTANCE) {
     next = MAX_CUSTOM_TEXT_DISTANCE;
-  } else if (desired > maxDistance) {
-    next = maxDistance;
+  } else if (desired > maxPositivePadding) {
+    next = maxPositivePadding;
   }
-
-  const metaDefH = getSkinDefaultOutputHeight();
   const gifFromDom = findGifHeightField()?.value;
   const gifDomN = Number(gifFromDom);
   const effectiveGifH = Number.isFinite(gifDomN) ? gifDomN : gifHeight;
