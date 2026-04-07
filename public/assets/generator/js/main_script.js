@@ -291,6 +291,28 @@ function resolveSizingSnapshot() {
   };
 }
 
+/**
+ * At default GIF height, negative padding cannot go past full vertical overlap of the heading:
+ * text + pad >= 0  =>  pad >= -textSize (same units as TimerGifGenerator natural stack).
+ */
+function minNegativePaddingWhenAtDefaultHeight(textSizePx) {
+  const te = Number.isFinite(textSizePx) ? textSizePx : 0;
+  if (te <= 0) return -400;
+  return Math.max(-400, -Math.round(te));
+}
+
+/** "Default height" band: metadata default or the layout minimum at padding 0, whichever is larger. */
+function isGifHeightAtDefaultBand(effectiveGifH, metaDefH, timerH, textH, edgePad) {
+  if (!Number.isFinite(effectiveGifH) || !Number.isFinite(metaDefH) || metaDefH <= 0) {
+    return false;
+  }
+  const layoutMin = Math.max(
+    metaDefH,
+    Math.ceil(naturalLayoutNeedForPad(timerH, textH, edgePad, 0))
+  );
+  return effectiveGifH <= layoutMin + 2;
+}
+
 function clampCustomTextDistance() {
   const distanceInput = document.querySelector('input[name="customTextDistance"]');
   if (!distanceInput) return;
@@ -318,21 +340,19 @@ function clampCustomTextDistance() {
     next = maxDistance;
   }
 
-  const defH = getSkinDefaultOutputHeight();
-  const hf = findGifHeightField();
-  const gifFromDom = hf?.value;
+  const metaDefH = getSkinDefaultOutputHeight();
+  const gifFromDom = findGifHeightField()?.value;
   const gifDomN = Number(gifFromDom);
   const effectiveGifH = Number.isFinite(gifDomN) ? gifDomN : gifHeight;
-  if (sizing.wantsText && Number.isFinite(defH) && defH > 0 && Number.isFinite(effectiveGifH)) {
-    const atDefaultHeight = effectiveGifH <= defH + 2;
-    console.log(atDefaultHeight,next, effectiveGifH, defH )
-    if (atDefaultHeight && next < 0) {
-      const floorAtDefault = Math.max(
-        MIN_CUSTOM_TEXT_DISTANCE,
-        minCustomTextDistanceAtSkinDefault(defH, sizing.edgePad, timerHeight, sizing.textSize)
-      );
-      next = Math.max(next, floorAtDefault);
-      console.log(floorAtDefault, next)
+  if (
+    sizing.wantsText &&
+    Number.isFinite(metaDefH) &&
+    metaDefH > 0 &&
+    isGifHeightAtDefaultBand(effectiveGifH, metaDefH, timerHeight, sizing.textSize, sizing.edgePad)
+  ) {
+    const padFloorNeg = minNegativePaddingWhenAtDefaultHeight(sizing.textSize);
+    if (next < padFloorNeg) {
+      next = padFloorNeg;
     }
   }
 
@@ -348,19 +368,7 @@ function findGifHeightField() {
 /** Skin default GIF height (floor used by syncGifHeightDeltaFromPaddingInput). */
 function getSkinDefaultOutputHeight() {
   const d = currentSkinMetadata?.defaults || {};
-  return 278;//firstNumber(d.outputHeight, d.height);
-}
-
-/**
- * Minimum customTextDistance when output height is at default: layout need must not drop below defH.
- * Matches timer + max(0, text + pad) + 2*edge === defH while text + pad >= 0 (same as TimerGifGenerator).
- */
-function minCustomTextDistanceAtSkinDefault(defH, edgePad, timerH, textH) {
-  
-  if (!Number.isFinite(defH) || defH <= 0 || !Number.isFinite(timerH) || !Number.isFinite(textH) || !Number.isFinite(edgePad)) {
-    return -400;
-  }
-  return Math.floor(defH - 2 * edgePad - timerH - textH);
+  return firstNumber(d.outputHeight, d.height);
 }
 
 function headingWantsCustomText() {
@@ -545,7 +553,9 @@ document.addEventListener('DOMContentLoaded', function() {
   if (distanceInput) {
     initPaddingHeightSyncState();
     const handleDistanceChange = () => {
-      const beforePadN = (() => {
+      // Clamp first (esp. -textSize floor at default height) so sync never applies height from an illegal pad.
+      clampCustomTextDistance();
+      const padBeforeSync = (() => {
         const n = Number(distanceInput.value);
         return Number.isFinite(n) ? n : 0;
       })();
@@ -554,15 +564,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
       clampCustomTextDistance();
 
-      const afterPadN = (() => {
+      const padAfter = (() => {
         const n = Number(distanceInput.value);
         return Number.isFinite(n) ? n : 0;
       })();
 
-      if (afterPadN !== beforePadN) {
-        adjustGifHeightForPaddingClampCorrection(afterPadN - beforePadN);
+      if (padAfter !== padBeforeSync) {
+        adjustGifHeightForPaddingClampCorrection(padAfter - padBeforeSync);
       }
-      distanceInput.dataset.heightSyncPad = String(afterPadN);
+      distanceInput.dataset.heightSyncPad = String(padAfter);
 
       enforceGifHeightMinimum();
       syncOverrides();
