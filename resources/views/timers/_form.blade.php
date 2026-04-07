@@ -716,8 +716,9 @@
                                         </select>
                                     </div>
                                 <div class="mb-3">
-                                    <label class="form-label">Title</label>
-                                    <input type="text" name="title" value="{{ old('title', $timer->title ?? '') }}" class="form-control" required>
+                                    <label class="form-label" for="timer_title_input">Title</label>
+                                    <input type="text" name="title" id="timer_title_input" value="{{ old('title', $timer->title ?? '') }}" class="form-control @error('title') is-invalid @enderror" required aria-describedby="title_field_feedback">
+                                    <div class="invalid-feedback d-block {{ $errors->has('title') ? '' : 'd-none' }}" id="title_field_feedback" role="alert">@error('title'){{ $message }}@enderror</div>
                                 </div>
 
                                 <div class="row g-3 mt-1">

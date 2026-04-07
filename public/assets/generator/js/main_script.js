@@ -2461,13 +2461,90 @@ function clearGifPollTimer() {
 /** Pause after each status response before the next request (ms). */
 const GIF_STATUS_POLL_GAP_MS = 2800;
 
+/**
+ * Clear client-side validation state from a prior AJAX 422 (inline messages + is-invalid).
+ * @param {HTMLFormElement} form
+ */
+function clearAjaxValidationErrors(form) {
+  form.querySelectorAll('.is-invalid').forEach((el) => el.classList.remove('is-invalid'));
+  form.querySelectorAll('.invalid-feedback[data-ajax-inline]').forEach((el) => el.remove());
+  const titleFb = document.getElementById('title_field_feedback');
+  if (titleFb) {
+    titleFb.textContent = '';
+    titleFb.classList.add('d-none');
+  }
+}
+
+/**
+ * Show Laravel validation.errors next to fields (422). No Swal.
+ * @param {HTMLFormElement} form
+ * @param {Record<string, string[]|string>} errors
+ */
+function applyLaravelValidationErrors(form, errors) {
+  if (!errors || typeof errors !== 'object') return;
+  clearAjaxValidationErrors(form);
+  /** @type {HTMLElement[]} */
+  const focusTargets = [];
+  Object.entries(errors).forEach(([name, msgs]) => {
+    const input = form.querySelector(`[name="${CSS.escape(name)}"]`);
+    if (!input) return;
+    const text = Array.isArray(msgs) ? msgs.filter(Boolean).join(' ') : String(msgs || '');
+    if (!text) return;
+    input.classList.add('is-invalid');
+    focusTargets.push(input);
+    if (name === 'title') {
+      const fb = document.getElementById('title_field_feedback');
+      if (fb) {
+        fb.textContent = text;
+        fb.classList.remove('d-none');
+      }
+      return;
+    }
+    let fb = input.nextElementSibling;
+    if (!fb || !fb.classList.contains('invalid-feedback')) {
+      fb = document.createElement('div');
+      fb.className = 'invalid-feedback d-block';
+      fb.setAttribute('data-ajax-inline', '1');
+      input.insertAdjacentElement('afterend', fb);
+    } else {
+      fb.setAttribute('data-ajax-inline', '1');
+    }
+    fb.textContent = text;
+    fb.classList.remove('d-none');
+  });
+  const first = focusTargets[0];
+  if (first && typeof first.focus === 'function') first.focus();
+}
+
 // AJAX save + preview polling
 async function ajaxSaveAndPoll() {
   const form = document.getElementById('timer_form');
   const saveBtn = document.getElementById('save_btn');
   if (!form || !saveBtn) return;
 
+  if (!form.dataset.ajaxValidationClearBound) {
+    form.dataset.ajaxValidationClearBound = '1';
+    form.addEventListener('input', (e) => {
+      const t = e.target;
+      if (t && t.name === 'title') {
+        t.classList.remove('is-invalid');
+        const fb = document.getElementById('title_field_feedback');
+        if (fb) {
+          fb.textContent = '';
+          fb.classList.add('d-none');
+        }
+      } else if (t && t.classList && t.classList.contains('is-invalid')) {
+        const fb = t.nextElementSibling;
+        if (fb && fb.classList.contains('invalid-feedback') && fb.getAttribute('data-ajax-inline')) {
+          t.classList.remove('is-invalid');
+          fb.remove();
+        }
+      }
+    });
+  }
+
   saveBtn.addEventListener('click', async () => {
+    clearAjaxValidationErrors(form);
     saveBtn.disabled = true;
     const formData = new FormData(form);
     formData.append('generate_gif', '1');
@@ -2479,6 +2556,11 @@ async function ajaxSaveAndPoll() {
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
+        if (res.status === 422 && err.errors && typeof err.errors === 'object') {
+          applyLaravelValidationErrors(form, err.errors);
+          saveBtn.disabled = false;
+          return;
+        }
         Swal.fire({
           icon: 'error',
           title: 'Save Failed',
