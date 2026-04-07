@@ -153,6 +153,81 @@ function parseOverrides() {
   }
 }
 
+/** Mirror TimerGifGenerator::resolveVisibilityLayout — effective timer width/height used when drawing. */
+function resolveTimerDimensionsFromVisibilityLayouts(defaults, overrides) {
+  const skin = { ...defaults, ...(overrides || {}) };
+  const layouts = skin.visibilityLayouts;
+  if (!layouts || typeof layouts !== 'object') {
+    return {
+      width: firstNumber(skin.width, 400),
+      height: firstNumber(skin.height, 160),
+    };
+  }
+  const showDays = (skin.showDays ?? true) === true;
+  const showSeconds = (skin.showSeconds ?? true) === true;
+  let layout = null;
+  if (!showDays && !showSeconds && layouts.daysAndSecondsHidden) {
+    layout = layouts.daysAndSecondsHidden;
+  } else if (!showDays && layouts.daysHidden) {
+    layout = layouts.daysHidden;
+  } else if (!showSeconds && layouts.secondsHidden) {
+    layout = layouts.secondsHidden;
+  } else if (layouts.allVisible) {
+    layout = layouts.allVisible;
+  }
+  if (!layout || typeof layout !== 'object') {
+    return {
+      width: firstNumber(skin.width, 400),
+      height: firstNumber(skin.height, 160),
+    };
+  }
+  let scaleW = 1.0;
+  let scaleH = 1.0;
+  const av = layouts.allVisible;
+  if (av && typeof av === 'object') {
+    const baseW = firstNumber(av.width);
+    const baseH = firstNumber(av.height);
+    const skinW = firstNumber(skin.width);
+    const skinH = firstNumber(skin.height);
+    if (baseW > 0 && skinW > 0 && baseW !== skinW) {
+      scaleW = skinW / baseW;
+    }
+    if (baseH > 0 && skinH > 0 && baseH !== skinH) {
+      scaleH = skinH / baseH;
+    }
+  }
+  const lw = firstNumber(layout.width);
+  const lh = firstNumber(layout.height);
+  let width = lw;
+  let height = lh;
+  if (scaleW !== 1.0 && Number.isFinite(lw)) {
+    width = Math.max(1, Math.round(lw * scaleW));
+  }
+  if (scaleH !== 1.0 && Number.isFinite(lh)) {
+    height = Math.max(1, Math.round(lh * scaleH));
+  }
+  return {
+    width: Number.isFinite(width) ? width : firstNumber(skin.width, 400),
+    height: Number.isFinite(height) ? height : firstNumber(skin.height, 160),
+  };
+}
+
+/** Approximate imagettfbbox vertical span for custom heading text (~asc+desc for skin TTFs). */
+function headingTextBlockHeightPx(defaults, overrides) {
+  const fontSizeRaw = firstNumber(
+    findFieldByKey('fontSize')?.value,
+    overrides.fontSize,
+    defaults.fontSize
+  );
+  const fontSize = Number.isFinite(fontSizeRaw) ? fontSizeRaw : 36;
+  const customInput = document.querySelector('input[name="customTextFontSize"]');
+  const customN = Number(customInput?.value);
+  const em = (Number.isFinite(customN) && customN >= 12)
+    ? Math.round(customN)
+    : Math.max(12, Math.round(fontSize * 0.5));
+  return Math.max(12, Math.round(em * 1.22));
+}
+
 function resolveSizingSnapshot() {
   const overrides = parseOverrides();
   const defaults = currentSkinMetadata?.defaults || {};
@@ -172,11 +247,8 @@ function resolveSizingSnapshot() {
     defaults.height
   );
 
-  const timerHeight = firstNumber(
-    findFieldByKey('height')?.value,
-    overrides.height,
-    defaults.height
-  );
+  const vis = resolveTimerDimensionsFromVisibilityLayouts(defaults, overrides);
+  const timerHeight = firstNumber(vis.height, overrides.height, defaults.height, 160);
 
   const fontSizeRaw = firstNumber(
     findFieldByKey('fontSize')?.value,
@@ -184,7 +256,8 @@ function resolveSizingSnapshot() {
     defaults.fontSize
   );
   const fontSize = isNaN(fontSizeRaw) ? 36 : fontSizeRaw;
-  const textSize = Math.max(12, Math.round(fontSize * 0.5));
+  /** Vertical space occupied by heading (px), aligned with TimerGifGenerator bbox — not the font em size. */
+  const textSize = headingTextBlockHeightPx(defaults, overrides);
 
   const textVal = (document.querySelector('input[name="custom_text"]')?.value || '').trim();
   const textPos = document.querySelector('select[name="text_position"]')?.value || 'none';
@@ -196,7 +269,8 @@ function resolveSizingSnapshot() {
   let distance = isNaN(distanceRaw) ? 0 : distanceRaw;
   distance = Math.max(MIN_CUSTOM_TEXT_DISTANCE, Math.min(MAX_CUSTOM_TEXT_DISTANCE, distance));
 
-  const combinedHeight = timerHeight + (wantsText ? (textSize + distance) : 0) + (edgePad * 2);
+  const innerStack = wantsText ? Math.max(0, textSize + distance) : 0;
+  const combinedHeight = timerHeight + innerStack + (edgePad * 2);
   const maxDistance = wantsText
     ? Math.max(0, Math.floor(gifHeight - (edgePad * 2) - timerHeight - textSize))
     : Math.max(0, Math.floor(gifHeight - (edgePad * 2) - timerHeight));
@@ -266,7 +340,12 @@ function initPaddingHeightSyncState() {
   distanceInput.dataset.heightSyncPad = String(Number.isFinite(p) ? p : 0);
 }
 
-/** When heading is active, move GIF/canvas height by the same delta as padding (including while padding is negative; floor: default, cap: 2× default). */
+/**
+ * When header text is on, GIF/canvas height tracks padding (floor: default, cap: 2× default).
+ * Negative padding (overlap): do not change height while padding stays below 0 or crosses into it.
+ * Height only increases again once padding is back at 0 or above; then it tracks the nonnegative
+ * amount (step from negative to +5 adds 5px, not the full delta from the negative value).
+ */
 function syncGifHeightDeltaFromPaddingInput(distanceInput) {
   if (!headingWantsCustomText()) {
     initPaddingHeightSyncState();
@@ -288,13 +367,22 @@ function syncGifHeightDeltaFromPaddingInput(distanceInput) {
   let prevPad = Number(distanceInput.dataset.heightSyncPad);
   if (!Number.isFinite(prevPad)) prevPad = curPad;
 
-  const delta = curPad - prevPad;
-  if (delta === 0) return;
+  const deltaPad = curPad - prevPad;
+  if (deltaPad === 0) return;
 
   let curH = Number(hf.value);
   if (!Number.isFinite(curH)) curH = defH;
 
-  let nextH = curH + delta;
+  let heightDelta;
+  if (curPad < 0) {
+    heightDelta = 0;
+  } else if (prevPad < 0) {
+    heightDelta = curPad;
+  } else {
+    heightDelta = deltaPad;
+  }
+
+  let nextH = curH + heightDelta;
   if (nextH < defH) nextH = defH;
   if (nextH > maxH) nextH = maxH;
 
