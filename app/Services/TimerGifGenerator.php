@@ -588,13 +588,17 @@ class TimerGifGenerator
         int $maxTextBlock
     ): array {
         $slotH = max(0, $pinSpanH - $timerTopInner - $timerH);
+        /* Mirror top: heading above timer is centered in a band of height timerTopInner; below timer, center in
+         * the same nominal band height (not the full slot). Using full slotH when slotH >> timerTopInner pushed
+         * the block too far down and consumed overlap slack prematurely. */
+        $belowBand = min($slotH, $timerTopInner);
         if ($distance >= 0) {
             $d1 = min($distance, $basePadBottom);
             $effB = $basePadBottom - $d1;
             $effT = $basePadTop + $d1;
             $tbh = $effT + $textH + $effB;
             $rem = $distance - $d1;
-            $b0 = $timerTopInner + $timerH + max(0, (int) floor(($slotH - $tbh) / 2));
+            $b0 = $timerTopInner + $timerH + max(0, (int) floor(($belowBand - $tbh) / 2));
             $marginBot = max(0, $pinSpanH - ($b0 + $tbh));
             $d2 = min($rem, $marginBot);
             $rem -= $d2;
@@ -614,7 +618,7 @@ class TimerGifGenerator
         $effB = $basePadBottom + $n1;
         $tbh = $effT + $textH + $effB;
         $rem = $u - $n1;
-        $b0 = $timerTopInner + $timerH + max(0, (int) floor(($slotH - $tbh) / 2));
+        $b0 = $timerTopInner + $timerH + max(0, (int) floor(($belowBand - $tbh) / 2));
         $blockTop = $b0;
         $marginBot = max(0, $pinSpanH - ($blockTop + $tbh));
         $n2 = min($rem, $marginBot);
@@ -672,17 +676,18 @@ class TimerGifGenerator
             $blockTop -= $n2;
             $blockTop += $rem;
 
-            return $blockTop;
+            return max(0, $blockTop);
         }
         if ($textPosition === 'bottom') {
             $slotH = max(0, $pinSpanH - $timerTopInner - $timerH);
+            $belowBand = min($slotH, $timerTopInner);
             if ($distance >= 0) {
                 $d1 = min($distance, $basePadBottom);
                 $effB = $basePadBottom - $d1;
                 $effT = $basePadTop + $d1;
                 $tbh = $effT + $textH + $effB;
                 $rem = $distance - $d1;
-                $b0 = $timerTopInner + $timerH + max(0, (int) floor(($slotH - $tbh) / 2));
+                $b0 = $timerTopInner + $timerH + max(0, (int) floor(($belowBand - $tbh) / 2));
                 $marginBot = max(0, $pinSpanH - ($b0 + $tbh));
                 $d2 = min($rem, $marginBot);
                 $rem -= $d2;
@@ -701,14 +706,14 @@ class TimerGifGenerator
             $effB = $basePadBottom + $n1;
             $tbh = $effT + $textH + $effB;
             $rem = $u - $n1;
-            $blockTop = $timerTopInner + $timerH + max(0, (int) floor(($slotH - $tbh) / 2));
+            $blockTop = $timerTopInner + $timerH + max(0, (int) floor(($belowBand - $tbh) / 2));
             $marginBot = max(0, $pinSpanH - ($blockTop + $tbh));
             $n2 = min($rem, $marginBot);
             $rem -= $n2;
             $blockTop += $n2;
             $blockTop -= $rem;
 
-            return $blockTop;
+            return max(0, $blockTop);
         }
 
         return 0;
@@ -860,7 +865,8 @@ class TimerGifGenerator
         }
         if ($textPosition === 'bottom') {
             $slotH = max(0, $pinSpanH - $timerTopInner - $timerH);
-            $b0 = $timerTopInner + $timerH + max(0, (int) floor(($slotH - $tbh) / 2));
+            $belowBand = min($slotH, $timerTopInner);
+            $b0 = $timerTopInner + $timerH + max(0, (int) floor(($belowBand - $tbh) / 2));
             $marginBot = max(0, $pinSpanH - ($b0 + $tbh));
 
             return $basePadBottom + $marginBot;
@@ -1046,6 +1052,37 @@ class TimerGifGenerator
         if ($glyphBottomY >= $glyphTopY) {
             imagerectangle($im, $x0, $glyphTopY, $x1, $glyphBottomY, $red);
         }
+    }
+
+    /**
+     * TEMP: outlines the timer sprite bounds on the GIF canvas (not the full output). Remove when done debugging layout.
+     */
+    private function drawDebugTimerBoundsBorder(\GdImage $im, int $offsetX, int $offsetY, int $timerW, int $timerH): void
+    {
+        if ($timerW <= 0 || $timerH <= 0) {
+            return;
+        }
+        $blue = @imagecolorallocate($im, 0, 120, 255);
+        if ($blue === false) {
+            return;
+        }
+        $x1 = $offsetX + $timerW - 1;
+        $y1 = $offsetY + $timerH - 1;
+        if (function_exists('imagesetthickness')) {
+            imagesetthickness($im, 2);
+        }
+        imagerectangle($im, $offsetX, $offsetY, $x1, $y1, $blue);
+        if (function_exists('imagesetthickness')) {
+            imagesetthickness($im, 1);
+        }
+        $this->logDraw('Debug timer bounds border (temporary)', [
+            'shape' => 'rectangle_border',
+            'x' => $offsetX,
+            'y' => $offsetY,
+            'x1' => $x1,
+            'y1' => $y1,
+            'color' => '#0078FF',
+        ]);
     }
 
     public function renderPngFrame(int $secondsRemaining, array $skin, ?string $customText, string $textPosition): string
@@ -1329,6 +1366,7 @@ class TimerGifGenerator
             'canvas_width' => $canvasW,
             'canvas_height' => $canvasH,
         ]);
+        $this->drawDebugTimerBoundsBorder($im, $offsetX, $offsetY, $timerW, $timerH);
         imagedestroy($timerIm);
 
         if ($hasText) {
