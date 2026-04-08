@@ -438,6 +438,330 @@ function resolveCustomTextStackLayoutJs(
   return [basePadTop, basePadBottom, maxTextBlock, timerTopInner, 0, 0];
 }
 
+function headingTextBlockHeightPxForStackBoundsJs(basePadTop, basePadBottom, textH, distance, textPosition) {
+  if (textPosition === 'top') {
+    if (distance >= 0) {
+      const d1 = Math.min(distance, basePadTop);
+      const effT = basePadTop - d1;
+      const effB = basePadBottom + d1;
+      return effT + textH + effB;
+    }
+    const u = -distance;
+    const n1 = Math.min(u, basePadBottom);
+    const effT = basePadTop + n1;
+    const effB = basePadBottom - n1;
+    return effT + textH + effB;
+  }
+  if (textPosition === 'bottom') {
+    if (distance >= 0) {
+      const d1 = Math.min(distance, basePadBottom);
+      const effB = basePadBottom - d1;
+      const effT = basePadTop + d1;
+      return effT + textH + effB;
+    }
+    const u = -distance;
+    const n1 = Math.min(u, basePadTop);
+    const effT = basePadTop - n1;
+    const effB = basePadBottom + n1;
+    return effT + textH + effB;
+  }
+  return basePadTop + textH + basePadBottom;
+}
+
+function rawHeadingBlockTopForStackDistanceJs(
+  textPosition,
+  distance,
+  basePadTop,
+  basePadBottom,
+  textH,
+  timerH,
+  pinSpanH,
+  timerTopInner
+) {
+  if (textPosition === 'top') {
+    if (distance >= 0) {
+      const d1 = Math.min(distance, basePadTop);
+      const effT = basePadTop - d1;
+      const effB = basePadBottom + d1;
+      const tbh = effT + textH + effB;
+      let rem = distance - d1;
+      const b0 = Math.max(0, Math.floor((timerTopInner - tbh) / 2));
+      const d2 = Math.min(rem, b0);
+      rem -= d2;
+      let blockTop = b0 - d2;
+      const gap = Math.max(0, timerTopInner - blockTop - tbh);
+      const d3 = Math.min(rem, gap);
+      rem -= d3;
+      blockTop += d3;
+      blockTop += rem;
+      return blockTop;
+    }
+    const u = -distance;
+    const n1 = Math.min(u, basePadBottom);
+    const effT = basePadTop + n1;
+    const effB = basePadBottom - n1;
+    const tbh = effT + textH + effB;
+    let rem = u - n1;
+    const b0 = Math.max(0, Math.floor((timerTopInner - tbh) / 2));
+    let blockTop = b0;
+    const n2 = Math.min(rem, blockTop);
+    rem -= n2;
+    blockTop -= n2;
+    blockTop += rem;
+    return blockTop;
+  }
+  if (textPosition === 'bottom') {
+    const slotH = Math.max(0, pinSpanH - timerTopInner - timerH);
+    if (distance >= 0) {
+      const d1 = Math.min(distance, basePadBottom);
+      const effB = basePadBottom - d1;
+      const effT = basePadTop + d1;
+      const tbh = effT + textH + effB;
+      let rem = distance - d1;
+      const b0 = timerTopInner + timerH + Math.max(0, Math.floor((slotH - tbh) / 2));
+      const marginBot = Math.max(0, pinSpanH - (b0 + tbh));
+      const d2 = Math.min(rem, marginBot);
+      rem -= d2;
+      let blockTop = b0 + d2;
+      const gap = Math.max(0, blockTop - timerTopInner - timerH);
+      const d3 = Math.min(rem, gap);
+      rem -= d3;
+      blockTop -= d3;
+      blockTop -= rem;
+      return blockTop;
+    }
+    const u = -distance;
+    const n1 = Math.min(u, basePadTop);
+    const effT = basePadTop - n1;
+    const effB = basePadBottom + n1;
+    const tbh = effT + textH + effB;
+    let rem = u - n1;
+    let blockTop = timerTopInner + timerH + Math.max(0, Math.floor((slotH - tbh) / 2));
+    const marginBot = Math.max(0, pinSpanH - (blockTop + tbh));
+    const n2 = Math.min(rem, marginBot);
+    rem -= n2;
+    blockTop += n2;
+    blockTop -= rem;
+    return blockTop;
+  }
+  return 0;
+}
+
+function stackDistanceLayoutFeasibleJs(
+  textPosition,
+  distance,
+  basePadTop,
+  basePadBottom,
+  textH,
+  timerH,
+  pinSpanH,
+  timerTopInner
+) {
+  if (textPosition !== 'top' && textPosition !== 'bottom') return true;
+  const tbh = headingTextBlockHeightPxForStackBoundsJs(basePadTop, basePadBottom, textH, distance, textPosition);
+  const rawTop = rawHeadingBlockTopForStackDistanceJs(
+    textPosition,
+    distance,
+    basePadTop,
+    basePadBottom,
+    textH,
+    timerH,
+    pinSpanH,
+    timerTopInner
+  );
+  return rawTop >= 0 && rawTop + tbh <= pinSpanH;
+}
+
+function minFeasibleCustomTextDistanceNegativeJs(
+  textPosition,
+  basePadTop,
+  basePadBottom,
+  textH,
+  timerH,
+  pinSpanH,
+  timerTopInner
+) {
+  if (!stackDistanceLayoutFeasibleJs(textPosition, 0, basePadTop, basePadBottom, textH, timerH, pinSpanH, timerTopInner)) {
+    return 0;
+  }
+  if (stackDistanceLayoutFeasibleJs(textPosition, -400, basePadTop, basePadBottom, textH, timerH, pinSpanH, timerTopInner)) {
+    return -400;
+  }
+  let lo = -401;
+  let hi = 0;
+  while (lo + 1 < hi) {
+    const mid = Math.floor((lo + hi) / 2);
+    if (stackDistanceLayoutFeasibleJs(textPosition, mid, basePadTop, basePadBottom, textH, timerH, pinSpanH, timerTopInner)) {
+      hi = mid;
+    } else {
+      lo = mid;
+    }
+  }
+  return hi;
+}
+
+function maxCustomTextDistanceInnerOuterPositiveJs(
+  textPosition,
+  basePadTop,
+  basePadBottom,
+  textH,
+  timerH,
+  pinSpanH,
+  timerTopInner
+) {
+  const tbh = basePadTop + textH + basePadBottom;
+  if (textPosition === 'top') {
+    const b0 = Math.max(0, Math.floor((timerTopInner - tbh) / 2));
+    return basePadTop + b0;
+  }
+  if (textPosition === 'bottom') {
+    const slotH = Math.max(0, pinSpanH - timerTopInner - timerH);
+    const b0 = timerTopInner + timerH + Math.max(0, Math.floor((slotH - tbh) / 2));
+    const marginBot = Math.max(0, pinSpanH - (b0 + tbh));
+    return basePadBottom + marginBot;
+  }
+  return 400;
+}
+
+function clampCustomTextStackDistanceForPinJs(
+  textPosition,
+  distance,
+  defaults,
+  basePadTop,
+  basePadBottom,
+  textH,
+  timerH,
+  pinSpanH,
+  edgePad,
+  maxTextBlock
+) {
+  let d = Math.max(-400, Math.min(400, distance));
+  if (textPosition !== 'top' && textPosition !== 'bottom') return d;
+  const defaultInner = defaultInnerHeightForHeadingLayoutJs(defaults, timerH, edgePad, pinSpanH, maxTextBlock);
+  const tti = timerTopInnerPxJs(defaultInner, timerH, pinSpanH);
+  const maxPos = maxCustomTextDistanceInnerOuterPositiveJs(
+    textPosition,
+    basePadTop,
+    basePadBottom,
+    textH,
+    timerH,
+    pinSpanH,
+    tti
+  );
+  if (d > maxPos) d = maxPos;
+  const minNeg = minFeasibleCustomTextDistanceNegativeJs(
+    textPosition,
+    basePadTop,
+    basePadBottom,
+    textH,
+    timerH,
+    pinSpanH,
+    tti
+  );
+  if (d < minNeg) d = minNeg;
+  return Math.max(-400, Math.min(400, d));
+}
+
+/** Max positive padding (inner + outer band only) after two-pass pin sync — slider ceiling for top/bottom. */
+function stackInnerOuterMaxPositiveFromSizing(textPosition, sizing) {
+  const defaults = sizing.defaults;
+  const { em, glyphH } = headingGlyphMetricsPx(defaults, sizing.overrides);
+  const baseT = customTextPaddingYEachPx(em);
+  const baseB = baseT;
+  const textH = glyphH;
+  const maxTextBlock = baseT + textH + baseB;
+  const timerH = sizing.timerHeight;
+  const edgePad = sizing.edgePad;
+  let d = Math.max(-400, Math.min(400, sizing.distance));
+  const gifH = sizing.gifHeight;
+  const requestedH = Number.isFinite(gifH) && gifH > 0 ? gifH : null;
+
+  for (let pass = 0; pass < 2; pass++) {
+    const contentH = layoutStackContentHeightJs(timerH, true, maxTextBlock, d, textPosition);
+    const layoutHeight = Math.max(timerH, contentH) + 2 * edgePad;
+    let canvasH = layoutHeight;
+    let outerTop = 0;
+    if (requestedH != null) {
+      canvasH = Math.max(layoutHeight, requestedH);
+      outerTop = outerTopPaddingForCanvasJs(canvasH, layoutHeight, true, textPosition);
+    }
+    const pinSpanH = canvasH - 2 * edgePad - outerTop;
+    d = clampCustomTextStackDistanceForPinJs(
+      textPosition,
+      d,
+      defaults,
+      baseT,
+      baseB,
+      textH,
+      timerH,
+      pinSpanH,
+      edgePad,
+      maxTextBlock
+    );
+  }
+  const contentHF = layoutStackContentHeightJs(timerH, true, maxTextBlock, d, textPosition);
+  const layoutHeightF = Math.max(timerH, contentHF) + 2 * edgePad;
+  let canvasHF = layoutHeightF;
+  let outerTopF = 0;
+  if (requestedH != null) {
+    canvasHF = Math.max(layoutHeightF, requestedH);
+    outerTopF = outerTopPaddingForCanvasJs(canvasHF, layoutHeightF, true, textPosition);
+  }
+  const pinSpanHF = canvasHF - 2 * edgePad - outerTopF;
+  const defaultInnerF = defaultInnerHeightForHeadingLayoutJs(defaults, timerH, edgePad, pinSpanHF, maxTextBlock);
+  const ttiF = timerTopInnerPxJs(defaultInnerF, timerH, pinSpanHF);
+  return maxCustomTextDistanceInnerOuterPositiveJs(
+    textPosition,
+    baseT,
+    baseB,
+    textH,
+    timerH,
+    pinSpanHF,
+    ttiF
+  );
+}
+
+/** Two-pass pin sync + clamp; matches TimerGifGenerator render loop for top/bottom headings. */
+function refineStackCustomTextDistanceForUi(textPosition, distanceIn, sizing) {
+  const defaults = sizing.defaults;
+  const overrides = sizing.overrides;
+  const { em, glyphH } = headingGlyphMetricsPx(defaults, overrides);
+  const baseT = customTextPaddingYEachPx(em);
+  const baseB = baseT;
+  const textH = glyphH;
+  const maxTextBlock = baseT + textH + baseB;
+  const timerH = sizing.timerHeight;
+  const edgePad = sizing.edgePad;
+  let d = Math.max(-400, Math.min(400, distanceIn));
+  const gifH = sizing.gifHeight;
+  const requestedH = Number.isFinite(gifH) && gifH > 0 ? gifH : null;
+
+  for (let pass = 0; pass < 2; pass++) {
+    const contentH = layoutStackContentHeightJs(timerH, true, maxTextBlock, d, textPosition);
+    const layoutHeight = Math.max(timerH, contentH) + 2 * edgePad;
+    let canvasH = layoutHeight;
+    let outerTop = 0;
+    if (requestedH != null) {
+      canvasH = Math.max(layoutHeight, requestedH);
+      outerTop = outerTopPaddingForCanvasJs(canvasH, layoutHeight, true, textPosition);
+    }
+    const pinSpanH = canvasH - 2 * edgePad - outerTop;
+    d = clampCustomTextStackDistanceForPinJs(
+      textPosition,
+      d,
+      defaults,
+      baseT,
+      baseB,
+      textH,
+      timerH,
+      pinSpanH,
+      edgePad,
+      maxTextBlock
+    );
+  }
+  return d;
+}
+
 /**
  * Mirrors TimerGifGenerator::resolveCustomTextStackLayout pin-span math for preview, clamp, and height sync.
  * @returns {{ textBlockPx: number, gapPx: number, layoutPinInnerNeed: number }}
@@ -591,6 +915,17 @@ function resolveSizingSnapshot() {
   let maxDistance = wantsText
     ? Math.max(0, Math.floor(gifHeight - (edgePad * 2) - timerHeight - textSize))
     : Math.max(0, Math.floor(gifHeight - (edgePad * 2) - timerHeight));
+  if (wantsText && (textPos === 'top' || textPos === 'bottom')) {
+    const stackMax = stackInnerOuterMaxPositiveFromSizing(textPos, {
+      defaults,
+      overrides,
+      gifHeight,
+      timerHeight,
+      edgePad,
+      distance,
+    });
+    maxDistance = Math.min(maxDistance, stackMax, MAX_CUSTOM_TEXT_DISTANCE);
+  }
 
   return {
     overrides,
@@ -680,6 +1015,13 @@ function clampCustomTextDistance() {
     if (next < padFloorNeg) {
       next = padFloorNeg;
     }
+  }
+
+  if (sizing.wantsText && (textPos === 'top' || textPos === 'bottom')) {
+    next = refineStackCustomTextDistanceForUi(textPos, next, sizing);
+    if (next > maxPositivePadding) next = maxPositivePadding;
+    if (next < MIN_CUSTOM_TEXT_DISTANCE) next = MIN_CUSTOM_TEXT_DISTANCE;
+    if (next > MAX_CUSTOM_TEXT_DISTANCE) next = MAX_CUSTOM_TEXT_DISTANCE;
   }
 
   if (next !== desired) {
