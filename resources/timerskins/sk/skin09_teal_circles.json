@@ -1,0 +1,83 @@
+{
+  "name": "Teal Circle Badges",
+  "width": 980,
+  "height": 274,
+  "background": "#FFFFFF",
+  "textColor": "#0F7892",
+  "accentColor": "#0F7892",
+  "fontSize": 65,
+  "labelFontSize": 18,
+  "fontPath": "resources/fonts/dejavu-sans.book.ttf",
+  "style": "teal_circle_badges",
+  "showDays": true,
+  "showHours": true,
+  "showMinutes": true,
+  "showSeconds": true,
+  "circleStroke": 6,
+  "finalMessage": "Sorry! you missed the offer.",
+  "finalBackground": null,
+  "finalTextColor": null,
+  "borderWidth": 0,
+  "borderColor": "#FFFFFF",
+
+  "visibilityLayouts": {
+    "allVisible": {
+      "width": 780,
+      "height": 200,
+      "visibleUnits": 4,
+      "note": "All 4 units visible"
+    },
+    "daysHidden": {
+      "width": 585,
+      "height": 200,
+      "visibleUnits": 3,
+      "note": "Hours, Minutes, Seconds only"
+    },
+    "secondsHidden": {
+      "width": 585,
+      "height": 200,
+      "visibleUnits": 3,
+      "note": "Days, Hours, Minutes only"
+    },
+    "daysAndSecondsHidden": {
+      "width": 390,
+      "height": 200,
+      "visibleUnits": 2,
+      "note": "Hours and Minutes only"
+    }
+  },
+
+  "visibilityRules": {
+    "keepSameCanvasIfOnlyOneEdgeUnitHidden": false,
+    "useCompactCanvasIfDaysAndSecondsHidden": true,
+    "compactTrigger": {
+      "showDays": false,
+      "showSeconds": false
+    }
+  },
+
+  "formDefaults": {
+        "background": "#D6D6D6",
+        "textColor": "#000000",
+        "accentColor": "#2F7A8A"
+    },
+  "fields": [
+    { "key": "width", "label": "Width", "type": "number", "min": 100, "max": 2000, "step": 10, "group": "Dimensions", "groupOrder": 2, "order": 2 },
+    { "key": "height", "label": "Height", "type": "number", "min": 80, "max": 1000, "step": 5, "group": "Dimensions", "order": 3 },
+    { "key": "background", "label": "Background", "type": "color", "group": "Appearance", "groupOrder": 1, "order": 1 },
+    { "key": "borderWidth", "label": "Border Width", "type": "number", "min": 0, "max": 50, "step": 1, "group": "Appearance", "order": 2 },
+    { "key": "borderColor", "label": "Border Color", "type": "color", "group": "Appearance", "order": 3 },
+    { "key": "textColor", "label": "Text Color", "type": "color", "group": "Appearance", "order": 4 },
+    { "key": "fontSize", "label": "Digit Font Size", "type": "number", "min": 8, "max": 200, "step": 1, "group": "Appearance", "order": 5 },
+    { "key": "labelFontSize", "label": "Label Font Size", "type": "number", "min": 8, "max": 100, "step": 1, "group": "Appearance", "order": 6 },
+    { "key": "showDays", "label": "Show Days", "type": "boolean", "group": "Visibility", "groupOrder": 4, "order": 3 },
+    { "key": "showSeconds", "label": "Show Seconds", "type": "boolean", "group": "Visibility", "order": 4 },
+    { "key": "accentColor", "label": "Circle Border Color", "type": "color", "group": "Appearance", "order": 7 },
+    { "key": "circleStroke", "label": "Circle Stroke Width", "type": "number", "min": 1, "max": 20, "step": 1, "group": "Appearance", "order": 8 },
+    { "key": "finalMessage", "label": "Final Message", "type": "text", "maxLength": 64, "group": "Final Screen", "groupOrder": 6 },
+    { "key": "finalBackground", "label": "Final Background", "type": "color", "group": "Final Screen"  },
+    { "key": "finalTextColor", "label": "Final Text Color", "type": "color", "group": "Final Screen" }
+  ]
+}
+
+

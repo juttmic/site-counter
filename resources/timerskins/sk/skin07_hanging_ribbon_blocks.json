@@ -1,0 +1,121 @@
+{
+    "name": "Hanging Ribbon Blocks",
+    "width": 980,
+    "height": 274,
+    "background": "#FFFFFF",
+    "textColor": "#24384D",
+    "accentColor": "#74AFCF",
+    "fontSize": 102,
+    "labelFontSize": 27,
+    "fontPath": "resources/fonts/dejavu-sans.book.ttf",
+    "style": "hanging_ribbon_blocks",
+  
+    "showDays": true,
+    "showHours": true,
+    "showMinutes": true,
+    "showSeconds": true,
+  
+    "circleStroke": 0,
+    "finalMessage": "Sorry! you missed the offer.",
+    "finalBackground": null,
+    "finalTextColor": null,
+  
+    "borderWidth": 0,
+    "borderColor": "#8DB0C8",
+  
+    "tileBackground": "#FFFFFF",
+    "tileBottomColor": "#7EB0CF",
+    "tileBottomColorAlt": "#214A75",
+    "tileRadius": 12,
+    "tileBorderColor": "#9BB7CB",
+    "tileBorderWidth": 2,
+    "hangerColor": "#CAD7E2",
+    "hangerWidth": 10,
+    "hangerHeight": 18,
+    "labelColor": "#FFFFFF",
+    "showBottomLabelBar": true,
+    "segmentGap": 18,
+    "shadowColor": "#D7E0E8",
+    "shadowBlur": 0,
+    "shadowOffsetY": 0,
+  
+    "visibilityLayouts": {
+      "allVisible": {
+        "width": 760,
+        "height": 170,
+        "visibleUnits": 4,
+        "segmentGap": 18,
+        "note": "All 4 ribbon tiles visible"
+      },
+      "daysHidden": {
+        "width": 760,
+        "height": 170,
+        "visibleUnits": 3,
+        "segmentGap": 24,
+        "stretchRemainingUnits": true,
+        "note": "Hide Days only, same width and height"
+      },
+      "secondsHidden": {
+        "width": 760,
+        "height": 170,
+        "visibleUnits": 3,
+        "segmentGap": 24,
+        "stretchRemainingUnits": true,
+        "note": "Hide Seconds only, same width and height"
+      },
+      "daysAndSecondsHidden": {
+        "width": 560,
+        "height": 150,
+        "visibleUnits": 2,
+        "segmentGap": 28,
+        "stretchRemainingUnits": true,
+        "note": "Compact ribbon layout for Hours and Minutes only"
+      }
+    },
+  
+    "visibilityRules": {
+      "keepSameCanvasIfOnlyOneEdgeUnitHidden": true,
+      "useCompactCanvasIfDaysAndSecondsHidden": true,
+      "compactTrigger": {
+        "showDays": false,
+        "showSeconds": false
+      }
+    },
+  
+    "formDefaults": {
+      "background": "#D6D6D6",
+      "textColor": "#24384D",
+      "accentColor": "#74AFCF"
+    },
+  
+    "fields": [
+      { "key": "width", "label": "Width", "type": "number", "min": 100, "max": 2000, "step": 10, "group": "Dimensions", "groupOrder": 2, "order": 1 },
+      { "key": "height", "label": "Height", "type": "number", "min": 80, "max": 1000, "step": 5, "group": "Dimensions", "order": 2 },
+  
+      { "key": "background", "label": "Background", "type": "color", "group": "Appearance", "groupOrder": 1, "order": 1 },
+      { "key": "tileBackground", "label": "Tile Top Background", "type": "color", "group": "Appearance", "order": 2 },
+      { "key": "tileBottomColor", "label": "Bottom Bar Color", "type": "color", "group": "Appearance", "order": 3 },
+      { "key": "tileBottomColorAlt", "label": "Active Bottom Bar Color", "type": "color", "group": "Appearance", "order": 4 },
+      { "key": "textColor", "label": "Digit", "type": "color", "group": "Appearance", "order": 5 },
+      { "key": "labelColor", "label": "Label Color", "type": "color", "group": "Appearance", "order": 6 },
+      { "key": "borderColor", "label": "Tile Border Color", "type": "color", "group": "Appearance", "order": 7 },
+      { "key": "hangerColor", "label": "Hanger Color", "type": "color", "group": "Appearance", "order": 8 },
+  
+      { "key": "fontSize", "label": "Digit Font Size", "type": "number", "min": 8, "max": 200, "step": 1, "group": "Appearance", "order": 9 },
+      { "key": "labelFontSize", "label": "Label Font Size", "type": "number", "min": 8, "max": 100, "step": 1, "group": "Appearance", "order": 10 },
+  
+      { "key": "tileRadius", "label": "Tile Radius", "type": "number", "min": 0, "max": 30, "step": 1, "group": "Layout", "groupOrder": 3, "order": 1 },
+      { "key": "tileBorderWidth", "label": "Tile Border Width", "type": "number", "min": 0, "max": 10, "step": 1, "group": "Layout", "order": 2 },
+      { "key": "hangerWidth", "label": "Hanger Width", "type": "number", "min": 0, "max": 20, "step": 1, "group": "Layout", "order": 3 },
+      { "key": "hangerHeight", "label": "Hanger Height", "type": "number", "min": 0, "max": 30, "step": 1, "group": "Layout", "order": 4 },
+      { "key": "segmentGap", "label": "Segment Gap", "type": "number", "min": 0, "max": 80, "step": 1, "group": "Layout", "order": 5 },
+  
+      { "key": "showBottomLabelBar", "label": "Show Bottom Label Bar", "type": "boolean", "group": "Visibility", "groupOrder": 4, "order": 1 },
+      { "key": "showDays", "label": "Show Days", "type": "boolean", "group": "Visibility", "order": 2 },
+      { "key": "showSeconds", "label": "Show Seconds", "type": "boolean", "group": "Visibility", "order": 3 },
+  
+      { "key": "finalMessage", "label": "Final Message", "type": "text", "maxLength": 64, "group": "Final Screen", "groupOrder": 6 },
+      { "key": "finalBackground", "label": "Final Background", "type": "color", "group": "Final Screen" },
+      { "key": "finalTextColor", "label": "Final Text Color", "type": "color", "group": "Final Screen" }
+    ]
+  }

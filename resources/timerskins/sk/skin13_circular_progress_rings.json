@@ -1,0 +1,133 @@
+{
+    "name": "Circular Progress Rings",
+    "width": 980,
+    "height": 274,
+    "background": "#FFFFFF",
+    "textColor": "#23384D",
+    "accentColor": "#67B6CB",
+    "fontSize": 63,
+    "labelFontSize": 19,
+    "fontPath": "resources/fonts/dejavu-sans.book.ttf",
+    "style": "circular_progress_rings",
+  
+    "showDays": true,
+    "showHours": true,
+    "showMinutes": true,
+    "showSeconds": true,
+  
+    "circleStroke": 9,
+    "finalMessage": "Sorry! you missed the offer.",
+    "finalBackground": null,
+    "finalTextColor": null,
+    "borderWidth": 0,
+    "borderColor": "#FFFFFF",
+  
+    "ringSize": 198,
+    "ringStroke": 8,
+    "ringTrackColor": "#D8E1E9",
+    "innerCircleColor": "#F9FBFD",
+    "innerBorderColor": "#D6DEE6",
+    "innerBorderWidth": 2,
+    "dottedRing": true,
+    "dotColor": "#CFD7E1",
+    "dotSize": 6,
+    "dotGap": 8,
+    "connectorColor": "#AEBAC6",
+    "connectorWidth": 7,
+    "connectorLength": 18,
+    "horizontalPadding": 52,
+    "labelColor": "#506478",
+    "shadowBlur": 10,
+    "shadowOffsetY": 6,
+  
+    // Layout behavior for visibility changes
+    "visibilityLayouts": {
+      "allVisible": {
+        "width": 980,
+        "height": 300,
+        "visibleUnits": 4,
+        "ringSize": 198,
+        "connectorLength": 18,
+        "horizontalPadding": 52,
+        "note": "All 4 circular timers visible"
+      },
+      "daysHidden": {
+        "width": 980,
+        "height": 300,
+        "visibleUnits": 3,
+        "ringSize": 208,
+        "connectorLength": 23,
+        "horizontalPadding": 52,
+        "stretchRemainingUnits": true,
+        "note": "Hide Days only, keep same canvas"
+      },
+      "secondsHidden": {
+        "width": 980,
+        "height": 300,
+        "visibleUnits": 3,
+        "ringSize": 208,
+        "connectorLength": 23,
+        "horizontalPadding": 52,
+        "stretchRemainingUnits": true,
+        "note": "Hide Seconds only, keep same canvas"
+      },
+      "daysAndSecondsHidden": {
+        "width": 700,
+        "height": 268,
+        "visibleUnits": 2,
+        "ringSize": 212,
+        "connectorLength": 27,
+        "horizontalPadding": 44,
+        "stretchRemainingUnits": true,
+        "note": "Hours and Minutes only, compact layout"
+      }
+    },
+  
+    "visibilityRules": {
+      "keepSameCanvasIfOnlyOneEdgeUnitHidden": true,
+      "useCompactCanvasIfDaysAndSecondsHidden": true,
+      "compactTrigger": {
+        "showDays": false,
+        "showSeconds": false
+      }
+    },
+  
+    "formDefaults": {
+      "background": "#D6D6D6",
+      "textColor": "#23384D",
+      "accentColor": "#67B6CB"
+    },
+  
+    "fields": [
+      { "key": "width", "label": "Width", "type": "number", "min": 100, "max": 2000, "step": 10, "group": "Dimensions", "groupOrder": 2, "order": 1 },
+      { "key": "height", "label": "Height", "type": "number", "min": 80, "max": 1000, "step": 5, "group": "Dimensions", "order": 2 },
+  
+      { "key": "background", "label": "Background", "type": "color", "group": "Appearance", "groupOrder": 1, "order": 1 },
+      { "key": "textColor", "label": "Digit", "type": "color", "group": "Appearance", "order": 2 },
+      { "key": "labelColor", "label": "Label Color", "type": "color", "group": "Appearance", "order": 3 },
+      { "key": "accentColor", "label": "Progress Color", "type": "color", "group": "Appearance", "order": 4 },
+      { "key": "ringTrackColor", "label": "Ring Track Color", "type": "color", "group": "Appearance", "order": 5 },
+      { "key": "innerCircleColor", "label": "Inner Circle Color", "type": "color", "group": "Appearance", "order": 6 },
+      { "key": "innerBorderColor", "label": "Inner Border Color", "type": "color", "group": "Appearance", "order": 7 },
+      { "key": "dotColor", "label": "Dotted Ring Color", "type": "color", "group": "Appearance", "order": 8 },
+      { "key": "connectorColor", "label": "Connector Color", "type": "color", "group": "Appearance", "order": 9 },
+  
+      { "key": "fontSize", "label": "Digit Font Size", "type": "number", "min": 8, "max": 200, "step": 1, "group": "Appearance", "order": 10 },
+      { "key": "labelFontSize", "label": "Label Font Size", "type": "number", "min": 8, "max": 100, "step": 1, "group": "Appearance", "order": 11 },
+  
+      { "key": "ringStroke", "label": "Progress Stroke Width", "type": "number", "min": 1, "max": 30, "step": 1, "group": "Layout", "groupOrder": 3, "order": 1 },
+      { "key": "innerBorderWidth", "label": "Inner Stroke Width", "type": "number", "min": 0, "max": 20, "step": 1, "group": "Layout", "order": 2 },
+      { "key": "dotSize", "label": "Dot Size", "type": "number", "min": 1, "max": 20, "step": 1, "group": "Layout", "order": 3 },
+      { "key": "dotGap", "label": "Dot Gap", "type": "number", "min": 1, "max": 20, "step": 1, "group": "Layout", "order": 4 },
+      { "key": "connectorWidth", "label": "Connector Width", "type": "number", "min": 1, "max": 20, "step": 1, "group": "Layout", "order": 5 },
+      { "key": "connectorLength", "label": "Connector Height", "type": "number", "min": 0, "max": 50, "step": 1, "group": "Layout", "order": 6 },
+  
+      { "key": "dottedRing", "label": "Show Dotted Ring", "type": "boolean", "group": "Visibility", "groupOrder": 4, "order": 1 },
+      { "key": "showDays", "label": "Show Days", "type": "boolean", "group": "Visibility", "order": 2 },
+      { "key": "showSeconds", "label": "Show Seconds", "type": "boolean", "group": "Visibility", "order": 3 },
+  
+      { "key": "finalMessage", "label": "Final Message", "type": "text", "maxLength": 64, "group": "Final Screen", "groupOrder": 6 },
+      { "key": "finalBackground", "label": "Final Background", "type": "color", "group": "Final Screen" },
+      { "key": "finalTextColor", "label": "Final Text Color", "type": "color", "group": "Final Screen" }
+    ]
+  }

@@ -1,0 +1,131 @@
+{
+    // Template name shown in admin/template selector
+    "name": "Rounded Panel Cards",
+  
+    // Default canvas size when all 4 units are visible
+    "width": 980,
+    "height": 274,
+  
+    "background": "#FFFFFF",
+    "textColor": "#24384D",
+    "accentColor": "#69B7CB",
+  
+    // Main digit font size
+    "fontSize": 97,
+  
+    // Label font size like DAYS / HOURS / MINUTES / SECONDS
+    "labelFontSize": 23,
+  
+    "fontPath": "resources/fonts/dejavu-sans.book.ttf",
+    "style": "rounded_panel_cards",
+  
+    // Visibility toggles controlled by user from form
+    "showDays": true,
+    "showHours": true,
+    "showMinutes": true,
+    "showSeconds": true,
+  
+    "circleStroke": 0,
+    "finalMessage": "Sorry! you missed the offer.",
+    "finalBackground": null,
+    "finalTextColor": null,
+  
+    "borderWidth": 0,
+    "borderColor": "#D8E0E8",
+  
+    "panelRadius": 30,
+    "cardRadius": 17,
+    "numberBoxRadius": 15,
+    "numberBoxBorderWidth": 3,
+    "numberBoxBorderColor": "#69B7CB",
+    "cardBackground": "#EDF1F5",
+    "numberBoxBackground": "#FFFFFF",
+    "shadowColor": "#D9E3EB",
+    "shadowBlur": 0,
+    "shadowOffsetY": 0,
+    "segmentGap": 24,
+    "labelColor": "#3D5268",
+  
+    // IMPORTANT:
+    // These presets tell renderer what canvas/layout to use
+    // depending on showDays and showSeconds values.
+    "visibilityLayouts": {
+      "allVisible": {
+        "width": 960,
+        "height": 256,
+        "visibleUnits": 4,
+        "segmentGap": 24,
+        "note": "Default layout for Days, Hours, Minutes, Seconds"
+      },
+      "daysHidden": {
+        "width": 960,
+        "height": 256,
+        "visibleUnits": 3,
+        "segmentGap": 28,
+        "stretchRemainingUnits": true,
+        "note": "Hide Days only, keep same canvas size"
+      },
+      "secondsHidden": {
+        "width": 960,
+        "height": 256,
+        "visibleUnits": 3,
+        "segmentGap": 28,
+        "stretchRemainingUnits": true,
+        "note": "Hide Seconds only, keep same canvas size"
+      },
+      "daysAndSecondsHidden": {
+        "width": 730,
+        "height": 224,
+        "visibleUnits": 2,
+        "segmentGap": 30,
+        "stretchRemainingUnits": true,
+        "note": "Only Hours and Minutes visible, compact layout"
+      }
+    },
+  
+    // This section is only for renderer/app logic understanding
+    "visibilityRules": {
+      "keepSameCanvasIfOnlyOneEdgeUnitHidden": true,
+      "useCompactCanvasIfDaysAndSecondsHidden": true,
+      "compactTrigger": {
+        "showDays": false,
+        "showSeconds": false
+      }
+    },
+  
+    "formDefaults": {
+      "background": "#D6D6D6",
+      "textColor": "#24384D",
+      "accentColor": "#69B7CB"
+    },
+  
+    "fields": [
+      { "key": "width", "label": "Width", "type": "number", "min": 100, "max": 2000, "step": 10, "group": "Dimensions", "groupOrder": 2, "order": 1 },
+      { "key": "height", "label": "Height", "type": "number", "min": 80, "max": 1000, "step": 5, "group": "Dimensions", "order": 2 },
+  
+      { "key": "background", "label": "Background", "type": "color", "group": "Appearance", "groupOrder": 1, "order": 1 },
+      { "key": "cardBackground", "label": "Card Background", "type": "color", "group": "Appearance", "order": 2 },
+      { "key": "numberBoxBackground", "label": "Digit Box Background", "type": "color", "group": "Appearance", "order": 3 },
+      { "key": "textColor", "label": "Digit", "type": "color", "group": "Appearance", "order": 4 },
+      { "key": "labelColor", "label": "Label Color", "type": "color", "group": "Appearance", "order": 5 },
+      { "key": "accentColor", "label": "Highlight Border Color", "type": "color", "group": "Appearance", "order": 6 },
+  
+      { "key": "fontSize", "label": "Digit Font Size", "type": "number", "min": 8, "max": 200, "step": 1, "group": "Appearance", "order": 7 },
+      { "key": "labelFontSize", "label": "Label Font Size", "type": "number", "min": 8, "max": 100, "step": 1, "group": "Appearance", "order": 8 },
+  
+      { "key": "borderWidth", "label": "Outer Border Width", "type": "number", "min": 0, "max": 20, "step": 1, "group": "Appearance", "order": 9 },
+      { "key": "borderColor", "label": "Outer Border Color", "type": "color", "group": "Appearance", "order": 10 },
+  
+      { "key": "cardRadius", "label": "Card Radius", "type": "number", "min": 0, "max": 50, "step": 1, "group": "Layout", "groupOrder": 3, "order": 1 },
+      { "key": "numberBoxRadius", "label": "Digit Box Radius", "type": "number", "min": 0, "max": 50, "step": 1, "group": "Layout", "order": 2 },
+      { "key": "numberBoxBorderWidth", "label": "Digit Box Border Width", "type": "number", "min": 0, "max": 10, "step": 1, "group": "Layout", "order": 3 },
+  
+      // Visibility fields (days and seconds only; hours/minutes always shown)
+      { "key": "showDays", "label": "Show Days", "type": "boolean", "group": "Visibility", "groupOrder": 4, "order": 1 },
+      { "key": "showSeconds", "label": "Show Seconds", "type": "boolean", "group": "Visibility", "order": 2 },
+  
+      { "key": "finalMessage", "label": "Final Message", "type": "text", "maxLength": 64, "group": "Final Screen", "groupOrder": 6 },
+      { "key": "finalBackground", "label": "Final Background", "type": "color", "group": "Final Screen" },
+      { "key": "finalTextColor", "label": "Final Text Color", "type": "color", "group": "Final Screen" }
+    ]
+  }
