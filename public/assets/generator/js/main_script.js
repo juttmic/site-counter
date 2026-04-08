@@ -229,14 +229,13 @@ function resolveTimerDimensionsFromVisibilityLayouts(defaults, overrides) {
 /** Padding above/below custom text glyphs — matches TimerGifGenerator::customTextVerticalPadding default. */
 function customTextPaddingYEachPx(emSize) {
   const e = Number.isFinite(emSize) ? emSize : 12;
-  return Math.max(4, Math.round(e * 0.2));
+  return Math.max(4, Math.round(e * 0.5));
 }
 
 /**
- * Layout height for the custom heading: glyph bbox (approx) + top + bottom padding.
- * Aligns with TimerGifGenerator ($textPadTop + $textH + $textPadBottom).
+ * Glyph height (approx bbox) and em used for heading — shared by block height and distance priority.
  */
-function headingTextBlockHeightPx(defaults, overrides) {
+function headingGlyphMetricsPx(defaults, overrides) {
   const fontSizeRaw = firstNumber(
     findFieldByKey('fontSize')?.value,
     overrides.fontSize,
@@ -249,8 +248,77 @@ function headingTextBlockHeightPx(defaults, overrides) {
     ? Math.round(customN)
     : Math.max(12, Math.round(fontSize * 0.5));
   const glyphH = Math.max(12, Math.round(em * 1.22));
+  return { em, glyphH };
+}
+
+/**
+ * Layout height for the custom heading at distance 0: glyph + full pads (max block before distance eats pad/slack).
+ */
+function headingTextBlockHeightPx(defaults, overrides) {
+  const { em, glyphH } = headingGlyphMetricsPx(defaults, overrides);
   const padEach = customTextPaddingYEachPx(em);
   return glyphH + 2 * padEach;
+}
+
+/**
+ * Mirrors TimerGifGenerator::resolveCustomTextDistancePriority for preview sizing clamps.
+ */
+function resolveHeadingBlockAndGapPx(
+  distanceRaw,
+  textPosition,
+  timerHeight,
+  innerH,
+  edgePad,
+  layoutHeightOuter
+) {
+  const MIN_D = -400;
+  const MAX_D = 400;
+  let D = Number.isFinite(distanceRaw) ? distanceRaw : 0;
+  D = Math.max(MIN_D, Math.min(MAX_D, D));
+
+  const defaults = currentSkinMetadata?.defaults || {};
+  const overrides = parseOverrides();
+  const { em, glyphH } = headingGlyphMetricsPx(defaults, overrides);
+  const padBase = customTextPaddingYEachPx(em);
+  const baseT = padBase;
+  const baseB = padBase;
+  const textH = glyphH;
+
+  const innerFromLayout = Number.isFinite(layoutHeightOuter) && layoutHeightOuter > 0
+    ? Math.max(0, layoutHeightOuter - 2 * edgePad)
+    : null;
+  const innerHsafe = innerFromLayout != null ? innerFromLayout : (Number.isFinite(innerH) ? Math.max(0, innerH) : 0);
+
+  if (D < 0) {
+    const tbh = baseT + textH + baseB;
+    let avail = innerHsafe - timerHeight - tbh;
+    if (!Number.isFinite(avail) || avail < 0) avail = 0;
+    const effDist = Math.min(D, avail);
+    return { textBlockPx: tbh, gapPx: effDist };
+  }
+
+  let effT = baseT;
+  let effB = baseB;
+  let D1 = D;
+  if (textPosition === 'top') {
+    const padEat = Math.min(D, baseT);
+    effT = baseT - padEat;
+    D1 = D - padEat;
+  } else if (textPosition === 'bottom') {
+    const padEat = Math.min(D, baseB);
+    effB = baseB - padEat;
+    D1 = D - padEat;
+  }
+
+  const textBlockPx = effT + textH + effB;
+  const stack0 = timerHeight + textBlockPx;
+  const innerTop0 = Math.max(0, Math.floor((innerHsafe - stack0) / 2));
+  const slackEat = Math.min(D1, innerTop0);
+  let gapPx = D1 - slackEat;
+  let avail = innerHsafe - timerHeight - textBlockPx;
+  if (!Number.isFinite(avail) || avail < 0) avail = 0;
+  if (gapPx > avail) gapPx = avail;
+  return { textBlockPx, gapPx };
 }
 
 function resolveSizingSnapshot() {
@@ -294,7 +362,11 @@ function resolveSizingSnapshot() {
   let distance = isNaN(distanceRaw) ? 0 : distanceRaw;
   distance = Math.max(MIN_CUSTOM_TEXT_DISTANCE, Math.min(MAX_CUSTOM_TEXT_DISTANCE, distance));
 
-  const innerStack = wantsText ? Math.max(0, textSize + distance) : 0;
+  const layoutInnerH = Math.max(0, gifHeight - edgePad * 2);
+  const { textBlockPx, gapPx } = wantsText
+    ? resolveHeadingBlockAndGapPx(distance, textPos, timerHeight, layoutInnerH, edgePad, gifHeight)
+    : { textBlockPx: 0, gapPx: 0 };
+  const innerStack = wantsText ? Math.max(0, textBlockPx + gapPx) : 0;
   const combinedHeight = timerHeight + innerStack + (edgePad * 2);
   const maxDistance = wantsText
     ? Math.max(0, Math.floor(gifHeight - (edgePad * 2) - timerHeight - textSize))
@@ -465,9 +537,13 @@ function syncGifHeightDeltaFromPaddingInput(distanceInput) {
   if (!Number.isFinite(curH)) curH = defH;
 
   const sizing = resolveSizingSnapshot();
-  const { edgePad, timerHeight, textSize: textH } = sizing;
-  const prevNeed = naturalLayoutNeedForPad(timerHeight, textH, edgePad, prevPad);
-  const curNeed = naturalLayoutNeedForPad(timerHeight, textH, edgePad, curPad);
+  const { edgePad, timerHeight } = sizing;
+  const textPos = document.querySelector('select[name="text_position"]')?.value || 'none';
+  const innerH = Math.max(0, curH - edgePad * 2);
+  const rPrev = resolveHeadingBlockAndGapPx(prevPad, textPos, timerHeight, innerH, edgePad, curH);
+  const rCur = resolveHeadingBlockAndGapPx(curPad, textPos, timerHeight, innerH, edgePad, curH);
+  const prevNeed = timerHeight + Math.max(0, rPrev.textBlockPx + rPrev.gapPx) + 2 * edgePad;
+  const curNeed = timerHeight + Math.max(0, rCur.textBlockPx + rCur.gapPx) + 2 * edgePad;
   const needDelta = Math.round(curNeed - prevNeed);
 
   /** Shrink GIF height with layout need, but not below skin default. */
