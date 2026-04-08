@@ -331,7 +331,7 @@ function resolveCustomTextStackLayoutTopJs(
     let effB = basePadBottom + d1;
     const tbh = effT + textH + effB;
     let rem = distance - d1;
-    const b0 = Math.max(0, Math.floor((timerTopInner - tbh) / 2));
+    const b0 = Math.max(0, Math.round((timerTopInner - tbh) / 2));
     const d2 = Math.min(rem, b0);
     rem -= d2;
     let blockTop = b0 - d2;
@@ -349,7 +349,7 @@ function resolveCustomTextStackLayoutTopJs(
   const effB = basePadBottom - n1;
   const tbh = effT + textH + effB;
   let rem = u - n1;
-  const b0 = Math.max(0, Math.floor((timerTopInner - tbh) / 2));
+  const b0 = Math.max(0, Math.round((timerTopInner - tbh) / 2));
   let blockTop = b0;
   const n2 = Math.min(rem, blockTop);
   rem -= n2;
@@ -372,14 +372,13 @@ function resolveCustomTextStackLayoutBottomJs(
   maxTextBlock
 ) {
   const slotH = Math.max(0, pinSpanH - timerTopInner - timerH);
-  const belowBand = Math.min(slotH, timerTopInner);
   if (distance >= 0) {
     const d1 = Math.min(distance, basePadBottom);
     let effB = basePadBottom - d1;
     let effT = basePadTop + d1;
     const tbh = effT + textH + effB;
     let rem = distance - d1;
-    const b0 = timerTopInner + timerH + Math.max(0, Math.floor((belowBand - tbh) / 2));
+    const b0 = timerTopInner + timerH + Math.max(0, Math.round((slotH - tbh) / 2));
     const marginBot = Math.max(0, pinSpanH - (b0 + tbh));
     const d2 = Math.min(rem, marginBot);
     rem -= d2;
@@ -398,7 +397,7 @@ function resolveCustomTextStackLayoutBottomJs(
   const effB = basePadBottom + n1;
   const tbh = effT + textH + effB;
   let rem = u - n1;
-  let blockTop = timerTopInner + timerH + Math.max(0, Math.floor((belowBand - tbh) / 2));
+  let blockTop = timerTopInner + timerH + Math.max(0, Math.round((slotH - tbh) / 2));
   const marginBot = Math.max(0, pinSpanH - (blockTop + tbh));
   const n2 = Math.min(rem, marginBot);
   rem -= n2;
@@ -496,7 +495,7 @@ function rawHeadingBlockTopForStackDistanceJs(
       const effB = basePadBottom + d1;
       const tbh = effT + textH + effB;
       let rem = distance - d1;
-      const b0 = Math.max(0, Math.floor((timerTopInner - tbh) / 2));
+      const b0 = Math.max(0, Math.round((timerTopInner - tbh) / 2));
       const d2 = Math.min(rem, b0);
       rem -= d2;
       let blockTop = b0 - d2;
@@ -513,7 +512,7 @@ function rawHeadingBlockTopForStackDistanceJs(
     const effB = basePadBottom - n1;
     const tbh = effT + textH + effB;
     let rem = u - n1;
-    const b0 = Math.max(0, Math.floor((timerTopInner - tbh) / 2));
+    const b0 = Math.max(0, Math.round((timerTopInner - tbh) / 2));
     let blockTop = b0;
     const n2 = Math.min(rem, blockTop);
     rem -= n2;
@@ -523,14 +522,13 @@ function rawHeadingBlockTopForStackDistanceJs(
   }
   if (textPosition === 'bottom') {
     const slotH = Math.max(0, pinSpanH - timerTopInner - timerH);
-    const belowBand = Math.min(slotH, timerTopInner);
     if (distance >= 0) {
       const d1 = Math.min(distance, basePadBottom);
       const effB = basePadBottom - d1;
       const effT = basePadTop + d1;
       const tbh = effT + textH + effB;
       let rem = distance - d1;
-      const b0 = timerTopInner + timerH + Math.max(0, Math.floor((belowBand - tbh) / 2));
+      const b0 = timerTopInner + timerH + Math.max(0, Math.round((slotH - tbh) / 2));
       const marginBot = Math.max(0, pinSpanH - (b0 + tbh));
       const d2 = Math.min(rem, marginBot);
       rem -= d2;
@@ -548,7 +546,7 @@ function rawHeadingBlockTopForStackDistanceJs(
     const effB = basePadBottom + n1;
     const tbh = effT + textH + effB;
     let rem = u - n1;
-    let blockTop = timerTopInner + timerH + Math.max(0, Math.floor((belowBand - tbh) / 2));
+    let blockTop = timerTopInner + timerH + Math.max(0, Math.round((slotH - tbh) / 2));
     const marginBot = Math.max(0, pinSpanH - (blockTop + tbh));
     const n2 = Math.min(rem, marginBot);
     rem -= n2;
@@ -641,13 +639,12 @@ function maxCustomTextDistanceInnerOuterPositiveJs(
 ) {
   const tbh = basePadTop + textH + basePadBottom;
   if (textPosition === 'top') {
-    const b0 = Math.max(0, Math.floor((timerTopInner - tbh) / 2));
+    const b0 = Math.max(0, Math.round((timerTopInner - tbh) / 2));
     return basePadTop + b0;
   }
   if (textPosition === 'bottom') {
     const slotH = Math.max(0, pinSpanH - timerTopInner - timerH);
-    const belowBand = Math.min(slotH, timerTopInner);
-    const b0 = timerTopInner + timerH + Math.max(0, Math.floor((belowBand - tbh) / 2));
+    const b0 = timerTopInner + timerH + Math.max(0, Math.round((slotH - tbh) / 2));
     const marginBot = Math.max(0, pinSpanH - (b0 + tbh));
     return basePadBottom + marginBot;
   }

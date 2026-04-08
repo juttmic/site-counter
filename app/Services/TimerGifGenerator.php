@@ -546,7 +546,7 @@ class TimerGifGenerator
             $effB = $basePadBottom + $d1;
             $tbh = $effT + $textH + $effB;
             $rem = $distance - $d1;
-            $b0 = max(0, (int) floor(($timerTopInner - $tbh) / 2));
+            $b0 = max(0, (int) round(($timerTopInner - $tbh) / 2));
             $d2 = min($rem, $b0);
             $rem -= $d2;
             $blockTop = $b0 - $d2;
@@ -565,7 +565,7 @@ class TimerGifGenerator
         $effB = $basePadBottom - $n1;
         $tbh = $effT + $textH + $effB;
         $rem = $u - $n1;
-        $b0 = max(0, (int) floor(($timerTopInner - $tbh) / 2));
+        $b0 = max(0, (int) round(($timerTopInner - $tbh) / 2));
         $blockTop = $b0;
         $n2 = min($rem, $blockTop);
         $rem -= $n2;
@@ -588,17 +588,13 @@ class TimerGifGenerator
         int $maxTextBlock
     ): array {
         $slotH = max(0, $pinSpanH - $timerTopInner - $timerH);
-        /* Mirror top: heading above timer is centered in a band of height timerTopInner; below timer, center in
-         * the same nominal band height (not the full slot). Using full slotH when slotH >> timerTopInner pushed
-         * the block too far down and consumed overlap slack prematurely. */
-        $belowBand = min($slotH, $timerTopInner);
         if ($distance >= 0) {
             $d1 = min($distance, $basePadBottom);
             $effB = $basePadBottom - $d1;
             $effT = $basePadTop + $d1;
             $tbh = $effT + $textH + $effB;
             $rem = $distance - $d1;
-            $b0 = $timerTopInner + $timerH + max(0, (int) floor(($belowBand - $tbh) / 2));
+            $b0 = $timerTopInner + $timerH + max(0, (int) round(($slotH - $tbh) / 2));
             $marginBot = max(0, $pinSpanH - ($b0 + $tbh));
             $d2 = min($rem, $marginBot);
             $rem -= $d2;
@@ -618,7 +614,7 @@ class TimerGifGenerator
         $effB = $basePadBottom + $n1;
         $tbh = $effT + $textH + $effB;
         $rem = $u - $n1;
-        $b0 = $timerTopInner + $timerH + max(0, (int) floor(($belowBand - $tbh) / 2));
+        $b0 = $timerTopInner + $timerH + max(0, (int) round(($slotH - $tbh) / 2));
         $blockTop = $b0;
         $marginBot = max(0, $pinSpanH - ($blockTop + $tbh));
         $n2 = min($rem, $marginBot);
@@ -651,7 +647,7 @@ class TimerGifGenerator
                 $effB = $basePadBottom + $d1;
                 $tbh = $effT + $textH + $effB;
                 $rem = $distance - $d1;
-                $b0 = max(0, (int) floor(($timerTopInner - $tbh) / 2));
+                $b0 = max(0, (int) round(($timerTopInner - $tbh) / 2));
                 $d2 = min($rem, $b0);
                 $rem -= $d2;
                 $blockTop = $b0 - $d2;
@@ -669,7 +665,7 @@ class TimerGifGenerator
             $effB = $basePadBottom - $n1;
             $tbh = $effT + $textH + $effB;
             $rem = $u - $n1;
-            $b0 = max(0, (int) floor(($timerTopInner - $tbh) / 2));
+            $b0 = max(0, (int) round(($timerTopInner - $tbh) / 2));
             $blockTop = $b0;
             $n2 = min($rem, $blockTop);
             $rem -= $n2;
@@ -680,14 +676,13 @@ class TimerGifGenerator
         }
         if ($textPosition === 'bottom') {
             $slotH = max(0, $pinSpanH - $timerTopInner - $timerH);
-            $belowBand = min($slotH, $timerTopInner);
             if ($distance >= 0) {
                 $d1 = min($distance, $basePadBottom);
                 $effB = $basePadBottom - $d1;
                 $effT = $basePadTop + $d1;
                 $tbh = $effT + $textH + $effB;
                 $rem = $distance - $d1;
-                $b0 = $timerTopInner + $timerH + max(0, (int) floor(($belowBand - $tbh) / 2));
+                $b0 = $timerTopInner + $timerH + max(0, (int) round(($slotH - $tbh) / 2));
                 $marginBot = max(0, $pinSpanH - ($b0 + $tbh));
                 $d2 = min($rem, $marginBot);
                 $rem -= $d2;
@@ -706,7 +701,7 @@ class TimerGifGenerator
             $effB = $basePadBottom + $n1;
             $tbh = $effT + $textH + $effB;
             $rem = $u - $n1;
-            $blockTop = $timerTopInner + $timerH + max(0, (int) floor(($belowBand - $tbh) / 2));
+            $blockTop = $timerTopInner + $timerH + max(0, (int) round(($slotH - $tbh) / 2));
             $marginBot = max(0, $pinSpanH - ($blockTop + $tbh));
             $n2 = min($rem, $marginBot);
             $rem -= $n2;
@@ -859,14 +854,13 @@ class TimerGifGenerator
     ): int {
         $tbh = $basePadTop + $textH + $basePadBottom;
         if ($textPosition === 'top') {
-            $b0 = max(0, (int) floor(($timerTopInner - $tbh) / 2));
+            $b0 = max(0, (int) round(($timerTopInner - $tbh) / 2));
 
             return $basePadTop + $b0;
         }
         if ($textPosition === 'bottom') {
             $slotH = max(0, $pinSpanH - $timerTopInner - $timerH);
-            $belowBand = min($slotH, $timerTopInner);
-            $b0 = $timerTopInner + $timerH + max(0, (int) floor(($belowBand - $tbh) / 2));
+            $b0 = $timerTopInner + $timerH + max(0, (int) round(($slotH - $tbh) / 2));
             $marginBot = max(0, $pinSpanH - ($b0 + $tbh));
 
             return $basePadBottom + $marginBot;
