@@ -434,7 +434,7 @@ class TimerGifGenerator
         if (!$hasText) {
             return [0, 0];
         }
-        $default = max(4, (int) round($textSize * 0.2));
+        $default = max(4, (int) round($textSize * 0.5));
         $top = $default;
         $bottom = $default;
         if (isset($skin['customTextPaddingTop'])) {
@@ -445,6 +445,56 @@ class TimerGifGenerator
         }
 
         return [$top, $bottom];
+    }
+
+    /**
+     * 1px red outline around the glyph row and around the padded heading block, both spanning the counter width.
+     */
+    private function drawCustomTextLayoutGuideBorders(
+        \GdImage $im,
+        int $counterLeftX,
+        int $counterW,
+        int $glyphTopY,
+        int $glyphBottomY,
+        int $paddedBlockTopY,
+        int $textBlockH
+    ): void {
+        if ($counterW <= 0 || $textBlockH <= 0) {
+            return;
+        }
+        if (function_exists('imagesetthickness')) {
+            imagesetthickness($im, 1);
+        }
+        $red = @imagecolorallocate($im, 255, 0, 0);
+        if ($red === false) {
+            return;
+        }
+        $x0 = $counterLeftX;
+        $x1 = $counterLeftX + max(0, $counterW - 1);
+        $outerY1 = $paddedBlockTopY + max(0, $textBlockH - 1);
+        imagerectangle($im, $x0, $paddedBlockTopY, $x1, $outerY1, $red);
+
+        if ($glyphBottomY >= $glyphTopY) {
+            imagerectangle($im, $x0, $glyphTopY, $x1, $glyphBottomY, $red);
+        }
+    }
+
+    /** 1px blue outline around the digit/timer block (separate from custom-text guide borders). */
+    private function drawTimerCounterGuideBorder(\GdImage $im, int $offsetX, int $offsetY, int $timerW, int $timerH): void
+    {
+        if ($timerW <= 0 || $timerH <= 0) {
+            return;
+        }
+        if (function_exists('imagesetthickness')) {
+            imagesetthickness($im, 1);
+        }
+        $blue = @imagecolorallocate($im, 0, 102, 204);
+        if ($blue === false) {
+            return;
+        }
+        $x1 = $offsetX + $timerW - 1;
+        $y1 = $offsetY + $timerH - 1;
+        imagerectangle($im, $offsetX, $offsetY, $x1, $y1, $blue);
     }
 
     public function renderPngFrame(int $secondsRemaining, array $skin, ?string $customText, string $textPosition): string
@@ -688,9 +738,7 @@ class TimerGifGenerator
             'canvas_width' => $canvasW,
             'canvas_height' => $canvasH,
         ]);
-        // Add a 1px border around the counter area for visual separation
-        $timerBorderCol = imagecolorallocate($im, $tr, $tg, $tb);
-        // imagerectangle($im, $offsetX, $offsetY, $offsetX + $timerW - 1, $offsetY + $timerH - 1, $timerBorderCol);
+        $this->drawTimerCounterGuideBorder($im, $offsetX, $offsetY, $timerW, $timerH);
         imagedestroy($timerIm);
 
         if ($hasText) {
@@ -714,6 +762,12 @@ class TimerGifGenerator
                     'position' => $textPosition,
                 ]);
                 imagettftext($im, $textSize, 0, $tx, $ty, $customTxtCol, $font, $customText);
+                $blockTopY = ($textPosition === 'top')
+                    ? (int) $topPadding
+                    : (int) ($offsetY + $timerH + $effectiveDistance);
+                $glyphTopY = (int) ($ty - $textAscent);
+                $glyphBottomY = (int) ($glyphTopY + $textH - 1);
+                $this->drawCustomTextLayoutGuideBorders($im, $offsetX, $timerW, $glyphTopY, $glyphBottomY, $blockTopY, $textBlockH);
             } else {
                 $bi2 = 3;
                 $builtInTextH = imagefontheight($bi2);
@@ -735,6 +789,12 @@ class TimerGifGenerator
                     'position' => $textPosition,
                 ]);
                 imagestring($im, $bi2, $tx, $ty, $customText, $customTxtCol);
+                $blockTopY = ($textPosition === 'top')
+                    ? (int) $topPadding
+                    : (int) ($offsetY + $timerH + $effectiveDistance);
+                $glyphTopY = (int) $ty;
+                $glyphBottomY = (int) ($ty + $textH - 1);
+                $this->drawCustomTextLayoutGuideBorders($im, $offsetX, $timerW, $glyphTopY, $glyphBottomY, $blockTopY, $textBlockH);
             }
         }
 
