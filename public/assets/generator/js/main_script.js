@@ -301,13 +301,15 @@ function resolveHeadingBlockAndGapPx(
   let effB = baseB;
   let D1 = D;
   if (textPosition === 'top') {
-    const padEat = Math.min(D, baseT);
-    effT = baseT - padEat;
-    D1 = D - padEat;
+    const transfer = Math.min(D, baseT);
+    effT = baseT - transfer;
+    effB = baseB + transfer;
+    D1 = D - transfer;
   } else if (textPosition === 'bottom') {
-    const padEat = Math.min(D, baseB);
-    effB = baseB - padEat;
-    D1 = D - padEat;
+    const transfer = Math.min(D, baseB);
+    effB = baseB - transfer;
+    effT = baseT + transfer;
+    D1 = D - transfer;
   }
 
   const textBlockPx = effT + textH + effB;

@@ -448,7 +448,9 @@ class TimerGifGenerator
     }
 
     /**
-     * When distance >= 0: consume outer-side heading pad first, then vertical centering slack, then timer↔heading gap.
+     * When distance >= 0: first move padding inside the heading box — top→bottom for heading-above-timer,
+     * bottom→top for heading-below — so text block height stays constant until the outer-side pad is fully
+     * redistributed. Remaining distance then consumes vertical centering slack, then timer↔heading gap.
      * When distance < 0: pads stay at base; distance is overlap only (slackEat = 0).
      *
      * @return array{0: int, 1: int, 2: int, 3: int, 4: int} [effPadTop, effPadBottom, textBlockH, effectiveDistance, slackEat]
@@ -480,15 +482,15 @@ class TimerGifGenerator
         }
         $D = $distance;
         if ($textPosition === 'top') {
-            $padEat = min($D, $basePadTop);
-            $effT = $basePadTop - $padEat;
-            $effB = $basePadBottom;
-            $D1 = $D - $padEat;
+            $transfer = min($D, $basePadTop);
+            $effT = $basePadTop - $transfer;
+            $effB = $basePadBottom + $transfer;
+            $D1 = $D - $transfer;
         } elseif ($textPosition === 'bottom') {
-            $padEat = min($D, $basePadBottom);
-            $effB = $basePadBottom - $padEat;
-            $effT = $basePadTop;
-            $D1 = $D - $padEat;
+            $transfer = min($D, $basePadBottom);
+            $effB = $basePadBottom - $transfer;
+            $effT = $basePadTop + $transfer;
+            $D1 = $D - $transfer;
         } else {
             $effT = $basePadTop;
             $effB = $basePadBottom;
