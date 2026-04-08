@@ -232,15 +232,6 @@ function customTextPaddingYEachPx(emSize) {
   return Math.max(4, Math.round(e * 0.5));
 }
 
-/** Matches TimerGifGenerator::outerTopPaddingForCanvas (extra canvas height vs layout). */
-function outerTopPaddingForCanvasJs(canvasH, layoutHeight, hasText, textPosition) {
-  const extra = Math.max(0, canvasH - layoutHeight);
-  if (extra === 0) return 0;
-  if (hasText && textPosition === 'top') return 0;
-  if (hasText && textPosition === 'bottom') return extra;
-  return Math.floor(extra / 2);
-}
-
 /**
  * Glyph height (approx bbox) and em used for heading — shared by block height and distance priority.
  */
@@ -270,7 +261,8 @@ function headingTextBlockHeightPx(defaults, overrides) {
 }
 
 /**
- * Mirrors TimerGifGenerator::resolveCustomTextDistancePriority for preview sizing clamps.
+ * Mirrors heading pad transfer + gap rules: for distance > 0 and top/bottom text, gap between blocks is 0
+ * (padding slider only affects space inside the heading box).
  */
 function resolveHeadingBlockAndGapPx(
   distanceRaw,
@@ -322,18 +314,9 @@ function resolveHeadingBlockAndGapPx(
   }
 
   const textBlockPx = effT + textH + effB;
-  const textBlockMax = baseT + textH + baseB;
 
   if (D > 0 && (textPosition === 'top' || textPosition === 'bottom')) {
-    const layoutH = Math.max(timerHeight, timerHeight + textBlockMax + D) + 2 * edgePad;
-    const canvasHNum = Number.isFinite(layoutHeightOuter) && layoutHeightOuter > 0
-      ? layoutHeightOuter
-      : layoutH;
-    const outerTop = outerTopPaddingForCanvasJs(canvasHNum, layoutH, true, textPosition);
-    const pinSpanH = canvasHNum - 2 * edgePad - outerTop;
-    let gapPx = pinSpanH - timerHeight - textBlockPx;
-    if (!Number.isFinite(gapPx) || gapPx < 0) gapPx = 0;
-    return { textBlockPx, gapPx };
+    return { textBlockPx, gapPx: 0 };
   }
 
   const stack0 = timerHeight + textBlockPx;
@@ -530,12 +513,20 @@ function initPaddingHeightSyncState() {
 }
 
 /** Timer + heading stack height for a padding value (matches TimerGifGenerator layout). */
-function naturalLayoutNeedForPad(timerH, textH, edgePad, pad) {
+function naturalLayoutNeedForPad(timerH, textH, edgePad, pad, textPosition = 'none') {
   const p = Number.isFinite(pad) ? pad : 0;
   const th = Number.isFinite(timerH) ? timerH : 0;
   const te = Number.isFinite(textH) ? textH : 0;
   const ep = Number.isFinite(edgePad) ? edgePad : 2;
-  return th + Math.max(0, te + p) + 2 * ep;
+  let stack = te;
+  if (p < 0) {
+    stack = te + p;
+  } else if (p > 0 && (textPosition === 'top' || textPosition === 'bottom')) {
+    stack = te;
+  } else {
+    stack = te + p;
+  }
+  return th + Math.max(0, stack) + 2 * ep;
 }
 
 /**
