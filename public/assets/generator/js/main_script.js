@@ -1202,6 +1202,34 @@ function colorizeDesignGroupColors(groupBodyEl) {
   }
 }
 
+/**
+ * Two-option pill toggle (On/Off) bound to a hidden checkbox — same interaction model as status/timer type pills.
+ * @param {HTMLElement} pillGroupEl .toggle-pill-group
+ * @param {HTMLInputElement} checkboxEl type=checkbox, data-key for syncOverrides
+ */
+function bindBoolPillGroupToCheckbox(pillGroupEl, checkboxEl) {
+  const buttons = Array.from(pillGroupEl.querySelectorAll('.toggle-pill'));
+  const syncFromCheckbox = () => {
+    const on = !!checkboxEl.checked;
+    buttons.forEach((btn) => {
+      const isOnPill = btn.dataset.boolOn === '1';
+      btn.classList.toggle('active', isOnPill === on);
+    });
+  };
+  syncFromCheckbox();
+  buttons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const turnOn = btn.dataset.boolOn === '1';
+      if (checkboxEl.checked === turnOn) return;
+      checkboxEl.checked = turnOn;
+      syncFromCheckbox();
+      checkboxEl.dispatchEvent(new Event('change', { bubbles: true }));
+      checkboxEl.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+  });
+  checkboxEl.addEventListener('change', syncFromCheckbox);
+}
+
 function renderFields(metadata, savedOverrides = {}) {
   currentSkinMetadata = metadata;
   currentHiddenOverrides = {};
@@ -1676,10 +1704,37 @@ function renderFields(metadata, savedOverrides = {}) {
       if (visibilityToggles.length > 0) {
         visibilityToggles.forEach(field => {
           const value = resolveFieldValue(field);
-          const displayField = { ...field, label: (field.label || '').replace(/^Show\s+/i, '') };
-          const fieldContainer = createFieldInput(displayField, value, { useSwitch: true });
-          const classes = fieldContainer.className.split(' ').filter(c => !c.startsWith('col-'));
-          fieldContainer.className = classes.join(' ').trim();
+          const key = field.key;
+          const wrap = document.createElement('div');
+          wrap.className =
+            'type-pill type-toggle d-flex flex-column align-items-center';
+          wrap.style.display = 'flex';
+          const group = document.createElement('div');
+          group.className = 'toggle-pill-group';
+          const btnOn = document.createElement('button');
+          btnOn.type = 'button';
+          btnOn.className = 'toggle-pill';
+          btnOn.dataset.boolOn = '1';
+          btnOn.textContent = 'On';
+          const btnOff = document.createElement('button');
+          btnOff.type = 'button';
+          btnOff.className = 'toggle-pill';
+          btnOff.dataset.boolOn = '0';
+          btnOff.textContent = 'Off';
+          group.appendChild(btnOn);
+          group.appendChild(btnOff);
+          const input = document.createElement('input');
+          input.type = 'checkbox';
+          input.className = 'd-none';
+          input.dataset.key = key;
+          input.checked = !!value;
+          input.id = `skin_${key}`;
+          input.addEventListener('change', syncOverrides);
+          wrap.appendChild(group);
+          wrap.appendChild(input);
+          bindBoolPillGroupToCheckbox(group, input);
+          const fieldContainer = document.createElement('div');
+          fieldContainer.appendChild(wrap);
           togglesInner.appendChild(fieldContainer);
         });
       }

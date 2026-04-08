@@ -451,7 +451,7 @@ class TimerController extends Controller
                 $diff = now()->utc()->diffInSeconds($data['target_datetime'], false);
                 if ($diff > $maxSeconds) {
                     throw \Illuminate\Validation\ValidationException::withMessages([
-                        'target_datetime' => 'When Days are hidden, the counter duration must be 24 hours or less.',
+                        'target_datetime' => 'The counter duration must be 24 hours or less, because days are hidden.',
                     ]);
                 }
             }
@@ -459,7 +459,7 @@ class TimerController extends Controller
             if ($data['timer_type'] === 'reload_based' && !empty($data['duration_seconds'])) {
                 if ((int) $data['duration_seconds'] > $maxSeconds) {
                     throw \Illuminate\Validation\ValidationException::withMessages([
-                        'duration_seconds' => 'When Days are hidden, the counter duration must be 24 hours or less.',
+                        'duration_seconds' => 'The counter duration must be 24 hours or less, because days are hidden.',
                     ]);
                 }
             }
