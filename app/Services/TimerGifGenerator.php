@@ -743,24 +743,6 @@ class TimerGifGenerator
         }
     }
 
-    /** 1px blue outline around the digit/timer block (separate from custom-text guide borders). */
-    private function drawTimerCounterGuideBorder(\GdImage $im, int $offsetX, int $offsetY, int $timerW, int $timerH): void
-    {
-        if ($timerW <= 0 || $timerH <= 0) {
-            return;
-        }
-        if (function_exists('imagesetthickness')) {
-            imagesetthickness($im, 1);
-        }
-        $blue = @imagecolorallocate($im, 0, 102, 204);
-        if ($blue === false) {
-            return;
-        }
-        $x1 = $offsetX + $timerW - 1;
-        $y1 = $offsetY + $timerH - 1;
-        imagerectangle($im, $offsetX, $offsetY, $x1, $y1, $blue);
-    }
-
     public function renderPngFrame(int $secondsRemaining, array $skin, ?string $customText, string $textPosition): string
     {
         $skin = $this->resolveVisibilityLayout($skin);
@@ -1012,7 +994,6 @@ class TimerGifGenerator
             'canvas_width' => $canvasW,
             'canvas_height' => $canvasH,
         ]);
-        $this->drawTimerCounterGuideBorder($im, $offsetX, $offsetY, $timerW, $timerH);
         imagedestroy($timerIm);
 
         if ($hasText) {
