@@ -203,6 +203,8 @@ class SkinController extends Controller
         // Output canvas width/height (overall GIF)
         if (!isset($have['outputWidth']))  { $fields[] = ['key' => 'outputWidth',  'label' => 'Output Width (GIF)',  'type' => 'number', 'min' => 50, 'max' => 3000, 'step' => 1]; }
         if (!isset($have['outputHeight'])) { $fields[] = ['key' => 'outputHeight', 'label' => 'Output Height (GIF)', 'type' => 'number', 'min' => 50, 'max' => 3000, 'step' => 1]; }
+        // Optional: timer-only inner baseline for heading stack math (see TimerGifGenerator::defaultInnerHeightForHeadingLayout)
+        if (!isset($have['defaultOutputHeight'])) { $fields[] = ['key' => 'defaultOutputHeight', 'label' => 'Default output height (timer baseline)', 'type' => 'number', 'min' => 50, 'max' => 3000, 'step' => 1]; }
         // Final message and colors
         if (!isset($have['finalMessage']))     { $fields[] = ['key' => 'finalMessage',     'label' => "Final Message",      'type' => 'text',   'maxLength' => 64]; }
         if (!isset($have['finalBackground']))  { $fields[] = ['key' => 'finalBackground',  'label' => 'Final Background',  'type' => 'color']; }

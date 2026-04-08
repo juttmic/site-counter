@@ -448,6 +448,176 @@ class TimerGifGenerator
     }
 
     /**
+     * Inner height (below top border) for the timer-only GIF. extraInner splits evenly above/below timer row.
+     */
+    private function defaultInnerHeightForHeadingLayout(
+        array $skin,
+        int $timerH,
+        int $edgePad,
+        int $pinSpanH,
+        int $maxTextBlock
+    ): int {
+        $explicit = (int) ($skin['defaultOutputHeight'] ?? 0);
+        if ($explicit > 0) {
+            return max($timerH, $explicit - 2 * $edgePad);
+        }
+        $guess = $pinSpanH - $maxTextBlock;
+        if ($guess >= $timerH && $guess < $pinSpanH) {
+            return $guess;
+        }
+
+        return max($timerH, (int) floor(($pinSpanH + $timerH) / 2));
+    }
+
+    private function timerTopInnerPx(int $defaultInner, int $timerH, int $pinSpanH): int
+    {
+        $timerTopRef = max(0, (int) floor(($defaultInner - $timerH) / 2));
+        $extraInner = max(0, $pinSpanH - $defaultInner);
+
+        return $timerTopRef + (int) floor($extraInner / 2);
+    }
+
+    /**
+     * Pin-span coords (0 = top inside top border, below outerTopPadding). Deterministic in distance → reversible.
+     *
+     * @return array{0:int,1:int,2:int,3:int,4:int,5:int} effT, effB, tbh, timerTopInner, blockTopInner, effGap
+     */
+    private function resolveCustomTextStackLayout(
+        string $textPosition,
+        int $distance,
+        int $basePadTop,
+        int $basePadBottom,
+        int $textH,
+        int $timerH,
+        int $pinSpanH,
+        int $defaultInner,
+        int $maxTextBlock
+    ): array {
+        $timerTopInner = $this->timerTopInnerPx($defaultInner, $timerH, $pinSpanH);
+        if ($textPosition === 'top') {
+            return $this->resolveCustomTextStackLayoutTop(
+                $distance,
+                $basePadTop,
+                $basePadBottom,
+                $textH,
+                $timerH,
+                $pinSpanH,
+                $timerTopInner,
+                $maxTextBlock
+            );
+        }
+        if ($textPosition === 'bottom') {
+            return $this->resolveCustomTextStackLayoutBottom(
+                $distance,
+                $basePadTop,
+                $basePadBottom,
+                $textH,
+                $timerH,
+                $pinSpanH,
+                $timerTopInner,
+                $maxTextBlock
+            );
+        }
+
+        return [$basePadTop, $basePadBottom, $maxTextBlock, $timerTopInner, 0, 0];
+    }
+
+    private function resolveCustomTextStackLayoutTop(
+        int $distance,
+        int $basePadTop,
+        int $basePadBottom,
+        int $textH,
+        int $timerH,
+        int $pinSpanH,
+        int $timerTopInner,
+        int $maxTextBlock
+    ): array {
+        if ($distance >= 0) {
+            $d1 = min($distance, $basePadTop);
+            $effT = $basePadTop - $d1;
+            $effB = $basePadBottom + $d1;
+            $tbh = $effT + $textH + $effB;
+            $rem = $distance - $d1;
+            $b0 = max(0, (int) floor(($timerTopInner - $tbh) / 2));
+            $d2 = min($rem, $b0);
+            $rem -= $d2;
+            $blockTop = $b0 - $d2;
+            $gap = max(0, $timerTopInner - $blockTop - $tbh);
+            $d3 = min($rem, $gap);
+            $rem -= $d3;
+            $blockTop += $d3;
+            $blockTop += $rem;
+            $effGap = $timerTopInner - $blockTop - $tbh;
+
+            return [$effT, $effB, $tbh, $timerTopInner, $blockTop, $effGap];
+        }
+        $u = -$distance;
+        $n1 = min($u, $basePadBottom);
+        $effT = $basePadTop + $n1;
+        $effB = $basePadBottom - $n1;
+        $tbh = $effT + $textH + $effB;
+        $rem = $u - $n1;
+        $b0 = max(0, (int) floor(($timerTopInner - $tbh) / 2));
+        $blockTop = $b0;
+        $n2 = min($rem, $blockTop);
+        $rem -= $n2;
+        $blockTop -= $n2;
+        $blockTop += $rem;
+        $effGap = $timerTopInner - $blockTop - $tbh;
+
+        return [$effT, $effB, $tbh, $timerTopInner, max(0, $blockTop), $effGap];
+    }
+
+    private function resolveCustomTextStackLayoutBottom(
+        int $distance,
+        int $basePadTop,
+        int $basePadBottom,
+        int $textH,
+        int $timerH,
+        int $pinSpanH,
+        int $timerTopInner,
+        int $maxTextBlock
+    ): array {
+        $slotH = max(0, $pinSpanH - $timerTopInner - $timerH);
+        if ($distance >= 0) {
+            $d1 = min($distance, $basePadBottom);
+            $effB = $basePadBottom - $d1;
+            $effT = $basePadTop + $d1;
+            $tbh = $effT + $textH + $effB;
+            $rem = $distance - $d1;
+            $b0 = $timerTopInner + $timerH + max(0, (int) floor(($slotH - $tbh) / 2));
+            $marginBot = max(0, $pinSpanH - ($b0 + $tbh));
+            $d2 = min($rem, $marginBot);
+            $rem -= $d2;
+            $blockTop = $b0 + $d2;
+            $gap = max(0, $blockTop - $timerTopInner - $timerH);
+            $d3 = min($rem, $gap);
+            $rem -= $d3;
+            $blockTop -= $d3;
+            $blockTop -= $rem;
+            $effGap = $blockTop - $timerTopInner - $timerH;
+
+            return [$effT, $effB, $tbh, $timerTopInner, $blockTop, $effGap];
+        }
+        $u = -$distance;
+        $n1 = min($u, $basePadTop);
+        $effT = $basePadTop - $n1;
+        $effB = $basePadBottom + $n1;
+        $tbh = $effT + $textH + $effB;
+        $rem = $u - $n1;
+        $b0 = $timerTopInner + $timerH + max(0, (int) floor(($slotH - $tbh) / 2));
+        $blockTop = $b0;
+        $marginBot = max(0, $pinSpanH - ($blockTop + $tbh));
+        $n2 = min($rem, $marginBot);
+        $rem -= $n2;
+        $blockTop += $n2;
+        $blockTop -= $rem;
+        $effGap = $blockTop - $timerTopInner - $timerH;
+
+        return [$effT, $effB, $tbh, $timerTopInner, $blockTop, $effGap];
+    }
+
+    /**
      * Minimum vertical size of timer + heading stack (excluding outer border pads).
      * Positive customTextDistance does not add outer space (only internal heading pad transfer).
      */
@@ -757,27 +927,11 @@ class TimerGifGenerator
         $layoutHeight = max($timerH, $contentHeight) + ($edgePad * 2);
         $innerH = $layoutHeight - ($edgePad * 2);
 
-        $slackEat = 0;
         $textPadTop = 0;
         $textPadBottom = 0;
         $textBlockH = 0;
-        $effectiveDistance = $distance;
-        if ($hasText) {
-            [$textPadTop, $textPadBottom, $textBlockH, $effectiveDistance, $slackEat] = $this->resolveCustomTextDistancePriority(
-                $textPosition,
-                $distance,
-                $basePadTop,
-                $basePadBottom,
-                $textH,
-                true,
-                $timerH,
-                $innerH,
-                $layoutHeight,
-                $edgePad
-            );
-        }
+        $effectiveDistance = 0;
 
-        // If an explicit output height is provided, add outer padding without changing the spacing math
         $canvasH = $layoutHeight;
         $outerTopPadding = 0;
         if ($requestedH && $requestedH > 0) {
@@ -785,40 +939,40 @@ class TimerGifGenerator
             $outerTopPadding = $this->outerTopPaddingForCanvas($canvasH, $layoutHeight, $hasText, $textPosition);
         }
 
-        if ($hasText && $distance > 0 && ($textPosition === 'top' || $textPosition === 'bottom')) {
-            // Distance only redistributes padding inside the heading; no extra strip between heading and timer.
-            $effectiveDistance = 0;
-            $slackEat = 0;
-        }
+        $pinSpanH = $canvasH - (2 * $edgePad) - $outerTopPadding;
+        $contentY0 = $outerTopPadding + $edgePad;
 
-        // Center the combined block (text + timer) within the layout height (timer-based)
-        $combinedHeight = $timerH + ($hasText ? ($textBlockH + $effectiveDistance) : 0);
-        // Overlap (negative distance) with a timer-tall column: do not center using text+gap — that
-        // adds bogus vertical slack while text overlaps the counter. Full stack centering applies
-        // when layout grows past the timer (extra content height / larger output canvas).
-        $useOverlapInnerCentering = $hasText && $distance < 0 && $innerH === $timerH;
-        $centeringStackHeight = $useOverlapInnerCentering ? $timerH : $combinedHeight;
-        $innerTopPadding = max(0, (int) floor(($innerH - $centeringStackHeight) / 2));
-        if ($hasText && $distance > 0 && ($textPosition === 'top' || $textPosition === 'bottom')) {
-            $pinSpanH = $canvasH - (2 * $edgePad) - $outerTopPadding;
-            $innerTopPadding = max(0, $pinSpanH - $combinedHeight);
-        }
-
-        $topPadding = $outerTopPadding + $innerTopPadding + $edgePad;
-        if ($hasText && $distance >= 0) {
+        if ($hasText && ($textPosition === 'top' || $textPosition === 'bottom')) {
+            $defaultInner = $this->defaultInnerHeightForHeadingLayout($skin, $timerH, $edgePad, $pinSpanH, $maxTextBlock);
+            [
+                $textPadTop,
+                $textPadBottom,
+                $textBlockH,
+                $timerTopInner,
+                $blockTopInner,
+                $effectiveDistance,
+            ] = $this->resolveCustomTextStackLayout(
+                $textPosition,
+                $distance,
+                $basePadTop,
+                $basePadBottom,
+                $textH,
+                $timerH,
+                $pinSpanH,
+                $defaultInner,
+                $maxTextBlock
+            );
             if ($textPosition === 'top') {
-                $topPadding -= $slackEat;
-            } elseif ($textPosition === 'bottom') {
-                $topPadding += $slackEat;
+                $topPadding = (int) ($contentY0 + $blockTopInner);
+                $offsetY = (int) ($contentY0 + $timerTopInner);
+            } else {
+                $topPadding = (int) ($contentY0 + $timerTopInner);
+                $offsetY = $topPadding;
             }
-        }
-
-        // Bottom: timer at topPadding; gap = effectiveDistance; then text block (see ty below).
-        // Top: heading block starts at topPadding; timer at topPadding + textBlockH + effectiveDistance.
-        // effectiveDistance appears only in the timer Y (top) or text Y (bottom) — not both (avoids double overlap).
-        $offsetY = $topPadding;
-        if ($hasText && $textPosition === 'top') {
-            $offsetY += $textBlockH + $effectiveDistance;
+        } else {
+            $innerTopPadding = max(0, (int) floor(($innerH - $timerH) / 2));
+            $topPadding = $outerTopPadding + $innerTopPadding + $edgePad;
+            $offsetY = $topPadding;
         }
         // For bottom position, timer stays at topPadding; text is drawn after timer using effectiveDistance
         // If output width was not set above, fall back to natural max
@@ -1624,23 +1778,10 @@ class TimerGifGenerator
         $layoutHeight = max($timerH, $contentHeight) + ($edgePad * 2);
         $innerH = $layoutHeight - ($edgePad * 2);
 
-        $slackEat = 0;
+        $textPadTop = 0;
+        $textPadBottom = 0;
         $textBlockH = 0;
-        $effectiveDistance = $distance;
-        if ($hasText) {
-            [, , $textBlockH, $effectiveDistance, $slackEat] = $this->resolveCustomTextDistancePriority(
-                $textPosition,
-                $distance,
-                $basePadTop,
-                $basePadBottom,
-                $textH,
-                true,
-                $timerH,
-                $innerH,
-                $layoutHeight,
-                $edgePad
-            );
-        }
+        $effectiveDistance = 0;
 
         $canvasH = $layoutHeight;
         $outerTopPadding = 0;
@@ -1649,30 +1790,40 @@ class TimerGifGenerator
             $outerTopPadding = $this->outerTopPaddingForCanvas($canvasH, $layoutHeight, $hasText, $textPosition);
         }
 
-        if ($hasText && $distance > 0 && ($textPosition === 'top' || $textPosition === 'bottom')) {
-            $effectiveDistance = 0;
-            $slackEat = 0;
-        }
+        $pinSpanH = $canvasH - (2 * $edgePad) - $outerTopPadding;
+        $contentY0 = $outerTopPadding + $edgePad;
 
-        $combinedHeight = $timerH + ($hasText ? ($textBlockH + $effectiveDistance) : 0);
-        $useOverlapInnerCentering = $hasText && $distance < 0 && $innerH === $timerH;
-        $centeringStackHeight = $useOverlapInnerCentering ? $timerH : $combinedHeight;
-        $innerTopPadding = max(0, (int) floor(($innerH - $centeringStackHeight) / 2));
-        if ($hasText && $distance > 0 && ($textPosition === 'top' || $textPosition === 'bottom')) {
-            $pinSpanH = $canvasH - (2 * $edgePad) - $outerTopPadding;
-            $innerTopPadding = max(0, $pinSpanH - $combinedHeight);
-        }
-        $topPadding = $outerTopPadding + $innerTopPadding + $edgePad;
-        if ($hasText && $distance >= 0) {
+        if ($hasText && ($textPosition === 'top' || $textPosition === 'bottom')) {
+            $defaultInner = $this->defaultInnerHeightForHeadingLayout($skin, $timerH, $edgePad, $pinSpanH, $maxTextBlock);
+            [
+                $textPadTop,
+                $textPadBottom,
+                $textBlockH,
+                $timerTopInner,
+                $blockTopInner,
+                $effectiveDistance,
+            ] = $this->resolveCustomTextStackLayout(
+                $textPosition,
+                $distance,
+                $basePadTop,
+                $basePadBottom,
+                $textH,
+                $timerH,
+                $pinSpanH,
+                $defaultInner,
+                $maxTextBlock
+            );
             if ($textPosition === 'top') {
-                $topPadding -= $slackEat;
-            } elseif ($textPosition === 'bottom') {
-                $topPadding += $slackEat;
+                $topPadding = (int) ($contentY0 + $blockTopInner);
+                $offsetY = (int) ($contentY0 + $timerTopInner);
+            } else {
+                $topPadding = (int) ($contentY0 + $timerTopInner);
+                $offsetY = $topPadding;
             }
-        }
-        $offsetY = $topPadding;
-        if ($hasText && $textPosition === 'top') {
-            $offsetY += $textBlockH + $effectiveDistance;
+        } else {
+            $innerTopPadding = max(0, (int) floor(($innerH - $timerH) / 2));
+            $topPadding = $outerTopPadding + $innerTopPadding + $edgePad;
+            $offsetY = $topPadding;
         }
 
         $im = imagecreatetruecolor($canvasW, $canvasH);
