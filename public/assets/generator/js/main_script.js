@@ -569,6 +569,32 @@ function stackDistanceLayoutFeasibleJs(
     pinSpanH,
     timerTopInner
   );
+  if (textPosition === 'top') {
+    if (rawTop < 0 || rawTop + tbh > pinSpanH) {
+      return false;
+    }
+    if (distance >= 0) {
+      return rawTop + tbh <= timerTopInner;
+    }
+    const u = -distance;
+    if (u <= basePadBottom) {
+      return true;
+    }
+    return rawTop + tbh <= timerTopInner;
+  }
+  if (textPosition === 'bottom') {
+    if (rawTop < 0 || rawTop + tbh > pinSpanH) {
+      return false;
+    }
+    if (distance >= 0) {
+      return rawTop >= timerTopInner + timerH;
+    }
+    const u = -distance;
+    if (u <= basePadTop) {
+      return true;
+    }
+    return rawTop >= timerTopInner + timerH;
+  }
   return rawTop >= 0 && rawTop + tbh <= pinSpanH;
 }
 
@@ -581,23 +607,14 @@ function minFeasibleCustomTextDistanceNegativeJs(
   pinSpanH,
   timerTopInner
 ) {
-  if (!stackDistanceLayoutFeasibleJs(textPosition, 0, basePadTop, basePadBottom, textH, timerH, pinSpanH, timerTopInner)) {
-    return 0;
-  }
-  if (stackDistanceLayoutFeasibleJs(textPosition, -400, basePadTop, basePadBottom, textH, timerH, pinSpanH, timerTopInner)) {
-    return -400;
-  }
-  let lo = -401;
-  let hi = 0;
-  while (lo + 1 < hi) {
-    const mid = Math.floor((lo + hi) / 2);
-    if (stackDistanceLayoutFeasibleJs(textPosition, mid, basePadTop, basePadBottom, textH, timerH, pinSpanH, timerTopInner)) {
-      hi = mid;
-    } else {
-      lo = mid;
+  let minD = null;
+  for (let d = -400; d <= 0; d += 1) {
+    if (!stackDistanceLayoutFeasibleJs(textPosition, d, basePadTop, basePadBottom, textH, timerH, pinSpanH, timerTopInner)) {
+      continue;
     }
+    minD = minD === null ? d : Math.min(minD, d);
   }
-  return hi;
+  return minD == null ? 0 : minD;
 }
 
 function maxCustomTextDistanceInnerOuterPositiveJs(
@@ -1002,6 +1019,13 @@ function clampCustomTextDistance() {
   } else if (desired > maxPositivePadding) {
     next = maxPositivePadding;
   }
+  if (sizing.wantsText && (textPos === 'top' || textPos === 'bottom')) {
+    next = refineStackCustomTextDistanceForUi(textPos, next, sizing);
+    if (next > maxPositivePadding) next = maxPositivePadding;
+    if (next < MIN_CUSTOM_TEXT_DISTANCE) next = MIN_CUSTOM_TEXT_DISTANCE;
+    if (next > MAX_CUSTOM_TEXT_DISTANCE) next = MAX_CUSTOM_TEXT_DISTANCE;
+  }
+
   const gifFromDom = findGifHeightField()?.value;
   const gifDomN = Number(gifFromDom);
   const effectiveGifH = Number.isFinite(gifDomN) ? gifDomN : gifHeight;
@@ -1015,13 +1039,6 @@ function clampCustomTextDistance() {
     if (next < padFloorNeg) {
       next = padFloorNeg;
     }
-  }
-
-  if (sizing.wantsText && (textPos === 'top' || textPos === 'bottom')) {
-    next = refineStackCustomTextDistanceForUi(textPos, next, sizing);
-    if (next > maxPositivePadding) next = maxPositivePadding;
-    if (next < MIN_CUSTOM_TEXT_DISTANCE) next = MIN_CUSTOM_TEXT_DISTANCE;
-    if (next > MAX_CUSTOM_TEXT_DISTANCE) next = MAX_CUSTOM_TEXT_DISTANCE;
   }
 
   if (next !== desired) {

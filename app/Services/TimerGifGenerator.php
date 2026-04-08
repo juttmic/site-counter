@@ -770,11 +770,43 @@ class TimerGifGenerator
             $timerTopInner
         );
 
+        if ($textPosition === 'top') {
+            if ($rawTop < 0 || $rawTop + $tbh > $pinSpanH) {
+                return false;
+            }
+            if ($distance >= 0) {
+                return $rawTop + $tbh <= $timerTopInner;
+            }
+            $u = -$distance;
+            // While lowering padding, inner bottom pad is consumed first (block position unchanged): allow
+            // without requiring no timer overlap so tight layouts can still use negative values up to -basePadBottom.
+            if ($u <= $basePadBottom) {
+                return true;
+            }
+
+            return $rawTop + $tbh <= $timerTopInner;
+        }
+
+        if ($textPosition === 'bottom') {
+            if ($rawTop < 0 || $rawTop + $tbh > $pinSpanH) {
+                return false;
+            }
+            if ($distance >= 0) {
+                return $rawTop >= $timerTopInner + $timerH;
+            }
+            $u = -$distance;
+            if ($u <= $basePadTop) {
+                return true;
+            }
+
+            return $rawTop >= $timerTopInner + $timerH;
+        }
+
         return $rawTop >= 0 && $rawTop + $tbh <= $pinSpanH;
     }
 
     /**
-     * Most negative distance still keeping the heading block inside the pin span (overlap geometry only).
+     * Most negative distance still feasible (inner-only relaxed; beyond that, no overlap into the timer row).
      */
     private function minFeasibleCustomTextDistanceNegative(
         string $textPosition,
@@ -785,24 +817,15 @@ class TimerGifGenerator
         int $pinSpanH,
         int $timerTopInner
     ): int {
-        if (!$this->stackDistanceLayoutFeasible($textPosition, 0, $basePadTop, $basePadBottom, $textH, $timerH, $pinSpanH, $timerTopInner)) {
-            return 0;
-        }
-        if ($this->stackDistanceLayoutFeasible($textPosition, -400, $basePadTop, $basePadBottom, $textH, $timerH, $pinSpanH, $timerTopInner)) {
-            return -400;
-        }
-        $lo = -401;
-        $hi = 0;
-        while ($lo + 1 < $hi) {
-            $mid = (int) floor(($lo + $hi) / 2);
-            if ($this->stackDistanceLayoutFeasible($textPosition, $mid, $basePadTop, $basePadBottom, $textH, $timerH, $pinSpanH, $timerTopInner)) {
-                $hi = $mid;
-            } else {
-                $lo = $mid;
+        $minD = null;
+        for ($d = -400; $d <= 0; $d++) {
+            if (!$this->stackDistanceLayoutFeasible($textPosition, $d, $basePadTop, $basePadBottom, $textH, $timerH, $pinSpanH, $timerTopInner)) {
+                continue;
             }
+            $minD = $minD === null ? $d : min($minD, $d);
         }
 
-        return $hi;
+        return $minD ?? 0;
     }
 
     /**
