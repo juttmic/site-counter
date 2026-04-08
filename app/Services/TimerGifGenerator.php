@@ -448,9 +448,10 @@ class TimerGifGenerator
     }
 
     /**
-     * When distance >= 0: first move padding inside the heading box — top→bottom for heading-above-timer,
-     * bottom→top for heading-below — so text block height stays constant until the outer-side pad is fully
-     * redistributed. Remaining distance then consumes vertical centering slack, then timer↔heading gap.
+     * When distance >= 0 and text is top/bottom: redistribute padding inside the heading only — top→bottom
+     * (heading above timer) or bottom→top (heading below). effectiveDistance is left 0 here; renderPngFrame
+     * pins the stack to the canvas inner bounds and sets gap = pinSpan − timerH − textBlockH when distance > 0.
+     * When distance == 0: centered stack with zero gap (no pin). Unknown positions fall back to legacy slack/gap.
      * When distance < 0: pads stay at base; distance is overlap only (slackEat = 0).
      *
      * @return array{0: int, 1: int, 2: int, 3: int, 4: int} [effPadTop, effPadBottom, textBlockH, effectiveDistance, slackEat]
@@ -485,17 +486,21 @@ class TimerGifGenerator
             $transfer = min($D, $basePadTop);
             $effT = $basePadTop - $transfer;
             $effB = $basePadBottom + $transfer;
-            $D1 = $D - $transfer;
-        } elseif ($textPosition === 'bottom') {
+            $textBlockH = $effT + $textH + $effB;
+
+            return [$effT, $effB, $textBlockH, 0, 0];
+        }
+        if ($textPosition === 'bottom') {
             $transfer = min($D, $basePadBottom);
             $effB = $basePadBottom - $transfer;
             $effT = $basePadTop + $transfer;
-            $D1 = $D - $transfer;
-        } else {
-            $effT = $basePadTop;
-            $effB = $basePadBottom;
-            $D1 = $D;
+            $textBlockH = $effT + $textH + $effB;
+
+            return [$effT, $effB, $textBlockH, 0, 0];
         }
+        $effT = $basePadTop;
+        $effB = $basePadBottom;
+        $D1 = $D;
         $textBlockH = $effT + $textH + $effB;
         $stackAtZeroGap = $timerH + $textBlockH;
         $innerTopAtZeroGap = max(0, (int) floor(($innerH - $stackAtZeroGap) / 2));
@@ -749,6 +754,20 @@ class TimerGifGenerator
             );
         }
 
+        // If an explicit output height is provided, add outer padding without changing the spacing math
+        $canvasH = $layoutHeight;
+        $outerTopPadding = 0;
+        if ($requestedH && $requestedH > 0) {
+            $canvasH = max($layoutHeight, $requestedH);
+            $outerTopPadding = $this->outerTopPaddingForCanvas($canvasH, $layoutHeight, $hasText, $textPosition);
+        }
+
+        if ($hasText && $distance > 0 && ($textPosition === 'top' || $textPosition === 'bottom')) {
+            $pinSpanH = $canvasH - (2 * $edgePad) - $outerTopPadding;
+            $effectiveDistance = max(0, $pinSpanH - $timerH - $textBlockH);
+            $slackEat = 0;
+        }
+
         // Center the combined block (text + timer) within the layout height (timer-based)
         $combinedHeight = $timerH + ($hasText ? ($textBlockH + $effectiveDistance) : 0);
         // Overlap (negative distance) with a timer-tall column: do not center using text+gap — that
@@ -757,13 +776,8 @@ class TimerGifGenerator
         $useOverlapInnerCentering = $hasText && $distance < 0 && $innerH === $timerH;
         $centeringStackHeight = $useOverlapInnerCentering ? $timerH : $combinedHeight;
         $innerTopPadding = max(0, (int) floor(($innerH - $centeringStackHeight) / 2));
-
-        // If an explicit output height is provided, add outer padding without changing the spacing math
-        $canvasH = $layoutHeight;
-        $outerTopPadding = 0;
-        if ($requestedH && $requestedH > 0) {
-            $canvasH = max($layoutHeight, $requestedH);
-            $outerTopPadding = $this->outerTopPaddingForCanvas($canvasH, $layoutHeight, $hasText, $textPosition);
+        if ($hasText && $distance > 0 && ($textPosition === 'top' || $textPosition === 'bottom')) {
+            $innerTopPadding = 0;
         }
 
         $topPadding = $outerTopPadding + $innerTopPadding + $edgePad;
@@ -1604,15 +1618,25 @@ class TimerGifGenerator
             );
         }
 
-        $combinedHeight = $timerH + ($hasText ? ($textBlockH + $effectiveDistance) : 0);
-        $useOverlapInnerCentering = $hasText && $distance < 0 && $innerH === $timerH;
-        $centeringStackHeight = $useOverlapInnerCentering ? $timerH : $combinedHeight;
-        $innerTopPadding = max(0, (int) floor(($innerH - $centeringStackHeight) / 2));
         $canvasH = $layoutHeight;
         $outerTopPadding = 0;
         if ($requestedH && $requestedH > 0) {
             $canvasH = max($layoutHeight, $requestedH);
             $outerTopPadding = $this->outerTopPaddingForCanvas($canvasH, $layoutHeight, $hasText, $textPosition);
+        }
+
+        if ($hasText && $distance > 0 && ($textPosition === 'top' || $textPosition === 'bottom')) {
+            $pinSpanH = $canvasH - (2 * $edgePad) - $outerTopPadding;
+            $effectiveDistance = max(0, $pinSpanH - $timerH - $textBlockH);
+            $slackEat = 0;
+        }
+
+        $combinedHeight = $timerH + ($hasText ? ($textBlockH + $effectiveDistance) : 0);
+        $useOverlapInnerCentering = $hasText && $distance < 0 && $innerH === $timerH;
+        $centeringStackHeight = $useOverlapInnerCentering ? $timerH : $combinedHeight;
+        $innerTopPadding = max(0, (int) floor(($innerH - $centeringStackHeight) / 2));
+        if ($hasText && $distance > 0 && ($textPosition === 'top' || $textPosition === 'bottom')) {
+            $innerTopPadding = 0;
         }
         $topPadding = $outerTopPadding + $innerTopPadding + $edgePad;
         if ($hasText && $distance >= 0) {

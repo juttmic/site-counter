@@ -232,6 +232,15 @@ function customTextPaddingYEachPx(emSize) {
   return Math.max(4, Math.round(e * 0.5));
 }
 
+/** Matches TimerGifGenerator::outerTopPaddingForCanvas (extra canvas height vs layout). */
+function outerTopPaddingForCanvasJs(canvasH, layoutHeight, hasText, textPosition) {
+  const extra = Math.max(0, canvasH - layoutHeight);
+  if (extra === 0) return 0;
+  if (hasText && textPosition === 'top') return 0;
+  if (hasText && textPosition === 'bottom') return extra;
+  return Math.floor(extra / 2);
+}
+
 /**
  * Glyph height (approx bbox) and em used for heading — shared by block height and distance priority.
  */
@@ -313,6 +322,20 @@ function resolveHeadingBlockAndGapPx(
   }
 
   const textBlockPx = effT + textH + effB;
+  const textBlockMax = baseT + textH + baseB;
+
+  if (D > 0 && (textPosition === 'top' || textPosition === 'bottom')) {
+    const layoutH = Math.max(timerHeight, timerHeight + textBlockMax + D) + 2 * edgePad;
+    const canvasHNum = Number.isFinite(layoutHeightOuter) && layoutHeightOuter > 0
+      ? layoutHeightOuter
+      : layoutH;
+    const outerTop = outerTopPaddingForCanvasJs(canvasHNum, layoutH, true, textPosition);
+    const pinSpanH = canvasHNum - 2 * edgePad - outerTop;
+    let gapPx = pinSpanH - timerHeight - textBlockPx;
+    if (!Number.isFinite(gapPx) || gapPx < 0) gapPx = 0;
+    return { textBlockPx, gapPx };
+  }
+
   const stack0 = timerHeight + textBlockPx;
   const innerTop0 = Math.max(0, Math.floor((innerHsafe - stack0) / 2));
   const slackEat = Math.min(D1, innerTop0);
@@ -370,9 +393,14 @@ function resolveSizingSnapshot() {
     : { textBlockPx: 0, gapPx: 0 };
   const innerStack = wantsText ? Math.max(0, textBlockPx + gapPx) : 0;
   const combinedHeight = timerHeight + innerStack + (edgePad * 2);
-  const maxDistance = wantsText
+  let maxDistance = wantsText
     ? Math.max(0, Math.floor(gifHeight - (edgePad * 2) - timerHeight - textSize))
     : Math.max(0, Math.floor(gifHeight - (edgePad * 2) - timerHeight));
+  if (wantsText && (textPos === 'top' || textPos === 'bottom')) {
+    const { em } = headingGlyphMetricsPx(defaults, overrides);
+    const padCap = customTextPaddingYEachPx(em);
+    maxDistance = Math.min(maxDistance, padCap);
+  }
 
   return {
     overrides,
@@ -426,6 +454,8 @@ function clampCustomTextDistance() {
   }
 
   const metaDefH = getSkinDefaultOutputHeight();
+  const textPos = document.querySelector('select[name="text_position"]')?.value || 'none';
+
   /** Upper bound for padding: room inside max GIF height (2× skin default), not current height — so positive padding can grow until sync hits maxH. */
   let maxPositivePadding = sizing.maxDistance;
   if (sizing.wantsText && Number.isFinite(metaDefH) && metaDefH > 0) {
@@ -434,6 +464,13 @@ function clampCustomTextDistance() {
       0,
       Math.floor(capH - sizing.edgePad * 2 - timerHeight - sizing.textSize)
     );
+  }
+  if (sizing.wantsText && (textPos === 'top' || textPos === 'bottom') && currentSkinMetadata?.defaults) {
+    const defaults = currentSkinMetadata.defaults;
+    const overrides = parseOverrides();
+    const { em } = headingGlyphMetricsPx(defaults, overrides);
+    const padCap = customTextPaddingYEachPx(em);
+    maxPositivePadding = Math.min(maxPositivePadding, padCap);
   }
 
   const desired = Number(distanceInput.value);
