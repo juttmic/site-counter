@@ -226,7 +226,16 @@ function resolveTimerDimensionsFromVisibilityLayouts(defaults, overrides) {
   };
 }
 
-/** Approximate imagettfbbox vertical span for custom heading text (~asc+desc for skin TTFs). */
+/** Padding above/below custom text glyphs — matches TimerGifGenerator::customTextVerticalPadding default. */
+function customTextPaddingYEachPx(emSize) {
+  const e = Number.isFinite(emSize) ? emSize : 12;
+  return Math.max(4, Math.round(e * 0.2));
+}
+
+/**
+ * Layout height for the custom heading: glyph bbox (approx) + top + bottom padding.
+ * Aligns with TimerGifGenerator ($textPadTop + $textH + $textPadBottom).
+ */
 function headingTextBlockHeightPx(defaults, overrides) {
   const fontSizeRaw = firstNumber(
     findFieldByKey('fontSize')?.value,
@@ -239,7 +248,9 @@ function headingTextBlockHeightPx(defaults, overrides) {
   const em = (Number.isFinite(customN) && customN >= 12)
     ? Math.round(customN)
     : Math.max(12, Math.round(fontSize * 0.5));
-  return Math.max(12, Math.round(em * 1.22));
+  const glyphH = Math.max(12, Math.round(em * 1.22));
+  const padEach = customTextPaddingYEachPx(em);
+  return glyphH + 2 * padEach;
 }
 
 function resolveSizingSnapshot() {
@@ -270,7 +281,7 @@ function resolveSizingSnapshot() {
     defaults.fontSize
   );
   const fontSize = isNaN(fontSizeRaw) ? 36 : fontSizeRaw;
-  /** Vertical space occupied by heading (px), aligned with TimerGifGenerator bbox — not the font em size. */
+  /** Vertical space for custom heading: glyph bbox (approx) + top/bottom padding, aligned with TimerGifGenerator $textBlockH. */
   const textSize = headingTextBlockHeightPx(defaults, overrides);
 
   const textVal = (document.querySelector('input[name="custom_text"]')?.value || '').trim();

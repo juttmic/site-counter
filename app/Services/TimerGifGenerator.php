@@ -424,6 +424,29 @@ class TimerGifGenerator
         return (int) floor($extra / 2);
     }
 
+    /**
+     * Padding above and below custom text glyphs. Layout height uses padTop + glyph height + padBottom.
+     *
+     * @return array{0: int, 1: int} [top, bottom] in px
+     */
+    private function customTextVerticalPadding(array $skin, int $textSize, bool $hasText): array
+    {
+        if (!$hasText) {
+            return [0, 0];
+        }
+        $default = max(4, (int) round($textSize * 0.2));
+        $top = $default;
+        $bottom = $default;
+        if (isset($skin['customTextPaddingTop'])) {
+            $top = max(0, min(100, (int) $skin['customTextPaddingTop']));
+        }
+        if (isset($skin['customTextPaddingBottom'])) {
+            $bottom = max(0, min(100, (int) $skin['customTextPaddingBottom']));
+        }
+
+        return [$top, $bottom];
+    }
+
     public function renderPngFrame(int $secondsRemaining, array $skin, ?string $customText, string $textPosition): string
     {
         $skin = $this->resolveVisibilityLayout($skin);
@@ -559,6 +582,9 @@ class TimerGifGenerator
             }
         }
 
+        [$textPadTop, $textPadBottom] = $this->customTextVerticalPadding($skin, $textSize, $hasText);
+        $textBlockH = $hasText ? ($textPadTop + $textH + $textPadBottom) : 0;
+
         // Read optional overall output size overrides
         $requestedW = isset($skin['outputWidth']) ? (int) $skin['outputWidth'] : null;
         $requestedH = isset($skin['outputHeight']) ? (int) $skin['outputHeight'] : null;
@@ -585,19 +611,20 @@ class TimerGifGenerator
 
         // Base height for layout: always based on the timer height (not the output/GIF height)
         // so vertical spacing for custom text is measured relative to the timer itself.
-        $contentHeight = $timerH + ($hasText ? ($textH + $distance) : 0);
+        // $textBlockH includes vertical padding around the heading glyphs.
+        $contentHeight = $timerH + ($hasText ? ($textBlockH + $distance) : 0);
         $layoutHeight = max($timerH, $contentHeight) + ($edgePad * 2);
 
         // Clamp distance so text + timer fit inside the layout height
         $effectiveDistance = $distance;
         if ($hasText) {
-            $available = $layoutHeight - ($edgePad * 2) - $timerH - $textH;
+            $available = $layoutHeight - ($edgePad * 2) - $timerH - $textBlockH;
             if ($available < 0) { $available = 0; }
             $effectiveDistance = min($distance, $available);
         }
 
         // Center the combined block (text + timer) within the layout height (timer-based)
-        $combinedHeight = $timerH + ($hasText ? ($textH + $effectiveDistance) : 0);
+        $combinedHeight = $timerH + ($hasText ? ($textBlockH + $effectiveDistance) : 0);
         $innerH = $layoutHeight - ($edgePad * 2);
         // Overlap (negative distance) with a timer-tall column: do not center using text+gap — that
         // adds bogus vertical slack while text overlaps the counter. Full stack centering applies
@@ -616,12 +643,12 @@ class TimerGifGenerator
 
         $topPadding = $outerTopPadding + $innerTopPadding + $edgePad;
 
-        // Bottom: timer at topPadding; gap = effectiveDistance; then text (see ty below).
-        // Top: heading anchored at topPadding (+ ascent for TTF); timer at topPadding + textH + effectiveDistance.
+        // Bottom: timer at topPadding; gap = effectiveDistance; then text block (see ty below).
+        // Top: heading block starts at topPadding; timer at topPadding + textBlockH + effectiveDistance.
         // effectiveDistance appears only in the timer Y (top) or text Y (bottom) — not both (avoids double overlap).
         $offsetY = $topPadding;
         if ($hasText && $textPosition === 'top') {
-            $offsetY += $textH + $effectiveDistance;
+            $offsetY += $textBlockH + $effectiveDistance;
         }
         // For bottom position, timer stays at topPadding; text is drawn after timer using effectiveDistance
         // If output width was not set above, fall back to natural max
@@ -670,8 +697,8 @@ class TimerGifGenerator
             if (is_file($font)) {
                 $tx = (int) (($canvasW - $textW) / 2);
                 $ty = ($textPosition === 'top')
-                    ? (int) ($topPadding + $textAscent)
-                    : (int) ($offsetY + $timerH + $effectiveDistance + $textAscent);
+                    ? (int) ($topPadding + $textPadTop + $textAscent)
+                    : (int) ($offsetY + $timerH + $effectiveDistance + $textPadTop + $textAscent);
                 $this->logDraw('Render custom text (TTF)', [
                     'shape' => 'text',
                     'text' => $customText,
@@ -681,6 +708,9 @@ class TimerGifGenerator
                     'font_size' => $textSize,
                     'width' => $textW,
                     'height' => $textH,
+                    'block_height' => $textBlockH,
+                    'pad_top' => $textPadTop,
+                    'pad_bottom' => $textPadBottom,
                     'position' => $textPosition,
                 ]);
                 imagettftext($im, $textSize, 0, $tx, $ty, $customTxtCol, $font, $customText);
@@ -689,8 +719,8 @@ class TimerGifGenerator
                 $builtInTextH = imagefontheight($bi2);
                 $tx = (int) (($canvasW - $textW) / 2);
                 $ty = ($textPosition === 'top')
-                    ? (int) $topPadding
-                    : (int) ($offsetY + $timerH + $effectiveDistance);
+                    ? (int) ($topPadding + $textPadTop)
+                    : (int) ($offsetY + $timerH + $effectiveDistance + $textPadTop);
                 $this->logDraw('Render custom text (GD built-in)', [
                     'shape' => 'text',
                     'text' => $customText,
@@ -699,6 +729,9 @@ class TimerGifGenerator
                     'font' => 'built-in-3',
                     'width' => $textW,
                     'height' => $builtInTextH + (int) ceil($builtInTextH * 0.25),
+                    'block_height' => $textBlockH,
+                    'pad_top' => $textPadTop,
+                    'pad_bottom' => $textPadBottom,
                     'position' => $textPosition,
                 ]);
                 imagestring($im, $bi2, $tx, $ty, $customText, $customTxtCol);
@@ -1388,6 +1421,9 @@ class TimerGifGenerator
             }
         }
 
+        [$textPadTop, $textPadBottom] = $this->customTextVerticalPadding($skin, $textSize, $hasText);
+        $textBlockH = $hasText ? ($textPadTop + $textH + $textPadBottom) : 0;
+
         // Distance for custom text
         $distance = null;
         if (isset($skin['customTextDistance'])) {
@@ -1404,17 +1440,17 @@ class TimerGifGenerator
             $canvasW = max(1, $requestedW);
         }
 
-        $contentHeight = $timerH + ($hasText ? ($textH + $distance) : 0);
+        $contentHeight = $timerH + ($hasText ? ($textBlockH + $distance) : 0);
         $layoutHeight = max($timerH, $contentHeight) + ($edgePad * 2);
 
         $effectiveDistance = $distance;
         if ($hasText) {
-            $available = $layoutHeight - ($edgePad * 2) - $timerH - $textH;
+            $available = $layoutHeight - ($edgePad * 2) - $timerH - $textBlockH;
             if ($available < 0) { $available = 0; }
             $effectiveDistance = min($distance, $available);
         }
 
-        $combinedHeight = $timerH + ($hasText ? ($textH + $effectiveDistance) : 0);
+        $combinedHeight = $timerH + ($hasText ? ($textBlockH + $effectiveDistance) : 0);
         $innerH = $layoutHeight - ($edgePad * 2);
         $useOverlapInnerCentering = $hasText && $distance < 0 && $innerH === $timerH;
         $centeringStackHeight = $useOverlapInnerCentering ? $timerH : $combinedHeight;
@@ -1428,7 +1464,7 @@ class TimerGifGenerator
         $topPadding = $outerTopPadding + $innerTopPadding + $edgePad;
         $offsetY = $topPadding;
         if ($hasText && $textPosition === 'top') {
-            $offsetY += $textH + $effectiveDistance;
+            $offsetY += $textBlockH + $effectiveDistance;
         }
 
         $im = imagecreatetruecolor($canvasW, $canvasH);
