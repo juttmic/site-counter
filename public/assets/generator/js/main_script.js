@@ -500,12 +500,9 @@ function naturalLayoutNeedForPad(timerH, textH, edgePad, pad) {
 }
 
 /**
- * When header text is on, GIF/canvas height tracks padding (floor: skin default, cap: 2× default).
- * Nonnegative padding: 1:1 with layout need. When padding decreases, height follows the change in
- * natural layout need (timer + max(0, text + pad) + 2×edge) while current height is above default,
- * so the canvas does not keep extra slack that vertically centers the stack and pulls top headings
- * away from the top edge. At default height, further negative padding does not shrink height.
- * Increasing from negative: height grows when layout need exceeds the skin default GIF height.
+ * When header text is on, GIF height may shrink when padding decreases to follow layout need.
+ * Increasing padding/distance does not auto-grow GIF height (user adjusts height manually if needed).
+ * Floor: skin default; cap: 2× default. Negative-padding transitions still use need-based deltas.
  */
 function syncGifHeightDeltaFromPaddingInput(distanceInput) {
   if (!headingWantsCustomText()) {
@@ -559,8 +556,10 @@ function syncGifHeightDeltaFromPaddingInput(distanceInput) {
   };
 
   let heightDelta;
-  if (prevPad >= 0 && curPad >= 0) {
-    heightDelta = deltaPad;
+  if (curPad > prevPad) {
+    heightDelta = 0;
+  } else if (prevPad >= 0 && curPad >= 0) {
+    heightDelta = shrinkTowardDefaultFollowingLayout();
   } else if (prevPad >= 0 && curPad < 0) {
     heightDelta = needDelta;
     if (curH + heightDelta < defH) {
