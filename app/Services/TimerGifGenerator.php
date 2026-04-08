@@ -469,6 +469,14 @@ class TimerGifGenerator
         return max($timerH, (int) floor(($pinSpanH + $timerH) / 2));
     }
 
+    /**
+     * Never treat the pin as taller than it is (explicit defaultOutputHeight can exceed actual GIF pin).
+     */
+    private function effectiveDefaultInnerForPin(int $defaultInner, int $pinSpanH): int
+    {
+        return min($defaultInner, max(0, $pinSpanH));
+    }
+
     private function timerTopInnerPx(int $defaultInner, int $timerH, int $pinSpanH): int
     {
         $timerTopRef = max(0, (int) floor(($defaultInner - $timerH) / 2));
@@ -563,9 +571,10 @@ class TimerGifGenerator
         $rem -= $n2;
         $blockTop -= $n2;
         $blockTop += $rem;
+        $blockTop = max(0, $blockTop);
         $effGap = $timerTopInner - $blockTop - $tbh;
 
-        return [$effT, $effB, $tbh, $timerTopInner, max(0, $blockTop), $effGap];
+        return [$effT, $effB, $tbh, $timerTopInner, $blockTop, $effGap];
     }
 
     private function resolveCustomTextStackLayoutBottom(
@@ -612,6 +621,7 @@ class TimerGifGenerator
         $rem -= $n2;
         $blockTop += $n2;
         $blockTop -= $rem;
+        $blockTop = max(0, $blockTop);
         $effGap = $blockTop - $timerTopInner - $timerH;
 
         return [$effT, $effB, $tbh, $timerTopInner, $blockTop, $effGap];
@@ -795,6 +805,8 @@ class TimerGifGenerator
                 return $rawTop >= $timerTopInner + $timerH;
             }
             $u = -$distance;
+            // Mirror of top: while lowering padding, inner top pad is consumed first (block position unchanged):
+            // allow without requiring separation from the timer row so tight layouts can use negative values up to -basePadTop.
             if ($u <= $basePadTop) {
                 return true;
             }
@@ -877,7 +889,10 @@ class TimerGifGenerator
         if (!$hasText || ($textPosition !== 'top' && $textPosition !== 'bottom')) {
             return $distance;
         }
-        $defaultInner = $this->defaultInnerHeightForHeadingLayout($skin, $timerH, $edgePad, $pinSpanH, $maxTextBlock);
+        $defaultInner = $this->effectiveDefaultInnerForPin(
+            $this->defaultInnerHeightForHeadingLayout($skin, $timerH, $edgePad, $pinSpanH, $maxTextBlock),
+            $pinSpanH
+        );
         $timerTopInner = $this->timerTopInnerPx($defaultInner, $timerH, $pinSpanH);
         $maxPos = $this->maxCustomTextDistanceInnerOuterPositive(
             $textPosition,
@@ -1203,6 +1218,7 @@ class TimerGifGenerator
         $textPadBottom = 0;
         $textBlockH = 0;
         $effectiveDistance = 0;
+        $blockTopInner = 0;
 
         $canvasH = $layoutHeight;
         $outerTopPadding = 0;
@@ -1241,7 +1257,10 @@ class TimerGifGenerator
                 $pinSpanH = $canvasH - (2 * $edgePad) - $outerTopPadding;
                 $contentY0 = $outerTopPadding + $edgePad;
             }
-            $defaultInner = $this->defaultInnerHeightForHeadingLayout($skin, $timerH, $edgePad, $pinSpanH, $maxTextBlock);
+            $defaultInner = $this->effectiveDefaultInnerForPin(
+                $this->defaultInnerHeightForHeadingLayout($skin, $timerH, $edgePad, $pinSpanH, $maxTextBlock),
+                $pinSpanH
+            );
             [
                 $textPadTop,
                 $textPadBottom,
@@ -1272,7 +1291,7 @@ class TimerGifGenerator
             $topPadding = $outerTopPadding + $innerTopPadding + $edgePad;
             $offsetY = $topPadding;
         }
-        // For bottom position, timer stays at topPadding; text is drawn after timer using effectiveDistance
+        // Bottom: timer at topPadding; heading block uses blockTopInner in pin span (same canvas rule as top).
         // If output width was not set above, fall back to natural max
         if ((!$requestedW || $requestedW <= 0) && $requestedW !== 0) {
             $canvasW = max($canvasW, $hasText ? ($textW + 2 * $padX) : $timerW);
@@ -1313,11 +1332,11 @@ class TimerGifGenerator
         imagedestroy($timerIm);
 
         if ($hasText) {
+            // Stack layout (top or bottom): padded block top in canvas coords — same rule as top (pin blockTopInner).
+            $blockTopCanvas = (int) ($contentY0 + $blockTopInner);
             if (is_file($font)) {
                 $tx = (int) (($canvasW - $textW) / 2);
-                $ty = ($textPosition === 'top')
-                    ? (int) ($topPadding + $textPadTop + $textAscent)
-                    : (int) ($offsetY + $timerH + $effectiveDistance + $textPadTop + $textAscent);
+                $ty = (int) ($blockTopCanvas + $textPadTop + $textAscent);
                 $this->logDraw('Render custom text (TTF)', [
                     'shape' => 'text',
                     'text' => $customText,
@@ -1333,9 +1352,7 @@ class TimerGifGenerator
                     'position' => $textPosition,
                 ]);
                 imagettftext($im, $textSize, 0, $tx, $ty, $customTxtCol, $font, $customText);
-                $blockTopY = ($textPosition === 'top')
-                    ? (int) $topPadding
-                    : (int) ($offsetY + $timerH + $effectiveDistance);
+                $blockTopY = $blockTopCanvas;
                 $glyphTopY = (int) ($ty - $textAscent);
                 $glyphBottomY = (int) ($glyphTopY + $textH - 1);
                 $this->drawCustomTextLayoutGuideBorders($im, $offsetX, $timerW, $glyphTopY, $glyphBottomY, $blockTopY, $textBlockH);
@@ -1343,9 +1360,7 @@ class TimerGifGenerator
                 $bi2 = 3;
                 $builtInTextH = imagefontheight($bi2);
                 $tx = (int) (($canvasW - $textW) / 2);
-                $ty = ($textPosition === 'top')
-                    ? (int) ($topPadding + $textPadTop)
-                    : (int) ($offsetY + $timerH + $effectiveDistance + $textPadTop);
+                $ty = (int) ($blockTopCanvas + $textPadTop);
                 $this->logDraw('Render custom text (GD built-in)', [
                     'shape' => 'text',
                     'text' => $customText,
@@ -1360,9 +1375,7 @@ class TimerGifGenerator
                     'position' => $textPosition,
                 ]);
                 imagestring($im, $bi2, $tx, $ty, $customText, $customTxtCol);
-                $blockTopY = ($textPosition === 'top')
-                    ? (int) $topPadding
-                    : (int) ($offsetY + $timerH + $effectiveDistance);
+                $blockTopY = $blockTopCanvas;
                 $glyphTopY = (int) $ty;
                 $glyphBottomY = (int) ($ty + $textH - 1);
                 $this->drawCustomTextLayoutGuideBorders($im, $offsetX, $timerW, $glyphTopY, $glyphBottomY, $blockTopY, $textBlockH);
@@ -2117,7 +2130,10 @@ class TimerGifGenerator
                 $pinSpanH = $canvasH - (2 * $edgePad) - $outerTopPadding;
                 $contentY0 = $outerTopPadding + $edgePad;
             }
-            $defaultInner = $this->defaultInnerHeightForHeadingLayout($skin, $timerH, $edgePad, $pinSpanH, $maxTextBlock);
+            $defaultInner = $this->effectiveDefaultInnerForPin(
+                $this->defaultInnerHeightForHeadingLayout($skin, $timerH, $edgePad, $pinSpanH, $maxTextBlock),
+                $pinSpanH
+            );
             [
                 $textPadTop,
                 $textPadBottom,

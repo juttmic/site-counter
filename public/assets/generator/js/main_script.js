@@ -297,6 +297,13 @@ function defaultInnerHeightForHeadingLayoutJs(defaults, timerH, edgePad, pinSpan
   return Math.max(th, Math.floor((pin + th) / 2));
 }
 
+/** Matches TimerGifGenerator::effectiveDefaultInnerForPin */
+function effectiveDefaultInnerForPinJs(defaultInner, pinSpanH) {
+  const di = Number.isFinite(defaultInner) ? defaultInner : 0;
+  const pin = Number.isFinite(pinSpanH) ? Math.max(0, pinSpanH) : 0;
+  return Math.min(di, pin);
+}
+
 /** Matches TimerGifGenerator::timerTopInnerPx */
 function timerTopInnerPxJs(defaultInner, timerH, pinSpanH) {
   const di = Number.isFinite(defaultInner) ? defaultInner : 0;
@@ -348,8 +355,9 @@ function resolveCustomTextStackLayoutTopJs(
   rem -= n2;
   blockTop -= n2;
   blockTop += rem;
+  blockTop = Math.max(0, blockTop);
   const effGap = timerTopInner - blockTop - tbh;
-  return [effT, effB, tbh, timerTopInner, Math.max(0, blockTop), effGap];
+  return [effT, effB, tbh, timerTopInner, blockTop, effGap];
 }
 
 /** @returns {[number, number, number, number, number, number]} */
@@ -395,6 +403,7 @@ function resolveCustomTextStackLayoutBottomJs(
   rem -= n2;
   blockTop += n2;
   blockTop -= rem;
+  blockTop = Math.max(0, blockTop);
   const effGap = blockTop - timerTopInner - timerH;
   return [effT, effB, tbh, timerTopInner, blockTop, effGap];
 }
@@ -410,7 +419,8 @@ function resolveCustomTextStackLayoutJs(
   defaultInner,
   maxTextBlock
 ) {
-  const timerTopInner = timerTopInnerPxJs(defaultInner, timerH, pinSpanH);
+  const di = effectiveDefaultInnerForPinJs(defaultInner, pinSpanH);
+  const timerTopInner = timerTopInnerPxJs(di, timerH, pinSpanH);
   if (textPosition === 'top') {
     return resolveCustomTextStackLayoutTopJs(
       distance,
@@ -590,6 +600,7 @@ function stackDistanceLayoutFeasibleJs(
       return rawTop >= timerTopInner + timerH;
     }
     const u = -distance;
+    // Mirror of top: inner top pad consumed first; relaxed band up to -basePadTop.
     if (u <= basePadTop) {
       return true;
     }
@@ -654,7 +665,10 @@ function clampCustomTextStackDistanceForPinJs(
 ) {
   let d = Math.max(-400, Math.min(400, distance));
   if (textPosition !== 'top' && textPosition !== 'bottom') return d;
-  const defaultInner = defaultInnerHeightForHeadingLayoutJs(defaults, timerH, edgePad, pinSpanH, maxTextBlock);
+  const defaultInner = effectiveDefaultInnerForPinJs(
+    defaultInnerHeightForHeadingLayoutJs(defaults, timerH, edgePad, pinSpanH, maxTextBlock),
+    pinSpanH
+  );
   const tti = timerTopInnerPxJs(defaultInner, timerH, pinSpanH);
   const maxPos = maxCustomTextDistanceInnerOuterPositiveJs(
     textPosition,
@@ -725,7 +739,10 @@ function stackInnerOuterMaxPositiveFromSizing(textPosition, sizing) {
     outerTopF = outerTopPaddingForCanvasJs(canvasHF, layoutHeightF, true, textPosition);
   }
   const pinSpanHF = canvasHF - 2 * edgePad - outerTopF;
-  const defaultInnerF = defaultInnerHeightForHeadingLayoutJs(defaults, timerH, edgePad, pinSpanHF, maxTextBlock);
+  const defaultInnerF = effectiveDefaultInnerForPinJs(
+    defaultInnerHeightForHeadingLayoutJs(defaults, timerH, edgePad, pinSpanHF, maxTextBlock),
+    pinSpanHF
+  );
   const ttiF = timerTopInnerPxJs(defaultInnerF, timerH, pinSpanHF);
   return maxCustomTextDistanceInnerOuterPositiveJs(
     textPosition,
@@ -823,7 +840,10 @@ function resolveHeadingBlockAndGapPx(
     }
     const outerTop = outerTopPaddingForCanvasJs(canvasH, layoutHeight, hasText, textPosition);
     const pinSpanH = canvasH - 2 * ep - outerTop;
-    const defaultInner = defaultInnerHeightForHeadingLayoutJs(defaults, th, ep, pinSpanH, maxTextBlock);
+    const defaultInner = effectiveDefaultInnerForPinJs(
+      defaultInnerHeightForHeadingLayoutJs(defaults, th, ep, pinSpanH, maxTextBlock),
+      pinSpanH
+    );
     const [, , tbh, timerTopInner, blockTopInner, effGap] = resolveCustomTextStackLayoutJs(
       textPosition,
       D,
@@ -835,9 +855,10 @@ function resolveHeadingBlockAndGapPx(
       defaultInner,
       maxTextBlock
     );
+    const pin = Math.max(0, pinSpanH);
     const layoutPinInnerNeed = textPosition === 'top'
-      ? timerTopInner + th
-      : blockTopInner + tbh;
+      ? Math.min(timerTopInner + th, pin)
+      : Math.min(blockTopInner + tbh, pin);
     return { textBlockPx: tbh, gapPx: effGap, layoutPinInnerNeed };
   }
 
