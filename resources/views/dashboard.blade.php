@@ -41,10 +41,12 @@
                                     <!-- Metadata -->
                                     <div class="small text-muted mb-3">
                                       <div class="mb-1">
-                                        @if($timer->timer_type == 'fixed_date' && $timer->target_datetime)
-                                          <span class="badge bg-secondary">On Date {{ $timer->target_datetime->format('M d, Y H:i') }}</span>
-                                        @else
-                                          <span class="badge bg-secondary">Counter Ends in {{  $timer->duration_seconds }} seconds</span>
+                                        @if($timer->status === 'active')
+                                          @if($timer->timer_type == 'fixed_date' && $timer->target_datetime)
+                                            <span class="badge bg-secondary">Counter ends on {{ $timer->target_datetime->format('M d, Y g:i A') }}</span>
+                                          @elseif($timer->timer_type == 'reload_based' && $timer->duration_seconds)
+                                            <span class="badge bg-secondary">Counter restarts in {{ $timer->duration_seconds }} seconds</span>
+                                          @endif
                                         @endif
                                       </div>
                                     </div>
