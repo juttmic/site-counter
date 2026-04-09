@@ -41,10 +41,12 @@
                                     <!-- Metadata -->
                                     <div class="small text-muted mb-3">
                                       <div class="mb-1">
-                                        @if($timer->timer_type == 'fixed_date' && $timer->target_datetime)
-                                          <span class="badge bg-secondary">On Date {{ $timer->target_datetime->format('M d, Y H:i') }}</span>
-                                        @else
-                                          <span class="badge bg-secondary">Counter Ends in {{  $timer->duration_seconds }} seconds</span>
+                                        @if($timer->status === 'active')
+                                          @if($timer->timer_type == 'fixed_date' && $timer->target_datetime)
+                                            <span class="badge bg-secondary">Counter ends on {{ $timer->target_datetime->format('M d, Y g:i A') }}</span>
+                                          @elseif($timer->timer_type == 'reload_based' && $timer->duration_seconds)
+                                            <span class="badge bg-secondary">Counter restarts in {{ $timer->duration_seconds }} seconds</span>
+                                          @endif
                                         @endif
                                       </div>
                                     </div>
@@ -56,12 +58,12 @@
                                         @if($timer->needsGifRegeneration())
                                           <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
                                                style="background: rgba(255,255,255,0.75);">
-                                            <small class="text-muted fw-semibold">Processing…</small>
+                                            <small class="text-muted fw-semibold">Counter Updating…</small>
                                           </div>
                                         @endif
                                       @else
                                         <div class="d-flex flex-column align-items-center justify-content-center h-100 text-muted timer-preview-placeholder-{{ $timer->id }}">
-                                          <small>GIF is being created</small>
+                                          <small>GIF is being generated</small>
                                         </div>
                                       @endif
                                     </div>

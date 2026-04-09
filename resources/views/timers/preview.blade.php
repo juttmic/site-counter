@@ -74,7 +74,7 @@
                 
             @else
                 <div class="alert alert-warning text-center mb-4">
-                    GIF is being created. Please refresh in a moment.
+                    GIF is being gene. Please refresh in a moment.
                 </div>
             @endif
 
