@@ -586,33 +586,43 @@ class TimerGifGenerator
         $padBottom = $baseTextPad;
         $textBoxH = $hasText ? ($padTop + $textH + $padBottom) : 0;
 
-        // Baseline compatibility:
-        // When we introduced internal padding, a distance of 0 would effectively add extra outer space
-        // (because the box got taller). To keep "0 padding" visually equivalent to the previous behavior,
-        // treat user distance as relative to the glyph stack by subtracting the added box padding.
-        $distanceForLayout = $distance;
-        if ($hasText && ($textPosition === 'top' || $textPosition === 'bottom')) {
-            $distanceForLayout = $distance - (2 * $baseTextPad);
-        }
-
         // Internal-first distance behavior for top/bottom headings:
-        // consume distance by shifting internal padding until the relevant side hits minTextPad.
-        $effectiveDistance = $distanceForLayout;
-        if ($hasText && $distanceForLayout > 0 && ($textPosition === 'top' || $textPosition === 'bottom')) {
-            if ($textPosition === 'top') {
-                $usable = max(0, $padTop - $minTextPad);
-                $take = min($distanceForLayout, $usable);
-                $padTop -= $take;
-                $padBottom += $take;
-                $effectiveDistance = $distanceForLayout - $take;
-            } else {
-                $usable = max(0, $padBottom - $minTextPad);
-                $take = min($distanceForLayout, $usable);
-                $padBottom -= $take;
-                $padTop += $take;
-                $effectiveDistance = $distanceForLayout - $take;
+        // - First, consume distance by shifting internal padding within the text box (no outer spacing change).
+        // - Only after internal padding is exhausted does distance increase the outer gap.
+        // Baseline compatibility: at distance=0, the outer gap behaves like the pre-padding implementation.
+        $effectiveDistance = $distance;
+        if ($hasText && ($textPosition === 'top' || $textPosition === 'bottom')) {
+            $baselineOffset = 2 * $baseTextPad; // extra height introduced by the padded box
+            $usableInternal = max(0, $baseTextPad - $minTextPad);
+            // Internal-first for both directions:
+            // distance > 0: shift internal padding toward the timer-side (until minTextPad), then grow outer gap.
+            // distance < 0: shift internal padding back the other way first, then only after internal is exhausted,
+            // allow negative outer distance (overlap).
+            $shift = max(-$usableInternal, min($usableInternal, $distance));
+            if ($shift !== 0) {
+                if ($textPosition === 'top') {
+                    if ($shift > 0) { // consume top pad first
+                        $padTop -= $shift;
+                        $padBottom += $shift;
+                    } else { // consume bottom pad first
+                        $padTop += (-$shift);
+                        $padBottom -= (-$shift);
+                    }
+                } else { // bottom
+                    if ($shift > 0) { // consume bottom pad first
+                        $padBottom -= $shift;
+                        $padTop += $shift;
+                    } else { // consume top pad first
+                        $padBottom += (-$shift);
+                        $padTop -= (-$shift);
+                    }
+                }
+                $textBoxH = $padTop + $textH + $padBottom;
             }
-            $textBoxH = $padTop + $textH + $padBottom;
+
+            // Remaining distance becomes external spacing/overlap (after internal padding is exhausted).
+            $external = $distance - $shift;
+            $effectiveDistance = $external - $baselineOffset;
         }
 
         // Allow explicit output width even if smaller than timer/text (will crop)
