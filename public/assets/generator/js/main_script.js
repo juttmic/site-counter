@@ -1466,8 +1466,16 @@ document.addEventListener('DOMContentLoaded', function() {
       const handler = () => {
         clampCustomTextDistance();
         enforceGifHeightMinimum();
+        if (typeof syncOverrides === 'function') {
+          syncOverrides();
+        }
+        if (typeof generatePreviewFrame === 'function') {
+          generatePreviewFrame();
+        }
       };
       el.addEventListener('change', handler);
+      // Spinner/arrow clicks fire `input`; make preview respond to live resizing.
+      el.addEventListener('input', handler);
       el.dataset.boundGifHeight = '1';
     }
   });
@@ -2659,8 +2667,15 @@ function renderFields(metadata, savedOverrides = {}) {
     const handler = () => {
       clampCustomTextDistance();
       enforceGifHeightMinimum();
+      if (typeof syncOverrides === 'function') {
+        syncOverrides();
+      }
+      if (typeof generatePreviewFrame === 'function') {
+        generatePreviewFrame();
+      }
     };
     gifHField.addEventListener('change', handler);
+    gifHField.addEventListener('input', handler);
     gifHField.dataset.boundGifHeight = '1';
   }
 

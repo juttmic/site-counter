@@ -1227,7 +1227,9 @@ class TimerGifGenerator
         $canvasH = $layoutHeight;
         $outerTopPadding = 0;
         if ($requestedH && $requestedH > 0) {
-            $canvasH = max($layoutHeight, $requestedH);
+            // Respect explicit outputHeight even if smaller than the computed layout height.
+            // The image will crop naturally when compositing onto the smaller canvas.
+            $canvasH = max(1, $requestedH);
             $outerTopPadding = $this->outerTopPaddingForCanvas($canvasH, $layoutHeight, $hasText, $textPosition);
         }
 
@@ -1255,7 +1257,8 @@ class TimerGifGenerator
                 $canvasH = $layoutHeight;
                 $outerTopPadding = 0;
                 if ($requestedH && $requestedH > 0) {
-                    $canvasH = max($layoutHeight, $requestedH);
+                    // Respect explicit outputHeight even if smaller than the computed layout height (crop).
+                    $canvasH = max(1, $requestedH);
                     $outerTopPadding = $this->outerTopPaddingForCanvas($canvasH, $layoutHeight, $hasText, $textPosition);
                 }
                 $pinSpanH = $canvasH - (2 * $edgePad) - $outerTopPadding;
