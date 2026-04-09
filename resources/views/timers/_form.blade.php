@@ -869,43 +869,9 @@
                             </div>
                         </div>
 
-                        <!-- Template (grouped fields) -->
-                        <div class="card d-none" id="template_card">
-                            <div class="card-header d-flex justify-content-between align-items-center py-2 collapsible-header" data-target="#template_body">
-                                <span class="fw-semibold small text-muted">Template</span>
-                                <i class="bi bi-chevron-down collapse-icon"></i>
-                            </div>
-                            <div class="card-body collapsible-body" id="template_body" style="padding:1rem">
-                                <!-- Dynamic skin customization fields -->
-                                <div id="skin_overrides_section" class="d-none">
-                                    <div id="skin_fields" class="row g-3"></div>
-                                </div>
-
-                                <!-- Static customization fields (timer-level but displayed here) -->
-                                <!-- Text & Animation (only animation-related) -->
-                                <div class="card border shadow-sm mb-3 d-none">
-                                    <div class="card-header bg-light py-2 collapsible-header" data-target="#skin_animation_group">
-                                        <span class="text-muted fw-semibold small">Text & Animation</span>
-                                        <i class="bi bi-chevron-down collapse-icon float-end"></i>
-                                    </div>
-                                    <div class="card-body collapsible-body" id="skin_animation_group">
-                                        <div class="row g-3">
-                                            <div class="col-12 col-sm-6">
-                                                <label class="form-label small mb-1">Animated Seconds</label>
-                                                <input type="number"
-                                                       name="animation_frame_limit"
-                                                       class="form-control"
-                                                       min="60"
-                                                       max="60"
-                                                       value="{{ old('animation_frame_limit', $timer->animation_frame_limit ?? 60) }}">
-                                                <div class="form-text small">Animated duration for generated GIF (10-60 seconds).</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <input type="hidden" name="skin_overrides" id="skin_overrides_input" value="{{ $isEdit ? json_encode($timer->skin_overrides ?? []) : '' }}" />
-                            </div>
-                        </div>
+                        <!-- Skin customization groups (rendered by JS as separate cards) -->
+                        <div id="skin_fields" class="row g-3"></div>
+                        <input type="hidden" name="skin_overrides" id="skin_overrides_input" value="{{ $isEdit ? json_encode($timer->skin_overrides ?? []) : '' }}" />
                     </div>
                 </div>
 

@@ -1279,8 +1279,7 @@ function renderFields(metadata, savedOverrides = {}) {
   // All other fields (including showDays, layout, animation, width, height if they're in the fields array) will be shown
   const visibleFields = fields.filter(field => !alwaysHiddenFields.has(field.key));
   
-  // Note: Template card visibility will be updated after fields are rendered
-  document.getElementById('skin_overrides_section').classList.toggle('d-none', visibleFields.length === 0);
+  // Note: skin groups render directly (no Template wrapper)
 
   // Multilevel group system: Parse group specification from field
   // Supports: "GroupName", ["Group", "Subgroup"], "Group.Subgroup", ["Group", "Subgroup", "Subsubgroup"]
@@ -1963,20 +1962,6 @@ function renderFields(metadata, savedOverrides = {}) {
   grouped.forEach(group => {
     renderGroup(group, fieldsWrap, 0);
   });
-
-  // Update Template card visibility based on whether there are any rendered fields
-  const templateCard = document.getElementById('template_card');
-  if (templateCard) {
-    // Check if there are any visible field elements in the skin_fields container
-    const hasVisibleFields = fieldsWrap.children.length > 0;
-    templateCard.classList.toggle('d-none', !hasVisibleFields);
-    
-    // Also update skin_overrides_section visibility
-    const skinOverridesSection = document.getElementById('skin_overrides_section');
-    if (skinOverridesSection) {
-      skinOverridesSection.classList.toggle('d-none', !hasVisibleFields);
-    }
-  }
 
   const gifHField = findGifHeightField();
   if (gifHField && !gifHField.dataset.boundGifHeight) {
