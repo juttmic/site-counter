@@ -776,7 +776,7 @@
                                 @endphp
                                 <div class="row g-3 mt-2" id="visibility_font_row">
                                     <div class="d-none" id="visibility_toggles_col">
-                                        <label class="form-label small mb-1">Days</label>
+                                        <label class="form-label small mb-1">Hide Days? (In the last 24 hours)</label>
                                         <div id="visibility_toggles_inner"></div>
                                     </div>
                                     <div class="col-6" id="font_field_col">

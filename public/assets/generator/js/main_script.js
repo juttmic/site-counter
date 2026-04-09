@@ -48,6 +48,7 @@ function toggleInputs(isUserAction = false) {
   }
   // When switching to fixed_date, we intentionally do NOT touch duration_seconds
   // This keeps the fields independent as requested
+  enforceHideDays24hRuleSilent();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -544,6 +545,8 @@ document.addEventListener('DOMContentLoaded', () => {
     targetInput.addEventListener('change', enforceMinTargetDateTime);
     // Ensure that changing the date does not affect the duration_seconds field
     // The fields are independent - entering a date should not populate or modify duration_seconds
+    targetInput.addEventListener('change', () => enforceHideDays24hRuleSilent());
+    targetInput.addEventListener('input', () => enforceHideDays24hRuleSilent());
   }
 });
 
@@ -787,6 +790,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Initial pass to ensure spacing/height are consistent on load
   clampCustomTextDistance();
   enforceGifHeightMinimum();
+  enforceHideDays24hRuleSilent();
 });
 
 // Skins loading and dynamic form
@@ -1241,6 +1245,36 @@ function bindBoolPillGroupToCheckbox(pillGroupEl, checkboxEl) {
     });
   });
   checkboxEl.addEventListener('change', syncFromCheckbox);
+}
+
+function enforceHideDays24hRuleSilent() {
+  // If user chose "Hide Days" (showDays=false) but the timer exceeds 24h,
+  // automatically switch back to showing days.
+  const showDaysInput = document.querySelector('input[data-key="showDays"]');
+  if (!showDaysInput) return;
+  if (showDaysInput.checked) return; // already showing days
+
+  const timerType = document.getElementById('timer_type')?.value || 'fixed_date';
+  let seconds = null;
+  if (timerType === 'reload_based') {
+    const dur = Number(document.querySelector('input[name="duration_seconds"]')?.value);
+    if (Number.isFinite(dur) && dur > 0) seconds = dur;
+  } else {
+    const raw = (document.querySelector('input[name="target_datetime"]')?.value || '').trim();
+    if (raw) {
+      const target = new Date(raw);
+      if (!Number.isNaN(target.getTime())) {
+        const diff = Math.floor((target.getTime() - Date.now()) / 1000);
+        if (Number.isFinite(diff) && diff > 0) seconds = diff;
+      }
+    }
+  }
+
+  if (seconds != null && seconds > 86400) {
+    showDaysInput.checked = true; // "Hide Days?" -> No
+    showDaysInput.dispatchEvent(new Event('change', { bubbles: true }));
+    showDaysInput.dispatchEvent(new Event('input', { bubbles: true }));
+  }
 }
 
 function renderFields(metadata, savedOverrides = {}) {
@@ -1757,12 +1791,12 @@ function renderFields(metadata, savedOverrides = {}) {
           btnOn.type = 'button';
           btnOn.className = 'toggle-pill';
           btnOn.dataset.boolOn = '1';
-          btnOn.textContent = 'On';
+          btnOn.textContent = key === 'showDays' ? 'No' : 'On';
           const btnOff = document.createElement('button');
           btnOff.type = 'button';
           btnOff.className = 'toggle-pill';
           btnOff.dataset.boolOn = '0';
-          btnOff.textContent = 'Off';
+          btnOff.textContent = key === 'showDays' ? 'Yes' : 'Off';
           group.appendChild(btnOn);
           group.appendChild(btnOff);
           const input = document.createElement('input');
@@ -1772,6 +1806,9 @@ function renderFields(metadata, savedOverrides = {}) {
           input.checked = !!value;
           input.id = `skin_${key}`;
           input.addEventListener('change', syncOverrides);
+          if (key === 'showDays') {
+            input.addEventListener('change', () => enforceHideDays24hRuleSilent());
+          }
           wrap.appendChild(group);
           wrap.appendChild(input);
           bindBoolPillGroupToCheckbox(group, input);
@@ -2329,6 +2366,7 @@ async function selectSkin(key) {
     // Ensure only General is expanded after skin selection.
     collapseAllSectionsExceptGeneral();
     setupCollapsibles(document);
+    enforceHideDays24hRuleSilent();
 
     if (isFirstLoad && Object.keys(baseOverrides).length > 0) {
       lastSkinOverrides = { ...baseOverrides };
@@ -2413,6 +2451,7 @@ async function resetDesignToDefaults() {
     // Ensure only General is expanded after reset-to-defaults.
     collapseAllSectionsExceptGeneral();
     setupCollapsibles(document);
+    enforceHideDays24hRuleSilent();
 
     resetStaticCustomTextInputsToDefault();
     resetHeadingTimerTypeAndTargetsToDefault();
@@ -2451,6 +2490,12 @@ document.addEventListener('DOMContentLoaded', () => {
         field.addEventListener('input', generatePreviewFrame);
       }
     });
+  }
+
+  const durationInput = document.querySelector('input[name="duration_seconds"]');
+  if (durationInput) {
+    durationInput.addEventListener('change', () => enforceHideDays24hRuleSilent());
+    durationInput.addEventListener('input', () => enforceHideDays24hRuleSilent());
   }
 
   (async () => {
@@ -2492,6 +2537,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Ensure only General is expanded after edit-load render.
         collapseAllSectionsExceptGeneral();
         setupCollapsibles(document);
+        enforceHideDays24hRuleSilent();
         // Seed last overrides with saved values so switching skins keeps the user's base settings
         lastSkinOverrides = savedOverrides;
         
