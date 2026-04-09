@@ -48,6 +48,7 @@ function toggleInputs(isUserAction = false) {
   }
   // When switching to fixed_date, we intentionally do NOT touch duration_seconds
   // This keeps the fields independent as requested
+  enforceHideDays24hRuleSilent();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -544,6 +545,8 @@ document.addEventListener('DOMContentLoaded', () => {
     targetInput.addEventListener('change', enforceMinTargetDateTime);
     // Ensure that changing the date does not affect the duration_seconds field
     // The fields are independent - entering a date should not populate or modify duration_seconds
+    targetInput.addEventListener('change', () => enforceHideDays24hRuleSilent());
+    targetInput.addEventListener('input', () => enforceHideDays24hRuleSilent());
   }
 });
 
@@ -787,6 +790,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Initial pass to ensure spacing/height are consistent on load
   clampCustomTextDistance();
   enforceGifHeightMinimum();
+  enforceHideDays24hRuleSilent();
 });
 
 // Skins loading and dynamic form
@@ -1164,6 +1168,19 @@ function setupCollapsibles(root) {
   });
 }
 
+function collapseAllSectionsExceptGeneral() {
+  // Collapse every collapsible body by default,
+  // except the General card in the main form.
+  const generalBody = document.querySelector('#general_settings_body');
+  document.querySelectorAll('.collapsible-body').forEach((body) => {
+    if (generalBody && body === generalBody) {
+      body.classList.remove('d-none');
+      return;
+    }
+    body.classList.add('d-none');
+  });
+}
+
 /** Unique random #rrggbb (lowercase) for color inputs. */
 function randomDistinctHexColors(count) {
   const used = new Set();
@@ -1230,6 +1247,36 @@ function bindBoolPillGroupToCheckbox(pillGroupEl, checkboxEl) {
   checkboxEl.addEventListener('change', syncFromCheckbox);
 }
 
+function enforceHideDays24hRuleSilent() {
+  // If user chose "Hide Days" (showDays=false) but the timer exceeds 24h,
+  // automatically switch back to showing days.
+  const showDaysInput = document.querySelector('input[data-key="showDays"]');
+  if (!showDaysInput) return;
+  if (showDaysInput.checked) return; // already showing days
+
+  const timerType = document.getElementById('timer_type')?.value || 'fixed_date';
+  let seconds = null;
+  if (timerType === 'reload_based') {
+    const dur = Number(document.querySelector('input[name="duration_seconds"]')?.value);
+    if (Number.isFinite(dur) && dur > 0) seconds = dur;
+  } else {
+    const raw = (document.querySelector('input[name="target_datetime"]')?.value || '').trim();
+    if (raw) {
+      const target = new Date(raw);
+      if (!Number.isNaN(target.getTime())) {
+        const diff = Math.floor((target.getTime() - Date.now()) / 1000);
+        if (Number.isFinite(diff) && diff > 0) seconds = diff;
+      }
+    }
+  }
+
+  if (seconds != null && seconds > 86400) {
+    showDaysInput.checked = true; // "Hide Days?" -> No
+    showDaysInput.dispatchEvent(new Event('change', { bubbles: true }));
+    showDaysInput.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+}
+
 function renderFields(metadata, savedOverrides = {}) {
   currentSkinMetadata = metadata;
   currentHiddenOverrides = {};
@@ -1279,8 +1326,7 @@ function renderFields(metadata, savedOverrides = {}) {
   // All other fields (including showDays, layout, animation, width, height if they're in the fields array) will be shown
   const visibleFields = fields.filter(field => !alwaysHiddenFields.has(field.key));
   
-  // Note: Template card visibility will be updated after fields are rendered
-  document.getElementById('skin_overrides_section').classList.toggle('d-none', visibleFields.length === 0);
+  // Note: skin groups render directly (no Template wrapper)
 
   // Multilevel group system: Parse group specification from field
   // Supports: "GroupName", ["Group", "Subgroup"], "Group.Subgroup", ["Group", "Subgroup", "Subsubgroup"]
@@ -1720,7 +1766,7 @@ function renderFields(metadata, savedOverrides = {}) {
     }
     return false;
   })();
-  let finalCardRef = null;
+  // Final message toggle state is driven by showFinalMessage and stored in overrides via data-key.
 
   function relocateVisibilityTogglesFromGroup(group) {
     const visibilityToggles = group.fields.filter(field => visibilityToggleKeys.has(field.key));
@@ -1745,12 +1791,12 @@ function renderFields(metadata, savedOverrides = {}) {
           btnOn.type = 'button';
           btnOn.className = 'toggle-pill';
           btnOn.dataset.boolOn = '1';
-          btnOn.textContent = 'On';
+          btnOn.textContent = key === 'showDays' ? 'No' : 'On';
           const btnOff = document.createElement('button');
           btnOff.type = 'button';
           btnOff.className = 'toggle-pill';
           btnOff.dataset.boolOn = '0';
-          btnOff.textContent = 'Off';
+          btnOff.textContent = key === 'showDays' ? 'Yes' : 'Off';
           group.appendChild(btnOn);
           group.appendChild(btnOff);
           const input = document.createElement('input');
@@ -1760,6 +1806,9 @@ function renderFields(metadata, savedOverrides = {}) {
           input.checked = !!value;
           input.id = `skin_${key}`;
           input.addEventListener('change', syncOverrides);
+          if (key === 'showDays') {
+            input.addEventListener('change', () => enforceHideDays24hRuleSilent());
+          }
           wrap.appendChild(group);
           wrap.appendChild(input);
           bindBoolPillGroupToCheckbox(group, input);
@@ -1854,32 +1903,43 @@ function renderFields(metadata, savedOverrides = {}) {
     }
   }
 
-  function wireFinalScreenGroupUi(parentContainer, col, card, level, isFinalGroup) {
+  function wireFinalScreenGroupUi(headerEl, bodyEl, level, isFinalGroup) {
     if (!isFinalGroup || level !== 0) return;
-    const toggleCol = document.createElement('div');
-    toggleCol.className = 'col-12 mb-0';
-    toggleCol.innerHTML = `
-        <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" name="show_final_message" id="show_final_message" value="1" ${showFinalMessage ? 'checked' : ''} data-key="show_final_message">
-          <label class="form-check-label" for="show_final_message">
-            <strong>Time's Up Message</strong>
-          </label>
-        </div>
-      `;
-    parentContainer.appendChild(toggleCol);
-    const toggleInput = toggleCol.querySelector('#show_final_message');
-    if (toggleInput) {
-      toggleInput.addEventListener('change', () => {
-        if (finalCardRef) {
-          finalCardRef.classList.toggle('d-none', !toggleInput.checked);
-          finalCardRef.querySelector('.card')?.classList.toggle('d-none', !toggleInput.checked);
-        }
-        syncOverrides();
-      });
+
+    // Toggle lives INSIDE the section body; it controls the visibility of the fields only.
+    // 1) Wrap existing body contents (the actual fields) so we can show/hide them.
+    const fieldsWrap = document.createElement('div');
+    fieldsWrap.className = 'final-message-fields';
+    while (bodyEl.firstChild) {
+      fieldsWrap.appendChild(bodyEl.firstChild);
     }
-    col.classList.toggle('d-none', !showFinalMessage);
-    card.classList.toggle('d-none', !showFinalMessage);
-    finalCardRef = col;
+
+    // 2) Create the toggle row and insert above fields.
+    const toggleRow = document.createElement('div');
+    toggleRow.className = 'mb-3';
+    toggleRow.innerHTML = `
+      <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" name="show_final_message" id="show_final_message" value="1" ${showFinalMessage ? 'checked' : ''} data-key="show_final_message">
+        <label class="form-check-label" for="show_final_message">Enable message</label>
+      </div>
+    `;
+    const toggleInput = toggleRow.querySelector('#show_final_message');
+
+    // Prevent toggle clicks from collapsing the section.
+    toggleRow.addEventListener('click', (e) => e.stopPropagation());
+
+    bodyEl.appendChild(toggleRow);
+    bodyEl.appendChild(fieldsWrap);
+
+    const apply = () => {
+      const on = !!toggleInput?.checked;
+      fieldsWrap.classList.toggle('d-none', !on);
+    };
+    apply();
+    toggleInput?.addEventListener('change', () => {
+      apply();
+      syncOverrides();
+    });
   }
 
   // Recursive function to render groups and subgroups
@@ -1912,7 +1972,7 @@ function renderFields(metadata, savedOverrides = {}) {
     header.dataset.target = `#${bodyId}`;
     let displayTitle = group.title;
     if (group.name === 'Appearance' || group.title === 'Appearance') displayTitle = 'Design';
-    else if (group.name === 'Final Screen' || group.title === 'Final Screen' || group.path?.some(p => String(p).toLowerCase().includes('final'))) displayTitle = 'End Message';
+    else if (group.name === 'Final Screen' || group.title === 'Final Screen' || group.path?.some(p => String(p).toLowerCase().includes('final'))) displayTitle = 'Timer Ends Message (optional)';
     const isDesignGroup =
       group.name === 'Appearance' ||
       group.title === 'Appearance' ||
@@ -1934,7 +1994,7 @@ function renderFields(metadata, savedOverrides = {}) {
       header.classList.add('d-flex', 'align-items-center', 'justify-content-between', 'gap-2', 'flex-wrap');
       const titleWrap = document.createElement('div');
       titleWrap.className = 'd-flex align-items-center gap-2';
-      titleWrap.innerHTML = `<span class="text-uppercase text-muted fw-semibold small">${displayTitle}</span><i class="bi bi-chevron-down collapse-icon"></i>`;
+      titleWrap.innerHTML = `<span class="text-muted fw-semibold small">${displayTitle}</span><i class="bi bi-chevron-down collapse-icon"></i>`;
       const colorizerBtn = document.createElement('button');
       colorizerBtn.type = 'button';
       colorizerBtn.className = 'skin-colorizer-btn';
@@ -1949,13 +2009,13 @@ function renderFields(metadata, savedOverrides = {}) {
       header.appendChild(titleWrap);
       header.appendChild(colorizerBtn);
     } else {
-      header.innerHTML = `<span class="text-uppercase text-muted fw-semibold small">${displayTitle}</span><i class="bi bi-chevron-down collapse-icon float-end"></i>`;
+      header.innerHTML = `<span class="text-muted fw-semibold small">${displayTitle}</span><i class="bi bi-chevron-down collapse-icon float-end"></i>`;
     }
 
     card.appendChild(header);
     card.appendChild(body);
     col.appendChild(card);
-    wireFinalScreenGroupUi(parentContainer, col, card, level, isFinalGroup);
+    wireFinalScreenGroupUi(header, body, level, isFinalGroup);
     parentContainer.appendChild(col);
   }
 
@@ -1963,20 +2023,6 @@ function renderFields(metadata, savedOverrides = {}) {
   grouped.forEach(group => {
     renderGroup(group, fieldsWrap, 0);
   });
-
-  // Update Template card visibility based on whether there are any rendered fields
-  const templateCard = document.getElementById('template_card');
-  if (templateCard) {
-    // Check if there are any visible field elements in the skin_fields container
-    const hasVisibleFields = fieldsWrap.children.length > 0;
-    templateCard.classList.toggle('d-none', !hasVisibleFields);
-    
-    // Also update skin_overrides_section visibility
-    const skinOverridesSection = document.getElementById('skin_overrides_section');
-    if (skinOverridesSection) {
-      skinOverridesSection.classList.toggle('d-none', !hasVisibleFields);
-    }
-  }
 
   const gifHField = findGifHeightField();
   if (gifHField && !gifHField.dataset.boundGifHeight) {
@@ -1994,6 +2040,10 @@ function renderFields(metadata, savedOverrides = {}) {
   syncOverrides();
   // Enable collapsible behavior for newly rendered groups
   setupCollapsibles(fieldsWrap);
+  // After skin load/render (select skin or edit load), collapse all sections except General.
+  collapseAllSectionsExceptGeneral();
+  // Re-sync chevrons for the newly forced state.
+  setupCollapsibles(document);
   clampCustomTextDistance();
   enforceGifHeightMinimum();
 }
@@ -2313,6 +2363,10 @@ async function selectSkin(key) {
     }
 
     renderFields(meta, baseOverrides);
+    // Ensure only General is expanded after skin selection.
+    collapseAllSectionsExceptGeneral();
+    setupCollapsibles(document);
+    enforceHideDays24hRuleSilent();
 
     if (isFirstLoad && Object.keys(baseOverrides).length > 0) {
       lastSkinOverrides = { ...baseOverrides };
@@ -2394,6 +2448,10 @@ async function resetDesignToDefaults() {
     appliedFormDefaults = { ...baseOverrides };
     lastSkinOverrides = { ...baseOverrides };
     renderFields(meta, baseOverrides);
+    // Ensure only General is expanded after reset-to-defaults.
+    collapseAllSectionsExceptGeneral();
+    setupCollapsibles(document);
+    enforceHideDays24hRuleSilent();
 
     resetStaticCustomTextInputsToDefault();
     resetHeadingTimerTypeAndTargetsToDefault();
@@ -2412,6 +2470,9 @@ async function resetDesignToDefaults() {
 document.addEventListener('DOMContentLoaded', () => {
   // Initial collapsible setup for static headers (general/customize cards)
   setupCollapsibles(document);
+  collapseAllSectionsExceptGeneral();
+  // Re-sync chevrons after forcing initial collapse state
+  setupCollapsibles(document);
 
   // Wire up form fields to trigger preview generation
   const form = document.getElementById('timer_form');
@@ -2429,6 +2490,12 @@ document.addEventListener('DOMContentLoaded', () => {
         field.addEventListener('input', generatePreviewFrame);
       }
     });
+  }
+
+  const durationInput = document.querySelector('input[name="duration_seconds"]');
+  if (durationInput) {
+    durationInput.addEventListener('change', () => enforceHideDays24hRuleSilent());
+    durationInput.addEventListener('input', () => enforceHideDays24hRuleSilent());
   }
 
   (async () => {
@@ -2467,6 +2534,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // Edit mode: load existing skin with saved overrides
         const meta = await fetchJson(`/skins/${encodeURIComponent(current)}`);
         renderFields(meta, savedOverrides);
+        // Ensure only General is expanded after edit-load render.
+        collapseAllSectionsExceptGeneral();
+        setupCollapsibles(document);
+        enforceHideDays24hRuleSilent();
         // Seed last overrides with saved values so switching skins keeps the user's base settings
         lastSkinOverrides = savedOverrides;
         
