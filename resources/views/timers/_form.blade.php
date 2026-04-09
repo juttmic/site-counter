@@ -698,7 +698,7 @@
                         <!-- General -->
                         <div class="card">
                             <div class="card-header d-flex justify-content-between align-items-center py-2 collapsible-header" data-target="#general_settings_body">
-                                <span class="fw-semibold small text-muted">General</span>
+                                <span class="fw-semibold small text-muted">General Setting</span>
                                 <i class="bi bi-chevron-down collapse-icon"></i>
                             </div>
                             <div class="card-body collapsible-body" id="general_settings_body">
