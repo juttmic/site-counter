@@ -1269,6 +1269,7 @@ class TimerGifGenerator
 
         $pinSpanH = $canvasH - (2 * $edgePad) - $outerTopPadding;
         $contentY0 = $outerTopPadding + $edgePad;
+        $explicitCanvasH = ($requestedH && $requestedH > 0);
 
         if ($hasText && ($textPosition === 'top' || $textPosition === 'bottom')) {
             for ($stackPass = 0; $stackPass < 2; $stackPass++) {
@@ -1310,7 +1311,7 @@ class TimerGifGenerator
                 $timerTopInner,
                 $blockTopInner,
                 $effectiveDistance,
-            ] = $cropMode
+            ] = ($explicitCanvasH)
                 ? $this->resolveCustomTextStackLayoutWithPinnedTimerCenter(
                     $textPosition,
                     $distance,
@@ -1335,9 +1336,12 @@ class TimerGifGenerator
             // and shift the "pin span" origin so heading math stays consistent.
             $pinOriginY = $contentY0;
             $timerTopCanvas = null;
-            if ($cropMode) {
-                // Allow negative dest Y so cropping is symmetric (top+bottom) when canvas is shorter than timer.
+            if ($explicitCanvasH) {
+                // Always keep the timer centered in the requested canvas height (even if this crops).
+                // This ensures that when we "append" the heading box by increasing outputHeight,
+                // the added height is distributed evenly above/below the timer.
                 $timerTopCanvas = (int) floor(($canvasH - $timerH) / 2);
+                // Anchor pin-span coords to this centered timer position so heading placement is relative.
                 $pinOriginY = $timerTopCanvas - $timerTopInner;
             }
 
@@ -1350,7 +1354,7 @@ class TimerGifGenerator
             }
         } else {
             // No custom heading: center the timer in the requested canvas height, even if it requires cropping.
-            if ($requestedH && $requestedH > 0 && $requestedH < $layoutHeight) {
+            if ($explicitCanvasH) {
                 $offsetY = (int) floor(($canvasH - $timerH) / 2);
             } else {
                 $innerTopPadding = max(0, (int) floor(($innerH - $timerH) / 2));
