@@ -264,8 +264,6 @@ function headingTextBlockHeightPx(defaults, overrides) {
 function outerTopPaddingForCanvasJs(canvasH, layoutHeight, hasText, textPosition) {
   const extra = Math.max(0, canvasH - layoutHeight);
   if (extra === 0) return 0;
-  if (hasText && textPosition === 'top') return 0;
-  if (hasText && textPosition === 'bottom') return extra;
   return Math.floor(extra / 2);
 }
 

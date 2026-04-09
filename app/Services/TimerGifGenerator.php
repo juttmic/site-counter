@@ -404,9 +404,7 @@ class TimerGifGenerator
 
     /**
      * When the output canvas is taller than the timer + heading layout, distribute the extra height.
-     * Heading top: align layout to the canvas top (extra space below) so the title stays on the top edge
-     * while padding shrinks instead of vertically centering the block away from that edge.
-     * Heading bottom: align to the canvas bottom (extra space above). Otherwise keep the block centered.
+     * Always center the layout within the output canvas.
      */
     private function outerTopPaddingForCanvas(int $canvasH, int $layoutHeight, bool $hasText, string $textPosition): int
     {
@@ -414,13 +412,6 @@ class TimerGifGenerator
         if ($extra === 0) {
             return 0;
         }
-        if ($hasText && $textPosition === 'top') {
-            return 0;
-        }
-        if ($hasText && $textPosition === 'bottom') {
-            return $extra;
-        }
-
         return (int) floor($extra / 2);
     }
 
