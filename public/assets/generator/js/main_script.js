@@ -1958,13 +1958,13 @@ function renderFields(metadata, savedOverrides = {}) {
     if (!group.fields.length && !hasChildren && !isFinalGroup) return;
 
     const col = document.createElement('div');
-    col.className = 'col-12';
+    col.className = '';
     if (hideSkinGroupCard) {
       col.classList.add('d-none');
     }
 
     const card = document.createElement('div');
-    card.className = 'card border shadow-sm mb-3';
+    card.className = 'card border shadow-sm';
     const bodyId = `skin_group_${group.pathKey.replace(/\./g, '_').replace(/[^a-zA-Z0-9_]/g, '_')}`;
 
     const header = document.createElement('div');

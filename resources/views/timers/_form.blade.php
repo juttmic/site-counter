@@ -899,7 +899,7 @@
                         </div>
 
                         <!-- Skin customization groups (rendered by JS as separate cards) -->
-                        <div id="skin_fields" class="row g-3"></div>
+                        <div id="skin_fields" class="d-flex flex-column gap-3"></div>
                         <input type="hidden" name="skin_overrides" id="skin_overrides_input" value="{{ $isEdit ? json_encode($timer->skin_overrides ?? []) : '' }}" />
                     </div>
                 </div>
