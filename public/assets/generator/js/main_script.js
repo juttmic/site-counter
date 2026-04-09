@@ -426,8 +426,15 @@ function clampCustomTextDistance() {
     strictMax = Math.min(MAX_CUSTOM_TEXT_DISTANCE, distMaxFromEff);
 
     // Ensure the internal zone is still reachable if it lies within the strict band.
-    strictMin = Math.min(strictMin, usableInternal);
-    strictMax = Math.max(strictMax, -usableInternal);
+    // Internal zone is [-usableInternal, +usableInternal].
+    strictMin = Math.min(strictMin, -usableInternal);
+    strictMax = Math.max(strictMax, usableInternal);
+
+    // Safety: if something went weird in the math, fall back to global guardrails.
+    if (!(strictMin <= strictMax)) {
+      strictMin = MIN_CUSTOM_TEXT_DISTANCE;
+      strictMax = MAX_CUSTOM_TEXT_DISTANCE;
+    }
   }
 
   const desired = Number(distanceInput.value);
