@@ -1056,9 +1056,9 @@ function headingWantsCustomText() {
 }
 
 function computeHeadingHeightDeltaPx(sizing) {
-  if (!sizing || !sizing.wantsText) return 0;
-  // Deterministic: when heading is enabled, we "append" the heading block,
-  // regardless of whether current height has spare whitespace.
+  if (!sizing) return 0;
+  // Deterministic heading "box" height. This is independent of whether text is currently enabled,
+  // because we need to subtract the full box when switching position to 'none'.
   return Math.max(0, Math.round(sizing.textSize || 0));
 }
 
@@ -1081,6 +1081,13 @@ function syncGifHeightOnHeadingToggle() {
   if (!form) return;
   const prevWants = form.dataset.headingWantsText === '1';
   const nextWants = headingWantsCustomText();
+  // If heading remains enabled, keep the stored delta in sync with current heading size
+  // so disabling subtracts the expected amount.
+  if (prevWants === true && nextWants === true) {
+    const sizing = resolveSizingSnapshot();
+    form.dataset.headingHeightDelta = String(computeHeadingHeightDeltaPx(sizing));
+    return;
+  }
   if (prevWants === nextWants) return;
 
   const hf = findGifHeightField();
@@ -1104,9 +1111,13 @@ function syncGifHeightOnHeadingToggle() {
     hf.value = String(nextH);
     form.dataset.headingHeightDelta = String(delta);
   } else {
-    // Disabling: subtract the last stored delta so height returns to the timer-only size.
+    // Disabling: subtract the CURRENT heading box height (not a stale stored value).
+    // This prevents drift when the box size changes while heading is enabled.
+    const deltaNow = computeHeadingHeightDeltaPx(resolveSizingSnapshot());
     const stored = Number(form.dataset.headingHeightDelta);
-    const delta = Number.isFinite(stored) ? stored : 0;
+    const delta = Number.isFinite(deltaNow) && deltaNow > 0
+      ? deltaNow
+      : (Number.isFinite(stored) ? stored : 0);
     const nextH = Math.max(floorH, curH - delta);
     hf.value = String(nextH);
     form.dataset.headingHeightDelta = '0';
@@ -2189,9 +2200,14 @@ function renderFields(metadata, savedOverrides = {}) {
 
   /** Max width/height inputs = 2× skin default (overrides JSON max). */
   function getDimensionCapMax(field) {
-    // Do not artificially cap dimensions based on skin defaults.
-    // Use the field's declared max so users can reach the full allowed range.
-    return null;
+    const key = field.key;
+    const d = defaults;
+    let base;
+    if (key === 'outputWidth') base = firstNumber(d.outputWidth, d.width);
+    else if (key === 'outputHeight') base = firstNumber(d.outputHeight, d.height);
+    else return null;
+    if (!Number.isFinite(base) || base <= 0) return null;
+    return Math.floor(base * 2);
   }
 
   const createFieldInput = (field, value, options = {}) => {
