@@ -1164,6 +1164,19 @@ function setupCollapsibles(root) {
   });
 }
 
+function collapseAllSectionsExceptGeneral() {
+  // Collapse every collapsible body by default,
+  // except the General card in the main form.
+  const generalBody = document.querySelector('#general_settings_body');
+  document.querySelectorAll('.collapsible-body').forEach((body) => {
+    if (generalBody && body === generalBody) {
+      body.classList.remove('d-none');
+      return;
+    }
+    body.classList.add('d-none');
+  });
+}
+
 /** Unique random #rrggbb (lowercase) for color inputs. */
 function randomDistinctHexColors(count) {
   const used = new Set();
@@ -1979,6 +1992,10 @@ function renderFields(metadata, savedOverrides = {}) {
   syncOverrides();
   // Enable collapsible behavior for newly rendered groups
   setupCollapsibles(fieldsWrap);
+  // After skin load/render (select skin or edit load), collapse all sections except General.
+  collapseAllSectionsExceptGeneral();
+  // Re-sync chevrons for the newly forced state.
+  setupCollapsibles(document);
   clampCustomTextDistance();
   enforceGifHeightMinimum();
 }
@@ -2298,6 +2315,9 @@ async function selectSkin(key) {
     }
 
     renderFields(meta, baseOverrides);
+    // Ensure only General is expanded after skin selection.
+    collapseAllSectionsExceptGeneral();
+    setupCollapsibles(document);
 
     if (isFirstLoad && Object.keys(baseOverrides).length > 0) {
       lastSkinOverrides = { ...baseOverrides };
@@ -2379,6 +2399,9 @@ async function resetDesignToDefaults() {
     appliedFormDefaults = { ...baseOverrides };
     lastSkinOverrides = { ...baseOverrides };
     renderFields(meta, baseOverrides);
+    // Ensure only General is expanded after reset-to-defaults.
+    collapseAllSectionsExceptGeneral();
+    setupCollapsibles(document);
 
     resetStaticCustomTextInputsToDefault();
     resetHeadingTimerTypeAndTargetsToDefault();
@@ -2396,6 +2419,9 @@ async function resetDesignToDefaults() {
 
 document.addEventListener('DOMContentLoaded', () => {
   // Initial collapsible setup for static headers (general/customize cards)
+  setupCollapsibles(document);
+  collapseAllSectionsExceptGeneral();
+  // Re-sync chevrons after forcing initial collapse state
   setupCollapsibles(document);
 
   // Wire up form fields to trigger preview generation
@@ -2452,6 +2478,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Edit mode: load existing skin with saved overrides
         const meta = await fetchJson(`/skins/${encodeURIComponent(current)}`);
         renderFields(meta, savedOverrides);
+        // Ensure only General is expanded after edit-load render.
+        collapseAllSectionsExceptGeneral();
+        setupCollapsibles(document);
         // Seed last overrides with saved values so switching skins keeps the user's base settings
         lastSkinOverrides = savedOverrides;
         
