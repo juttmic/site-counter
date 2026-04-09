@@ -661,6 +661,16 @@ class TimerGifGenerator
             $outerTopPadding = $this->outerTopPaddingForCanvas($canvasH, $layoutHeight, $hasText, $textPosition);
         }
 
+        // Placement rule: when heading is on top/bottom and padding is nonnegative, do not overlap the timer.
+        // If the current canvas is too short to provide a full text box worth of space on the selected side,
+        // auto-grow the canvas symmetrically (adds height both above and below since the timer stays centered).
+        if ($hasText && ($textPosition === 'top' || $textPosition === 'bottom') && $distance >= 0) {
+            $minCanvasHNoOverlap = $timerH + (2 * $textBoxH);
+            if ($minCanvasHNoOverlap > 0) {
+                $canvasH = max($canvasH, $minCanvasHNoOverlap);
+            }
+        }
+
         $topPadding = $outerTopPadding + $innerTopPadding + $edgePad;
 
         // Always center the timer vertically in the output canvas (even if that implies cropping).
@@ -756,7 +766,7 @@ class TimerGifGenerator
         ]);
         // Add a 1px border around the counter area for visual separation
         $timerBorderCol = imagecolorallocate($im, $tr, $tg, $tb);
-        // imagerectangle($im, $offsetX, $offsetY, $offsetX + $timerW - 1, $offsetY + $timerH - 1, $timerBorderCol);
+        imagerectangle($im, $offsetX, $offsetY, $offsetX + $timerW - 1, $offsetY + $timerH - 1, $timerBorderCol);
         imagedestroy($timerIm);
 
         if ($hasText) {
@@ -776,11 +786,11 @@ class TimerGifGenerator
                     if (function_exists('imagesetthickness')) {
                         imagesetthickness($im, 1);
                     }
-                    // imagerectangle($im, $x0, $y0, $x1, $y1, $red);
+                    imagerectangle($im, $x0, $y0, $x1, $y1, $red);
 
                     // Center line through the text box
                     $cy = (int) floor(($y0 + $y1) / 2);
-                    // imageline($im, $x0, $cy, $x1, $cy, $red);
+                    imageline($im, $x0, $cy, $x1, $cy, $red);
                 }
             }
 
