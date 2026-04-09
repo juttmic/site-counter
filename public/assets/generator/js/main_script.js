@@ -1242,30 +1242,9 @@ document.addEventListener('DOMContentLoaded', function() {
   // Sync distance field to skin_overrides when changed; keep GIF height in sync with padding
   const distanceInput = document.querySelector('input[name="customTextDistance"]');
   if (distanceInput) {
-    initPaddingHeightSyncState();
     const handleDistanceChange = () => {
-      // Clamp first (esp. -textSize floor at default height) so sync never applies height from an illegal pad.
+      // Clamp first so UI stays within allowed distance bounds.
       clampCustomTextDistance();
-      const padBeforeSync = (() => {
-        const n = Number(distanceInput.value);
-        return Number.isFinite(n) ? n : 0;
-      })();
-
-      syncGifHeightDeltaFromPaddingInput(distanceInput);
-
-      clampCustomTextDistance();
-
-      const padAfter = (() => {
-        const n = Number(distanceInput.value);
-        return Number.isFinite(n) ? n : 0;
-      })();
-
-      if (padAfter !== padBeforeSync) {
-        adjustGifHeightForPaddingClampCorrection(padAfter - padBeforeSync);
-      }
-      distanceInput.dataset.heightSyncPad = String(padAfter);
-
-      enforceGifHeightMinimum();
       syncOverrides();
     };
     distanceInput.addEventListener('change', handleDistanceChange);
