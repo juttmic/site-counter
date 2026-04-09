@@ -1991,23 +1991,23 @@ function renderFields(metadata, savedOverrides = {}) {
     renderGroupFieldsForCategory(body, group, isVisibilityGroup);
 
     if (isDesignGroup) {
-      header.classList.add('d-flex', 'align-items-center', 'justify-content-between', 'gap-2', 'flex-wrap');
-      const titleWrap = document.createElement('div');
-      titleWrap.className = 'd-flex align-items-center gap-2';
-      titleWrap.innerHTML = `<span class="text-muted fw-semibold small">${displayTitle}</span><i class="bi bi-chevron-down collapse-icon"></i>`;
+      header.innerHTML = `<span class="text-muted fw-semibold small">${displayTitle}</span><i class="bi bi-chevron-down collapse-icon float-end"></i>`;
+
+      // Colorizer: inside section body, its own line, right-aligned.
+      const row = document.createElement('div');
+      row.className = 'd-flex justify-content-end mb-3';
       const colorizerBtn = document.createElement('button');
       colorizerBtn.type = 'button';
-      colorizerBtn.className = 'skin-colorizer-btn';
+      colorizerBtn.className = 'skin-colorizer-btn skin-colorizer-btn--rainbow';
       colorizerBtn.setAttribute('title', 'Assign random unique colors to all fields in this section');
-      colorizerBtn.innerHTML =
-        '<i class="bi bi-palette-fill" aria-hidden="true"></i><span>Colorizer</span>';
+      colorizerBtn.innerHTML = '<i class="bi bi-palette-fill" aria-hidden="true"></i><span>Colorizer</span>';
       colorizerBtn.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
         colorizeDesignGroupColors(body);
       });
-      header.appendChild(titleWrap);
-      header.appendChild(colorizerBtn);
+      row.appendChild(colorizerBtn);
+      body.prepend(row);
     } else {
       header.innerHTML = `<span class="text-muted fw-semibold small">${displayTitle}</span><i class="bi bi-chevron-down collapse-icon float-end"></i>`;
     }

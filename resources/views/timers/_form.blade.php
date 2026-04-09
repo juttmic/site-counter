@@ -581,6 +581,35 @@
     flex-shrink: 0;
     line-height: 1.2;
   }
+  .skin-colorizer-btn--rainbow{
+    color: #0b1020;
+    border-color: rgba(0,0,0,0.08);
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.65) 0%, rgba(255,255,255,0.25) 100%),
+      linear-gradient(90deg,
+        #ff3b30 0%,
+        #ff9500 16%,
+        #ffcc00 32%,
+        #34c759 48%,
+        #00c7be 64%,
+        #0a84ff 80%,
+        #bf5af2 100%
+      );
+    box-shadow:
+      0 6px 18px rgba(0, 0, 0, 0.10),
+      0 1px 2px rgba(0, 0, 0, 0.10);
+  }
+  .skin-colorizer-btn--rainbow:hover{
+    border-color: rgba(0,0,0,0.16);
+    box-shadow:
+      0 10px 26px rgba(0, 0, 0, 0.14),
+      0 0 0 3px rgba(10, 132, 255, 0.12);
+    transform: translateY(-1px);
+  }
+  .dark .skin-colorizer-btn--rainbow{
+    color: #0b1020;
+    border-color: rgba(255,255,255,0.18);
+  }
   .skin-colorizer-btn:hover {
     color: #1d4ed8;
     border-color: #3b82f6;
