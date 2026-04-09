@@ -341,12 +341,17 @@ function clampCustomTextDistance() {
     return;
   }
 
+  const desired = Number(distanceInput.value);
+  if (isNaN(desired)) {
+    return;
+  }
+
   const wantsText = sizing.wantsText;
   const textPos = document.querySelector('select[name="text_position"]')?.value || 'none';
   const hf = findGifHeightField();
   const gifFromDom = hf?.value;
   const gifDomN = Number(gifFromDom);
-  const canvasH = Number.isFinite(gifDomN) ? gifDomN : gifHeight;
+  let canvasH = Number.isFinite(gifDomN) ? gifDomN : gifHeight;
 
   // Only clamp tightly when the heading is actually being used top/bottom.
   // Otherwise keep the general guardrails.
@@ -371,6 +376,15 @@ function clampCustomTextDistance() {
     const usableInternal = Math.max(0, basePad - minPad);
     const baselineOffset = 2 * basePad;
     const textBoxH = Math.max(0, Math.round(sizing.textSize + 2 * basePad));
+
+    // Backend may auto-grow the render canvas to ensure stable placement around 0
+    // (timer stays centered; requires a full text box height on both sides).
+    // The height field may intentionally remain unchanged, so we mirror that "effective canvas" here
+    // to avoid discontinuities when moving from small positives to small negatives.
+    const minCanvasHNoOverlap = timerHeight + 2 * textBoxH;
+    if (Number.isFinite(minCanvasHNoOverlap) && minCanvasHNoOverlap > 0) {
+      canvasH = Math.max(canvasH, minCanvasHNoOverlap);
+    }
 
     // Placement bounds are expressed in terms of effectiveDistance (as used by renderer),
     // then converted to distance bounds via the internal-first mapping.
@@ -435,11 +449,6 @@ function clampCustomTextDistance() {
       strictMin = MIN_CUSTOM_TEXT_DISTANCE;
       strictMax = MAX_CUSTOM_TEXT_DISTANCE;
     }
-  }
-
-  const desired = Number(distanceInput.value);
-  if (isNaN(desired)) {
-    return;
   }
   let next = desired;
   if (desired < strictMin) {
@@ -581,6 +590,11 @@ function adjustGifHeightForPaddingClampCorrection(padDelta) {
 }
 
 function enforceGifHeightMinimum() {
+  // Never auto-adjust height while the user is dragging padding (customTextDistance).
+  // Padding should only move the text within the existing canvas.
+  if (window.__suppressHeightMutations === true) {
+    return;
+  }
   const heightField = findGifHeightField();
   if (!heightField) return;
   const sizing = resolveSizingSnapshot();
@@ -648,16 +662,21 @@ document.addEventListener('DOMContentLoaded', function() {
     const handleDistanceChange = () => {
       const hf = findGifHeightField();
       const heightBefore = hf ? String(hf.value ?? '') : null;
-      clampCustomTextDistance();
+      window.__suppressHeightMutations = true;
+      try {
+        clampCustomTextDistance();
 
-      syncOverrides();
-      // Padding (customTextDistance) must never mutate overall output height.
-      // Some other sync paths may indirectly touch the height field; if so, revert it.
-      if (hf && heightBefore !== null && String(hf.value ?? '') !== heightBefore) {
-        hf.value = heightBefore;
-      }
-      if (typeof generatePreviewFrame === 'function') {
-        generatePreviewFrame();
+        syncOverrides();
+        // Padding (customTextDistance) must never mutate overall output height.
+        // Some other sync paths may indirectly touch the height field; if so, revert it.
+        if (hf && heightBefore !== null && String(hf.value ?? '') !== heightBefore) {
+          hf.value = heightBefore;
+        }
+        if (typeof generatePreviewFrame === 'function') {
+          generatePreviewFrame();
+        }
+      } finally {
+        window.__suppressHeightMutations = false;
       }
     };
     distanceInput.addEventListener('change', handleDistanceChange);
