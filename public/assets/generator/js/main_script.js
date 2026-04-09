@@ -1057,6 +1057,71 @@ function headingWantsCustomText() {
   return textVal !== '' && textPos !== 'none';
 }
 
+function computeHeadingHeightDeltaPx(sizing) {
+  if (!sizing || !sizing.wantsText) return 0;
+  // Deterministic: when heading is enabled, we "append" the heading block,
+  // regardless of whether current height has spare whitespace.
+  return Math.max(0, Math.round(sizing.textSize || 0));
+}
+
+function initHeadingHeightToggleState() {
+  const form = document.getElementById('timer_form');
+  if (!form) return;
+  const wants = headingWantsCustomText();
+  form.dataset.headingWantsText = wants ? '1' : '0';
+  // If heading is already on at load, store the delta so disabling can subtract it.
+  if (wants) {
+    const sizing = resolveSizingSnapshot();
+    form.dataset.headingHeightDelta = String(computeHeadingHeightDeltaPx(sizing));
+  } else {
+    form.dataset.headingHeightDelta = '0';
+  }
+}
+
+function syncGifHeightOnHeadingToggle() {
+  const form = document.getElementById('timer_form');
+  if (!form) return;
+  const prevWants = form.dataset.headingWantsText === '1';
+  const nextWants = headingWantsCustomText();
+  if (prevWants === nextWants) return;
+
+  const hf = findGifHeightField();
+  if (!hf) {
+    form.dataset.headingWantsText = nextWants ? '1' : '0';
+    return;
+  }
+
+  const defH = getSkinDefaultOutputHeight();
+  const sizing = resolveSizingSnapshot();
+  const timerOnly = Math.max(0, Math.round((sizing.timerHeight || 0) + 2 * (sizing.edgePad || 0)));
+  const floorH = Math.max(timerOnly, Number.isFinite(defH) && defH > 0 ? Math.round(defH) : 0);
+
+  let curH = Number(hf.value);
+  if (!Number.isFinite(curH) || curH <= 0) {
+    curH = Number.isFinite(sizing.gifHeight) && sizing.gifHeight > 0 ? Math.round(sizing.gifHeight) : floorH;
+  }
+
+  if (nextWants) {
+    // Enabling: always grow by the heading block height (append behavior).
+    const delta = computeHeadingHeightDeltaPx(sizing);
+    const nextH = Math.max(floorH, curH + delta);
+    hf.value = String(nextH);
+    form.dataset.headingHeightDelta = String(delta);
+  } else {
+    // Disabling: subtract the last stored delta so height returns to the timer-only size.
+    const stored = Number(form.dataset.headingHeightDelta);
+    const delta = Number.isFinite(stored) ? stored : 0;
+    const nextH = Math.max(floorH, curH - delta);
+    hf.value = String(nextH);
+    form.dataset.headingHeightDelta = '0';
+  }
+
+  form.dataset.headingWantsText = nextWants ? '1' : '0';
+  if (typeof syncOverrides === 'function') {
+    syncOverrides();
+  }
+}
+
 /** Last padding value used for GIF height sync (see syncGifHeightDeltaFromPaddingInput). */
 function initPaddingHeightSyncState() {
   const distanceInput = document.querySelector('input[name="customTextDistance"]');
@@ -1254,10 +1319,11 @@ document.addEventListener('DOMContentLoaded', function() {
   const headingCustomTextInput = document.querySelector('input[name="custom_text"]');
   const headingPositionSelect = document.querySelector('select[name="text_position"]');
   if (headingCustomTextInput) {
-    headingCustomTextInput.addEventListener('change', () => initPaddingHeightSyncState());
+    headingCustomTextInput.addEventListener('input', () => syncGifHeightOnHeadingToggle());
+    headingCustomTextInput.addEventListener('change', () => syncGifHeightOnHeadingToggle());
   }
   if (headingPositionSelect) {
-    headingPositionSelect.addEventListener('change', () => initPaddingHeightSyncState());
+    headingPositionSelect.addEventListener('change', () => syncGifHeightOnHeadingToggle());
   }
 
   // Sync custom text font size to skin_overrides when changed
@@ -1435,6 +1501,10 @@ document.addEventListener('DOMContentLoaded', function() {
   // Initial pass to ensure spacing/height are consistent on load
   clampCustomTextDistance();
   enforceGifHeightMinimum();
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  initHeadingHeightToggleState();
 });
 
 // Skins loading and dynamic form
