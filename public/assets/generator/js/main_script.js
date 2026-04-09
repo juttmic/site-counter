@@ -1091,10 +1091,8 @@ function syncGifHeightOnHeadingToggle() {
     return;
   }
 
-  const defH = getSkinDefaultOutputHeight();
   const sizing = resolveSizingSnapshot();
-  const timerOnly = Math.max(0, Math.round((sizing.timerHeight || 0) + 2 * (sizing.edgePad || 0)));
-  const floorH = Math.max(timerOnly, Number.isFinite(defH) && defH > 0 ? Math.round(defH) : 0);
+  const floorH = 100;
 
   let curH = Number(hf.value);
   if (!Number.isFinite(curH) || curH <= 0) {
@@ -1247,24 +1245,18 @@ function adjustGifHeightForPaddingClampCorrection(padDelta) {
 function enforceGifHeightMinimum() {
   const heightField = findGifHeightField();
   if (!heightField) return;
-  const sizing = resolveSizingSnapshot();
+  const hardMin = 100;
+  const maxAttr = heightField.max !== '' && heightField.max != null ? Number(heightField.max) : Number.NaN;
+  const minAttr = heightField.min !== '' && heightField.min != null ? Number(heightField.min) : Number.NaN;
+  const effectiveMin = Math.max(hardMin, Number.isFinite(minAttr) ? minAttr : hardMin);
 
-  if (isNaN(sizing.gifHeight) || isNaN(sizing.timerHeight)) {
-    return;
-  }
-
-  const required = Math.max(0, Math.ceil(sizing.combinedHeight || 0));
-  if (!isNaN(required) && required > 0 && sizing.gifHeight < required) {
-    const maxAttr = heightField.max !== '' && heightField.max != null ? Number(heightField.max) : Number.NaN;
-    const applied = Number.isFinite(maxAttr) ? Math.min(required, maxAttr) : required;
-    heightField.value = applied;
-    const msg = `GIF height must be at least ${required}px to fit the timer and text.`;
-    if (window.showToast) {
-      // window.showToast(msg, 'warning');
-    } else {
-      console.warn(msg);
-    }
-    // Keep overrides in sync with the adjusted value
+  let h = Number(heightField.value);
+  if (!Number.isFinite(h)) return;
+  let next = h;
+  if (next < effectiveMin) next = effectiveMin;
+  if (Number.isFinite(maxAttr) && maxAttr > 0 && next > maxAttr) next = maxAttr;
+  if (next !== h) {
+    heightField.value = String(Math.round(next));
     if (typeof syncOverrides === 'function') {
       syncOverrides();
     }
@@ -2191,16 +2183,9 @@ function renderFields(metadata, savedOverrides = {}) {
 
   /** Max width/height inputs = 2× skin default (overrides JSON max). */
   function getDimensionCapMax(field) {
-    const key = field.key;
-    const d = defaults;
-    let base;
-    if (key === 'outputWidth') base = firstNumber(d.outputWidth, d.width);
-    else if (key === 'outputHeight') base = firstNumber(d.outputHeight, d.height);
-    else if (key === 'width') base = firstNumber(d.width);
-    else if (key === 'height') base = firstNumber(d.height);
-    else return null;
-    if (!Number.isFinite(base) || base <= 0) return null;
-    return Math.floor(base * 2);
+    // Do not artificially cap dimensions based on skin defaults.
+    // Use the field's declared max so users can reach the full allowed range.
+    return null;
   }
 
   const createFieldInput = (field, value, options = {}) => {
@@ -2216,7 +2201,10 @@ function renderFields(metadata, savedOverrides = {}) {
     const type = field.type || 'text';
     const dimCapMax = getDimensionCapMax(field);
     const effMax = dimCapMax == null ? field.max : dimCapMax;
-    const effMin = field.min;
+    let effMin = field.min;
+    if (key === 'outputHeight') {
+      effMin = Math.max(100, Number.isFinite(effMin) ? effMin : 100);
+    }
     if (type === 'number' && effMax != null) {
       label += ` (max: ${effMax})`;
     }
