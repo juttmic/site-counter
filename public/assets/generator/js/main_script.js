@@ -576,31 +576,58 @@ document.addEventListener('DOMContentLoaded', function() {
   // Sync distance field to skin_overrides when changed; keep GIF height in sync with padding
   const distanceInput = document.querySelector('input[name="customTextDistance"]');
   if (distanceInput) {
-    initPaddingHeightSyncState();
     const handleDistanceChange = () => {
-      // Clamp first (esp. -textSize floor at default height) so sync never applies height from an illegal pad.
-      clampCustomTextDistance();
-      const padBeforeSync = (() => {
-        const n = Number(distanceInput.value);
-        return Number.isFinite(n) ? n : 0;
-      })();
-
-      syncGifHeightDeltaFromPaddingInput(distanceInput);
-
       clampCustomTextDistance();
 
-      const padAfter = (() => {
-        const n = Number(distanceInput.value);
-        return Number.isFinite(n) ? n : 0;
-      })();
+      // Internal-first sizing rule:
+      // - For top/bottom headings, the first N pixels of "distance" are consumed by shifting
+      //   internal padding inside the heading box (no change in overall output height).
+      // - Only the remainder grows/shrinks overall outputHeight (up to 2× default).
+      const sizing = resolveSizingSnapshot();
+      const wantsText = sizing.wantsText;
+      const textPos = document.querySelector('select[name="text_position"]')?.value || 'none';
+      const hf = findGifHeightField();
+      const defH = getSkinDefaultOutputHeight();
+      if (hf && wantsText && (textPos === 'top' || textPos === 'bottom') && Number.isFinite(defH) && defH > 0) {
+        // Compute the heading "em" size similarly to the renderer sizing logic.
+        const fontSizeRaw = firstNumber(
+          findFieldByKey('fontSize')?.value,
+          sizing.overrides.fontSize,
+          sizing.defaults.fontSize
+        );
+        const fontSize = Number.isFinite(fontSizeRaw) ? fontSizeRaw : 36;
+        const customInput = document.querySelector('input[name="customTextFontSize"]');
+        const customN = Number(customInput?.value);
+        const em = (Number.isFinite(customN) && customN >= 12)
+          ? Math.round(customN)
+          : Math.max(12, Math.round(fontSize * 0.5));
 
-      if (padAfter !== padBeforeSync) {
-        adjustGifHeightForPaddingClampCorrection(padAfter - padBeforeSync);
+        // Default internal heading padding per side (matches backend default):
+        // basePad = max(4, round(em * 0.5)), but we never reduce below minPad.
+        const minPad = 4;
+        const basePad = Math.max(minPad, Math.round(em * 0.5));
+        const usableInternal = Math.max(0, basePad - minPad);
+        const d = Number(distanceInput.value);
+        const dist = Number.isFinite(d) ? d : 0;
+        // Internal-first: distance is first consumed by shifting internal padding inside the text box.
+        // Only remaining distance grows the canvas height.
+        const external = Math.max(0, dist - usableInternal);
+        const minH = Math.floor(defH);
+        const maxH = Math.floor(defH * 2);
+        const target = Math.max(minH, Math.min(maxH, Math.round(minH + external)));
+        const cur = Number(hf.value);
+        // Do NOT snap back to default height. Only auto-grow when required to reflect external distance.
+        if (!Number.isFinite(cur) || cur <= 0) {
+          hf.value = String(target);
+        } else if (target > cur) {
+          hf.value = String(target);
+        }
       }
-      distanceInput.dataset.heightSyncPad = String(padAfter);
 
-      enforceGifHeightMinimum();
       syncOverrides();
+      if (typeof generatePreviewFrame === 'function') {
+        generatePreviewFrame();
+      }
     };
     distanceInput.addEventListener('change', handleDistanceChange);
     distanceInput.addEventListener('input', handleDistanceChange);
