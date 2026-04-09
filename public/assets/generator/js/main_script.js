@@ -341,15 +341,89 @@ function clampCustomTextDistance() {
     return;
   }
 
-  const metaDefH = getSkinDefaultOutputHeight();
-  /** Upper bound for padding: room inside max GIF height (2× skin default), not current height — so positive padding can grow until sync hits maxH. */
-  let maxPositivePadding = sizing.maxDistance;
-  if (sizing.wantsText && Number.isFinite(metaDefH) && metaDefH > 0) {
-    const capH = Math.floor(metaDefH * 2);
-    maxPositivePadding = Math.max(
-      0,
-      Math.floor(capH - sizing.edgePad * 2 - timerHeight - sizing.textSize)
+  const wantsText = sizing.wantsText;
+  const textPos = document.querySelector('select[name="text_position"]')?.value || 'none';
+  const hf = findGifHeightField();
+  const gifFromDom = hf?.value;
+  const gifDomN = Number(gifFromDom);
+  const canvasH = Number.isFinite(gifDomN) ? gifDomN : gifHeight;
+
+  // Only clamp tightly when the heading is actually being used top/bottom.
+  // Otherwise keep the general guardrails.
+  let strictMin = MIN_CUSTOM_TEXT_DISTANCE;
+  let strictMax = MAX_CUSTOM_TEXT_DISTANCE;
+  if (wantsText && (textPos === 'top' || textPos === 'bottom') && Number.isFinite(canvasH) && canvasH > 0) {
+    // Mirror backend "internal-first" behavior and text box sizing.
+    const fontSizeRaw = firstNumber(
+      findFieldByKey('fontSize')?.value,
+      sizing.overrides?.fontSize,
+      sizing.defaults?.fontSize
     );
+    const fontSize = Number.isFinite(fontSizeRaw) ? fontSizeRaw : 36;
+    const customInput = document.querySelector('input[name="customTextFontSize"]');
+    const customN = Number(customInput?.value);
+    const em = (Number.isFinite(customN) && customN >= 12)
+      ? Math.round(customN)
+      : Math.max(12, Math.round(fontSize * 0.5));
+
+    const minPad = 4;
+    const basePad = Math.max(minPad, Math.round(em * 0.5));
+    const usableInternal = Math.max(0, basePad - minPad);
+    const baselineOffset = 2 * basePad;
+    const textBoxH = Math.max(0, Math.round(sizing.textSize + 2 * basePad));
+
+    // Placement bounds are expressed in terms of effectiveDistance (as used by renderer),
+    // then converted to distance bounds via the internal-first mapping.
+    const offsetY = Math.floor((canvasH - timerHeight) / 2);
+    const halfBox = Math.floor(textBoxH / 2);
+    const spaceAbove = offsetY;
+    const spaceBelow = canvasH - (offsetY + timerHeight);
+
+    let effMin = -Infinity;
+    let effMax = Infinity;
+
+    if (textPos === 'top') {
+      if (spaceAbove >= textBoxH) {
+        const base = Math.floor((spaceAbove - textBoxH) / 2);
+        // y = base - eff, constrained to [0, offsetY - textBoxH]
+        effMax = base;
+        effMin = base - (offsetY - textBoxH);
+      } else {
+        // Overlap case: keep "away from timer" capped at touching the timer edge,
+        // and cap overlap so the text box doesn't cross the timer centerline.
+        const effAtTouchingTimer = Math.ceil(textBoxH / 2); // y = offsetY - textBoxH
+        const effAtTimerCenter = Math.ceil(textBoxH / 2) - Math.floor(timerHeight / 2);
+        effMax = effAtTouchingTimer;
+        effMin = effAtTimerCenter;
+      }
+    } else if (textPos === 'bottom') {
+      if (spaceBelow >= textBoxH) {
+        const base = Math.floor((spaceBelow - textBoxH) / 2);
+        const start = offsetY + timerHeight;
+        // y = start + base + eff, constrained to [start, canvasH - textBoxH]
+        effMin = -base;
+        effMax = (canvasH - textBoxH) - (start + base);
+      } else {
+        const effAtTouchingTimer = halfBox; // y = offsetY + timerHeight
+        const effAtTimerCenter = halfBox - Math.ceil(timerHeight / 2);
+        effMax = effAtTouchingTimer;
+        effMin = effAtTimerCenter;
+      }
+    }
+
+    // Convert effectiveDistance bounds to the user-facing distance bounds.
+    // For |distance| <= usableInternal: effectiveDistance is constant (-baselineOffset).
+    // For distance > usableInternal:  eff = distance - usableInternal - baselineOffset.
+    // For distance < -usableInternal: eff = distance + usableInternal - baselineOffset.
+    const distMaxFromEff = Math.floor(effMax + usableInternal + baselineOffset);
+    const distMinFromEff = Math.ceil(effMin - usableInternal + baselineOffset);
+
+    strictMin = Math.max(MIN_CUSTOM_TEXT_DISTANCE, distMinFromEff);
+    strictMax = Math.min(MAX_CUSTOM_TEXT_DISTANCE, distMaxFromEff);
+
+    // Ensure the internal zone is still reachable if it lies within the strict band.
+    strictMin = Math.min(strictMin, usableInternal);
+    strictMax = Math.max(strictMax, -usableInternal);
   }
 
   const desired = Number(distanceInput.value);
@@ -357,26 +431,10 @@ function clampCustomTextDistance() {
     return;
   }
   let next = desired;
-  if (desired < MIN_CUSTOM_TEXT_DISTANCE) {
-    next = MIN_CUSTOM_TEXT_DISTANCE;
-  } else if (desired > MAX_CUSTOM_TEXT_DISTANCE) {
-    next = MAX_CUSTOM_TEXT_DISTANCE;
-  } else if (desired > maxPositivePadding) {
-    next = maxPositivePadding;
-  }
-  const gifFromDom = findGifHeightField()?.value;
-  const gifDomN = Number(gifFromDom);
-  const effectiveGifH = Number.isFinite(gifDomN) ? gifDomN : gifHeight;
-  if (
-    sizing.wantsText &&
-    Number.isFinite(metaDefH) &&
-    metaDefH > 0 &&
-    isGifHeightAtDefaultBand(effectiveGifH, metaDefH, timerHeight, sizing.textSize, sizing.edgePad)
-  ) {
-    const padFloorNeg = minNegativePaddingWhenAtDefaultHeight(sizing.textSize);
-    if (next < padFloorNeg) {
-      next = padFloorNeg;
-    }
+  if (desired < strictMin) {
+    next = strictMin;
+  } else if (desired > strictMax) {
+    next = strictMax;
   }
 
   if (next !== desired) {

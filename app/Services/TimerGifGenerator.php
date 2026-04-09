@@ -675,25 +675,40 @@ class TimerGifGenerator
                 // place it centered within that space; otherwise allow overlap into the timer.
                 if ($spaceAbove >= $textBoxH) {
                     $base = (int) floor(($spaceAbove - $textBoxH) / 2);
-                    $y = (int) round($base - $effectiveDistance); // positive -> away from timer (up)
+                    // Clamp distance so the box doesn't exceed the available space on that side.
+                    $effMin = (int) ($base - ($offsetY - $textBoxH));
+                    $effMax = (int) $base;
+                    $eff = max($effMin, min($effMax, (int) $effectiveDistance));
+                    $y = (int) round($base - $eff); // positive -> away from timer (up)
                     $minY = 0;
                     $maxY = (int) ($offsetY - $textBoxH);
                     $textBoxTopY = max($minY, min($maxY, $y));
                 } else {
                     $halfBox = (int) floor($textBoxH / 2);
-                    $textBoxTopY = (int) ($offsetY - $halfBox - $effectiveDistance);
+                    // Clamp so "away from timer" stops at touching the timer edge,
+                    // and overlap stops at the timer centerline.
+                    $effMax = (int) ceil($textBoxH / 2); // y = offsetY - textBoxH
+                    $effMin = (int) (ceil($textBoxH / 2) - floor($timerH / 2)); // box bottom <= timer center
+                    $eff = max($effMin, min($effMax, (int) $effectiveDistance));
+                    $textBoxTopY = (int) ($offsetY - $halfBox - $eff);
                 }
             } else {
                 if ($spaceBelow >= $textBoxH) {
                     $base = (int) floor(($spaceBelow - $textBoxH) / 2);
                     $start = (int) ($offsetY + $timerH);
-                    $y = (int) round($start + $base + $effectiveDistance); // positive -> away from timer (down)
+                    $effMin = (int) (-$base);
+                    $effMax = (int) (($canvasH - $textBoxH) - ($start + $base));
+                    $eff = max($effMin, min($effMax, (int) $effectiveDistance));
+                    $y = (int) round($start + $base + $eff); // positive -> away from timer (down)
                     $minY = $start;
                     $maxY = (int) ($canvasH - $textBoxH);
                     $textBoxTopY = max($minY, min($maxY, $y));
                 } else {
                     $halfBox = (int) floor($textBoxH / 2);
-                    $textBoxTopY = (int) ($offsetY + $timerH - $halfBox + $effectiveDistance);
+                    $effMax = (int) $halfBox; // y = offsetY + timerH
+                    $effMin = (int) ($halfBox - ceil($timerH / 2)); // box top >= timer center
+                    $eff = max($effMin, min($effMax, (int) $effectiveDistance));
+                    $textBoxTopY = (int) ($offsetY + $timerH - $halfBox + $eff);
                 }
             }
         }
