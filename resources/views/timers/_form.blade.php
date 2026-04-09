@@ -698,7 +698,7 @@
                         <!-- General -->
                         <div class="card">
                             <div class="card-header d-flex justify-content-between align-items-center py-2 collapsible-header" data-target="#general_settings_body">
-                                <span class="fw-semibold small text-uppercase text-muted">General</span>
+                                <span class="fw-semibold small text-muted">General</span>
                                 <i class="bi bi-chevron-down collapse-icon"></i>
                             </div>
                             <div class="card-body collapsible-body" id="general_settings_body">
@@ -802,7 +802,7 @@
                         <!-- TEXT ( optional ) -->
                         <div class="card">
                             <div class="card-header d-flex justify-content-between align-items-center py-2 collapsible-header" data-target="#text_optional_body">
-                                <span class="fw-semibold small text-uppercase text-muted">HEADING ( <span class="text-lowercase">optional</span> )</span>
+                                <span class="fw-semibold small text-muted">Heading (optional)</span>
                                 <i class="bi bi-chevron-down collapse-icon"></i>
                             </div>
                             <div class="card-body collapsible-body" id="text_optional_body">
@@ -872,7 +872,7 @@
                         <!-- Template (grouped fields) -->
                         <div class="card d-none" id="template_card">
                             <div class="card-header d-flex justify-content-between align-items-center py-2 collapsible-header" data-target="#template_body">
-                                <span class="fw-semibold small text-uppercase text-muted">Template</span>
+                                <span class="fw-semibold small text-muted">Template</span>
                                 <i class="bi bi-chevron-down collapse-icon"></i>
                             </div>
                             <div class="card-body collapsible-body" id="template_body" style="padding:1rem">
@@ -885,7 +885,7 @@
                                 <!-- Text & Animation (only animation-related) -->
                                 <div class="card border shadow-sm mb-3 d-none">
                                     <div class="card-header bg-light py-2 collapsible-header" data-target="#skin_animation_group">
-                                        <span class="text-uppercase text-muted fw-semibold small">Text & Animation</span>
+                                        <span class="text-muted fw-semibold small">Text & Animation</span>
                                         <i class="bi bi-chevron-down collapse-icon float-end"></i>
                                     </div>
                                     <div class="card-body collapsible-body" id="skin_animation_group">

@@ -1934,7 +1934,7 @@ function renderFields(metadata, savedOverrides = {}) {
       header.classList.add('d-flex', 'align-items-center', 'justify-content-between', 'gap-2', 'flex-wrap');
       const titleWrap = document.createElement('div');
       titleWrap.className = 'd-flex align-items-center gap-2';
-      titleWrap.innerHTML = `<span class="text-uppercase text-muted fw-semibold small">${displayTitle}</span><i class="bi bi-chevron-down collapse-icon"></i>`;
+      titleWrap.innerHTML = `<span class="text-muted fw-semibold small">${displayTitle}</span><i class="bi bi-chevron-down collapse-icon"></i>`;
       const colorizerBtn = document.createElement('button');
       colorizerBtn.type = 'button';
       colorizerBtn.className = 'skin-colorizer-btn';
@@ -1949,7 +1949,7 @@ function renderFields(metadata, savedOverrides = {}) {
       header.appendChild(titleWrap);
       header.appendChild(colorizerBtn);
     } else {
-      header.innerHTML = `<span class="text-uppercase text-muted fw-semibold small">${displayTitle}</span><i class="bi bi-chevron-down collapse-icon float-end"></i>`;
+      header.innerHTML = `<span class="text-muted fw-semibold small">${displayTitle}</span><i class="bi bi-chevron-down collapse-icon float-end"></i>`;
     }
 
     card.appendChild(header);
