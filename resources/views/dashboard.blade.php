@@ -61,7 +61,7 @@
                                         @endif
                                       @else
                                         <div class="d-flex flex-column align-items-center justify-content-center h-100 text-muted timer-preview-placeholder-{{ $timer->id }}">
-                                          <small>GIF is being created</small>
+                                          <small>GIF is being generated</small>
                                         </div>
                                       @endif
                                     </div>

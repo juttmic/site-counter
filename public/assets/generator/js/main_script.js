@@ -2694,7 +2694,7 @@ function startPreviewPolling(timerId, opts) {
   if (Swal.isVisible()) {
     Swal.update({
       title: 'Generating GIF...',
-      text: 'Please wait while your counter GIF is being created'
+      text: 'Please wait while your counter GIF is being generated'
     });
   }
 
