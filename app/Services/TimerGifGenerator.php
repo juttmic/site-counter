@@ -769,7 +769,7 @@ class TimerGifGenerator
         ]);
         // Add a 1px border around the counter area for visual separation
         $timerBorderCol = imagecolorallocate($im, $tr, $tg, $tb);
-        imagerectangle($im, $offsetX, $offsetY, $offsetX + $timerW - 1, $offsetY + $timerH - 1, $timerBorderCol);
+        // imagerectangle($im, $offsetX, $offsetY, $offsetX + $timerW - 1, $offsetY + $timerH - 1, $timerBorderCol);
         imagedestroy($timerIm);
 
         if ($hasText) {
