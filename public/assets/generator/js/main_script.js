@@ -389,11 +389,12 @@ function clampCustomTextDistance() {
         effMax = base;
         effMin = base - (offsetY - textBoxH);
       } else {
-        // Overlap case: keep "away from timer" capped at touching the timer edge,
-        // and cap overlap so the text box doesn't cross the timer centerline.
-        const effAtTouchingTimer = Math.ceil(textBoxH / 2); // y = offsetY - textBoxH
+        // Overlap case:
+        // - Positive (away/up) stops when TOP of the box hits canvas top (y >= 0).
+        // - Negative (overlap) stops at timer centerline (box bottom <= timer center).
+        const effAtTopBoundary = offsetY - halfBox; // y = 0
         const effAtTimerCenter = Math.ceil(textBoxH / 2) - Math.floor(timerHeight / 2);
-        effMax = effAtTouchingTimer;
+        effMax = effAtTopBoundary;
         effMin = effAtTimerCenter;
       }
     } else if (textPos === 'bottom') {
@@ -404,9 +405,12 @@ function clampCustomTextDistance() {
         effMin = -base;
         effMax = (canvasH - textBoxH) - (start + base);
       } else {
-        const effAtTouchingTimer = halfBox; // y = offsetY + timerHeight
+        // Overlap case:
+        // - Positive (away/down) stops when BOTTOM of the box hits canvas bottom.
+        // - Negative (overlap) stops at timer centerline (box top >= timer center).
+        const effAtBottomBoundary = (canvasH - textBoxH) - (offsetY + timerHeight - halfBox);
         const effAtTimerCenter = halfBox - Math.ceil(timerHeight / 2);
-        effMax = effAtTouchingTimer;
+        effMax = effAtBottomBoundary;
         effMin = effAtTimerCenter;
       }
     }
@@ -635,54 +639,16 @@ document.addEventListener('DOMContentLoaded', function() {
   const distanceInput = document.querySelector('input[name="customTextDistance"]');
   if (distanceInput) {
     const handleDistanceChange = () => {
+      const hf = findGifHeightField();
+      const heightBefore = hf ? String(hf.value ?? '') : null;
       clampCustomTextDistance();
 
-      // Internal-first sizing rule:
-      // - For top/bottom headings, the first N pixels of "distance" are consumed by shifting
-      //   internal padding inside the heading box (no change in overall output height).
-      // - Only the remainder grows/shrinks overall outputHeight (up to 2× default).
-      const sizing = resolveSizingSnapshot();
-      const wantsText = sizing.wantsText;
-      const textPos = document.querySelector('select[name="text_position"]')?.value || 'none';
-      const hf = findGifHeightField();
-      const defH = getSkinDefaultOutputHeight();
-      if (hf && wantsText && (textPos === 'top' || textPos === 'bottom') && Number.isFinite(defH) && defH > 0) {
-        // Compute the heading "em" size similarly to the renderer sizing logic.
-        const fontSizeRaw = firstNumber(
-          findFieldByKey('fontSize')?.value,
-          sizing.overrides.fontSize,
-          sizing.defaults.fontSize
-        );
-        const fontSize = Number.isFinite(fontSizeRaw) ? fontSizeRaw : 36;
-        const customInput = document.querySelector('input[name="customTextFontSize"]');
-        const customN = Number(customInput?.value);
-        const em = (Number.isFinite(customN) && customN >= 12)
-          ? Math.round(customN)
-          : Math.max(12, Math.round(fontSize * 0.5));
-
-        // Default internal heading padding per side (matches backend default):
-        // basePad = max(4, round(em * 0.5)), but we never reduce below minPad.
-        const minPad = 4;
-        const basePad = Math.max(minPad, Math.round(em * 0.5));
-        const usableInternal = Math.max(0, basePad - minPad);
-        const d = Number(distanceInput.value);
-        const dist = Number.isFinite(d) ? d : 0;
-        // Internal-first: distance is first consumed by shifting internal padding inside the text box.
-        // Only remaining distance grows the canvas height.
-        const external = Math.max(0, dist - usableInternal);
-        const minH = Math.floor(defH);
-        const maxH = Math.floor(defH * 2);
-        const target = Math.max(minH, Math.min(maxH, Math.round(minH + external)));
-        const cur = Number(hf.value);
-        // Do NOT snap back to default height. Only auto-grow when required to reflect external distance.
-        if (!Number.isFinite(cur) || cur <= 0) {
-          hf.value = String(target);
-        } else if (target > cur) {
-          hf.value = String(target);
-        }
-      }
-
       syncOverrides();
+      // Padding (customTextDistance) must never mutate overall output height.
+      // Some other sync paths may indirectly touch the height field; if so, revert it.
+      if (hf && heightBefore !== null && String(hf.value ?? '') !== heightBefore) {
+        hf.value = heightBefore;
+      }
       if (typeof generatePreviewFrame === 'function') {
         generatePreviewFrame();
       }

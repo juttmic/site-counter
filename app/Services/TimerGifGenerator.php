@@ -687,7 +687,9 @@ class TimerGifGenerator
                     $halfBox = (int) floor($textBoxH / 2);
                     // Clamp so "away from timer" stops at touching the timer edge,
                     // and overlap stops at the timer centerline.
-                    $effMax = (int) ceil($textBoxH / 2); // y = offsetY - textBoxH
+                    // Positive (away from timer / upward) must stop when the TOP of the box hits the canvas top.
+                    // y = offsetY - halfBox - eff  >= 0  =>  eff <= offsetY - halfBox
+                    $effMax = (int) ($offsetY - $halfBox);
                     $effMin = (int) (ceil($textBoxH / 2) - floor($timerH / 2)); // box bottom <= timer center
                     $eff = max($effMin, min($effMax, (int) $effectiveDistance));
                     $textBoxTopY = (int) ($offsetY - $halfBox - $eff);
@@ -705,7 +707,10 @@ class TimerGifGenerator
                     $textBoxTopY = max($minY, min($maxY, $y));
                 } else {
                     $halfBox = (int) floor($textBoxH / 2);
-                    $effMax = (int) $halfBox; // y = offsetY + timerH
+                    // Positive (away from timer / downward) must stop when the BOTTOM of the box hits the canvas bottom.
+                    // y = offsetY + timerH - halfBox + eff; need y + textBoxH <= canvasH
+                    // => eff <= canvasH - textBoxH - (offsetY + timerH - halfBox)
+                    $effMax = (int) ($canvasH - $textBoxH - ($offsetY + $timerH - $halfBox));
                     $effMin = (int) ($halfBox - ceil($timerH / 2)); // box top >= timer center
                     $eff = max($effMin, min($effMax, (int) $effectiveDistance));
                     $textBoxTopY = (int) ($offsetY + $timerH - $halfBox + $eff);
