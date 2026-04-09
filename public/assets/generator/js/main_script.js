@@ -1732,7 +1732,7 @@ function renderFields(metadata, savedOverrides = {}) {
     }
     return false;
   })();
-  let finalCardRef = null;
+  // Final message toggle state is driven by showFinalMessage and stored in overrides via data-key.
 
   function relocateVisibilityTogglesFromGroup(group) {
     const visibilityToggles = group.fields.filter(field => visibilityToggleKeys.has(field.key));
@@ -1866,32 +1866,43 @@ function renderFields(metadata, savedOverrides = {}) {
     }
   }
 
-  function wireFinalScreenGroupUi(parentContainer, col, card, level, isFinalGroup) {
+  function wireFinalScreenGroupUi(headerEl, bodyEl, level, isFinalGroup) {
     if (!isFinalGroup || level !== 0) return;
-    const toggleCol = document.createElement('div');
-    toggleCol.className = 'col-12 mb-0';
-    toggleCol.innerHTML = `
-        <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" name="show_final_message" id="show_final_message" value="1" ${showFinalMessage ? 'checked' : ''} data-key="show_final_message">
-          <label class="form-check-label" for="show_final_message">
-            <strong>Time's Up Message</strong>
-          </label>
-        </div>
-      `;
-    parentContainer.appendChild(toggleCol);
-    const toggleInput = toggleCol.querySelector('#show_final_message');
-    if (toggleInput) {
-      toggleInput.addEventListener('change', () => {
-        if (finalCardRef) {
-          finalCardRef.classList.toggle('d-none', !toggleInput.checked);
-          finalCardRef.querySelector('.card')?.classList.toggle('d-none', !toggleInput.checked);
-        }
-        syncOverrides();
-      });
+
+    // Toggle lives INSIDE the section body; it controls the visibility of the fields only.
+    // 1) Wrap existing body contents (the actual fields) so we can show/hide them.
+    const fieldsWrap = document.createElement('div');
+    fieldsWrap.className = 'final-message-fields';
+    while (bodyEl.firstChild) {
+      fieldsWrap.appendChild(bodyEl.firstChild);
     }
-    col.classList.toggle('d-none', !showFinalMessage);
-    card.classList.toggle('d-none', !showFinalMessage);
-    finalCardRef = col;
+
+    // 2) Create the toggle row and insert above fields.
+    const toggleRow = document.createElement('div');
+    toggleRow.className = 'mb-3';
+    toggleRow.innerHTML = `
+      <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" name="show_final_message" id="show_final_message" value="1" ${showFinalMessage ? 'checked' : ''} data-key="show_final_message">
+        <label class="form-check-label" for="show_final_message">Enable message</label>
+      </div>
+    `;
+    const toggleInput = toggleRow.querySelector('#show_final_message');
+
+    // Prevent toggle clicks from collapsing the section.
+    toggleRow.addEventListener('click', (e) => e.stopPropagation());
+
+    bodyEl.appendChild(toggleRow);
+    bodyEl.appendChild(fieldsWrap);
+
+    const apply = () => {
+      const on = !!toggleInput?.checked;
+      fieldsWrap.classList.toggle('d-none', !on);
+    };
+    apply();
+    toggleInput?.addEventListener('change', () => {
+      apply();
+      syncOverrides();
+    });
   }
 
   // Recursive function to render groups and subgroups
@@ -1924,7 +1935,7 @@ function renderFields(metadata, savedOverrides = {}) {
     header.dataset.target = `#${bodyId}`;
     let displayTitle = group.title;
     if (group.name === 'Appearance' || group.title === 'Appearance') displayTitle = 'Design';
-    else if (group.name === 'Final Screen' || group.title === 'Final Screen' || group.path?.some(p => String(p).toLowerCase().includes('final'))) displayTitle = 'End Message';
+    else if (group.name === 'Final Screen' || group.title === 'Final Screen' || group.path?.some(p => String(p).toLowerCase().includes('final'))) displayTitle = 'Timer Ends Message (optional)';
     const isDesignGroup =
       group.name === 'Appearance' ||
       group.title === 'Appearance' ||
@@ -1967,7 +1978,7 @@ function renderFields(metadata, savedOverrides = {}) {
     card.appendChild(header);
     card.appendChild(body);
     col.appendChild(card);
-    wireFinalScreenGroupUi(parentContainer, col, card, level, isFinalGroup);
+    wireFinalScreenGroupUi(header, body, level, isFinalGroup);
     parentContainer.appendChild(col);
   }
 
