@@ -372,39 +372,26 @@ function resolveCustomTextStackLayoutBottomJs(
   maxTextBlock
 ) {
   const slotH = Math.max(0, pinSpanH - timerTopInner - timerH);
-  if (distance >= 0) {
-    const d1 = Math.min(distance, basePadBottom);
-    let effB = basePadBottom - d1;
-    let effT = basePadTop + d1;
-    const tbh = effT + textH + effB;
-    let rem = distance - d1;
-    const b0 = timerTopInner + timerH + Math.max(0, Math.round((slotH - tbh) / 2));
-    const marginBot = Math.max(0, pinSpanH - (b0 + tbh));
-    const d2 = Math.min(rem, marginBot);
-    rem -= d2;
-    let blockTop = b0 + d2;
-    const gap = Math.max(0, blockTop - timerTopInner - timerH);
-    const d3 = Math.min(rem, gap);
-    rem -= d3;
-    blockTop -= d3;
-    blockTop -= rem;
-    const effGap = blockTop - timerTopInner - timerH;
-    return [effT, effB, tbh, timerTopInner, blockTop, effGap];
-  }
-  const u = -distance;
-  const n1 = Math.min(u, basePadTop);
-  const effT = basePadTop - n1;
-  const effB = basePadBottom + n1;
-  const tbh = effT + textH + effB;
-  let rem = u - n1;
-  let blockTop = timerTopInner + timerH + Math.max(0, Math.round((slotH - tbh) / 2));
-  const marginBot = Math.max(0, pinSpanH - (blockTop + tbh));
-  const n2 = Math.min(rem, marginBot);
-  rem -= n2;
-  blockTop += n2;
-  blockTop -= rem;
-  blockTop = Math.max(0, blockTop);
+  const mirrored = resolveCustomTextStackLayoutTopJs(
+    distance,
+    basePadBottom,
+    basePadTop,
+    textH,
+    timerH,
+    pinSpanH,
+    slotH,
+    maxTextBlock
+  );
+  const mirroredEffTop = mirrored[0];
+  const mirroredEffBottom = mirrored[1];
+  const tbh = mirrored[2];
+  const mirroredBlockTop = mirrored[4];
+
+  const effT = mirroredEffBottom;
+  const effB = mirroredEffTop;
+  const blockTop = pinSpanH - mirroredBlockTop - tbh;
   const effGap = blockTop - timerTopInner - timerH;
+
   return [effT, effB, tbh, timerTopInner, blockTop, effGap];
 }
 
@@ -522,37 +509,24 @@ function rawHeadingBlockTopForStackDistanceJs(
   }
   if (textPosition === 'bottom') {
     const slotH = Math.max(0, pinSpanH - timerTopInner - timerH);
-    if (distance >= 0) {
-      const d1 = Math.min(distance, basePadBottom);
-      const effB = basePadBottom - d1;
-      const effT = basePadTop + d1;
-      const tbh = effT + textH + effB;
-      let rem = distance - d1;
-      const b0 = timerTopInner + timerH + Math.max(0, Math.round((slotH - tbh) / 2));
-      const marginBot = Math.max(0, pinSpanH - (b0 + tbh));
-      const d2 = Math.min(rem, marginBot);
-      rem -= d2;
-      let blockTop = b0 + d2;
-      const gap = Math.max(0, blockTop - timerTopInner - timerH);
-      const d3 = Math.min(rem, gap);
-      rem -= d3;
-      blockTop -= d3;
-      blockTop -= rem;
-      return blockTop;
-    }
-    const u = -distance;
-    const n1 = Math.min(u, basePadTop);
-    const effT = basePadTop - n1;
-    const effB = basePadBottom + n1;
-    const tbh = effT + textH + effB;
-    let rem = u - n1;
-    let blockTop = timerTopInner + timerH + Math.max(0, Math.round((slotH - tbh) / 2));
-    const marginBot = Math.max(0, pinSpanH - (blockTop + tbh));
-    const n2 = Math.min(rem, marginBot);
-    rem -= n2;
-    blockTop += n2;
-    blockTop -= rem;
-    return Math.max(0, blockTop);
+    const mirroredRawTop = rawHeadingBlockTopForStackDistanceJs(
+      'top',
+      distance,
+      basePadBottom,
+      basePadTop,
+      textH,
+      timerH,
+      pinSpanH,
+      slotH
+    );
+    const tbh = headingTextBlockHeightPxForStackBoundsJs(
+      basePadTop,
+      basePadBottom,
+      textH,
+      distance,
+      'bottom'
+    );
+    return Math.max(0, pinSpanH - mirroredRawTop - tbh);
   }
   return 0;
 }
