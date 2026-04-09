@@ -588,40 +588,27 @@ class TimerGifGenerator
         int $maxTextBlock
     ): array {
         $slotH = max(0, $pinSpanH - $timerTopInner - $timerH);
-        if ($distance >= 0) {
-            $d1 = min($distance, $basePadBottom);
-            $effB = $basePadBottom - $d1;
-            $effT = $basePadTop + $d1;
-            $tbh = $effT + $textH + $effB;
-            $rem = $distance - $d1;
-            $b0 = $timerTopInner + $timerH + max(0, (int) round(($slotH - $tbh) / 2));
-            $marginBot = max(0, $pinSpanH - ($b0 + $tbh));
-            $d2 = min($rem, $marginBot);
-            $rem -= $d2;
-            $blockTop = $b0 + $d2;
-            $gap = max(0, $blockTop - $timerTopInner - $timerH);
-            $d3 = min($rem, $gap);
-            $rem -= $d3;
-            $blockTop -= $d3;
-            $blockTop -= $rem;
-            $effGap = $blockTop - $timerTopInner - $timerH;
+        [
+            $mirroredEffTop,
+            $mirroredEffBottom,
+            $tbh,
+            ,
+            $mirroredBlockTop,
+            ,
+        ] = $this->resolveCustomTextStackLayoutTop(
+            $distance,
+            $basePadBottom,
+            $basePadTop,
+            $textH,
+            $timerH,
+            $pinSpanH,
+            $slotH,
+            $maxTextBlock
+        );
 
-            return [$effT, $effB, $tbh, $timerTopInner, $blockTop, $effGap];
-        }
-        $u = -$distance;
-        $n1 = min($u, $basePadTop);
-        $effT = $basePadTop - $n1;
-        $effB = $basePadBottom + $n1;
-        $tbh = $effT + $textH + $effB;
-        $rem = $u - $n1;
-        $b0 = $timerTopInner + $timerH + max(0, (int) round(($slotH - $tbh) / 2));
-        $blockTop = $b0;
-        $marginBot = max(0, $pinSpanH - ($blockTop + $tbh));
-        $n2 = min($rem, $marginBot);
-        $rem -= $n2;
-        $blockTop += $n2;
-        $blockTop -= $rem;
-        $blockTop = max(0, $blockTop);
+        $effT = $mirroredEffBottom;
+        $effB = $mirroredEffTop;
+        $blockTop = $pinSpanH - $mirroredBlockTop - $tbh;
         $effGap = $blockTop - $timerTopInner - $timerH;
 
         return [$effT, $effB, $tbh, $timerTopInner, $blockTop, $effGap];
@@ -676,39 +663,25 @@ class TimerGifGenerator
         }
         if ($textPosition === 'bottom') {
             $slotH = max(0, $pinSpanH - $timerTopInner - $timerH);
-            if ($distance >= 0) {
-                $d1 = min($distance, $basePadBottom);
-                $effB = $basePadBottom - $d1;
-                $effT = $basePadTop + $d1;
-                $tbh = $effT + $textH + $effB;
-                $rem = $distance - $d1;
-                $b0 = $timerTopInner + $timerH + max(0, (int) round(($slotH - $tbh) / 2));
-                $marginBot = max(0, $pinSpanH - ($b0 + $tbh));
-                $d2 = min($rem, $marginBot);
-                $rem -= $d2;
-                $blockTop = $b0 + $d2;
-                $gap = max(0, $blockTop - $timerTopInner - $timerH);
-                $d3 = min($rem, $gap);
-                $rem -= $d3;
-                $blockTop -= $d3;
-                $blockTop -= $rem;
+            $mirroredRawTop = $this->rawHeadingBlockTopForStackDistance(
+                'top',
+                $distance,
+                $basePadBottom,
+                $basePadTop,
+                $textH,
+                $timerH,
+                $pinSpanH,
+                $slotH
+            );
+            $tbh = $this->headingTextBlockHeightPxForStackBounds(
+                $basePadTop,
+                $basePadBottom,
+                $textH,
+                $distance,
+                'bottom'
+            );
 
-                return $blockTop;
-            }
-            $u = -$distance;
-            $n1 = min($u, $basePadTop);
-            $effT = $basePadTop - $n1;
-            $effB = $basePadBottom + $n1;
-            $tbh = $effT + $textH + $effB;
-            $rem = $u - $n1;
-            $blockTop = $timerTopInner + $timerH + max(0, (int) round(($slotH - $tbh) / 2));
-            $marginBot = max(0, $pinSpanH - ($blockTop + $tbh));
-            $n2 = min($rem, $marginBot);
-            $rem -= $n2;
-            $blockTop += $n2;
-            $blockTop -= $rem;
-
-            return max(0, $blockTop);
+            return max(0, $pinSpanH - $mirroredRawTop - $tbh);
         }
 
         return 0;
