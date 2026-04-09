@@ -776,11 +776,11 @@ class TimerGifGenerator
                     if (function_exists('imagesetthickness')) {
                         imagesetthickness($im, 1);
                     }
-                    imagerectangle($im, $x0, $y0, $x1, $y1, $red);
+                    // imagerectangle($im, $x0, $y0, $x1, $y1, $red);
 
                     // Center line through the text box
                     $cy = (int) floor(($y0 + $y1) / 2);
-                    imageline($im, $x0, $cy, $x1, $cy, $red);
+                    // imageline($im, $x0, $cy, $x1, $cy, $red);
                 }
             }
 
@@ -811,7 +811,7 @@ class TimerGifGenerator
                         $gx1 = (int) ($tx + max(0, $textW - 1));
                         $gy0 = (int) ($ty - $textAscent);
                         $gy1 = (int) ($gy0 + max(0, $textH - 1));
-                        imagerectangle($im, $gx0, $gy0, $gx1, $gy1, $blue);
+                        // imagerectangle($im, $gx0, $gy0, $gx1, $gy1, $blue);
                     }
                 }
             } else {
@@ -842,7 +842,7 @@ class TimerGifGenerator
                         $gx1 = (int) ($tx + max(0, $textW - 1));
                         $gy0 = (int) $ty;
                         $gy1 = (int) ($ty + max(0, $builtInTextH - 1));
-                        imagerectangle($im, $gx0, $gy0, $gx1, $gy1, $blue);
+                        // imagerectangle($im, $gx0, $gy0, $gx1, $gy1, $blue);
                     }
                 }
             }
