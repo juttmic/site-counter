@@ -521,6 +521,49 @@ class TimerGifGenerator
         return [$basePadTop, $basePadBottom, $maxTextBlock, $timerTopInner, 0, 0];
     }
 
+    /**
+     * Crop-mode layout: keep the timer centered in the available pin span, and resolve the heading relative to it.
+     * This avoids re-centering the combined (timer+heading) stack when outputHeight is reduced below the natural layout.
+     *
+     * @return array{0:int,1:int,2:int,3:int,4:int,5:int} effT, effB, tbh, timerTopInner, blockTopInner, effGap
+     */
+    private function resolveCustomTextStackLayoutWithPinnedTimerCenter(
+        string $textPosition,
+        int $distance,
+        int $basePadTop,
+        int $basePadBottom,
+        int $textH,
+        int $timerH,
+        int $pinSpanH
+    ): array {
+        $timerTopInner = max(0, (int) floor(($pinSpanH - $timerH) / 2));
+        if ($textPosition === 'top') {
+            return $this->resolveCustomTextStackLayoutTop(
+                $distance,
+                $basePadTop,
+                $basePadBottom,
+                $textH,
+                $timerH,
+                $pinSpanH,
+                $timerTopInner,
+                $basePadTop + $textH + $basePadBottom
+            );
+        }
+        if ($textPosition === 'bottom') {
+            return $this->resolveCustomTextStackLayoutBottom(
+                $distance,
+                $basePadTop,
+                $basePadBottom,
+                $textH,
+                $timerH,
+                $pinSpanH,
+                $timerTopInner,
+                $basePadTop + $textH + $basePadBottom
+            );
+        }
+        return [$basePadTop, $basePadBottom, $basePadTop + $textH + $basePadBottom, $timerTopInner, 0, 0];
+    }
+
     private function resolveCustomTextStackLayoutTop(
         int $distance,
         int $basePadTop,
@@ -1259,6 +1302,7 @@ class TimerGifGenerator
                 $this->defaultInnerHeightForHeadingLayout($skin, $timerH, $edgePad, $pinSpanH, $maxTextBlock),
                 $pinSpanH
             );
+            $cropMode = ($requestedH && $requestedH > 0 && $requestedH < $layoutHeight);
             [
                 $textPadTop,
                 $textPadBottom,
@@ -1266,28 +1310,53 @@ class TimerGifGenerator
                 $timerTopInner,
                 $blockTopInner,
                 $effectiveDistance,
-            ] = $this->resolveCustomTextStackLayout(
-                $textPosition,
-                $distance,
-                $basePadTop,
-                $basePadBottom,
-                $textH,
-                $timerH,
-                $pinSpanH,
-                $defaultInner,
-                $maxTextBlock
-            );
+            ] = $cropMode
+                ? $this->resolveCustomTextStackLayoutWithPinnedTimerCenter(
+                    $textPosition,
+                    $distance,
+                    $basePadTop,
+                    $basePadBottom,
+                    $textH,
+                    $timerH,
+                    $pinSpanH
+                )
+                : $this->resolveCustomTextStackLayout(
+                    $textPosition,
+                    $distance,
+                    $basePadTop,
+                    $basePadBottom,
+                    $textH,
+                    $timerH,
+                    $pinSpanH,
+                    $defaultInner,
+                    $maxTextBlock
+                );
+            // In crop mode, center the TIMER in the full canvas (not just inside edge padding),
+            // and shift the "pin span" origin so heading math stays consistent.
+            $pinOriginY = $contentY0;
+            $timerTopCanvas = null;
+            if ($cropMode) {
+                // Allow negative dest Y so cropping is symmetric (top+bottom) when canvas is shorter than timer.
+                $timerTopCanvas = (int) floor(($canvasH - $timerH) / 2);
+                $pinOriginY = $timerTopCanvas - $timerTopInner;
+            }
+
             if ($textPosition === 'top') {
-                $topPadding = (int) ($contentY0 + $blockTopInner);
-                $offsetY = (int) ($contentY0 + $timerTopInner);
+                $topPadding = (int) ($pinOriginY + $blockTopInner);
+                $offsetY = $timerTopCanvas !== null ? $timerTopCanvas : (int) ($pinOriginY + $timerTopInner);
             } else {
-                $topPadding = (int) ($contentY0 + $timerTopInner);
-                $offsetY = $topPadding;
+                $topPadding = (int) ($pinOriginY + $timerTopInner);
+                $offsetY = $timerTopCanvas !== null ? $timerTopCanvas : $topPadding;
             }
         } else {
-            $innerTopPadding = max(0, (int) floor(($innerH - $timerH) / 2));
-            $topPadding = $outerTopPadding + $innerTopPadding + $edgePad;
-            $offsetY = $topPadding;
+            // No custom heading: center the timer in the requested canvas height, even if it requires cropping.
+            if ($requestedH && $requestedH > 0 && $requestedH < $layoutHeight) {
+                $offsetY = (int) floor(($canvasH - $timerH) / 2);
+            } else {
+                $innerTopPadding = max(0, (int) floor(($innerH - $timerH) / 2));
+                $topPadding = $outerTopPadding + $innerTopPadding + $edgePad;
+                $offsetY = $topPadding;
+            }
         }
         // Bottom: timer at topPadding; heading block uses blockTopInner in pin span (same canvas rule as top).
         // If output width was not set above, fall back to natural max
@@ -1332,7 +1401,8 @@ class TimerGifGenerator
 
         if ($hasText) {
             // Stack layout (top or bottom): padded block top in canvas coords — same rule as top (pin blockTopInner).
-            $blockTopCanvas = (int) ($contentY0 + $blockTopInner);
+            // In crop mode, $pinOriginY may shift so timer stays centered in full canvas.
+            $blockTopCanvas = (int) (($pinOriginY ?? $contentY0) + $blockTopInner);
             if (is_file($font)) {
                 $tx = (int) (($canvasW - $textW) / 2);
                 $ty = (int) ($blockTopCanvas + $textPadTop + $textAscent);
