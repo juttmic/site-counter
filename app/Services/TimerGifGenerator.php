@@ -789,11 +789,11 @@ class TimerGifGenerator
                     if (function_exists('imagesetthickness')) {
                         imagesetthickness($im, 1);
                     }
-                    imagerectangle($im, $x0, $y0, $x1, $y1, $red);
+                    // imagerectangle($im, $x0, $y0, $x1, $y1, $red);
 
                     // Center line through the text box
                     $cy = (int) floor(($y0 + $y1) / 2);
-                    imageline($im, $x0, $cy, $x1, $cy, $red);
+                    // imageline($im, $x0, $cy, $x1, $cy, $red);
                 }
             }
 
