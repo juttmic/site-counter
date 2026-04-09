@@ -664,19 +664,37 @@ class TimerGifGenerator
         $topPadding = $outerTopPadding + $innerTopPadding + $edgePad;
 
         // Always center the timer vertically in the output canvas (even if that implies cropping).
-        // When text is enabled, the canvas height (whether user-provided or natural) already includes the
-        // text box height; by centering the timer we effectively split that "required text space" half above/half below.
-        // To place the full text box on one side (top/bottom), we borrow the remaining half by overlapping into the timer area.
         $offsetY = (int) floor(($canvasH - $timerH) / 2);
         $textBoxTopY = null;
         if ($hasText && ($textPosition === 'top' || $textPosition === 'bottom')) {
-            $halfBox = (int) floor($textBoxH / 2);
+            $spaceAbove = $offsetY;
+            $spaceBelow = $canvasH - ($offsetY + $timerH);
+
             if ($textPosition === 'top') {
-                // Positive distance moves text further away from timer (upwards), negative moves towards/overlaps more.
-                $textBoxTopY = (int) ($offsetY - $halfBox - $effectiveDistance);
+                // If there is enough space above the timer to fit the whole text box,
+                // place it centered within that space; otherwise allow overlap into the timer.
+                if ($spaceAbove >= $textBoxH) {
+                    $base = (int) floor(($spaceAbove - $textBoxH) / 2);
+                    $y = (int) round($base - $effectiveDistance); // positive -> away from timer (up)
+                    $minY = 0;
+                    $maxY = (int) ($offsetY - $textBoxH);
+                    $textBoxTopY = max($minY, min($maxY, $y));
+                } else {
+                    $halfBox = (int) floor($textBoxH / 2);
+                    $textBoxTopY = (int) ($offsetY - $halfBox - $effectiveDistance);
+                }
             } else {
-                // Bottom: positive distance moves text down away from timer.
-                $textBoxTopY = (int) ($offsetY + $timerH - $halfBox + $effectiveDistance);
+                if ($spaceBelow >= $textBoxH) {
+                    $base = (int) floor(($spaceBelow - $textBoxH) / 2);
+                    $start = (int) ($offsetY + $timerH);
+                    $y = (int) round($start + $base + $effectiveDistance); // positive -> away from timer (down)
+                    $minY = $start;
+                    $maxY = (int) ($canvasH - $textBoxH);
+                    $textBoxTopY = max($minY, min($maxY, $y));
+                } else {
+                    $halfBox = (int) floor($textBoxH / 2);
+                    $textBoxTopY = (int) ($offsetY + $timerH - $halfBox + $effectiveDistance);
+                }
             }
         }
         // If output width was not set above, fall back to natural max
