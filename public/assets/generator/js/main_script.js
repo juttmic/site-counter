@@ -1485,6 +1485,30 @@ function renderFields(metadata, savedOverrides = {}) {
     return Math.floor(base * 2);
   }
 
+  /** Label-only min (does not change input constraints). */
+  function getDimensionLabelMin(field) {
+    const key = field.key;
+    const d = defaults;
+    if (key === 'outputHeight') {
+      const explicit = firstNumber(d.outputHeight);
+      if (Number.isFinite(explicit) && explicit > 0) return Math.floor(explicit);
+      const h = firstNumber(d.height);
+      const bw = firstNumber(d.borderWidth, 0);
+      const edgePad = Math.max(2, Number.isFinite(bw) ? bw : 0);
+      if (Number.isFinite(h) && h > 0) return Math.floor(h + 2 * edgePad);
+      return null;
+    }
+    if (key === 'outputWidth') {
+      const base = firstNumber(d.outputWidth, d.width);
+      return (Number.isFinite(base) && base > 0) ? Math.floor(base) : null;
+    }
+    if (key === 'width' || key === 'height') {
+      const base = firstNumber(d[key]);
+      return (Number.isFinite(base) && base > 0) ? Math.floor(base) : null;
+    }
+    return null;
+  }
+
   const createFieldInput = (field, value, options = {}) => {
     const key = field.key;
     let label = field.label || key;
@@ -1499,8 +1523,12 @@ function renderFields(metadata, savedOverrides = {}) {
     const dimCapMax = getDimensionCapMax(field);
     const effMax = dimCapMax == null ? field.max : dimCapMax;
     const effMin = field.min;
-    if (type === 'number' && effMax != null) {
-      label += ` (max: ${effMax})`;
+    const labelMin = getDimensionLabelMin(field);
+    if (type === 'number' && (effMin != null || effMax != null)) {
+      const bits = [];
+      if (labelMin != null) bits.push(`min: ${labelMin}`);
+      if (effMax != null) bits.push(`max: ${effMax}`);
+      label += ` (${bits.join(', ')})`;
     }
     const useSwitch = options.useSwitch === true;
     const container = document.createElement('div');
@@ -1580,7 +1608,9 @@ function renderFields(metadata, savedOverrides = {}) {
     } else if (type === 'number') {
       input = document.createElement('input');
       input.type = 'number';
-      if (effMin != null) input.min = effMin;
+      const enforceDefaultMin = (key === 'outputWidth' || key === 'outputHeight' || key === 'width' || key === 'height') && labelMin != null;
+      const inputMin = enforceDefaultMin ? labelMin : effMin;
+      if (inputMin != null) input.min = inputMin;
       if (effMax != null) input.max = effMax;
       if (field.step != null) input.step = field.step;
       input.value = (value ?? '');
@@ -1589,16 +1619,16 @@ function renderFields(metadata, savedOverrides = {}) {
         const n = Number(input.value);
         if (isNaN(n)) return;
         let c = n;
-        if (effMin != null && c < effMin) c = effMin;
+        if (inputMin != null && c < inputMin) c = inputMin;
         if (effMax != null && c > effMax) c = effMax;
         if (c !== n) input.value = String(c);
       })();
       input.className = 'form-control' + (isMarginField ? ' form-control-sm' : '');
       input.addEventListener('change', () => {
         const n = Number(input.value);
-        if (!isNaN(n) && (effMin != null || effMax != null)) {
+        if (!isNaN(n) && (inputMin != null || effMax != null)) {
           let clamped = n;
-          if (effMin != null && clamped < effMin) clamped = effMin;
+          if (inputMin != null && clamped < inputMin) clamped = inputMin;
           if (effMax != null && clamped > effMax) clamped = effMax;
           if (clamped !== n) {
             input.value = clamped;
