@@ -371,7 +371,7 @@ function clampCustomTextDistance() {
       ? Math.round(customN)
       : Math.max(12, Math.round(fontSize * 0.5));
 
-    const minPad = 4;
+    const minPad = 0;
     const basePad = Math.max(minPad, Math.round(em * 0.5));
     const usableInternal = Math.max(0, basePad - minPad);
     const textBoxH = Math.max(0, Math.round(sizing.textSize + 2 * basePad));
@@ -380,7 +380,8 @@ function clampCustomTextDistance() {
     // (timer stays centered; requires a full text box height on both sides).
     // The height field may intentionally remain unchanged, so we mirror that "effective canvas" here
     // to avoid discontinuities when moving from small positives to small negatives.
-    const minCanvasHNoOverlap = timerHeight + 2 * textBoxH;
+    // Include edgePad so clamp matches backend layout canvas more closely.
+    const minCanvasHNoOverlap = timerHeight + 2 * textBoxH + 2 * (Number.isFinite(sizing.edgePad) ? sizing.edgePad : 2);
     if (Number.isFinite(minCanvasHNoOverlap) && minCanvasHNoOverlap > 0) {
       canvasH = Math.max(canvasH, minCanvasHNoOverlap);
     }
@@ -452,6 +453,12 @@ function clampCustomTextDistance() {
       strictMax = MAX_CUSTOM_TEXT_DISTANCE;
     }
   }
+
+  // Apply dynamic min/max to the input so the spinner can't exceed
+  // the visually meaningful clamp bounds.
+  distanceInput.min = String(strictMin);
+  distanceInput.max = String(strictMax);
+
   let next = desired;
   if (desired < strictMin) {
     next = strictMin;
@@ -639,7 +646,7 @@ function requiredOutputDimsForHeadingNoScale() {
   const em = (Number.isFinite(customN) && customN >= 12)
     ? Math.round(customN)
     : Math.max(12, Math.round(fontSize * 0.5));
-  const minPad = 4;
+  const minPad = 0;
   const basePad = Math.max(minPad, Math.round(em * 0.5));
   const textBoxH = Math.max(0, Math.round(sizing.textSize + 2 * basePad));
   const hf = findGifHeightField();

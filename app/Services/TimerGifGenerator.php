@@ -643,7 +643,7 @@ class TimerGifGenerator
 
         // Internal padding for the custom text "box" (top+bottom). Layout math should be based on the
         // text container (box), not the raw glyph height.
-        $minTextPad = 4;
+        $minTextPad = 0;
         $baseTextPad = $hasText ? max($minTextPad, (int) round($textSize * 0.5)) : 0;
         $padTop = $baseTextPad;
         $padBottom = $baseTextPad;
@@ -725,6 +725,18 @@ class TimerGifGenerator
             if ($minCanvasHNoOverlap > 0) {
                 $layoutH = max($layoutH, $minCanvasHNoOverlap);
             }
+        }
+
+        // If the user output is at/above the skin defaults, we do NOT scale content down.
+        // In that case, compose directly into the requested output canvas so padding can consume
+        // the real available space (instead of being limited to the natural layout box).
+        $defaultOutW = (int) ($skin['__defaultOutputWidth'] ?? ($skin['outputWidth'] ?? $skin['width'] ?? $layoutW));
+        $defaultOutH = (int) ($skin['__defaultOutputHeight'] ?? ($skin['outputHeight'] ?? $skin['height'] ?? $layoutH));
+        if ($requestedW && $requestedW > 0 && $requestedW >= $defaultOutW) {
+            $layoutW = max($layoutW, (int) $requestedW);
+        }
+        if ($requestedH && $requestedH > 0 && $requestedH >= $defaultOutH) {
+            $layoutH = max($layoutH, (int) $requestedH);
         }
 
         $topPadding = $outerTopPadding + $innerTopPadding + $edgePad;
