@@ -427,7 +427,8 @@ class TimerController extends Controller
         }
 
         $data['status'] = $data['status'] ?? 'active';
-        $data['animation_frame_limit'] = (int) ($data['animation_frame_limit'] ?? 20);
+        // Default to a 60-second shareable GIF (1 fps) unless user overrides.
+        $data['animation_frame_limit'] = (int) ($data['animation_frame_limit'] ?? 60);
 
         // Decode overrides JSON if provided
         $overridesRaw = $request->input('skin_overrides');
