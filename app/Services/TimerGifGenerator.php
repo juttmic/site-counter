@@ -967,7 +967,8 @@ class TimerGifGenerator
 
     private function resolveFrameLimit(Timer $timer): int
     {
-        $limit = (int) ($timer->animation_frame_limit ?? 20);
+        // Default to a 60-second shareable GIF (1 fps) unless user overrides.
+        $limit = (int) ($timer->animation_frame_limit ?? 60);
         return max(10, min(60, $limit));
     }
 
