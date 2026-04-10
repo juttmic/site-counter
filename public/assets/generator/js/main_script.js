@@ -1999,6 +1999,19 @@ function renderFields(metadata, savedOverrides = {}) {
       if (defaults[key] !== undefined) return defaults[key];
       if (defaults.width !== undefined) return defaults.width;
     }
+    // Injected "Timer Ends Message" fields may not exist in skin defaults.
+    // Provide stable UX defaults on first load / skin switch.
+    if (key === 'finalMessageFontSize') {
+      if (savedOverrides[key] !== undefined) return savedOverrides[key];
+      if (defaults[key] !== undefined) return defaults[key];
+      return 20;
+    }
+    if (key === 'finalMessageColor') {
+      if (savedOverrides[key] !== undefined) return savedOverrides[key];
+      if (defaults[key] !== undefined) return defaults[key];
+      // If no explicit color, default to the timer's text color (so it looks consistent).
+      return savedOverrides.textColor ?? defaults.textColor ?? '#000000';
+    }
     return (savedOverrides[key] !== undefined) ? savedOverrides[key] : defaults[key];
   };
 
