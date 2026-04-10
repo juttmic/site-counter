@@ -1499,12 +1499,6 @@ function renderFields(metadata, savedOverrides = {}) {
   const fieldsWrap = document.getElementById('skin_fields');
   const defaults = metadata.defaults || {};
 
-  // Default font size for "Timer Ends Message" text.
-  // Only applies when the user hasn't saved an override yet.
-  if (defaults.finalMessageFontSize === undefined || defaults.finalMessageFontSize === null) {
-    defaults.finalMessageFontSize = 20;
-  }
-
   // For create flows only, enforce a visible border default when skin is missing or zero
   const formEl = document.getElementById('timer_form');
   const isEdit = formEl && formEl.dataset.isEdit === '1';
@@ -2452,6 +2446,20 @@ function syncOverrides() {
   const showFinalMessageInput = document.querySelector('input[name="show_final_message"]');
   if (showFinalMessageInput) {
     data['show_final_message'] = showFinalMessageInput.checked;
+  }
+
+  // If the final message is enabled, always persist the font size value.
+  // Otherwise the UI-default (e.g. 20) may not be saved (because it matches defaults),
+  // causing the backend to fall back to the skin's main fontSize.
+  if (data['show_final_message'] === true) {
+    const finalFontSizeEl = document.querySelector('[data-key="finalMessageFontSize"]');
+    const raw = finalFontSizeEl ? String(finalFontSizeEl.value ?? '').trim() : '';
+    if (raw !== '') {
+      const n = Number(raw);
+      if (!isNaN(n)) {
+        data['finalMessageFontSize'] = n;
+      }
+    }
   }
   
   document.getElementById('skin_overrides_input').value = JSON.stringify(data);
