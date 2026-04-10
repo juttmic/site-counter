@@ -1499,6 +1499,12 @@ function renderFields(metadata, savedOverrides = {}) {
   const fieldsWrap = document.getElementById('skin_fields');
   const defaults = metadata.defaults || {};
 
+  // Default font size for "Timer Ends Message" text.
+  // Only applies when the user hasn't saved an override yet.
+  if (defaults.finalMessageFontSize === undefined || defaults.finalMessageFontSize === null) {
+    defaults.finalMessageFontSize = 20;
+  }
+
   // For create flows only, enforce a visible border default when skin is missing or zero
   const formEl = document.getElementById('timer_form');
   const isEdit = formEl && formEl.dataset.isEdit === '1';

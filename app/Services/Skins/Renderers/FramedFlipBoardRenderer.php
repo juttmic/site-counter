@@ -203,7 +203,7 @@ class FramedFlipBoardRenderer implements SkinRendererInterface
         $labelFontSize = (int) ($skin['labelFontSize'] ?? 11);
         $labelCol = $this->allocColor($im, $skin['labelColor'] ?? '#5C6B7A');
 
-        if ($secondsRemaining <= 0) {
+        if ($secondsRemaining <= 0 && ($skin['show_final_message'] ?? false)) {
             $finalMsg = (string) ($skin['finalMessage'] ?? "Time's Up");
             $finalTextCol = $skin['finalTextColor'] ?? null;
             $drawCol = ($finalTextCol !== null && $finalTextCol !== '') ? $this->allocColor($im, $finalTextCol) : $textCol;
@@ -300,6 +300,9 @@ class FramedFlipBoardRenderer implements SkinRendererInterface
         } else {
             $builtIn = 5;
             $labelBuiltIn = 3;
+            $numberCenterY = $tileY + $tileHeight / 2.0;
+            $labelRegionTop = $tileY + $tileHeight + $labelGap;
+            $labelCenterY = $labelRegionTop + $approxLabelHeight / 2.0;
             $numberY = (int) ($numberCenterY - 12);
             for ($i = 0; $i < $segments; $i++) {
                 $tileX = $startX + $i * ($tileWidth + $tileGap);

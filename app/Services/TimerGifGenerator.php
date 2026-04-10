@@ -344,7 +344,11 @@ class TimerGifGenerator
         
         // If timer expired (seconds = 0), show only "Time's Up" frame
         if ($seconds <= 0) {
-            $frames[] = $this->renderFinalFrame($skin, $customText, $textPosition);
+            if (($skin['show_final_message'] ?? false) === true) {
+                $frames[] = $this->renderFinalFrame($skin, $customText, $textPosition);
+            } else {
+                $frames[] = $this->renderPngFrame(0, $skin, $customText, $textPosition);
+            }
             return $frames;
         }
         
@@ -368,8 +372,10 @@ class TimerGifGenerator
         // Always include the 0 second frame
         $frames[] = $this->renderPngFrame(0, $skin, $customText, $textPosition);
         
-        // Always include the final "Time's Up" frame
-        $frames[] = $this->renderFinalFrame($skin, $customText, $textPosition);
+        // Include the final "Time's Up" frame only when enabled
+        if (($skin['show_final_message'] ?? false) === true) {
+            $frames[] = $this->renderFinalFrame($skin, $customText, $textPosition);
+        }
         
         return $frames;
     }

@@ -158,10 +158,11 @@ class RoundedPanelCardsRenderer implements SkinRendererInterface
         $requestedLabelFontSize = (int) ($skin['labelFontSize'] ?? 18);
         $labelCol = $this->allocColor($im, $skin['labelColor'] ?? '#3D5268');
 
-        if ($secondsRemaining <= 0) {
+        if ($secondsRemaining <= 0 && ($skin['show_final_message'] ?? false)) {
             $finalMsg = (string) ($skin['finalMessage'] ?? "Time's Up");
             $finalTextCol = $skin['finalTextColor'] ?? null;
             $drawCol = ($finalTextCol !== null && $finalTextCol !== '') ? $this->allocColor($im, $finalTextCol) : $textCol;
+            $fontSize = $requestedFontSize;
             if (is_file($font)) {
                 $box = imagettfbbox($fontSize, 0, $font, $finalMsg) ?: [0, 0, 0, 0, 0, 0, 0, 0];
                 $tw = (int) (max($box[0], $box[2], $box[4], $box[6]) - min($box[0], $box[2], $box[4], $box[6]));
@@ -246,7 +247,11 @@ class RoundedPanelCardsRenderer implements SkinRendererInterface
         } else {
             $builtIn = 5;
             $labelBuiltIn = 3;
-            $numberY = (int) ($numberCenterY - 12);
+            // Fallback placement for GD built-in fonts: keep it simple and stable.
+            $numberCenterY = ($boxY + $boxBottom) / 2.0;
+            $labelCenterY = ($boxBottom + $cardBottom) / 2.0;
+            $numberY = (int) round($numberCenterY - 12);
+            $labelY = (int) round($labelCenterY);
             for ($i = 0; $i < $segments; $i++) {
                 $cardX = $layout['cardX'] + $i * ($layout['cardWidth'] + $layout['segmentGap']);
                 $centerX = (int) ($cardX + $layout['cardWidth'] / 2);
