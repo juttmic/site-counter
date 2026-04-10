@@ -796,6 +796,32 @@ document.addEventListener('DOMContentLoaded', function() {
     customTextFontSizeInput.addEventListener('input', handleFontSizeChange);
   }
 
+  // Populate Custom Text Font Size with the applied value when empty.
+  // Applied value rule matches backend default: max(12, round(fontSize * 0.5)) unless user overrides.
+  const computeSeedCustomTextFontSize = () => {
+    const sizing = resolveSizingSnapshot();
+    const fontSizeRaw = firstNumber(findFieldByKey('fontSize')?.value, sizing.overrides?.fontSize, sizing.defaults?.fontSize);
+    const fontSize = Number.isFinite(fontSizeRaw) ? fontSizeRaw : 36;
+    const appliedRaw = firstNumber(
+      sizing.overrides?.customTextFontSize,
+      sizing.defaults?.customTextFontSize,
+      Math.round(fontSize * 0.5)
+    );
+    const calculated = Math.max(12, Math.round(Number.isFinite(appliedRaw) ? appliedRaw : (fontSize * 0.5)));
+    return calculated < 30 ? 40 : calculated;
+  };
+
+  const seedCustomTextFontSizeIfEmpty = () => {
+    const input = document.querySelector('input[name="customTextFontSize"]');
+    if (!input) return;
+    const raw = (input.value ?? '').toString().trim();
+    if (raw !== '') return;
+
+    input.value = String(computeSeedCustomTextFontSize());
+    // Do not auto-sync/preview just for seeding the displayed value.
+  };
+  seedCustomTextFontSizeIfEmpty();
+
   // Sync font select to skin_overrides when changed
   const fontSelect = document.querySelector('select[name="customTextFont"]');
   if (fontSelect) {
@@ -944,6 +970,11 @@ document.addEventListener('DOMContentLoaded', function() {
   const customTextInput = document.querySelector('input[name="custom_text"]');
   if (customTextInput) {
     const handleTextChange = () => {
+      // If user enables heading without choosing a custom size, show the applied default.
+      const cfs = document.querySelector('input[name="customTextFontSize"]');
+      if (cfs && String(cfs.value ?? '').trim() === '') {
+        cfs.value = String(computeSeedCustomTextFontSize());
+      }
       syncOutputDimsOnHeadingToggleIfUnlocked();
       clampCustomTextDistance();
       enforceGifHeightMinimum();
