@@ -1548,7 +1548,8 @@ function renderFields(metadata, savedOverrides = {}) {
   (function injectFinalMessageFontSizeField() {
     const hasFinalMessage = visibleFields.some(f => f && f.key === 'finalMessage');
     const hasFontSize = visibleFields.some(f => f && f.key === 'finalMessageFontSize');
-    if (!hasFinalMessage || hasFontSize) return;
+    const hasColor = visibleFields.some(f => f && f.key === 'finalMessageColor');
+    if (!hasFinalMessage || (hasFontSize && hasColor)) return;
 
     const idx = visibleFields.findIndex(f => f && f.key === 'finalMessage');
     const finalField = idx >= 0 ? visibleFields[idx] : null;
@@ -1556,19 +1557,31 @@ function renderFields(metadata, savedOverrides = {}) {
     const groupOrder = finalField?.groupOrder ?? 6;
     const orderBase = (finalField?.order ?? finalField?._originalIndex ?? 1000);
 
-    const injected = {
-      key: 'finalMessageFontSize',
-      label: 'Font Size',
-      type: 'number',
-      min: 8,
-      max: 300,
-      step: 1,
-      group,
-      groupOrder,
-      order: orderBase + 1,
-    };
-
-    visibleFields.splice(Math.max(0, idx + 1), 0, injected);
+    const injected = [];
+    if (!hasColor) {
+      injected.push({
+        key: 'finalMessageColor',
+        label: 'Color',
+        type: 'color',
+        group,
+        groupOrder,
+        order: orderBase + 1,
+      });
+    }
+    if (!hasFontSize) {
+      injected.push({
+        key: 'finalMessageFontSize',
+        label: 'Font Size',
+        type: 'number',
+        min: 8,
+        max: 300,
+        step: 1,
+        group,
+        groupOrder,
+        order: orderBase + 2,
+      });
+    }
+    visibleFields.splice(Math.max(0, idx + 1), 0, ...injected);
   })();
   
   // Note: skin groups render directly (no Template wrapper)
@@ -1801,6 +1814,8 @@ function renderFields(metadata, savedOverrides = {}) {
       label = 'Width';
     } else if (key === 'finalMessage') {
       label = 'Text';
+    } else if (key === 'finalMessageColor') {
+      label = 'Color';
     } else if (key === 'finalMessageFontSize') {
       label = 'Font Size';
     }
@@ -1821,7 +1836,9 @@ function renderFields(metadata, savedOverrides = {}) {
     const isMarginField = marginKeys.has(key);
     if (isMarginField) {
       container.className = 'col-12 col-sm-4 col-md-3';
-    } else if (key === 'finalMessage' || key === 'finalMessageFontSize') {
+    } else if (key === 'finalMessage') {
+      container.className = 'col-12';
+    } else if (key === 'finalMessageColor' || key === 'finalMessageFontSize') {
       container.className = 'col-12 col-sm-6';
     } else {
       container.className = isSmall ? 'col-12 col-sm-6 col-md-4' : 'col-12';
@@ -2155,6 +2172,43 @@ function renderFields(metadata, savedOverrides = {}) {
       fieldsWrap.appendChild(bodyEl.firstChild);
     }
 
+    // Re-layout final message fields:
+    // - Row 1: Text (full width)
+    // - Row 2: Color + Font Size (half+half)
+    // All remain inside fieldsWrap so they are controlled by the toggle.
+    (function reorderFinalMessageFields() {
+      const findContainer = (key) => {
+        const input = fieldsWrap.querySelector(`[data-key="${key}"]`);
+        if (!input) return null;
+        let n = input.parentElement;
+        while (n && n !== fieldsWrap && !/\bcol-/.test(n.className || '')) {
+          n = n.parentElement;
+        }
+        return (n && n !== fieldsWrap) ? n : null;
+      };
+
+      const textCol = findContainer('finalMessage');
+      const colorCol = findContainer('finalMessageColor');
+      const sizeCol = findContainer('finalMessageFontSize');
+      if (!textCol || !colorCol || !sizeCol) return;
+
+      const row1 = document.createElement('div');
+      row1.className = 'row g-3';
+      const row2 = document.createElement('div');
+      row2.className = 'row g-3';
+
+      textCol.className = 'col-12';
+      colorCol.className = 'col-12 col-sm-6';
+      sizeCol.className = 'col-12 col-sm-6';
+
+      row1.appendChild(textCol);
+      row2.appendChild(colorCol);
+      row2.appendChild(sizeCol);
+
+      fieldsWrap.prepend(row2);
+      fieldsWrap.prepend(row1);
+    })();
+
     // 2) Create the toggle row and insert above fields.
     const toggleRow = document.createElement('div');
     toggleRow.className = 'mb-3';
@@ -2354,7 +2408,9 @@ function syncOverrides() {
   if (resolvedBackground) {
     data.finalBackground = resolvedBackground;
   }
-  if (resolvedTextColor) {
+  if (data.finalMessageColor) {
+    data.finalTextColor = data.finalMessageColor;
+  } else if (resolvedTextColor) {
     data.finalTextColor = resolvedTextColor;
   }
   
