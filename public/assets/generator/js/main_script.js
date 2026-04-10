@@ -1541,6 +1541,35 @@ function renderFields(metadata, savedOverrides = {}) {
   // Filter: Only hide fields that are in alwaysHiddenFields
   // All other fields (including showDays, layout, animation, width, height if they're in the fields array) will be shown
   const visibleFields = fields.filter(field => !alwaysHiddenFields.has(field.key));
+
+  // Ensure "Timer Ends Message (optional)" always has a font size control next to the Text field,
+  // without requiring each skin JSON to define it.
+  // We do this at the metadata level (field descriptors) so rendering/layout stays consistent.
+  (function injectFinalMessageFontSizeField() {
+    const hasFinalMessage = visibleFields.some(f => f && f.key === 'finalMessage');
+    const hasFontSize = visibleFields.some(f => f && f.key === 'finalMessageFontSize');
+    if (!hasFinalMessage || hasFontSize) return;
+
+    const idx = visibleFields.findIndex(f => f && f.key === 'finalMessage');
+    const finalField = idx >= 0 ? visibleFields[idx] : null;
+    const group = finalField?.group ?? 'Final Screen';
+    const groupOrder = finalField?.groupOrder ?? 6;
+    const orderBase = (finalField?.order ?? finalField?._originalIndex ?? 1000);
+
+    const injected = {
+      key: 'finalMessageFontSize',
+      label: 'Font Size',
+      type: 'number',
+      min: 8,
+      max: 300,
+      step: 1,
+      group,
+      groupOrder,
+      order: orderBase + 1,
+    };
+
+    visibleFields.splice(Math.max(0, idx + 1), 0, injected);
+  })();
   
   // Note: skin groups render directly (no Template wrapper)
 
@@ -1772,6 +1801,8 @@ function renderFields(metadata, savedOverrides = {}) {
       label = 'Width';
     } else if (key === 'finalMessage') {
       label = 'Text';
+    } else if (key === 'finalMessageFontSize') {
+      label = 'Font Size';
     }
     const type = field.type || 'text';
     const dimCapMax = getDimensionCapMax(field);
@@ -1790,6 +1821,8 @@ function renderFields(metadata, savedOverrides = {}) {
     const isMarginField = marginKeys.has(key);
     if (isMarginField) {
       container.className = 'col-12 col-sm-4 col-md-3';
+    } else if (key === 'finalMessage' || key === 'finalMessageFontSize') {
+      container.className = 'col-12 col-sm-6';
     } else {
       container.className = isSmall ? 'col-12 col-sm-6 col-md-4' : 'col-12';
     }
@@ -2296,6 +2329,11 @@ function syncOverrides() {
       val = el.value === '' ? null : Number(el.value);
     } else {
       val = el.value;
+    }
+
+    // Don't persist an empty "finalMessageFontSize" as null; treat it as "unset".
+    if (k === 'finalMessageFontSize' && val === null) {
+      return;
     }
     
     // Store if different from default OR if it's an applied formDefault

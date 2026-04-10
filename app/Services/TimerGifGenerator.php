@@ -1591,6 +1591,9 @@ class TimerGifGenerator
         $padX = 10;
         $font = (string) ($skin['fontPath'] ?? '');
         $fontSize = (int) ($skin['fontSize'] ?? 36);
+        $finalMessageFontSize = isset($skin['finalMessageFontSize'])
+            ? max(8, min(300, (int) $skin['finalMessageFontSize']))
+            : $fontSize;
         $msg = (string) ($skin['finalMessage'] ?? "Time's Up");
         $requestedW = isset($skin['outputWidth']) ? (int) $skin['outputWidth'] : null;
         $requestedH = isset($skin['outputHeight']) ? (int) $skin['outputHeight'] : null;
@@ -1667,19 +1670,19 @@ class TimerGifGenerator
         $this->drawRoundedRect($im, 0, 0, $layoutW, $layoutH, 12, $bgCol);
 
         if (is_file($font)) {
-            $centerY = (int) ($offsetY + $timerH / 2 + $fontSize / 2);
-            $centerX = (int) ($layoutW / 2 - $this->textBoxWidth($msg, $font, $fontSize) / 2);
+            $centerY = (int) ($offsetY + $timerH / 2 + $finalMessageFontSize / 2);
+            $centerX = (int) ($layoutW / 2 - $this->textBoxWidth($msg, $font, $finalMessageFontSize) / 2);
             $this->logDraw('Render final message (TTF)', [
                 'shape' => 'text',
                 'text' => $msg,
                 'x' => $centerX,
                 'y' => $centerY,
                 'font' => $font,
-                'font_size' => $fontSize,
-                'width' => $this->textBoxWidth($msg, $font, $fontSize),
-                'height' => $fontSize,
+                'font_size' => $finalMessageFontSize,
+                'width' => $this->textBoxWidth($msg, $font, $finalMessageFontSize),
+                'height' => $finalMessageFontSize,
             ]);
-            imagettftext($im, $fontSize, 0, $centerX, $centerY, $textCol, $font, $msg);
+            imagettftext($im, $finalMessageFontSize, 0, $centerX, $centerY, $textCol, $font, $msg);
         } else {
             $builtIn = 5;
             $textWidth = imagefontwidth($builtIn) * strlen($msg);
