@@ -334,7 +334,7 @@ function clampCustomTextDistance() {
   const sizing = resolveSizingSnapshot();
   const gifHeight = sizing.gifHeight;
   const timerHeight = sizing.timerHeight;
-  const MIN_CUSTOM_TEXT_DISTANCE = -400;
+  const MIN_CUSTOM_TEXT_DISTANCE = -1000000;
   const MAX_CUSTOM_TEXT_DISTANCE = 400;
 
   if (isNaN(gifHeight) || isNaN(timerHeight)) {
@@ -439,7 +439,9 @@ function clampCustomTextDistance() {
     const distMaxFromEff = Math.floor(effMax + usableInternal);
     const distMinFromEff = Math.ceil(effMin - usableInternal);
 
-    strictMin = Math.max(MIN_CUSTOM_TEXT_DISTANCE, distMinFromEff);
+    // No restriction on negative padding values (user can go as negative as they want).
+    // We keep only the positive upper clamp to avoid weirdness in the UI.
+    strictMin = MIN_CUSTOM_TEXT_DISTANCE;
     strictMax = Math.min(MAX_CUSTOM_TEXT_DISTANCE, distMaxFromEff);
 
     // Ensure the internal zone is still reachable if it lies within the strict band.
@@ -456,13 +458,11 @@ function clampCustomTextDistance() {
 
   // Apply dynamic min/max to the input so the spinner can't exceed
   // the visually meaningful clamp bounds.
-  distanceInput.min = String(strictMin);
+  distanceInput.removeAttribute('min');
   distanceInput.max = String(strictMax);
 
   let next = desired;
-  if (desired < strictMin) {
-    next = strictMin;
-  } else if (desired > strictMax) {
+  if (desired > strictMax) {
     next = strictMax;
   }
 
