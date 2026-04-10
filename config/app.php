@@ -20,6 +20,11 @@ return [
     // Supported: "sync" | "queue"
     'gif_generation_mode' => env('GIF_GENERATION_MODE', 'queue'),
 
+    // When final screen is enabled, and the countdown duration is <= this limit,
+    // we pad the generated GIF by repeating the final screen so the total GIF
+    // length reaches this value (in seconds).
+    'final_message_total_seconds' => (int) env('FINAL_MESSAGE_TOTAL_SECONDS', 60),
+
     /*
     |--------------------------------------------------------------------------
     | Application Environment

@@ -74,6 +74,7 @@ class TimerGifGenerator
         $skin = $this->applyFinalColorDefaults($skin);
 
         $showFinalMessage = (bool) ($skin['show_final_message'] ?? false);
+        $finalTotalSeconds = max(0, (int) config('app.final_message_total_seconds', 60));
 
         // Special handling when a final "Time's Up" screen is configured
         if ($showFinalMessage) {
@@ -90,7 +91,22 @@ class TimerGifGenerator
                 $skinForFrames = $skin;
                 $skinForFrames['show_final_message'] = false;
                 $frames = $this->buildFramesCapped($remaining, $animateFor, $skinForFrames, $timer->custom_text, $timer->text_position);
-                $this->encodeAnimatedGif($frames, $fullPath, $animateFor);
+                // If the total countdown duration fits within the configured total seconds,
+                // pad the GIF by repeating the final screen to reach that total.
+                if ($finalTotalSeconds > 0 && $remaining > 0 && $remaining <= $finalTotalSeconds && $animateFor >= $remaining) {
+                    $padSeconds = max(0, $finalTotalSeconds - $animateFor);
+                    if ($padSeconds > 0) {
+                        $finalFrame = $this->renderFinalFrame($skin, $timer->custom_text, $timer->text_position ?? 'none');
+                        for ($i = 0; $i < $padSeconds; $i++) {
+                            $frames[] = $finalFrame;
+                        }
+                        $this->encodeAnimatedGif($frames, $fullPath, $animateFor + $padSeconds);
+                    } else {
+                        $this->encodeAnimatedGif($frames, $fullPath, $animateFor);
+                    }
+                } else {
+                    $this->encodeAnimatedGif($frames, $fullPath, $animateFor);
+                }
             }
         } else {
             // No final screen configured: keep existing behavior
@@ -131,6 +147,7 @@ class TimerGifGenerator
         }
         $skin = $this->applyFinalColorDefaults($skin);
         $showFinalMessage = (bool) ($skin['show_final_message'] ?? false);
+        $finalTotalSeconds = max(0, (int) config('app.final_message_total_seconds', 60));
         
         if ($showFinalMessage) {
             if ($remaining <= 5) {
@@ -146,7 +163,20 @@ class TimerGifGenerator
             $skinForFrames = $skin;
             $skinForFrames['show_final_message'] = false;
             $frames = $this->buildFramesCapped($remaining, $animateFor, $skinForFrames, $timer->custom_text, $timer->text_position);
-            $this->encodeAnimatedGif($frames, $targetPath, $animateFor);
+            if ($finalTotalSeconds > 0 && $remaining > 0 && $remaining <= $finalTotalSeconds && $animateFor >= $remaining) {
+                $padSeconds = max(0, $finalTotalSeconds - $animateFor);
+                if ($padSeconds > 0) {
+                    $finalFrame = $this->renderFinalFrame($skin, $timer->custom_text, $timer->text_position ?? 'none');
+                    for ($i = 0; $i < $padSeconds; $i++) {
+                        $frames[] = $finalFrame;
+                    }
+                    $this->encodeAnimatedGif($frames, $targetPath, $animateFor + $padSeconds);
+                } else {
+                    $this->encodeAnimatedGif($frames, $targetPath, $animateFor);
+                }
+            } else {
+                $this->encodeAnimatedGif($frames, $targetPath, $animateFor);
+            }
         } else {
             // No final screen configured: keep existing behavior
             $frameLimit = $this->resolveFrameLimit($timer);
@@ -1591,6 +1621,15 @@ class TimerGifGenerator
         $padX = 10;
         $font = (string) ($skin['fontPath'] ?? '');
         $fontSize = (int) ($skin['fontSize'] ?? 36);
+        // Optional global font override: keep final screen consistent with main timer font override.
+        if (!empty($skin['customTextFont'])) {
+            $resolved = $this->resolveCustomTextFont($skin, $font);
+            if (is_file($resolved)) {
+                $font = $resolved;
+                $skin['fontPath'] = $resolved;
+                $skin['numberFontPath'] = $resolved;
+            }
+        }
         $finalMessageFontSize = isset($skin['finalMessageFontSize'])
             ? max(8, min(300, (int) $skin['finalMessageFontSize']))
             : $fontSize;
@@ -1600,65 +1639,12 @@ class TimerGifGenerator
         $borderWidth = (int) ($skin['borderWidth'] ?? 0);
         $edgePad = max(2, $borderWidth);
 
-        // Custom text measurement
-        $hasText = ($customText !== null && $customText !== '' && $textPosition !== 'none');
-        $textW = 0; $textH = 0; $textAscent = 0; $textDescent = 0;
-        $customTextSize = isset($skin['customTextFontSize']) ? (int) $skin['customTextFontSize'] : null;
-        $textSize = max(12, (int) ($customTextSize ?: round($fontSize * 0.5)));
-        if ($hasText) {
-            if (is_file($font)) {
-                $box = imagettfbbox($textSize, 0, $font, $customText);
-                $xCoords = [$box[0], $box[2], $box[4], $box[6]];
-                $yCoords = [$box[1], $box[3], $box[5], $box[7]];
-                $textW = (int) (max($xCoords) - min($xCoords));
-                $textAscent = (int) abs(min($yCoords));
-                $textDescent = (int) max($yCoords);
-                $textH = $textAscent + $textDescent;
-            } else {
-                $bi = 3;
-                $textW = imagefontwidth($bi) * strlen($customText);
-                $textH = imagefontheight($bi);
-                $textAscent = $textH;
-                $textDescent = (int) ceil($textH * 0.25);
-                $textH = $textAscent + $textDescent;
-            }
-        }
-
-        // Distance for custom text
-        $distance = null;
-        if (isset($skin['customTextDistance'])) {
-            $distance = max(-400, min(400, (int) $skin['customTextDistance']));
-        } elseif (isset($skin['customTextMarginTop']) || isset($skin['customTextMarginBottom'])) {
-            $legacyTop = isset($skin['customTextMarginTop']) ? max(0, (int) $skin['customTextMarginTop']) : 0;
-            $legacyBottom = isset($skin['customTextMarginBottom']) ? max(0, (int) $skin['customTextMarginBottom']) : 0;
-            $distance = max($legacyTop, $legacyBottom);
-        }
-        if ($distance === null) { $distance = 0; }
-
-        $layoutW = max($timerW, $hasText ? ($textW + 2 * $padX) : $timerW);
-
-        $contentHeight = $timerH + ($hasText ? ($textH + $distance) : 0);
-        $layoutHeight = max($timerH, $contentHeight) + ($edgePad * 2);
-
-        $effectiveDistance = $distance;
-        if ($hasText) {
-            $available = $layoutHeight - ($edgePad * 2) - $timerH - $textH;
-            if ($available < 0) { $available = 0; }
-            $effectiveDistance = min($distance, $available);
-        }
-
-        $combinedHeight = $timerH + ($hasText ? ($textH + $effectiveDistance) : 0);
-        $innerH = $layoutHeight - ($edgePad * 2);
-        $useOverlapInnerCentering = $hasText && $distance < 0 && $innerH === $timerH;
-        $centeringStackHeight = $useOverlapInnerCentering ? $timerH : $combinedHeight;
-        $innerTopPadding = max(0, (int) floor(($innerH - $centeringStackHeight) / 2));
-        $layoutH = $layoutHeight;
-        $outerTopPadding = 0;
-        $topPadding = $outerTopPadding + $innerTopPadding + $edgePad;
-        $offsetY = $topPadding;
-        if ($hasText && $textPosition === 'top') {
-            $offsetY += $textH + $effectiveDistance;
-        }
+        // Final screen intentionally does NOT render custom heading text.
+        // Keep the final-screen canvas dimensions consistent with the main timer canvas to avoid
+        // unexpected scaling differences that can make the message appear at the wrong size.
+        $layoutW = $timerW + ($edgePad * 2);
+        $layoutH = $timerH + ($edgePad * 2);
+        $offsetY = $edgePad;
 
         $im = imagecreatetruecolor($layoutW, $layoutH);
         $bgHex = (string) ($skin['finalBackground'] ?? $skin['background']);
@@ -1701,7 +1687,7 @@ class TimerGifGenerator
             imagestring($im, $builtIn, $x, $y, $msg, $textCol);
         }
 
-        // Do not render custom text on final screen; spacing already accounted for above
+        // Do not render custom text on final screen.
 
         [$im, $canvasW, $canvasH] = $this->scaleComposedImageToOutput(
             $im,
