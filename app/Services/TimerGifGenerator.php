@@ -301,6 +301,10 @@ class TimerGifGenerator
         if (empty($skin['borderColor']) || !is_string($skin['borderColor'])) {
             $skin['borderColor'] = '#FFFFFF';
         }
+        // Preserve default output dimensions for scaling threshold logic later.
+        // These should reflect the skin defaults (before runtime overrides).
+        $skin['__defaultOutputWidth'] = (int) ($skin['outputWidth'] ?? $skin['width'] ?? 278);
+        $skin['__defaultOutputHeight'] = (int) ($skin['outputHeight'] ?? $skin['height'] ?? 980);
         return $skin;
     }
 
@@ -422,6 +426,65 @@ class TimerGifGenerator
         }
 
         return (int) floor($extra / 2);
+    }
+
+    /**
+     * Uniformly scale a fully composed layout image to the requested output size without cropping.
+     * Letterboxes with the skin background when aspect ratios differ. Minimum dimension is 100px.
+     *
+     * @return array{0: resource, 1: int, 2: int}
+     */
+    private function scaleComposedImageToOutput($im, int $layoutW, int $layoutH, ?int $requestedW, ?int $requestedH, int $defaultOutW, int $defaultOutH, int $bgR, int $bgG, int $bgB): array
+    {
+        $minDim = 100;
+        $outW = ($requestedW !== null && $requestedW > 0) ? max($minDim, (int) $requestedW) : $layoutW;
+        $outH = ($requestedH !== null && $requestedH > 0) ? max($minDim, (int) $requestedH) : $layoutH;
+
+        // If the user is at/above the skin defaults, never scale down.
+        // When composed layout doesn't fit, expand the output canvas to fit it (no cropping, no scaling).
+        if ($outW >= max(1, $defaultOutW) && $outH >= max(1, $defaultOutH)) {
+            $outW = max($outW, $layoutW);
+            $outH = max($outH, $layoutH);
+        }
+
+        if ($outW === $layoutW && $outH === $layoutH) {
+            return [$im, $layoutW, $layoutH];
+        }
+
+        // Scale down only when output is below skin defaults.
+        $shouldScaleDown = ($outW < max(1, $defaultOutW)) || ($outH < max(1, $defaultOutH));
+        if (!$shouldScaleDown) {
+            $out = imagecreatetruecolor($outW, $outH);
+            if ($out === false) {
+                return [$im, $layoutW, $layoutH];
+            }
+            $bgFill = imagecolorallocate($out, $bgR, $bgG, $bgB);
+            imagefilledrectangle($out, 0, 0, $outW, $outH, $bgFill);
+            $dstX = (int) floor(($outW - $layoutW) / 2);
+            $dstY = (int) floor(($outH - $layoutH) / 2);
+            imagecopy($out, $im, $dstX, $dstY, 0, 0, max(1, $layoutW), max(1, $layoutH));
+            imagedestroy($im);
+            return [$out, $outW, $outH];
+        }
+
+        $lw = max(1, $layoutW);
+        $lh = max(1, $layoutH);
+        $scale = min($outW / $lw, $outH / $lh);
+        $dstW = max(1, (int) round($lw * $scale));
+        $dstH = max(1, (int) round($lh * $scale));
+        $dstX = (int) floor(($outW - $dstW) / 2);
+        $dstY = (int) floor(($outH - $dstH) / 2);
+
+        $out = imagecreatetruecolor($outW, $outH);
+        if ($out === false) {
+            return [$im, $layoutW, $layoutH];
+        }
+        $bgFill = imagecolorallocate($out, $bgR, $bgG, $bgB);
+        imagefilledrectangle($out, 0, 0, $outW, $outH, $bgFill);
+        imagecopyresampled($out, $im, $dstX, $dstY, 0, 0, $dstW, $dstH, $lw, $lh);
+        imagedestroy($im);
+
+        return [$out, $outW, $outH];
     }
 
     public function renderPngFrame(int $secondsRemaining, array $skin, ?string $customText, string $textPosition): string
@@ -578,26 +641,72 @@ class TimerGifGenerator
             $distance = 0;
         }
 
-        // Allow explicit output width even if smaller than timer/text (will crop)
-        $canvasW = $requestedW && $requestedW > 0
-            ? max(1, $requestedW)
-            : max($timerW, $hasText ? ($textW + 2 * $padX) : $timerW);
+        // Internal padding for the custom text "box" (top+bottom). Layout math should be based on the
+        // text container (box), not the raw glyph height.
+        $minTextPad = 0;
+        $baseTextPad = $hasText ? max($minTextPad, (int) round($textSize * 0.5)) : 0;
+        $padTop = $baseTextPad;
+        $padBottom = $baseTextPad;
+        $textBoxH = $hasText ? ($padTop + $textH + $padBottom) : 0;
+        $placementDistance = $distance;
 
-        // Base height for layout: always based on the timer height (not the output/GIF height)
-        // so vertical spacing for custom text is measured relative to the timer itself.
-        $contentHeight = $timerH + ($hasText ? ($textH + $distance) : 0);
+        // Internal-first distance behavior for top/bottom headings:
+        // - First, consume distance by shifting internal padding within the text box (no outer spacing change).
+        // - Only after internal padding is exhausted does distance increase the outer gap.
+        // Baseline compatibility: at distance=0, the outer gap behaves like the pre-padding implementation.
+        $effectiveDistance = $distance;
+        if ($hasText && ($textPosition === 'top' || $textPosition === 'bottom')) {
+            $baselineOffset = 2 * $baseTextPad; // extra height introduced by the padded box
+            $usableInternal = max(0, $baseTextPad - $minTextPad);
+            // Internal-first for both directions:
+            // distance > 0: shift internal padding toward the timer-side (until minTextPad), then grow outer gap.
+            // distance < 0: shift internal padding back the other way first, then only after internal is exhausted,
+            // allow negative outer distance (overlap).
+            $shift = max(-$usableInternal, min($usableInternal, $distance));
+            if ($shift !== 0) {
+                if ($textPosition === 'top') {
+                    if ($shift > 0) { // consume top pad first
+                        $padTop -= $shift;
+                        $padBottom += $shift;
+                    } else { // consume bottom pad first
+                        $padTop += (-$shift);
+                        $padBottom -= (-$shift);
+                    }
+                } else { // bottom
+                    if ($shift > 0) { // consume bottom pad first
+                        $padBottom -= $shift;
+                        $padTop += $shift;
+                    } else { // consume top pad first
+                        $padBottom += (-$shift);
+                        $padTop -= (-$shift);
+                    }
+                }
+                $textBoxH = $padTop + $textH + $padBottom;
+            }
+
+            // Remaining distance becomes external spacing/overlap (after internal padding is exhausted).
+            $external = $distance - $shift;
+            $effectiveDistance = $external - $baselineOffset;
+            // Placement uses only the external distance (ignore baseline offset).
+            $placementDistance = $external;
+        }
+
+        // Layout width: compose at natural size; requested output width/height are applied via uniform scaling later.
+        $layoutW = max($timerW, $hasText ? ($textW + 2 * $padX) : $timerW);
+
+        // Base height for layout: measured using the TEXT BOX (with internal padding), not raw glyph height.
+        $contentHeight = $timerH + ($hasText ? ($textBoxH + $effectiveDistance) : 0);
         $layoutHeight = max($timerH, $contentHeight) + ($edgePad * 2);
 
-        // Clamp distance so text + timer fit inside the layout height
-        $effectiveDistance = $distance;
+        // Clamp distance so text box + timer fit inside the layout height
         if ($hasText) {
-            $available = $layoutHeight - ($edgePad * 2) - $timerH - $textH;
+            $available = $layoutHeight - ($edgePad * 2) - $timerH - $textBoxH;
             if ($available < 0) { $available = 0; }
-            $effectiveDistance = min($distance, $available);
+            $effectiveDistance = min($effectiveDistance, $available);
         }
 
         // Center the combined block (text + timer) within the layout height (timer-based)
-        $combinedHeight = $timerH + ($hasText ? ($textH + $effectiveDistance) : 0);
+        $combinedHeight = $timerH + ($hasText ? ($textBoxH + $effectiveDistance) : 0);
         $innerH = $layoutHeight - ($edgePad * 2);
         // Overlap (negative distance) with a timer-tall column: do not center using text+gap — that
         // adds bogus vertical slack while text overlaps the counter. Full stack centering applies
@@ -606,31 +715,90 @@ class TimerGifGenerator
         $centeringStackHeight = $useOverlapInnerCentering ? $timerH : $combinedHeight;
         $innerTopPadding = max(0, (int) floor(($innerH - $centeringStackHeight) / 2));
 
-        // If an explicit output height is provided, add outer padding without changing the spacing math
-        $canvasH = $layoutHeight;
+        $layoutH = $layoutHeight;
         $outerTopPadding = 0;
-        if ($requestedH && $requestedH > 0) {
-            $canvasH = max($layoutHeight, $requestedH);
-            $outerTopPadding = $this->outerTopPaddingForCanvas($canvasH, $layoutHeight, $hasText, $textPosition);
+
+        // Stable placement rule for top/bottom headings:
+        // Always ensure we have at least one full text box height of space on each side of the centered timer.
+        if ($hasText && ($textPosition === 'top' || $textPosition === 'bottom')) {
+            $minCanvasHNoOverlap = $timerH + (2 * $textBoxH);
+            if ($minCanvasHNoOverlap > 0) {
+                $layoutH = max($layoutH, $minCanvasHNoOverlap);
+            }
+        }
+
+        // If the user output is at/above the skin defaults, we do NOT scale content down.
+        // In that case, compose directly into the requested output canvas so padding can consume
+        // the real available space (instead of being limited to the natural layout box).
+        $defaultOutW = (int) ($skin['__defaultOutputWidth'] ?? ($skin['outputWidth'] ?? $skin['width'] ?? $layoutW));
+        $defaultOutH = (int) ($skin['__defaultOutputHeight'] ?? ($skin['outputHeight'] ?? $skin['height'] ?? $layoutH));
+        if ($requestedW && $requestedW > 0 && $requestedW >= $defaultOutW) {
+            $layoutW = max($layoutW, (int) $requestedW);
+        }
+        if ($requestedH && $requestedH > 0 && $requestedH >= $defaultOutH) {
+            $layoutH = max($layoutH, (int) $requestedH);
         }
 
         $topPadding = $outerTopPadding + $innerTopPadding + $edgePad;
 
-        // Bottom: timer at topPadding; gap = effectiveDistance; then text (see ty below).
-        // Top: heading anchored at topPadding (+ ascent for TTF); timer at topPadding + textH + effectiveDistance.
-        // effectiveDistance appears only in the timer Y (top) or text Y (bottom) — not both (avoids double overlap).
-        $offsetY = $topPadding;
-        if ($hasText && $textPosition === 'top') {
-            $offsetY += $textH + $effectiveDistance;
-        }
-        // For bottom position, timer stays at topPadding; text is drawn after timer using effectiveDistance
-        // If output width was not set above, fall back to natural max
-        if ((!$requestedW || $requestedW <= 0) && $requestedW !== 0) {
-            $canvasW = max($canvasW, $hasText ? ($textW + 2 * $padX) : $timerW);
-        }
+        // Always center the timer vertically in the layout canvas.
+        $offsetY = (int) floor(($layoutH - $timerH) / 2);
+        $textBoxTopY = null;
+        if ($hasText && ($textPosition === 'top' || $textPosition === 'bottom')) {
+            $spaceAbove = $offsetY;
+            $spaceBelow = $layoutH - ($offsetY + $timerH);
 
-        // Compose final image
-        $im = imagecreatetruecolor($canvasW, $canvasH);
+            if ($textPosition === 'top') {
+                // If there is enough space above the timer to fit the whole text box,
+                // place it centered within that space; otherwise allow overlap into the timer.
+                if ($spaceAbove >= $textBoxH) {
+                    $base = (int) floor(($spaceAbove - $textBoxH) / 2);
+                    // Clamp distance so the box doesn't exceed the available space on that side.
+                    $effMin = (int) ($base - ($offsetY - $textBoxH));
+                    $effMax = (int) $base;
+                    $eff = max($effMin, min($effMax, (int) $placementDistance));
+                    $y = (int) round($base - $eff); // positive -> away from timer (up)
+                    $minY = 0;
+                    $maxY = (int) ($offsetY - $textBoxH);
+                    $textBoxTopY = max($minY, min($maxY, $y));
+                } else {
+                    $halfBox = (int) floor($textBoxH / 2);
+                    // Clamp so "away from timer" stops at touching the timer edge,
+                    // and overlap stops at the timer centerline.
+                    // Positive (away from timer / upward) must stop when the TOP of the box hits the canvas top.
+                    // y = offsetY - halfBox - eff  >= 0  =>  eff <= offsetY - halfBox
+                    $effMax = (int) ($offsetY - $halfBox);
+                    $effMin = (int) (ceil($textBoxH / 2) - floor($timerH / 2)); // box bottom <= timer center
+                    $eff = max($effMin, min($effMax, (int) $placementDistance));
+                    $textBoxTopY = (int) ($offsetY - $halfBox - $eff);
+                }
+            } else {
+                if ($spaceBelow >= $textBoxH) {
+                    $base = (int) floor(($spaceBelow - $textBoxH) / 2);
+                    $start = (int) ($offsetY + $timerH);
+                    $effMin = (int) (-$base);
+                    $effMax = (int) (($layoutH - $textBoxH) - ($start + $base));
+                    $eff = max($effMin, min($effMax, (int) $placementDistance));
+                    $y = (int) round($start + $base + $eff); // positive -> away from timer (down)
+                    $minY = $start;
+                    $maxY = (int) ($layoutH - $textBoxH);
+                    $textBoxTopY = max($minY, min($maxY, $y));
+                } else {
+                    $halfBox = (int) floor($textBoxH / 2);
+                    // Positive (away from timer / downward) must stop when the BOTTOM of the box hits the canvas bottom.
+                    // y = offsetY + timerH - halfBox + eff; need y + textBoxH <= canvasH
+                    // => eff <= canvasH - textBoxH - (offsetY + timerH - halfBox)
+                    $effMax = (int) ($layoutH - $textBoxH - ($offsetY + $timerH - $halfBox));
+                    $effMin = (int) ($halfBox - ceil($timerH / 2)); // box top >= timer center
+                    $eff = max($effMin, min($effMax, (int) $placementDistance));
+                    $textBoxTopY = (int) ($offsetY + $timerH - $halfBox + $eff);
+                }
+            }
+        }
+        $layoutW = max($layoutW, $hasText ? ($textW + 2 * $padX) : $timerW);
+
+        // Compose final image at layout (natural) size; output dimensions scale uniformly afterward.
+        $im = imagecreatetruecolor($layoutW, $layoutH);
         $bgCol = imagecolorallocate($im, $br, $bg, $bb);
         $txtCol = imagecolorallocate($im, $tr, $tg, $tb);
         // Choose color for custom text: default to skin textColor unless customTextColor is provided
@@ -639,18 +807,18 @@ class TimerGifGenerator
             [$ctr, $ctg, $ctb] = $this->hexToRgb($skin['customTextColor']);
         }
         $customTxtCol = imagecolorallocate($im, $ctr, $ctg, $ctb);
-        imagefilledrectangle($im, 0, 0, $canvasW, $canvasH, $bgCol);
+        imagefilledrectangle($im, 0, 0, $layoutW, $layoutH, $bgCol);
         $this->logDraw('Canvas background', [
             'shape' => 'rectangle',
             'x' => 0,
             'y' => 0,
-            'width' => $canvasW,
-            'height' => $canvasH,
+            'width' => $layoutW,
+            'height' => $layoutH,
             'color' => $skin['background'] ?? '#000000',
             'context' => 'canvas',
         ]);
 
-        $offsetX = (int) (($canvasW - $timerW) / 2);
+        $offsetX = (int) (($layoutW - $timerW) / 2);
         imagecopy($im, $timerIm, $offsetX, $offsetY, 0, 0, $timerW, $timerH);
         $this->logDraw('Place timer onto canvas', [
             'shape' => 'imagecopy',
@@ -658,8 +826,8 @@ class TimerGifGenerator
             'source_height' => $timerH,
             'dest_x' => $offsetX,
             'dest_y' => $offsetY,
-            'canvas_width' => $canvasW,
-            'canvas_height' => $canvasH,
+            'canvas_width' => $layoutW,
+            'canvas_height' => $layoutH,
         ]);
         // Add a 1px border around the counter area for visual separation
         $timerBorderCol = imagecolorallocate($im, $tr, $tg, $tb);
@@ -667,11 +835,37 @@ class TimerGifGenerator
         imagedestroy($timerIm);
 
         if ($hasText) {
+            // Debug guide: draw 1px red border around the padded text box.
+            // Enabled only in local environment to avoid affecting production output.
+            $debugTextBoxBorder = app()->environment('local');
+            $textBoxTopY = $textBoxTopY ?? (($textPosition === 'top')
+                ? (int) $topPadding
+                : (int) ($offsetY + $timerH + $effectiveDistance));
+            if ($debugTextBoxBorder && $textBoxH > 0) {
+                $red = @imagecolorallocate($im, 255, 0, 0);
+                if ($red !== false) {
+                    // Full-width border for the text box (entire output width).
+                    $x0 = 0;
+                    $x1 = (int) max(0, $layoutW - 1);
+                    $y0 = $textBoxTopY;
+                    $y1 = (int) ($textBoxTopY + max(0, $textBoxH - 1));
+                    if (function_exists('imagesetthickness')) {
+                        imagesetthickness($im, 1);
+                    }
+                    // imagerectangle($im, $x0, $y0, $x1, $y1, $red);
+
+                    // Center line through the text box
+                    $cy = (int) floor(($y0 + $y1) / 2);
+                    // imageline($im, $x0, $cy, $x1, $cy, $red);
+                }
+            }
+
             if (is_file($font)) {
-                $tx = (int) (($canvasW - $textW) / 2);
-                $ty = ($textPosition === 'top')
-                    ? (int) ($topPadding + $textAscent)
-                    : (int) ($offsetY + $timerH + $effectiveDistance + $textAscent);
+                $tx = (int) (($layoutW - $textW) / 2);
+                $boxTop = $textBoxTopY ?? (($textPosition === 'top')
+                    ? (int) $topPadding
+                    : (int) ($offsetY + $timerH + $effectiveDistance));
+                $ty = (int) ($boxTop + $padTop + $textAscent);
                 $this->logDraw('Render custom text (TTF)', [
                     'shape' => 'text',
                     'text' => $customText,
@@ -684,13 +878,26 @@ class TimerGifGenerator
                     'position' => $textPosition,
                 ]);
                 imagettftext($im, $textSize, 0, $tx, $ty, $customTxtCol, $font, $customText);
+
+                // Debug guide: border around actual text glyph box (inside padded box)
+                if ($debugTextBoxBorder) {
+                    $blue = @imagecolorallocate($im, 0, 120, 255);
+                    if ($blue !== false) {
+                        $gx0 = (int) $tx;
+                        $gx1 = (int) ($tx + max(0, $textW - 1));
+                        $gy0 = (int) ($ty - $textAscent);
+                        $gy1 = (int) ($gy0 + max(0, $textH - 1));
+                        // imagerectangle($im, $gx0, $gy0, $gx1, $gy1, $blue);
+                    }
+                }
             } else {
                 $bi2 = 3;
                 $builtInTextH = imagefontheight($bi2);
-                $tx = (int) (($canvasW - $textW) / 2);
-                $ty = ($textPosition === 'top')
+                $tx = (int) (($layoutW - $textW) / 2);
+                $boxTop = $textBoxTopY ?? (($textPosition === 'top')
                     ? (int) $topPadding
-                    : (int) ($offsetY + $timerH + $effectiveDistance);
+                    : (int) ($offsetY + $timerH + $effectiveDistance));
+                $ty = (int) ($boxTop + $padTop);
                 $this->logDraw('Render custom text (GD built-in)', [
                     'shape' => 'text',
                     'text' => $customText,
@@ -702,8 +909,33 @@ class TimerGifGenerator
                     'position' => $textPosition,
                 ]);
                 imagestring($im, $bi2, $tx, $ty, $customText, $customTxtCol);
+
+                // Debug guide: border around built-in text bounding box (approx)
+                if ($debugTextBoxBorder) {
+                    $blue = @imagecolorallocate($im, 0, 120, 255);
+                    if ($blue !== false) {
+                        $gx0 = (int) $tx;
+                        $gx1 = (int) ($tx + max(0, $textW - 1));
+                        $gy0 = (int) $ty;
+                        $gy1 = (int) ($ty + max(0, $builtInTextH - 1));
+                        // imagerectangle($im, $gx0, $gy0, $gx1, $gy1, $blue);
+                    }
+                }
             }
         }
+
+        [$im, $canvasW, $canvasH] = $this->scaleComposedImageToOutput(
+            $im,
+            $layoutW,
+            $layoutH,
+            $requestedW,
+            $requestedH,
+            (int) ($skin['__defaultOutputWidth'] ?? $layoutW),
+            (int) ($skin['__defaultOutputHeight'] ?? $layoutH),
+            $br,
+            $bg,
+            $bb
+        );
 
         // Optional border around entire canvas
         if ($borderWidth > 0) {
@@ -1399,10 +1631,7 @@ class TimerGifGenerator
         }
         if ($distance === null) { $distance = 0; }
 
-        $canvasW = max($timerW, $hasText ? ($textW + 2 * $padX) : $timerW);
-        if ($requestedW && $requestedW > 0) {
-            $canvasW = max(1, $requestedW);
-        }
+        $layoutW = max($timerW, $hasText ? ($textW + 2 * $padX) : $timerW);
 
         $contentHeight = $timerH + ($hasText ? ($textH + $distance) : 0);
         $layoutHeight = max($timerH, $contentHeight) + ($edgePad * 2);
@@ -1419,30 +1648,26 @@ class TimerGifGenerator
         $useOverlapInnerCentering = $hasText && $distance < 0 && $innerH === $timerH;
         $centeringStackHeight = $useOverlapInnerCentering ? $timerH : $combinedHeight;
         $innerTopPadding = max(0, (int) floor(($innerH - $centeringStackHeight) / 2));
-        $canvasH = $layoutHeight;
+        $layoutH = $layoutHeight;
         $outerTopPadding = 0;
-        if ($requestedH && $requestedH > 0) {
-            $canvasH = max($layoutHeight, $requestedH);
-            $outerTopPadding = $this->outerTopPaddingForCanvas($canvasH, $layoutHeight, $hasText, $textPosition);
-        }
         $topPadding = $outerTopPadding + $innerTopPadding + $edgePad;
         $offsetY = $topPadding;
         if ($hasText && $textPosition === 'top') {
             $offsetY += $textH + $effectiveDistance;
         }
 
-        $im = imagecreatetruecolor($canvasW, $canvasH);
+        $im = imagecreatetruecolor($layoutW, $layoutH);
         $bgHex = (string) ($skin['finalBackground'] ?? $skin['background']);
         [$br, $bg, $bb] = $this->hexToRgb($bgHex);
         [$tr, $tg, $tb] = $this->hexToRgb((string) ($skin['finalTextColor'] ?? $skin['textColor']));
         $bgCol = imagecolorallocate($im, $br, $bg, $bb);
         $textCol = imagecolorallocate($im, $tr, $tg, $tb);
-        imagefilledrectangle($im, 0, 0, $canvasW, $canvasH, $bgCol);
-        $this->drawRoundedRect($im, 0, 0, $canvasW, $canvasH, 12, $bgCol);
+        imagefilledrectangle($im, 0, 0, $layoutW, $layoutH, $bgCol);
+        $this->drawRoundedRect($im, 0, 0, $layoutW, $layoutH, 12, $bgCol);
 
         if (is_file($font)) {
             $centerY = (int) ($offsetY + $timerH / 2 + $fontSize / 2);
-            $centerX = (int) ($canvasW / 2 - $this->textBoxWidth($msg, $font, $fontSize) / 2);
+            $centerX = (int) ($layoutW / 2 - $this->textBoxWidth($msg, $font, $fontSize) / 2);
             $this->logDraw('Render final message (TTF)', [
                 'shape' => 'text',
                 'text' => $msg,
@@ -1458,7 +1683,7 @@ class TimerGifGenerator
             $builtIn = 5;
             $textWidth = imagefontwidth($builtIn) * strlen($msg);
             $textHeight = imagefontheight($builtIn);
-            $x = (int) (($canvasW - $textWidth) / 2);
+            $x = (int) (($layoutW - $textWidth) / 2);
             $y = (int) ($offsetY + ($timerH - $textHeight) / 2);
             $this->logDraw('Render final message (GD built-in)', [
                 'shape' => 'text',
@@ -1473,6 +1698,19 @@ class TimerGifGenerator
         }
 
         // Do not render custom text on final screen; spacing already accounted for above
+
+        [$im, $canvasW, $canvasH] = $this->scaleComposedImageToOutput(
+            $im,
+            $layoutW,
+            $layoutH,
+            $requestedW,
+            $requestedH,
+            (int) ($skin['__defaultOutputWidth'] ?? $layoutW),
+            (int) ($skin['__defaultOutputHeight'] ?? $layoutH),
+            $br,
+            $bg,
+            $bb
+        );
 
         // Optional border on final frame
         if ($borderWidth > 0) {
