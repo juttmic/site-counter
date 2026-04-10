@@ -301,6 +301,10 @@ class TimerGifGenerator
         if (empty($skin['borderColor']) || !is_string($skin['borderColor'])) {
             $skin['borderColor'] = '#FFFFFF';
         }
+        // Preserve default output dimensions for scaling threshold logic later.
+        // These should reflect the skin defaults (before runtime overrides).
+        $skin['__defaultOutputWidth'] = (int) ($skin['outputWidth'] ?? $skin['width'] ?? 278);
+        $skin['__defaultOutputHeight'] = (int) ($skin['outputHeight'] ?? $skin['height'] ?? 980);
         return $skin;
     }
 
@@ -430,14 +434,37 @@ class TimerGifGenerator
      *
      * @return array{0: resource, 1: int, 2: int}
      */
-    private function scaleComposedImageToOutput($im, int $layoutW, int $layoutH, ?int $requestedW, ?int $requestedH, int $bgR, int $bgG, int $bgB): array
+    private function scaleComposedImageToOutput($im, int $layoutW, int $layoutH, ?int $requestedW, ?int $requestedH, int $defaultOutW, int $defaultOutH, int $bgR, int $bgG, int $bgB): array
     {
         $minDim = 100;
         $outW = ($requestedW !== null && $requestedW > 0) ? max($minDim, (int) $requestedW) : $layoutW;
         $outH = ($requestedH !== null && $requestedH > 0) ? max($minDim, (int) $requestedH) : $layoutH;
 
+        // If the user is at/above the skin defaults, never scale down.
+        // When composed layout doesn't fit, expand the output canvas to fit it (no cropping, no scaling).
+        if ($outW >= max(1, $defaultOutW) && $outH >= max(1, $defaultOutH)) {
+            $outW = max($outW, $layoutW);
+            $outH = max($outH, $layoutH);
+        }
+
         if ($outW === $layoutW && $outH === $layoutH) {
             return [$im, $layoutW, $layoutH];
+        }
+
+        // Scale down only when output is below skin defaults.
+        $shouldScaleDown = ($outW < max(1, $defaultOutW)) || ($outH < max(1, $defaultOutH));
+        if (!$shouldScaleDown) {
+            $out = imagecreatetruecolor($outW, $outH);
+            if ($out === false) {
+                return [$im, $layoutW, $layoutH];
+            }
+            $bgFill = imagecolorallocate($out, $bgR, $bgG, $bgB);
+            imagefilledrectangle($out, 0, 0, $outW, $outH, $bgFill);
+            $dstX = (int) floor(($outW - $layoutW) / 2);
+            $dstY = (int) floor(($outH - $layoutH) / 2);
+            imagecopy($out, $im, $dstX, $dstY, 0, 0, max(1, $layoutW), max(1, $layoutH));
+            imagedestroy($im);
+            return [$out, $outW, $outH];
         }
 
         $lw = max(1, $layoutW);
@@ -890,6 +917,8 @@ class TimerGifGenerator
             $layoutH,
             $requestedW,
             $requestedH,
+            (int) ($skin['__defaultOutputWidth'] ?? $layoutW),
+            (int) ($skin['__defaultOutputHeight'] ?? $layoutH),
             $br,
             $bg,
             $bb
@@ -1663,6 +1692,8 @@ class TimerGifGenerator
             $layoutH,
             $requestedW,
             $requestedH,
+            (int) ($skin['__defaultOutputWidth'] ?? $layoutW),
+            (int) ($skin['__defaultOutputHeight'] ?? $layoutH),
             $br,
             $bg,
             $bb
