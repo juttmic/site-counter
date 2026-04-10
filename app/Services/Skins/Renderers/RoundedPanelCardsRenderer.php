@@ -87,7 +87,7 @@ class RoundedPanelCardsRenderer implements SkinRendererInterface
     {
         imagefilledrectangle($im, 0, 0, $width, $height, $bgCol);
 
-        if ($secondsRemaining <= 0) {
+        if ($secondsRemaining <= 0 && ($skin['show_final_message'] ?? false)) {
             $finalBg = $skin['finalBackground'] ?? null;
             if ($finalBg !== null && $finalBg !== '') {
                 $finalBgCol = $this->allocColor($im, $finalBg);

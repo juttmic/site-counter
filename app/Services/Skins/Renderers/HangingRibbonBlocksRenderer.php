@@ -15,7 +15,7 @@ class HangingRibbonBlocksRenderer implements SkinRendererInterface
     {
         imagefilledrectangle($im, 0, 0, $width, $height, $bgCol);
 
-        if ($secondsRemaining <= 0) {
+        if ($secondsRemaining <= 0 && ($skin['show_final_message'] ?? false)) {
             $finalBg = $skin['finalBackground'] ?? null;
             if ($finalBg !== null && $finalBg !== '') {
                 $finalBgCol = $this->allocColor($im, $finalBg);
@@ -87,7 +87,7 @@ class HangingRibbonBlocksRenderer implements SkinRendererInterface
             ? $this->allocColor($im, $skin['textColor']) : $textCol;
         $labelCol = $this->allocColor($im, $skin['labelColor'] ?? '#FFFFFF');
 
-        if ($secondsRemaining <= 0) {
+        if ($secondsRemaining <= 0 && ($skin['show_final_message'] ?? false)) {
             $finalMsg = (string) ($skin['finalMessage'] ?? "Time's Up");
             $finalTextCol = $skin['finalTextColor'] ?? null;
             $drawCol = ($finalTextCol !== null && $finalTextCol !== '') ? $this->allocColor($im, $finalTextCol) : $textCol;
