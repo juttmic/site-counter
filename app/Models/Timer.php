@@ -108,10 +108,12 @@ class Timer extends Model
             return true;
         }
 
-        // If we don't have a gif_* cache key, assume legacy behavior and treat as up-to-date
+        // If we don't have a gif_* cache key, assume legacy behavior and force a regeneration once.
+        // This ensures updated settings (like final screen toggles) are reflected and that we
+        // migrate the record to a deterministic gif_{id}_{timestamp} cache key on next generate.
         $cacheKey = (string) ($this->cache_key ?? '');
         if (!str_starts_with($cacheKey, 'gif_')) {
-            return false;
+            return true;
         }
 
         // cache_key is like gif_{id}_{timestamp}
