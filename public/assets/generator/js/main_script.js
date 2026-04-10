@@ -374,7 +374,6 @@ function clampCustomTextDistance() {
     const minPad = 4;
     const basePad = Math.max(minPad, Math.round(em * 0.5));
     const usableInternal = Math.max(0, basePad - minPad);
-    const baselineOffset = 2 * basePad;
     const textBoxH = Math.max(0, Math.round(sizing.textSize + 2 * basePad));
 
     // Backend may auto-grow the render canvas to ensure stable placement around 0
@@ -429,12 +428,15 @@ function clampCustomTextDistance() {
       }
     }
 
-    // Convert effectiveDistance bounds to the user-facing distance bounds.
-    // For |distance| <= usableInternal: effectiveDistance is constant (-baselineOffset).
-    // For distance > usableInternal:  eff = distance - usableInternal - baselineOffset.
-    // For distance < -usableInternal: eff = distance + usableInternal - baselineOffset.
-    const distMaxFromEff = Math.floor(effMax + usableInternal + baselineOffset);
-    const distMinFromEff = Math.ceil(effMin - usableInternal + baselineOffset);
+    // Convert placementDistance bounds to the user-facing distance bounds.
+    // Backend placement uses only the *external* distance (after internal padding shift),
+    // i.e. placementDistance === external.
+    // Mapping:
+    // - For |distance| <= usableInternal: external = 0
+    // - For distance > usableInternal:  external = distance - usableInternal
+    // - For distance < -usableInternal: external = distance + usableInternal
+    const distMaxFromEff = Math.floor(effMax + usableInternal);
+    const distMinFromEff = Math.ceil(effMin - usableInternal);
 
     strictMin = Math.max(MIN_CUSTOM_TEXT_DISTANCE, distMinFromEff);
     strictMax = Math.min(MAX_CUSTOM_TEXT_DISTANCE, distMaxFromEff);
