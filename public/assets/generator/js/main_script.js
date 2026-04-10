@@ -624,7 +624,8 @@ function requiredOutputDimsForHeadingNoScale() {
   const sizing = resolveSizingSnapshot();
   if (!headingEnabledTopBottom()) return null;
 
-  // Match backend minimum: layoutH must be >= timerH + 2*textBoxH (textBoxH includes internal padding).
+  // Auto-grow rule (legacy behavior): when heading is enabled and dimensions are unlocked,
+  // grow output just enough to accommodate the heading box (not 2×).
   const fontSizeRaw = firstNumber(
     findFieldByKey('fontSize')?.value,
     sizing.overrides?.fontSize,
@@ -639,14 +640,24 @@ function requiredOutputDimsForHeadingNoScale() {
   const minPad = 4;
   const basePad = Math.max(minPad, Math.round(em * 0.5));
   const textBoxH = Math.max(0, Math.round(sizing.textSize + 2 * basePad));
-  const minH = Math.max(100, Math.round(sizing.timerHeight + 2 * textBoxH));
+  const hf = findGifHeightField();
+  const curH = Number(hf?.value);
+  const baseH = (Number.isFinite(curH) && curH > 0)
+    ? curH
+    : (Number.isFinite(sizing.gifHeight) ? sizing.gifHeight : 0);
+  const minH = Math.max(100, Math.round(baseH + textBoxH));
 
   // Width: ensure the composed layout doesn't exceed the output width, otherwise everything scales down.
   // Approx: timer width vs heading text width with padding.
   const textVal = (document.querySelector('input[name="custom_text"]')?.value || '').trim();
   const approxTextW = Math.max(0, Math.round(textVal.length * (em * 0.62)));
   const padX = 20;
-  const minW = Math.max(100, Math.round(Math.max(sizing.width || 0, approxTextW + padX)));
+  const wf = findGifWidthField();
+  const curW = Number(wf?.value);
+  const baseW = (Number.isFinite(curW) && curW > 0)
+    ? curW
+    : (Number.isFinite(sizing.width) ? sizing.width : 0);
+  const minW = Math.max(100, Math.round(Math.max(baseW, approxTextW + padX)));
 
   return { minW, minH };
 }
@@ -657,24 +668,37 @@ function syncOutputDimsOnHeadingToggleIfUnlocked() {
   if (!hf || !wf) return;
 
   const enabled = headingEnabledTopBottom();
+  const wasEnabled = hf.dataset.headingEnabled === '1';
   const dims = requiredOutputDimsForHeadingNoScale();
 
   const heightLocked = hf.dataset.userLocked === '1';
   const widthLocked = wf.dataset.userLocked === '1';
 
   if (enabled && dims) {
+    // If heading is already enabled, do not re-auto-grow on position toggles (top<->bottom)
+    // or other edits. Auto-grow is only for the first transition from OFF -> ON.
+    if (wasEnabled) {
+      hf.dataset.headingEnabled = '1';
+      return;
+    }
     // Only auto-grow if user hasn't manually set the dimension.
     if (!heightLocked) {
       if (!hf.dataset.autoPrev) hf.dataset.autoPrev = String(hf.value ?? '');
+      // Use the stored pre-heading value as the base so we don't keep bumping on each keystroke.
+      const base = Number(hf.dataset.autoPrev);
+      const baseH = (Number.isFinite(base) && base > 0) ? base : Number(hf.value);
+      const target = Math.max(100, Math.round(baseH + Math.max(0, dims.minH - baseH)));
       const cur = Number(hf.value);
-      if (!Number.isFinite(cur) || cur < dims.minH) hf.value = String(dims.minH);
+      if (!Number.isFinite(cur) || cur < target) hf.value = String(target);
     }
     if (!widthLocked) {
       if (!wf.dataset.autoPrev) wf.dataset.autoPrev = String(wf.value ?? '');
       const curW = Number(wf.value);
       if (!Number.isFinite(curW) || curW < dims.minW) wf.value = String(dims.minW);
     }
+    hf.dataset.headingEnabled = '1';
   } else {
+    hf.dataset.headingEnabled = '0';
     // When heading is disabled, restore previous values if they were auto-grown and still unlocked.
     if (!heightLocked && hf.dataset.autoPrev) {
       const prev = Number(hf.dataset.autoPrev);
