@@ -308,6 +308,7 @@ class TimerController extends Controller
             $request->merge($patch);
         }
 
+        $maxFrames = max(1, (int) config('app.gif_frame_limit_max_seconds', 60));
         $rules = [
             'title' => ['sometimes', 'nullable', 'string', 'max:255'],
             'timer_type' => ['sometimes', 'nullable', 'in:fixed_date,reload_based'],
@@ -318,7 +319,7 @@ class TimerController extends Controller
             'custom_text' => ['sometimes', 'nullable', 'string', 'max:255'],
             'status' => ['sometimes', 'in:active,inactive'],
             'skin_overrides' => ['sometimes', 'nullable', 'string'],
-            'animation_frame_limit' => ['sometimes', 'nullable', 'integer', 'min:10', 'max:60'],
+            'animation_frame_limit' => ['sometimes', 'nullable', 'integer', 'min:10', 'max:' . $maxFrames],
             'client_timezone' => ['sometimes', 'nullable', 'string', 'max:64'],
         ];
 
@@ -367,8 +368,8 @@ class TimerController extends Controller
 
         $data['text_position'] = $data['text_position'] ?? ($timer->text_position ?? 'bottom');
         $data['status'] = $data['status'] ?? ($timer->status ?? 'active');
-        // Default to a 60-second shareable GIF (1 fps) unless user overrides.
-        $data['animation_frame_limit'] = (int) ($data['animation_frame_limit'] ?? ($timer->animation_frame_limit ?? 60));
+        // Default to a shareable GIF (1 fps) unless user overrides.
+        $data['animation_frame_limit'] = (int) ($data['animation_frame_limit'] ?? ($timer->animation_frame_limit ?? $maxFrames));
 
         $overridesRaw = $request->input('skin_overrides');
         if (is_string($overridesRaw) && $overridesRaw !== '') {
@@ -389,6 +390,7 @@ class TimerController extends Controller
 
     private function validateTimer(Request $request): array
     {
+        $maxFrames = max(1, (int) config('app.gif_frame_limit_max_seconds', 60));
         $rules = [
             'title' => ['required', 'string', 'max:255'],
             'timer_type' => ['nullable', 'in:fixed_date,reload_based'], // Made nullable to allow defaults
@@ -399,7 +401,7 @@ class TimerController extends Controller
             'custom_text' => ['nullable', 'string', 'max:255'],
             'status' => ['nullable', 'in:active,inactive'],
             'skin_overrides' => ['nullable', 'string'],
-            'animation_frame_limit' => ['nullable', 'integer', 'min:10', 'max:60'],
+            'animation_frame_limit' => ['nullable', 'integer', 'min:10', 'max:' . $maxFrames],
             'client_timezone' => ['nullable', 'string', 'max:64'],
         ];
 
@@ -427,8 +429,8 @@ class TimerController extends Controller
         }
 
         $data['status'] = $data['status'] ?? 'active';
-        // Default to a 60-second shareable GIF (1 fps) unless user overrides.
-        $data['animation_frame_limit'] = (int) ($data['animation_frame_limit'] ?? 60);
+        // Default to a shareable GIF (1 fps) unless user overrides.
+        $data['animation_frame_limit'] = (int) ($data['animation_frame_limit'] ?? $maxFrames);
 
         // Decode overrides JSON if provided
         $overridesRaw = $request->input('skin_overrides');

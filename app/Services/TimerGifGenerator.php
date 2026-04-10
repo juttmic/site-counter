@@ -389,7 +389,8 @@ class TimerGifGenerator
             $frames[] = $this->renderPngFrame(0, $skin, $customText, $textPosition);
             return $frames;
         }
-        $animateSeconds = max(0, min(60, $animateSeconds));
+        $maxFrames = max(1, (int) config('app.gif_frame_limit_max_seconds', 60));
+        $animateSeconds = max(0, min($maxFrames, $animateSeconds));
         if ($animateSeconds === 0) {
             $frames[] = $this->renderPngFrame($startingRemaining, $skin, $customText, $textPosition);
             return $frames;
@@ -997,9 +998,10 @@ class TimerGifGenerator
 
     private function resolveFrameLimit(Timer $timer): int
     {
-        // Default to a 60-second shareable GIF (1 fps) unless user overrides.
-        $limit = (int) ($timer->animation_frame_limit ?? 60);
-        return max(10, min(60, $limit));
+        $max = max(1, (int) config('app.gif_frame_limit_max_seconds', 60));
+        // Default to a shareable GIF (1 fps) unless user overrides.
+        $limit = (int) ($timer->animation_frame_limit ?? $max);
+        return max(10, min($max, $limit));
     }
 
     /**
