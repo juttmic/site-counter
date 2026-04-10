@@ -655,18 +655,7 @@
 </style>
 
 <div class="py-1" style="border: 0px solid red; display: flex; justify-content: space-between; gap: 0.5rem; padding: inherit;">
-  @if(isset($timer))
-    {{-- <h2 class="font-semibold text-xl text-gray-800 leading-tight" style="font-size: 1.5rem !important">Edit Counter</h2> --}}
-    <a id="form_preview_btn"
-       href="{{ $gifPendingEdit ? '#' : route('timers.preview', $timer) }}"
-       data-preview-url="{{ route('timers.preview', $timer) }}"
-       class="btn btn-outline-secondary border rounded prevbtntop {{ $gifPendingEdit ? 'disabled' : '' }}"
-       style="display: flex; align-items: center;"
-       @if($gifPendingEdit) title="Processing" tabindex="-1" aria-disabled="true" @else title="Preview counter" @endif
-    >Preview Counter</a>
-  @else
-    {{-- <h2 class="font-semibold text-xl text-gray-800 leading-tight" style="font-size: 1.5rem !important">Create New Counter</h2> --}}
-  @endif
+  {{-- Preview Counter button removed from edit screen --}}
   
 </div>
 <div class="py-4 py-md-3">
