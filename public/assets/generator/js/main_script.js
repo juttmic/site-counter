@@ -597,26 +597,94 @@ function enforceGifHeightMinimum() {
   }
   const heightField = findGifHeightField();
   if (!heightField) return;
-  const sizing = resolveSizingSnapshot();
-
-  if (isNaN(sizing.gifHeight) || isNaN(sizing.timerHeight)) {
+  const ABS_MIN = 100;
+  const h = Number(heightField.value);
+  if (!Number.isFinite(h)) {
     return;
   }
-
-  const required = Math.max(0, Math.ceil(sizing.combinedHeight || 0));
-  if (!isNaN(required) && required > 0 && sizing.gifHeight < required) {
-    const maxAttr = heightField.max !== '' && heightField.max != null ? Number(heightField.max) : Number.NaN;
-    const applied = Number.isFinite(maxAttr) ? Math.min(required, maxAttr) : required;
-    heightField.value = applied;
-    const msg = `GIF height must be at least ${required}px to fit the timer and text.`;
-    if (window.showToast) {
-      // window.showToast(msg, 'warning');
-    } else {
-      console.warn(msg);
-    }
-    // Keep overrides in sync with the adjusted value
+  if (h < ABS_MIN) {
+    heightField.value = String(ABS_MIN);
     if (typeof syncOverrides === 'function') {
       syncOverrides();
+    }
+  }
+}
+
+function findGifWidthField() {
+  return findFieldByKey('outputWidth') || findFieldByKey('width');
+}
+
+function headingEnabledTopBottom() {
+  const textVal = (document.querySelector('input[name="custom_text"]')?.value || '').trim();
+  const textPos = document.querySelector('select[name="text_position"]')?.value || 'none';
+  return textVal !== '' && (textPos === 'top' || textPos === 'bottom');
+}
+
+function requiredOutputDimsForHeadingNoScale() {
+  const sizing = resolveSizingSnapshot();
+  if (!headingEnabledTopBottom()) return null;
+
+  // Match backend minimum: layoutH must be >= timerH + 2*textBoxH (textBoxH includes internal padding).
+  const fontSizeRaw = firstNumber(
+    findFieldByKey('fontSize')?.value,
+    sizing.overrides?.fontSize,
+    sizing.defaults?.fontSize
+  );
+  const fontSize = Number.isFinite(fontSizeRaw) ? fontSizeRaw : 36;
+  const customInput = document.querySelector('input[name="customTextFontSize"]');
+  const customN = Number(customInput?.value);
+  const em = (Number.isFinite(customN) && customN >= 12)
+    ? Math.round(customN)
+    : Math.max(12, Math.round(fontSize * 0.5));
+  const minPad = 4;
+  const basePad = Math.max(minPad, Math.round(em * 0.5));
+  const textBoxH = Math.max(0, Math.round(sizing.textSize + 2 * basePad));
+  const minH = Math.max(100, Math.round(sizing.timerHeight + 2 * textBoxH));
+
+  // Width: ensure the composed layout doesn't exceed the output width, otherwise everything scales down.
+  // Approx: timer width vs heading text width with padding.
+  const textVal = (document.querySelector('input[name="custom_text"]')?.value || '').trim();
+  const approxTextW = Math.max(0, Math.round(textVal.length * (em * 0.62)));
+  const padX = 20;
+  const minW = Math.max(100, Math.round(Math.max(sizing.width || 0, approxTextW + padX)));
+
+  return { minW, minH };
+}
+
+function syncOutputDimsOnHeadingToggleIfUnlocked() {
+  const hf = findGifHeightField();
+  const wf = findGifWidthField();
+  if (!hf || !wf) return;
+
+  const enabled = headingEnabledTopBottom();
+  const dims = requiredOutputDimsForHeadingNoScale();
+
+  const heightLocked = hf.dataset.userLocked === '1';
+  const widthLocked = wf.dataset.userLocked === '1';
+
+  if (enabled && dims) {
+    // Only auto-grow if user hasn't manually set the dimension.
+    if (!heightLocked) {
+      if (!hf.dataset.autoPrev) hf.dataset.autoPrev = String(hf.value ?? '');
+      const cur = Number(hf.value);
+      if (!Number.isFinite(cur) || cur < dims.minH) hf.value = String(dims.minH);
+    }
+    if (!widthLocked) {
+      if (!wf.dataset.autoPrev) wf.dataset.autoPrev = String(wf.value ?? '');
+      const curW = Number(wf.value);
+      if (!Number.isFinite(curW) || curW < dims.minW) wf.value = String(dims.minW);
+    }
+  } else {
+    // When heading is disabled, restore previous values if they were auto-grown and still unlocked.
+    if (!heightLocked && hf.dataset.autoPrev) {
+      const prev = Number(hf.dataset.autoPrev);
+      if (Number.isFinite(prev) && prev > 0) hf.value = String(Math.max(100, Math.round(prev)));
+      delete hf.dataset.autoPrev;
+    }
+    if (!widthLocked && wf.dataset.autoPrev) {
+      const prev = Number(wf.dataset.autoPrev);
+      if (Number.isFinite(prev) && prev > 0) wf.value = String(Math.max(100, Math.round(prev)));
+      delete wf.dataset.autoPrev;
     }
   }
 }
@@ -834,10 +902,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // If timer height changes, re-clamp distance. Use 'change' only (not 'input') so the user
   // can type freely (e.g. clear 430 to enter 500) without validation resetting the value mid-edit.
-  ['outputHeight'].forEach(name => {
+  ['outputHeight','outputWidth'].forEach(name => {
     const el = document.querySelector(`[data-key="${name}"]`) || document.querySelector(`input[name="${name}"]`);
     if (el) {
       const handler = () => {
+        el.dataset.userLocked = '1';
         clampCustomTextDistance();
         enforceGifHeightMinimum();
       };
@@ -849,8 +918,11 @@ document.addEventListener('DOMContentLoaded', function() {
   const customTextInput = document.querySelector('input[name="custom_text"]');
   if (customTextInput) {
     const handleTextChange = () => {
+      syncOutputDimsOnHeadingToggleIfUnlocked();
       clampCustomTextDistance();
       enforceGifHeightMinimum();
+      syncOverrides();
+      if (typeof generatePreviewFrame === 'function') generatePreviewFrame();
     };
     customTextInput.addEventListener('change', handleTextChange);
     customTextInput.addEventListener('input', handleTextChange);
@@ -859,8 +931,11 @@ document.addEventListener('DOMContentLoaded', function() {
   const textPositionInput = document.querySelector('select[name="text_position"]');
   if (textPositionInput) {
     textPositionInput.addEventListener('change', () => {
+      syncOutputDimsOnHeadingToggleIfUnlocked();
       clampCustomTextDistance();
       enforceGifHeightMinimum();
+      syncOverrides();
+      if (typeof generatePreviewFrame === 'function') generatePreviewFrame();
     });
   }
 
@@ -1609,21 +1684,13 @@ function renderFields(metadata, savedOverrides = {}) {
   }
 
   /** Label-only min (does not change input constraints). */
+  const OUTPUT_DIMENSION_MIN = 100;
+
   function getDimensionLabelMin(field) {
     const key = field.key;
     const d = defaults;
-    if (key === 'outputHeight') {
-      const explicit = firstNumber(d.outputHeight);
-      if (Number.isFinite(explicit) && explicit > 0) return Math.floor(explicit);
-      const h = firstNumber(d.height);
-      const bw = firstNumber(d.borderWidth, 0);
-      const edgePad = Math.max(2, Number.isFinite(bw) ? bw : 0);
-      if (Number.isFinite(h) && h > 0) return Math.floor(h + 2 * edgePad);
-      return null;
-    }
-    if (key === 'outputWidth') {
-      const base = firstNumber(d.outputWidth, d.width);
-      return (Number.isFinite(base) && base > 0) ? Math.floor(base) : null;
+    if (key === 'outputWidth' || key === 'outputHeight') {
+      return OUTPUT_DIMENSION_MIN;
     }
     if (key === 'width' || key === 'height') {
       const base = firstNumber(d[key]);
