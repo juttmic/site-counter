@@ -832,14 +832,15 @@ class TimerGifGenerator
             if ($debugTextBoxBorder && $textBoxH > 0) {
                 $red = @imagecolorallocate($im, 255, 0, 0);
                 if ($red !== false) {
-                    $x0 = (int) $offsetX;
-                    $x1 = (int) ($offsetX + max(0, $timerW - 1));
+                    // Full-width border for the text box (entire output width).
+                    $x0 = 0;
+                    $x1 = (int) max(0, $layoutW - 1);
                     $y0 = $textBoxTopY;
                     $y1 = (int) ($textBoxTopY + max(0, $textBoxH - 1));
                     if (function_exists('imagesetthickness')) {
                         imagesetthickness($im, 1);
                     }
-                    // imagerectangle($im, $x0, $y0, $x1, $y1, $red);
+                    imagerectangle($im, $x0, $y0, $x1, $y1, $red);
 
                     // Center line through the text box
                     $cy = (int) floor(($y0 + $y1) / 2);
