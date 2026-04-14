@@ -49,6 +49,18 @@ function toggleInputs(isUserAction = false) {
   // When switching to fixed_date, we intentionally do NOT touch duration_seconds
   // This keeps the fields independent as requested
   enforceHideDays24hRuleSilent();
+
+  // Final message is only applicable for fixed-date timers.
+  // For Evergreen (reload_based), hide the entire "Timer Ends Message (optional)" section.
+  (function toggleFinalMessageSection() {
+    const wantShow = type === 'fixed_date';
+    const header = Array.from(document.querySelectorAll('.collapsible-header'))
+      .find(h => (h.textContent || '').trim() === 'Timer Ends Message (optional)');
+    const card = header?.closest('.card');
+    const sectionCol = card?.parentElement; // the flex item inside #skin_fields (gap applies here)
+    if (!sectionCol) return;
+    sectionCol.classList.toggle('d-none', !wantShow);
+  })();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -2331,6 +2343,12 @@ function renderFields(metadata, savedOverrides = {}) {
   grouped.forEach(group => {
     renderGroup(group, fieldsWrap, 0);
   });
+
+  // Apply timer_type rules (e.g., hide final message for Evergreen).
+  // This is needed because skin groups are re-rendered on skin selection.
+  if (typeof toggleInputs === 'function') {
+    try { toggleInputs(false); } catch (e) {}
+  }
 
   const gifHField = findGifHeightField();
   if (gifHField && !gifHField.dataset.boundGifHeight) {
