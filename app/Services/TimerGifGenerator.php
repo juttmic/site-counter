@@ -73,7 +73,11 @@ class TimerGifGenerator
         }
         $skin = $this->applyFinalColorDefaults($skin);
 
-        $showFinalMessage = (bool) ($skin['show_final_message'] ?? false);
+        // Final message screen applies only to fixed-date timers.
+        if (!$timer->isFixedDate()) {
+            $skin['show_final_message'] = false;
+        }
+        $showFinalMessage = $timer->isFixedDate() && (bool) ($skin['show_final_message'] ?? false);
         $finalTotalSeconds = max(0, (int) config('app.final_message_total_seconds', 60));
 
         // Special handling when a final "Time's Up" screen is configured
@@ -146,7 +150,11 @@ class TimerGifGenerator
             $skin = array_replace_recursive($skin, $timer->skin_overrides);
         }
         $skin = $this->applyFinalColorDefaults($skin);
-        $showFinalMessage = (bool) ($skin['show_final_message'] ?? false);
+        // Final message screen applies only to fixed-date timers.
+        if (!$timer->isFixedDate()) {
+            $skin['show_final_message'] = false;
+        }
+        $showFinalMessage = $timer->isFixedDate() && (bool) ($skin['show_final_message'] ?? false);
         $finalTotalSeconds = max(0, (int) config('app.final_message_total_seconds', 60));
         
         if ($showFinalMessage) {
