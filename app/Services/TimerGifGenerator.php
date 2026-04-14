@@ -80,15 +80,17 @@ class TimerGifGenerator
         $showFinalMessage = $timer->isFixedDate() && (bool) ($skin['show_final_message'] ?? false);
         $finalTotalSeconds = max(0, (int) config('app.final_message_total_seconds', 60));
 
+        $finalThresholdSeconds = max(0, (int) config('app.final_message_threshold_seconds', 5));
+
         // Special handling when a final "Time's Up" screen is configured
         if ($showFinalMessage) {
-            if ($remaining <= 5) {
-                // Remaining time is 5s or less: only render the final screen as a static GIF
+            if ($remaining <= $finalThresholdSeconds) {
+                // Remaining time is threshold or less: only render the final screen as a static GIF
                 $framePng = $this->renderFinalFrame($skin, $timer->custom_text, $timer->text_position ?? 'none');
                 // Use a minimal non-zero duration so encoders behave correctly
                 $this->encodeAnimatedGif([$framePng], $fullPath, 1);
             } else {
-                // Remaining time is more than 5s: generate countdown frames without the final screen
+                // Remaining time is more than threshold: generate countdown frames without the final screen
                 $frameLimit = $this->resolveFrameLimit($timer);
                 $animateFor = min($frameLimit, max(0, $durationForGif));
                 // Temporarily disable final message so buildFramesCapped does not append the final frame
@@ -156,16 +158,17 @@ class TimerGifGenerator
         }
         $showFinalMessage = $timer->isFixedDate() && (bool) ($skin['show_final_message'] ?? false);
         $finalTotalSeconds = max(0, (int) config('app.final_message_total_seconds', 60));
+        $finalThresholdSeconds = max(0, (int) config('app.final_message_threshold_seconds', 5));
         
         if ($showFinalMessage) {
-            if ($remaining <= 5) {
-                // Remaining time is 5s or less: only render the final screen as a static GIF
+            if ($remaining <= $finalThresholdSeconds) {
+                // Remaining time is threshold or less: only render the final screen as a static GIF
                 $framePng = $this->renderFinalFrame($skin, $timer->custom_text, $timer->text_position ?? 'none');
                 $this->encodeAnimatedGif([$framePng], $targetPath, 1);
                 return;
             }
 
-            // Remaining time is more than 5s: generate countdown frames without the final screen
+            // Remaining time is more than threshold: generate countdown frames without the final screen
             $frameLimit = $this->resolveFrameLimit($timer);
             $animateFor = min($frameLimit, $maxAnimateFor, max(0, $durationForGif));
             $skinForFrames = $skin;

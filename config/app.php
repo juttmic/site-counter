@@ -25,6 +25,10 @@ return [
     // length reaches this value (in seconds).
     'final_message_total_seconds' => (int) env('FINAL_MESSAGE_TOTAL_SECONDS', 60),
 
+    // When final screen is enabled, show ONLY the final screen once remaining time
+    // is <= this many seconds.
+    'final_message_threshold_seconds' => (int) env('FINAL_MESSAGE_THRESHOLD_SECONDS', 5),
+
     // Default / maximum animation length (1 frame per second).
     'gif_frame_limit_max_seconds' => (int) env('GIF_FRAME_LIMIT_MAX_SECONDS', 60),
 
