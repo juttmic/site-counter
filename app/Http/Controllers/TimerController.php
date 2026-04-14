@@ -236,6 +236,10 @@ class TimerController extends Controller
         if (is_array($workingTimer->skin_overrides) && !empty($workingTimer->skin_overrides)) {
             $skin = array_replace_recursive($skin, $workingTimer->skin_overrides);
         }
+        // Final message screen applies only to fixed-date timers.
+        if (!$workingTimer->isFixedDate()) {
+            $skin['show_final_message'] = false;
+        }
         if (empty($skin['finalBackground']) && !empty($skin['background'])) {
             $skin['finalBackground'] = $skin['background'];
         }
