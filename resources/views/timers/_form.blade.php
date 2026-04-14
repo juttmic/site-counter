@@ -946,4 +946,4 @@
   window.COUNTER_FONT_BASE_URL = "{{ rtrim(asset('assets/fonts'), '/') }}";
 </script>
 
-<script src="{{ asset('assets/generator/js/main_script.js') }}" defer></script>
+<script src="{{ asset('assets/generator/js/main_script.js?v=5') }}" defer></script>
