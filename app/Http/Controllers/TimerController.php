@@ -104,10 +104,9 @@ class TimerController extends Controller
         $timer->save();
 
         // Only generate GIFs for active timers.
-        // If a timer becomes inactive, keep the last generated gif_url so the dashboard preview can still show it,
-        // but embeds remain blocked by GifController's inactive check.
+        // Keep the last generated gif_url while a new GIF is pending so the dashboard can show
+        // the old preview with an "updating" overlay.
         if (($timer->status ?? 'active') === 'active') {
-            $timer->gif_url = '';
             $timer->cache_key = 'timer_' . $timer->id . '_' . bin2hex(random_bytes(3));
             $timer->save();
 
