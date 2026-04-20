@@ -19,6 +19,7 @@
     }
     .dark .theme-logo-large-dark {
         display: inline-block;
+        width:194px;
     }
     .dark .theme-logo-small-dark {
         display: none;
@@ -56,7 +57,7 @@
 <span class="theme-logo-wrapper d-inline-flex align-items-center">
     {{-- Light Theme Logos --}}
     <img
-        src="{{ asset('assets/images/countdownly_dark.png') }}"
+        src="{{ asset('assets/images/Countdownly logo for white bg.png') }}"
         alt="Countdownly logo light"
         class="theme-logo-large-light"
         style="height: 40px;"
@@ -70,7 +71,7 @@
 
     {{-- Dark Theme Logos --}}
     <img
-        src="{{ asset('assets/images/countdownly_light.png') }}"
+        src="{{ asset('assets/images/Countdownly logo for black bg.png') }}"
         alt="Countdownly logo dark"
         class="theme-logo-large-dark"
         style="height: 40px;"
