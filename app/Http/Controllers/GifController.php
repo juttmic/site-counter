@@ -19,9 +19,8 @@ class GifController extends Controller
             ->where('gif_url', 'like', "%/{$userId}/{$filename}.gif")
             ->first();
 
-        // For public endpoints, show a friendly "unavailable" page when the timer
-        // doesn't exist or is inactive (instead of a hard 404).
-        if (!$timer || !$timer->isActive()) {
+        // Public endpoint: if the timer can't be resolved, show a friendly page.
+        if (!$timer) {
             return response()
                 ->view('timers.unavailable', [
                     'startUrl' => url('/login'),
@@ -34,18 +33,39 @@ class GifController extends Controller
             File::makeDirectory($dir, 0755, true);
         }
 
+        // Inactive timers should still render the *previously generated* GIF when available,
+        // especially for embed code usage. Never regenerate while inactive.
+        if (!$timer->isActive()) {
+            if (!File::exists($path)) {
+                return response()
+                    ->view('timers.unavailable', [
+                        'startUrl' => url('/login'),
+                    ], 410);
+            }
+            return response()->file($path, [
+                'Content-Type' => 'image/gif',
+                'Cache-Control' => 'no-cache, no-store, must-revalidate',
+                'Pragma' => 'no-cache',
+                'Expires' => '0',
+            ]);
+        }
+
         if ($timer->isFixedDate()) {
             // Regenerate on each request for fixed-date timers (fresh remaining time)
             $generator->regenerateForCache($timer, $path);
         } else {
-            // Reload-based timers: keep previous behavior
+            // Reload-based timers: only generate once if missing
             if (!File::exists($path)) {
                 $generator->regenerateForCache($timer, $path);
             }
         }
 
-        $gifUrl = "/timers/{$userId}/{$filename}.gif";
-        return redirect($gifUrl);
+        return response()->file($path, [
+            'Content-Type' => 'image/gif',
+            'Cache-Control' => 'no-cache, no-store, must-revalidate',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
+        ]);
     }
 
     private function buildCacheKey(int $userId, string $filename): string
