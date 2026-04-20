@@ -103,8 +103,13 @@ class TimerController extends Controller
         }
         $timer->save();
 
-        // Optionally generate GIF immediately when requested (e.g. from Generate GIF button)
-        if ($request->boolean('generate_gif')) {
+        // Always regenerate GIF on save for active timers, even if no fields changed.
+        // This keeps embeds/previews consistent and avoids stale GIFs.
+        if (($timer->status ?? 'active') === 'active') {
+            $timer->gif_url = '';
+            $timer->cache_key = 'timer_' . $timer->id . '_' . bin2hex(random_bytes(3));
+            $timer->save();
+
             $mode = (string) config('app.gif_generation_mode', 'queue');
             if ($mode === 'sync') {
                 (new GenerateTimerGif($timer->id))->handle();
