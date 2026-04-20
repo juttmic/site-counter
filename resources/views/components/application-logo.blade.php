@@ -45,9 +45,9 @@
     /* Smooth handling */
     .theme-logo-wrapper img {
         height: auto;
-        width: auto;
+        width: 196px;
         transition: none;
-        max-width: 160px;
+        max-width: 196px;
         object-fit: contain;
     }
 </style>

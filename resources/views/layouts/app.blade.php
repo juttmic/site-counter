@@ -143,6 +143,11 @@
                                 </div>
                             </div>
                             <div class="d-flex align-items-center gap-2 ms-auto">
+                                <a href="{{ route('timers.create') }}"
+                                   class="btn btn-primary btn-sm d-md-none d-inline-flex align-items-center justify-content-center"
+                                   aria-label="Create new counter">
+                                    <i class="bi bi-plus-lg" style="margin-right:5px"></i> New Counter
+                                </a>
                                 <button class="btn btn-outline-secondary btn-sm d-md-none" type="button" data-bs-toggle="collapse" data-bs-target="#mobileHeaderNav" aria-expanded="false" aria-controls="mobileHeaderNav" aria-label="Toggle navigation">
                                     <i class="bi bi-list"></i>
                                 </button>
@@ -186,9 +191,6 @@
                                 </div>
                                 <nav class="d-flex flex-column gap-2">
                                     {{-- Dashboard link removed --}}
-                                    <a href="{{ route('timers.create') }}" class="d-flex align-items-center text-decoration-none {{ request()->routeIs('timers.create') ? 'text-primary fw-semibold' : 'text-dark' }}">
-                                        <i class="bi bi-plus-square me-2"></i> Create Ndew Counter
-                                    </a>
                                 </nav>
                                 <div class="border-top pt-2">
                                     <form method="POST" action="{{ route('logout') }}">
