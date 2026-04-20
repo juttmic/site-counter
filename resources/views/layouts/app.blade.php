@@ -140,6 +140,12 @@
                                 justify-content: center;
                             }
                         }
+                        /* Below 500px: let button shrink naturally */
+                        @media (max-width: 500px) {
+                            .mobile-new-counter-btn {
+                                width: auto;
+                            }
+                        }
                     </style>
                     <div class="container-fluid">
                         <div class="d-flex align-items-center justify-content-between gap-3 py-3 px-3 px-md-4 flex-nowrap">
