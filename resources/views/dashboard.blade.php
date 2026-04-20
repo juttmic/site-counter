@@ -23,7 +23,7 @@
                         @php($gifQueueMode = config('app.gif_generation_mode', 'queue') === 'queue')
                         <div class="row g-3" id="dashboard-timers-row">
                             @foreach($timers as $timer)
-                            @php($dashboardGifPending = $gifQueueMode && ($timer->needsGifRegeneration() || empty($timer->gif_url)))
+                            @php($dashboardGifPending = $gifQueueMode && $timer->status === 'active' && ($timer->needsGifRegeneration() || empty($timer->gif_url)))
                             <div class="col-12 col-md-3" data-timer-card data-timer-id="{{ $timer->id }}" @if($dashboardGifPending) data-gif-pending="1" @endif>
                                 <div class="card shadow-sm border-0 h-100">
                                   <div class="card-body d-flex flex-column justify-content-between">
@@ -55,16 +55,21 @@
                                     <div class="mt-3 position-relative border rounded overflow-hidden bg-light timer-preview-{{ $timer->id }}" style="height: 160px;">
                                       @if($timer->gif_url)
                                         <img src="{{ url($timer->gif_url_with_cache_bust ?? $timer->gif_url) }}" alt="Timer Preview" class="img-fluid w-100 h-100 object-fit-contain timer-preview-img-{{ $timer->id }}">
-                                        @if($timer->needsGifRegeneration())
+                                        @if($timer->status === 'active' && $timer->needsGifRegeneration())
                                           <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
                                                style="background: rgba(255,255,255,0.75);">
                                             <small class="text-muted fw-semibold">Counter Updating…</small>
                                           </div>
                                         @endif
                                       @else
-                                        <div class="d-flex flex-column align-items-center justify-content-center h-100 text-muted timer-preview-placeholder-{{ $timer->id }}">
-                                          <small>GIF is being generated</small>
-                                        </div>
+                                        @if($timer->status === 'active')
+                                          <div class="d-flex flex-column align-items-center justify-content-center h-100 text-muted timer-preview-placeholder-{{ $timer->id }}">
+                                            <small>GIF is being generated</small>
+                                          </div>
+                                        @else
+                                          {{-- Inactive + no GIF: show nothing in preview --}}
+                                          <div class="h-100 w-100 timer-preview-placeholder-{{ $timer->id }}"></div>
+                                        @endif
                                       @endif
                                     </div>
                               

@@ -50,12 +50,18 @@ class TimerController extends Controller
         }
 
         $timer = new Timer($data);
+        // DB requires gif_url (non-null, no default)
         $timer->gif_url = '';
-        $timer->cache_key = 'timer_' . $timer->id . '_' . bin2hex(random_bytes(3));
         $timer->save();
 
+        // Only mark for regeneration / generate GIF when active.
+        if (($timer->status ?? 'active') === 'active') {
+            $timer->cache_key = 'timer_' . $timer->id . '_' . bin2hex(random_bytes(3));
+            $timer->save();
+        }
+
         // Optionally generate GIF immediately when requested (e.g. from Generate GIF button)
-        if ($request->boolean('generate_gif')) {
+        if (($timer->status ?? 'active') === 'active' && $request->boolean('generate_gif')) {
             $mode = (string) config('app.gif_generation_mode', 'queue');
             if ($mode === 'sync') {
                 (new GenerateTimerGif($timer->id))->handle();
@@ -95,16 +101,11 @@ class TimerController extends Controller
         $wasActive = $timer->status === 'active';
         $data = $this->validateTimer($request);
         $timer->fill($data);
-        // If switching to inactive, drop existing GIF and cache key so embeds stop working
-        if ($wasActive && ($timer->status ?? 'active') !== 'active') {
-            $this->deleteGifFile($timer);
-            $timer->gif_url = '';
-            $timer->cache_key = null;
-        }
         $timer->save();
 
-        // Always regenerate GIF on save for active timers, even if no fields changed.
-        // This keeps embeds/previews consistent and avoids stale GIFs.
+        // Only generate GIFs for active timers.
+        // If a timer becomes inactive, keep the last generated gif_url so the dashboard preview can still show it,
+        // but embeds remain blocked by GifController's inactive check.
         if (($timer->status ?? 'active') === 'active') {
             $timer->gif_url = '';
             $timer->cache_key = 'timer_' . $timer->id . '_' . bin2hex(random_bytes(3));
