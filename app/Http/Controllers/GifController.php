@@ -19,10 +19,9 @@ class GifController extends Controller
             ->where('gif_url', 'like', "%/{$userId}/{$filename}.gif")
             ->first();
 
-        if (!$timer) {
-            abort(404);
-        }
-        if (!$timer->isActive()) {
+        // For public endpoints, show a friendly "unavailable" page when the timer
+        // doesn't exist or is inactive (instead of a hard 404).
+        if (!$timer || !$timer->isActive()) {
             return response()
                 ->view('timers.unavailable', [
                     'startUrl' => url('/login'),
