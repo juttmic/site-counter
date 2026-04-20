@@ -141,10 +141,24 @@
                             }
                         }
                         /* Below 500px: let button shrink naturally */
-                        @media (max-width: 500px) {
+                        @media (max-width: 555px) {
+                            .mobile-new-counter-btn {
+                                width: 100px;
+                            }
+                        }
+                        @media (max-width: 535px) {
                             .mobile-new-counter-btn {
                                 width: auto;
                             }
+                        }
+                        @media (max-width: 496px) {
+                            .mobile-new-word {
+                                display: none !important;
+                            }
+                            /* .mobile-new-counter-btn {
+                                width: 124px;
+                                justify-content: center;
+                            } */
                         }
                     </style>
                     <div class="container-fluid">
@@ -164,7 +178,7 @@
                                 <a href="{{ route('timers.create') }}"
                                    class="btn btn-primary btn-sm d-md-none d-inline-flex align-items-center justify-content-center mobile-new-counter-btn"
                                    aria-label="Create new counter">
-                                    <i class="bi bi-plus-lg" style="margin-right:5px"></i> New <span class="mobile-new-counter-word" style="margin-left:5px">Counter</span>
+                                    <i class="bi bi-plus-lg" style="margin-right:5px"></i> <span class="mobile-new-word">New</span> <span class="mobile-new-counter-word" style="margin-left:5px">Counter</span>
                                 </a>
                                 <button class="btn btn-outline-secondary btn-sm d-md-none" type="button" data-bs-toggle="collapse" data-bs-target="#mobileHeaderNav" aria-expanded="false" aria-controls="mobileHeaderNav" aria-label="Toggle navigation">
                                     <i class="bi bi-list"></i>
