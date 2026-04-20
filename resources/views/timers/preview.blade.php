@@ -32,6 +32,15 @@
                             data-bs-toggle="tooltip"
                             data-bs-placement="top"
                             aria-label="Embed code">
+                        <i class="bi bi-clipboard"></i>
+                    </button>
+                    <button id="preview_chain_copy"
+                            style="border-radius: 50%;"
+                            class="btn btn-outline-primary btn-sm prev_btn"
+                            title="Copy direct image URL (Suitable for Landingly)"
+                            data-bs-toggle="tooltip"
+                            data-bs-placement="top"
+                            aria-label="Copy direct image URL (Suitable for Landingly)">
                         <i class="bi bi-copy"></i>
                     </button>
                     @if($timer->status === 'active' && !empty($timer->gif_url) && !$timer->needsGifRegeneration())
@@ -43,6 +52,13 @@
                             class="form-control font-monospace"
                             style="max-width: 640px;"
                             value='<img src="{{ $embedUrl }}" alt="Countdown Counter">'
+                            readonly
+                        >
+                        <input
+                            id="preview_gif_url_input"
+                            type="text"
+                            hidden
+                            value="{{ $embedUrl }}"
                             readonly
                         >
                     @endif
@@ -121,6 +137,16 @@
                     if (!input) {window.showToast?.('Activate the counter to get code', 'danger');return;}
                     window.copyToClipboard(input.value).then(function () {
                         window.showToast?.('Embed code copied', 'success');
+                    });
+                });
+            }
+            const copyBtnChain = document.getElementById('preview_chain_copy');
+            if (copyBtnChain) {
+                copyBtnChain.addEventListener('click', function () {
+                    const input = document.getElementById('preview_gif_url_input');
+                    if (!input) {window.showToast?.('Activate the counter to get link', 'danger');return;}
+                    window.copyToClipboard(input.value).then(function () {
+                        window.showToast?.('Direct image URL copied', 'success');
                     });
                 });
             }

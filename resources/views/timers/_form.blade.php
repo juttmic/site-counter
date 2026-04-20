@@ -908,11 +908,8 @@
                                 <img id="preview_frame" src="" class="img-fluid d-none" style="max-height: 400px; object-fit: contain;" alt="Timer preview">
                                 <img id="preview_gif" src="" class="img-fluid d-none" style="max-height: 400px; object-fit: contain;" alt="Timer GIF">
                                 <div id="preview_placeholder" class="text-center text-muted">
-                                    <svg class="mb-2" width="48" height="48" fill="currentColor" viewBox="0 0 16 16">
-                                        <path d="M8 3.993c-2.21 0-4 1.79-4 4 0 .705.183 1.368.504 1.944l-.837.837A5.002 5.002 0 1 1 13 8a4.978 4.978 0 0 1-1.944.504l-.837-.837c.576-.321 1.239-.504 1.944-.504 2.21 0 4 1.79 4 4s-1.79 4-4 4-4-1.79-4-4c0-.705.183-1.368.504-1.944l-.837-.837A3.993 3.993 0 0 0 8 3.993z"/>
-                                    </svg>
-                                    <p class="small mb-0">Timer preview will appear here</p>
-                                    <p class="text-muted small">Configure your counter settings to see the preview</p>
+                                    
+                                    <p class="small mb-0">Timer preview will appear here.</p>
                                 </div>
                             </div>
                             <div class="d-flex gap-2" style="justify-content: space-between;">

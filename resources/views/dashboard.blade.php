@@ -84,13 +84,22 @@
                                           <i class="bi bi-eye"></i>
                                         </a>
                                         <button type="button"
-                                                class="btn btn-outline-secondary btn-sm copy-embed-btn copy-embed-btn-{{ $timer->id }} {{ $copyGifPending ? 'disabled' : '' }} {{ ($copyEmbedReady || $copyGifPending) ? '' : 'd-none' }}"
+                                                class="btn btn-outline-secondary btn-sm copy-embed-code-btn copy-embed-code-btn-{{ $timer->id }} {{ $copyGifPending ? 'disabled' : '' }} {{ ($copyEmbedReady || $copyGifPending) ? '' : 'd-none' }}"
                                                 title="{{ $copyGifPending ? 'Processing' : 'Embed code' }}"
-                                                data-embed-url="{{ $copyEmbedReady ? $embedCopyUrl : '' }}"
+                                                data-gif-url="{{ $copyEmbedReady ? $embedCopyUrl : '' }}"
                                                 style="margin-left: 2px;"
                                                 @if($copyGifPending) disabled aria-disabled="true" @endif
                                         >
                                           <i class="bi bi-clipboard"></i>
+                                        </button>
+                                        <button type="button"
+                                                class="btn btn-outline-secondary btn-sm copy-gif-url-btn copy-gif-url-btn-{{ $timer->id }} {{ $copyGifPending ? 'disabled' : '' }} {{ ($copyEmbedReady || $copyGifPending) ? '' : 'd-none' }}"
+                                                title="{{ $copyGifPending ? 'Processing' : 'Copy direct image URL (Suitable for Landingly)' }}"
+                                                data-gif-url="{{ $copyEmbedReady ? $embedCopyUrl : '' }}"
+                                                style="margin-left: 2px;"
+                                                @if($copyGifPending) disabled aria-disabled="true" @endif
+                                        >
+                                          <i class="bi bi-copy"></i>
                                         </button>
                                         <a href="{{ route('timers.edit', $timer) }}" class="btn btn-outline-primary btn-sm" title="Edit" style="margin-left: 2px;">
                                           <i class="bi bi-pencil"></i>
@@ -209,13 +218,13 @@
     document.addEventListener('click', function(e){
       var prev = e.target.closest('a.dashboard-preview-btn.disabled');
       if (prev) e.preventDefault();
-      var copyBtn = e.target.closest('.copy-embed-btn');
+      var copyBtn = e.target.closest('.copy-embed-code-btn, .copy-gif-url-btn');
       if (copyBtn && (copyBtn.disabled || copyBtn.classList.contains('disabled'))) {
         e.preventDefault();
         e.stopPropagation();
       }
     }, true);
-    // Copy embed code for dashboard cards
+    // Copy buttons for dashboard cards
     document.addEventListener('click', function(e){
       if (!window.copyToClipboard) {
         window.copyToClipboard = function(text){
@@ -240,14 +249,24 @@
           });
         };
       }
-      var btn = e.target.closest('.copy-embed-btn');
+      var btn = e.target.closest('.copy-embed-code-btn, .copy-gif-url-btn');
       if (!btn) return;
       if (btn.disabled || btn.classList.contains('disabled')) return;
-      var url = btn.getAttribute('data-embed-url');
+      var url = btn.getAttribute('data-gif-url');
       if (!url) return;
-      var code = `<img src="${url}" alt="Countdown Counter">`;
-      window.copyToClipboard(code).then(function(){
-        if (window.showToast) window.showToast('Embed code copied', 'success');
+
+      if (btn.classList.contains('copy-embed-code-btn')) {
+        var code = `<img src="${url}" alt="Countdown Counter">`;
+        window.copyToClipboard(code).then(function(){
+          if (window.showToast) window.showToast('Embed code copied', 'success');
+        }).catch(function(){
+          if (window.showToast) window.showToast('Copy failed', 'danger');
+        });
+        return;
+      }
+
+      window.copyToClipboard(url).then(function(){
+        if (window.showToast) window.showToast('Direct image URL copied', 'success');
       }).catch(function(){
         if (window.showToast) window.showToast('Copy failed', 'danger');
       });
@@ -300,14 +319,19 @@
           var sep = src.indexOf('?') >= 0 ? '&' : '?';
           img.src = src + sep + '_t=' + Date.now();
         }
-        var embedBtn = card.querySelector('.copy-embed-btn-' + timerId);
-        if (embedBtn && t.embed_url && t.status === 'active') {
-          embedBtn.removeAttribute('disabled');
-          embedBtn.removeAttribute('aria-disabled');
-          embedBtn.classList.remove('disabled');
-          embedBtn.setAttribute('data-embed-url', t.embed_url);
-          embedBtn.setAttribute('title', 'Embed code');
-          embedBtn.classList.remove('d-none');
+        var embedBtn = card.querySelector('.copy-embed-code-btn-' + timerId);
+        var linkBtn = card.querySelector('.copy-gif-url-btn-' + timerId);
+        if (t.embed_url && t.status === 'active') {
+          [embedBtn, linkBtn].forEach(function(b){
+            if (!b) return;
+            b.removeAttribute('disabled');
+            b.removeAttribute('aria-disabled');
+            b.classList.remove('disabled');
+            b.setAttribute('data-gif-url', t.embed_url);
+            b.classList.remove('d-none');
+          });
+          if (embedBtn) embedBtn.setAttribute('title', 'Embed code');
+          if (linkBtn) linkBtn.setAttribute('title', 'Copy direct image URL (Suitable for Landingly)');
         }
       }
 
