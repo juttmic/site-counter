@@ -129,6 +129,18 @@
             <div class="main-content" style="min-height: 100vh;">
                 <!-- Header -->
                 <header class="bg-white border-bottom shadow-sm sticky-top" style="z-index: 999;">
+                    <style>
+                        /* Mobile topbar: shorten New Counter label below 584px */
+                        @media (max-width: 584px) {
+                            .mobile-new-counter-btn .mobile-new-counter-word {
+                                display: none !important;
+                            }
+                            .mobile-new-counter-btn {
+                                width: 124px;
+                                justify-content: center;
+                            }
+                        }
+                    </style>
                     <div class="container-fluid">
                         <div class="d-flex align-items-center justify-content-between gap-3 py-3 px-3 px-md-4 flex-nowrap">
                             <div class="d-flex align-items-center gap-3 flex-nowrap">
@@ -144,9 +156,9 @@
                             </div>
                             <div class="d-flex align-items-center gap-2 ms-auto">
                                 <a href="{{ route('timers.create') }}"
-                                   class="btn btn-primary btn-sm d-md-none d-inline-flex align-items-center justify-content-center"
+                                   class="btn btn-primary btn-sm d-md-none d-inline-flex align-items-center justify-content-center mobile-new-counter-btn"
                                    aria-label="Create new counter">
-                                    <i class="bi bi-plus-lg" style="margin-right:5px"></i> New
+                                    <i class="bi bi-plus-lg" style="margin-right:5px"></i> New <span class="mobile-new-counter-word" style="margin-left:5px">Counter</span>
                                 </a>
                                 <button class="btn btn-outline-secondary btn-sm d-md-none" type="button" data-bs-toggle="collapse" data-bs-target="#mobileHeaderNav" aria-expanded="false" aria-controls="mobileHeaderNav" aria-label="Toggle navigation">
                                     <i class="bi bi-list"></i>

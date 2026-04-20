@@ -19,7 +19,7 @@
     }
     .dark .theme-logo-large-dark {
         display: inline-block;
-        width:194px;
+        max-width:348px;
     }
     .dark .theme-logo-small-dark {
         display: none;
@@ -46,9 +46,8 @@
     /* Smooth handling */
     .theme-logo-wrapper img {
         height: auto;
-        width: 196px;
         transition: none;
-        max-width: 196px;
+        max-width: 350px;
         object-fit: contain;
     }
 </style>
