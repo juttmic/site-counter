@@ -178,7 +178,7 @@
                                 <a href="{{ route('timers.create') }}"
                                    class="btn btn-primary btn-sm d-md-none d-inline-flex align-items-center justify-content-center mobile-new-counter-btn"
                                    aria-label="Create new counter">
-                                    <i class="bi bi-plus-lg" style="margin-right:5px"></i> <span class="mobile-new-word">New</span> <span class="mobile-new-counter-word" style="margin-left:5px">Counter</span>
+                                    <i class="bi bi-plus-lg" style="margin-right:5px"></i> <span class="mobile-new-word">New</span> <span class="mobile-new-counter-word" style="margin-left:5px">Timer</span>
                                 </a>
                                 <button class="btn btn-outline-secondary btn-sm d-md-none" type="button" data-bs-toggle="collapse" data-bs-target="#mobileHeaderNav" aria-expanded="false" aria-controls="mobileHeaderNav" aria-label="Toggle navigation">
                                     <i class="bi bi-list"></i>
@@ -186,7 +186,7 @@
                                 <a href="{{ route('timers.create') }}"
                                    class="btn btn-primary btn-sm d-none d-md-inline-flex align-items-center justify-content-center"
                                    aria-label="Create new counter">
-                                    <i class="bi bi-plus-lg" style="margin-right:5px"></i> New Counter
+                                    <i class="bi bi-plus-lg" style="margin-right:5px"></i> New Timer
                                 </a>
                                 <div class="dropdown d-none d-md-block">
                                     <button class="btn btn-outline-secondary btn-sm d-flex align-items-center justify-content-center rounded-circle p-0" type="button" id="userMenuDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="width: 38px; height: 38px;">
