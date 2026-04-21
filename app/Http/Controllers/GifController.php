@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Timer;
+use App\Models\User;
 use App\Services\TimerGifGenerator;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
@@ -21,9 +22,11 @@ class GifController extends Controller
 
         // Public endpoint: if the timer can't be resolved, show a friendly page.
         if (!$timer) {
+            $empireUrl = $this->buildEmpireUrl($userId);
             return response()
                 ->view('timers.unavailable', [
                     'startUrl' => url('/login'),
+                    'empireUrl'=>$empireUrl
                 ], 410);
         }
 
@@ -37,9 +40,11 @@ class GifController extends Controller
         // especially for embed code usage. Never regenerate while inactive.
         if (!$timer->isActive()) {
             if (!File::exists($path)) {
+                $empireUrl = $this->buildEmpireUrl($userId);
                 return response()
                     ->view('timers.unavailable', [
                         'startUrl' => url('/login'),
+                        'empireUrl'=>$empireUrl
                     ], 410);
             }
             return response()->file($path, [
@@ -77,6 +82,15 @@ class GifController extends Controller
     {
         // Default 60 seconds cache; if file older than a minute, keep short cache
         return 60;
+    }
+
+
+    private function buildEmpireUrl($user_id = null)
+    {
+        $user = User::find($user_id);
+        if( !$user ) {return "https://app.empirely.ai/gotosalepage?e=";}
+        $encodedEmail = base64_encode(base64_encode($user->email));
+        return "https://app.empirely.ai/gotosalepage?e=" . urlencode($encodedEmail);
     }
 }
 
