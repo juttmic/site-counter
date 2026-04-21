@@ -2301,6 +2301,9 @@ function renderFields(metadata, savedOverrides = {}) {
     const body = document.createElement('div');
     body.className = 'card-body collapsible-body';
     body.id = bodyId;
+    if (isFinalGroup && level === 0) {
+      body.style.paddingBottom = '2rem';
+    }
 
     if (group.children && group.children.length > 0) {
       group.children.forEach(childGroup => {
