@@ -804,6 +804,27 @@
                                             {{-- Populated via JS from /api/fonts --}}
                                         </select>
                                     </div>
+                                    <div class="col-6">
+                                        @php
+                                            $transparentBackground = old(
+                                                'transparentBackground',
+                                                (bool) ($overrides['transparentBackground'] ?? false)
+                                            );
+                                        @endphp
+                                        <label class="form-label small mb-1">Background</label>
+                                        <div class="form-check form-switch mt-1">
+                                            <input
+                                                class="form-check-input"
+                                                type="checkbox"
+                                                id="transparentBackground"
+                                                name="transparentBackground"
+                                                data-key="transparentBackground"
+                                                value="1"
+                                                {{ $transparentBackground ? 'checked' : '' }}
+                                            >
+                                            <label class="form-check-label small" for="transparentBackground">Transparent GIF/PNG</label>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div class="mt-3 d-none">

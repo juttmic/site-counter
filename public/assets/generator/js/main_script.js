@@ -847,6 +847,14 @@ document.addEventListener('DOMContentLoaded', function() {
     fontSelect.addEventListener('change', syncOverrides);
   }
 
+  const transparentBgToggle = document.getElementById('transparentBackground');
+  if (transparentBgToggle) {
+    transparentBgToggle.addEventListener('change', () => {
+      if (typeof syncOverrides === 'function') syncOverrides();
+      if (typeof generatePreviewFrame === 'function') generatePreviewFrame();
+    });
+  }
+
   // Fetch fonts and populate font select
   (async function loadFontsIntoSelect() {
     const fontSelect = document.getElementById('customTextFont');

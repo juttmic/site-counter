@@ -88,7 +88,7 @@ class TimerGifGenerator
                 // Remaining time is threshold or less: only render the final screen as a static GIF
                 $framePng = $this->renderFinalFrame($skin, $timer->custom_text, $timer->text_position ?? 'none');
                 // Use a minimal non-zero duration so encoders behave correctly
-                $this->encodeAnimatedGif([$framePng], $fullPath, 1);
+                $this->encodeAnimatedGif([$framePng], $fullPath, 1, ($skin['transparentBackground'] ?? false) === true);
             } else {
                 // Remaining time is more than threshold: generate countdown frames without the final screen
                 $frameLimit = $this->resolveFrameLimit($timer);
@@ -106,12 +106,12 @@ class TimerGifGenerator
                         for ($i = 0; $i < $padSeconds; $i++) {
                             $frames[] = $finalFrame;
                         }
-                        $this->encodeAnimatedGif($frames, $fullPath, $animateFor + $padSeconds);
+                        $this->encodeAnimatedGif($frames, $fullPath, $animateFor + $padSeconds, ($skin['transparentBackground'] ?? false) === true);
                     } else {
-                        $this->encodeAnimatedGif($frames, $fullPath, $animateFor);
+                        $this->encodeAnimatedGif($frames, $fullPath, $animateFor, ($skin['transparentBackground'] ?? false) === true);
                     }
                 } else {
-                    $this->encodeAnimatedGif($frames, $fullPath, $animateFor);
+                    $this->encodeAnimatedGif($frames, $fullPath, $animateFor, ($skin['transparentBackground'] ?? false) === true);
                 }
             }
         } else {
@@ -120,7 +120,7 @@ class TimerGifGenerator
             // Cap animation length to configured limit but start from actual remaining
             $animateFor = min($frameLimit, max(0, $durationForGif));
             $frames = $this->buildFramesCapped($remaining, $animateFor, $skin, $timer->custom_text, $timer->text_position);
-            $this->encodeAnimatedGif($frames, $fullPath, $animateFor);
+            $this->encodeAnimatedGif($frames, $fullPath, $animateFor, ($skin['transparentBackground'] ?? false) === true);
         }
 
         $url = "/timers/{$userId}/{$filename}";
@@ -164,7 +164,7 @@ class TimerGifGenerator
             if ($remaining <= $finalThresholdSeconds) {
                 // Remaining time is threshold or less: only render the final screen as a static GIF
                 $framePng = $this->renderFinalFrame($skin, $timer->custom_text, $timer->text_position ?? 'none');
-                $this->encodeAnimatedGif([$framePng], $targetPath, 1);
+                $this->encodeAnimatedGif([$framePng], $targetPath, 1, ($skin['transparentBackground'] ?? false) === true);
                 return;
             }
 
@@ -181,19 +181,19 @@ class TimerGifGenerator
                     for ($i = 0; $i < $padSeconds; $i++) {
                         $frames[] = $finalFrame;
                     }
-                    $this->encodeAnimatedGif($frames, $targetPath, $animateFor + $padSeconds);
+                    $this->encodeAnimatedGif($frames, $targetPath, $animateFor + $padSeconds, ($skin['transparentBackground'] ?? false) === true);
                 } else {
-                    $this->encodeAnimatedGif($frames, $targetPath, $animateFor);
+                    $this->encodeAnimatedGif($frames, $targetPath, $animateFor, ($skin['transparentBackground'] ?? false) === true);
                 }
             } else {
-                $this->encodeAnimatedGif($frames, $targetPath, $animateFor);
+                $this->encodeAnimatedGif($frames, $targetPath, $animateFor, ($skin['transparentBackground'] ?? false) === true);
             }
         } else {
             // No final screen configured: keep existing behavior
             $frameLimit = $this->resolveFrameLimit($timer);
             $animateFor = min($frameLimit, $maxAnimateFor, max(0, $durationForGif));
             $frames = $this->buildFramesCapped($remaining, $animateFor, $skin, $timer->custom_text, $timer->text_position);
-            $this->encodeAnimatedGif($frames, $targetPath, $animateFor);
+            $this->encodeAnimatedGif($frames, $targetPath, $animateFor, ($skin['transparentBackground'] ?? false) === true);
         }
     }
 
@@ -237,7 +237,7 @@ class TimerGifGenerator
      * Never shows "Time's Up" — loops by counting down then restarting.
      *
      * @param int $seconds Starting remaining seconds (sample templates use {@see DEFAULT_PREVIEW_SECONDS})
-     * @param int|null $frameCount Number of frames (1 per second); default/max {@see SAMPLE_SKIN_GIF_FRAME_COUNT} (55), not 60
+     * @param int|null $animateFor Number of frames (1 per second); default/max {@see SAMPLE_SKIN_GIF_FRAME_COUNT} (55), not 60
      */
     public function renderSkinGifPreview(string $skinName, string $outputPath, int $seconds = 6, ?string $customText = null, string $textPosition = 'none', ?string $customTextColor = null, array $overrides = [], ?int $animateFor = null): void
     {
@@ -263,7 +263,7 @@ class TimerGifGenerator
         }
 
         \Illuminate\Support\Facades\File::ensureDirectoryExists(dirname($outputPath));
-        $this->encodeAnimatedGif($frames, $outputPath, $frameCount);
+        $this->encodeAnimatedGif($frames, $outputPath, $frameCount, ($skin['transparentBackground'] ?? false) === true);
     }
 
     public function loadSkin(string $skinName): array
@@ -482,7 +482,7 @@ class TimerGifGenerator
      *
      * @return array{0: resource, 1: int, 2: int}
      */
-    private function scaleComposedImageToOutput($im, int $layoutW, int $layoutH, ?int $requestedW, ?int $requestedH, int $defaultOutW, int $defaultOutH, int $bgR, int $bgG, int $bgB): array
+    private function scaleComposedImageToOutput($im, int $layoutW, int $layoutH, ?int $requestedW, ?int $requestedH, int $defaultOutW, int $defaultOutH, int $bgR, int $bgG, int $bgB, bool $transparentBackground = false): array
     {
         $minDim = 100;
         $outW = ($requestedW !== null && $requestedW > 0) ? max($minDim, (int) $requestedW) : $layoutW;
@@ -506,8 +506,17 @@ class TimerGifGenerator
             if ($out === false) {
                 return [$im, $layoutW, $layoutH];
             }
-            $bgFill = imagecolorallocate($out, $bgR, $bgG, $bgB);
+            if ($transparentBackground) {
+                imagealphablending($out, false);
+                imagesavealpha($out, true);
+                $bgFill = imagecolorallocatealpha($out, 0, 0, 0, 127);
+            } else {
+                $bgFill = imagecolorallocate($out, $bgR, $bgG, $bgB);
+            }
             imagefilledrectangle($out, 0, 0, $outW, $outH, $bgFill);
+            if ($transparentBackground) {
+                imagealphablending($out, true);
+            }
             $dstX = (int) floor(($outW - $layoutW) / 2);
             $dstY = (int) floor(($outH - $layoutH) / 2);
             imagecopy($out, $im, $dstX, $dstY, 0, 0, max(1, $layoutW), max(1, $layoutH));
@@ -527,8 +536,17 @@ class TimerGifGenerator
         if ($out === false) {
             return [$im, $layoutW, $layoutH];
         }
-        $bgFill = imagecolorallocate($out, $bgR, $bgG, $bgB);
+        if ($transparentBackground) {
+            imagealphablending($out, false);
+            imagesavealpha($out, true);
+            $bgFill = imagecolorallocatealpha($out, 0, 0, 0, 127);
+        } else {
+            $bgFill = imagecolorallocate($out, $bgR, $bgG, $bgB);
+        }
         imagefilledrectangle($out, 0, 0, $outW, $outH, $bgFill);
+        if ($transparentBackground) {
+            imagealphablending($out, true);
+        }
         imagecopyresampled($out, $im, $dstX, $dstY, 0, 0, $dstW, $dstH, $lw, $lh);
         imagedestroy($im);
 
@@ -538,6 +556,7 @@ class TimerGifGenerator
     public function renderPngFrame(int $secondsRemaining, array $skin, ?string $customText, string $textPosition): string
     {
         $skin = $this->resolveVisibilityLayout($skin);
+        $transparentBackground = ($skin['transparentBackground'] ?? false) === true;
 
         // Base timer dimensions from skin
         $timerW = max(120, (int) ($skin['width'] ?? 400));
@@ -562,10 +581,19 @@ class TimerGifGenerator
 
         // Render timer into off-screen surface
         $timerIm = imagecreatetruecolor($timerW, $timerH);
-        $bgTimer = imagecolorallocate($timerIm, $br, $bg, $bb);
+        if ($transparentBackground) {
+            imagealphablending($timerIm, false);
+            imagesavealpha($timerIm, true);
+            $bgTimer = imagecolorallocatealpha($timerIm, 0, 0, 0, 127);
+        } else {
+            $bgTimer = imagecolorallocate($timerIm, $br, $bg, $bb);
+        }
         $txtTimer = imagecolorallocate($timerIm, $tr, $tg, $tb);
         $accTimer = imagecolorallocate($timerIm, $ar, $ag, $ab);
         imagefilledrectangle($timerIm, 0, 0, $timerW, $timerH, $bgTimer);
+        if ($transparentBackground) {
+            imagealphablending($timerIm, true);
+        }
         $this->logDraw('Timer base rectangle', [
             'shape' => 'rectangle',
             'x' => 0,
@@ -847,7 +875,13 @@ class TimerGifGenerator
 
         // Compose final image at layout (natural) size; output dimensions scale uniformly afterward.
         $im = imagecreatetruecolor($layoutW, $layoutH);
-        $bgCol = imagecolorallocate($im, $br, $bg, $bb);
+        if ($transparentBackground) {
+            imagealphablending($im, false);
+            imagesavealpha($im, true);
+            $bgCol = imagecolorallocatealpha($im, 0, 0, 0, 127);
+        } else {
+            $bgCol = imagecolorallocate($im, $br, $bg, $bb);
+        }
         $txtCol = imagecolorallocate($im, $tr, $tg, $tb);
         // Choose color for custom text: default to skin textColor unless customTextColor is provided
         $ctr = $tr; $ctg = $tg; $ctb = $tb;
@@ -856,6 +890,9 @@ class TimerGifGenerator
         }
         $customTxtCol = imagecolorallocate($im, $ctr, $ctg, $ctb);
         imagefilledrectangle($im, 0, 0, $layoutW, $layoutH, $bgCol);
+        if ($transparentBackground) {
+            imagealphablending($im, true);
+        }
         $this->logDraw('Canvas background', [
             'shape' => 'rectangle',
             'x' => 0,
@@ -982,7 +1019,8 @@ class TimerGifGenerator
             (int) ($skin['__defaultOutputHeight'] ?? $layoutH),
             $br,
             $bg,
-            $bb
+            $bb,
+            $transparentBackground
         );
 
         // Optional border around entire canvas
@@ -1665,13 +1703,23 @@ class TimerGifGenerator
         $layoutH = $timerH + ($edgePad * 2);
         $offsetY = $edgePad;
 
+        $transparentBackground = ($skin['transparentBackground'] ?? false) === true;
         $im = imagecreatetruecolor($layoutW, $layoutH);
         $bgHex = (string) ($skin['finalBackground'] ?? $skin['background']);
         [$br, $bg, $bb] = $this->hexToRgb($bgHex);
         [$tr, $tg, $tb] = $this->hexToRgb((string) ($skin['finalTextColor'] ?? $skin['textColor']));
-        $bgCol = imagecolorallocate($im, $br, $bg, $bb);
+        if ($transparentBackground) {
+            imagealphablending($im, false);
+            imagesavealpha($im, true);
+            $bgCol = imagecolorallocatealpha($im, 0, 0, 0, 127);
+        } else {
+            $bgCol = imagecolorallocate($im, $br, $bg, $bb);
+        }
         $textCol = imagecolorallocate($im, $tr, $tg, $tb);
         imagefilledrectangle($im, 0, 0, $layoutW, $layoutH, $bgCol);
+        if ($transparentBackground) {
+            imagealphablending($im, true);
+        }
         $this->drawRoundedRect($im, 0, 0, $layoutW, $layoutH, 12, $bgCol);
 
         if (is_file($font)) {
@@ -1718,7 +1766,8 @@ class TimerGifGenerator
             (int) ($skin['__defaultOutputHeight'] ?? $layoutH),
             $br,
             $bg,
-            $bb
+            $bb,
+            $transparentBackground
         );
 
         // Optional border on final frame
@@ -1758,7 +1807,7 @@ class TimerGifGenerator
         }
     }
 
-    private function encodeAnimatedGif(array $pngFrames, string $outputPath, int $totalSeconds): void
+    private function encodeAnimatedGif(array $pngFrames, string $outputPath, int $totalSeconds, bool $transparentBackground = false): void
     {
         // Calculate frame delay based on step size (must match buildFrames logic)
         // For durations up to 60s, show every second
@@ -1780,6 +1829,12 @@ class TimerGifGenerator
             foreach ($pngFrames as $frame) {
                 $frameImagick = new \Imagick();
                 $frameImagick->readImageBlob($frame);
+                if ($transparentBackground) {
+                    $frameImagick->setImageAlphaChannel(\Imagick::ALPHACHANNEL_ACTIVATE);
+                } else {
+                    // Ensure opaque output matches legacy behavior.
+                    $frameImagick->setImageAlphaChannel(\Imagick::ALPHACHANNEL_REMOVE);
+                }
                 $frameImagick->setImageFormat('gif');
                 $frameImagick->setImageDelay($frameDelay); // centiseconds per frame
                 $frameImagick->setImageDispose(\Imagick::DISPOSE_BACKGROUND);
