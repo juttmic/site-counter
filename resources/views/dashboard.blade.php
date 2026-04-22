@@ -6,8 +6,88 @@
             </h2>
         </div> --}}
     </x-slot>
+<style>
+  
+.promotion-box-main {
+  padding-inline: 25px;
+  margin-bottom: 34px;
+  padding-block: 10px;
+}
+.promotion-box-main .card-body {
+  display: flex;
+  align-items: center;
+}
+.promotion-box-main h4{
+  margin-bottom: 0;
+  width: 115px;
+  font-size: 20px;
+}
+.promotion-box-main ul{
+  display: grid;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding-left: 0;
+  margin: 0;
+  grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
+}
+.promotion-box-main ul li{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-right: solid 1px #d4d4d4;
+}
+.promotion-box-main ul li:last-child{
+  border-right: 0;
+}
+.promotion-box-main ul li img{
+  width: 35px;
+}
+.promotion-box-main ul li p{
+  margin-bottom: 0;
+  margin-left: 15px;
+}
 
-    <div class="py-2 py-md-3">
+
+
+
+@media (max-width: 1440px){
+  .promotion-box-main {
+    padding-inline: 10px;
+  }
+}
+
+
+
+
+@media (max-width: 1199px){
+  .promotion-box-main .card-body {
+      display: block;
+    }
+    .promotion-box-main h4 {
+      margin-bottom: 20px;
+    }
+  .promotion-box-main ul{
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+  .promotion-box-main ul li{
+    margin-bottom: 20px;
+    justify-content: flex-start;
+    border-right: 0;
+  }
+}
+
+
+
+
+@media (max-width: 767px){
+  .promotion-box-main ul{
+    grid-template-columns: 1fr 1fr;
+  }
+
+}
+</style>
+    <div class="py-2 py-md-3 pt-0 pt-md-0">
         <div class="container-fluid">
           <div class="" style="display: flex;
     flex-direction: row;
@@ -16,6 +96,41 @@
     {{-- <a href="{{ route('timers.create') }}" class="btn btn-primary text-decoration-none fw-semibold {{ request()->routeIs('timers.create') ? 'text-primary' : 'text-dark' }}" style="color:white !important">Create New</a> --}}
                                 </div>
             <div class="rounded">
+              <div class="card shadow-sm border-0 promotion-box-main">
+                <div class="card-body ">
+                        <h4>Perfect for:</h4>
+                        <ul>
+                                <li>
+                                        <img src="{{ asset("assets/icons/sales.png") }}" alt="Sales" />
+                                        <p>Sales </p>
+                                </li>
+                                <li>
+                                        <img src="{{ asset("assets/icons/calendar.png") }}" alt="Calendar" />
+                                        <p>Events  </p>
+                                </li>
+                                <li>
+                                        <img src="{{ asset("assets/icons/gift.png") }}" alt="Gift" />
+                                        <p>Giveaways  </p>
+                                </li>
+                                <li>
+                                        <img src="{{ asset("assets/icons/startup.png") }}" alt="Startup" />
+                                        <p>Launches  </p>
+                                </li>
+                                <li>
+                                        <img src="{{ asset("assets/icons/undo.png") }}" alt="Replay" />
+                                        <p>Replays </p>
+                                </li>
+                                <li>
+                                        <img src="{{ asset("assets/icons/trophy.png") }}" alt="Trophy" />
+                                        <p>Challenges  </p>
+                                </li>
+                                <li>
+                                        <img src="{{ asset("assets/icons/deadline.png") }}" alt="Deadline" />
+                                        <p>Deadlines </p>
+                                </li>
+                        </ul>
+                </div>
+        </div>
                 <div class="">
                     @if(isset($timers) && $timers->isEmpty())
                         <div class="alert alert-info">No counters yet. Create your first one!</div>
