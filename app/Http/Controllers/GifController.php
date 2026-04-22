@@ -83,7 +83,7 @@ class GifController extends Controller
                 return $response;
             }
 
-        if ($timer->isFixedDate()) {
+            if ($timer->isFixedDate()) {
             // Regenerate on each request for fixed-date timers (fresh remaining time)
             $t0 = microtime(true);
             Log::channel('gif_embed')->info('embed_regen_start', [
@@ -117,7 +117,7 @@ class GifController extends Controller
                 'ms' => (int) round((microtime(true) - $t0) * 1000),
             ]);
             $this->logGifFileHealth($timer->id, $path);
-        } else {
+            } else {
             // Reload-based timers: only generate once if missing
             if (!File::exists($path)) {
                 $t0 = microtime(true);
@@ -153,7 +153,13 @@ class GifController extends Controller
                 ]);
                 $this->logGifFileHealth($timer->id, $path);
             }
-        }
+            }
+
+            // Hardening: guarantee a clean binary response (no buffered output, no compression).
+            @ini_set('zlib.output_compression', '0');
+            while (ob_get_level() > 0) {
+                @ob_end_clean();
+            }
 
             $response = response()->file($path, [
                 'Content-Type' => 'image/gif',
@@ -227,6 +233,26 @@ class GifController extends Controller
                 'looks_like_gif' => str_starts_with($head, 'GIF8'),
                 'has_trailer' => $tail === "\x3B",
             ]);
+
+            if (class_exists(\Imagick::class)) {
+                try {
+                    $im = new \Imagick();
+                    $im->readImage($path);
+                    Log::channel('gif_embed')->info('embed_file_imagick', [
+                        'timer_id' => $timerId,
+                        'path' => $path,
+                        'frames' => $im->getNumberImages(),
+                    ]);
+                    $im->clear();
+                } catch (\Throwable $e) {
+                    Log::channel('gif_embed')->warning('embed_file_imagick_error', [
+                        'timer_id' => $timerId,
+                        'path' => $path,
+                        'exception_class' => $e::class,
+                        'message' => $e->getMessage(),
+                    ]);
+                }
+            }
         } catch (\Throwable $e) {
             // never break the embed response
         }
