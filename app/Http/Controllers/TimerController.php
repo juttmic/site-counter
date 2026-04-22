@@ -145,7 +145,7 @@ class TimerController extends Controller
         $timer->delete();
 
         if ($request->ajax() || $request->wantsJson()) {
-            return response()->json(['message' => 'Counter deleted.']);
+            return response()->json(['message' => 'Timer deleted.']);
         }
 
         return redirect()->route('dashboard')->with('status', 'Timer deleted');

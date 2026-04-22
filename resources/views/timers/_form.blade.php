@@ -740,7 +740,7 @@
                                 </div>
 
                                 <div class="row g-3 mt-1">
-                                    <label class="form-label">Counter Expires</label>
+                                    <label class="form-label">Timer Expires</label>
                                     <div class="col-12 col-lg-6 type-pill type-toggle" style="
     display: flex;
     flex-direction: column;
@@ -775,7 +775,7 @@
                                            min="{{ now()->format('Y-m-d\\TH:i:s') }}"
                                            value="{{ $inputValue }}"
                                            data-utc="{{ $utcIso }}">
-                                           <div class="form-text small">Select the date and time when the counter stops.</div>
+                                           <div class="form-text small">Select the date and time when the timer stops.</div>
                                 </div>
 
                                 <div id="duration_input" class="{{ ($isEdit && $timer->timer_type !== 'reload_based') || !$isEdit ? 'd-none' : '' }}">
@@ -914,7 +914,7 @@
                             </div>
                             <div class="d-flex gap-2" style="justify-content: space-between;">
                               <button id="reset_design_btn" type="button" class="btn btn-outline-secondary" disabled>Reset Design</button>
-                              <button id="save_btn" type="button" class="btn btn-primary">Save Counter</button>
+                              <button id="save_btn" type="button" class="btn btn-primary">Save Timer</button>
                             </div>
                             
                             

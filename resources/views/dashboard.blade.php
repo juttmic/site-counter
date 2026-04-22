@@ -133,7 +133,7 @@
         </div>
                 <div class="">
                     @if(isset($timers) && $timers->isEmpty())
-                        <div class="alert alert-info">No counters yet. Create your first one!</div>
+                        <div class="alert alert-info">No timers yet. Create your first one!</div>
                     @else
                         @php($gifQueueMode = config('app.gif_generation_mode', 'queue') === 'queue')
                         <div class="row g-3" id="dashboard-timers-row">
@@ -158,9 +158,9 @@
                                       <div class="mb-1">
                                         @if($timer->status === 'active')
                                           @if($timer->timer_type == 'fixed_date' && $timer->target_datetime)
-                                            <span class="badge bg-secondary">Counter ends on {{ $timer->target_datetime->format('M d, Y g:i A') }}</span>
+                                            <span class="badge bg-secondary">Timer ends on {{ $timer->target_datetime->format('M d, Y g:i A') }}</span>
                                           @elseif($timer->timer_type == 'reload_based' && $timer->duration_seconds)
-                                            <span class="badge bg-secondary">Counter restarts in {{ $timer->duration_seconds }} seconds</span>
+                                            <span class="badge bg-secondary">Timer restarts in {{ $timer->duration_seconds }} seconds</span>
                                           @endif
                                         @endif
                                       </div>
@@ -272,13 +272,13 @@
       e.preventDefault();
       e.stopImmediatePropagation();
       if (typeof Swal === 'undefined') {
-        if (window.confirm('Delete this counter?')) {
+        if (window.confirm('Delete this timer?')) {
           submitDashboardDelete(form);
         }
         return;
       }
       Swal.fire({
-        text: 'Delete this counter?',
+        text: 'Delete this timer?',
         icon: 'warning',
         iconHtml: '<i class="fa-solid fa-trash-can"></i>',
         iconColor: '#dc3545',
@@ -318,10 +318,10 @@
           if (row && !row.querySelector('[data-timer-card]')) {
             var wrap = row.closest('.rounded');
             if (wrap) {
-              wrap.innerHTML = '<div class="alert alert-info">No counters yet. Create your first one!</div>';
+              wrap.innerHTML = '<div class="alert alert-info">No timers yet. Create your first one!</div>';
             }
           }
-          if (window.showToast) window.showToast('Counter deleted', 'success');
+          if (window.showToast) window.showToast('Timer deleted', 'success');
           return;
         }
         return res.json().catch(function(){ return {}; }).then(function(err){

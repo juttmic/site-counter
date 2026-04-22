@@ -69,7 +69,7 @@
             @if(!empty($timer->gif_url))
                 @if($timer->needsGifRegeneration())
                     <div class="alert alert-warning text-center mb-3">
-                        GIF is being generated. Your counter changes are saved—this preview may still show the previous GIF until the new one is ready.
+                        GIF is being generated. Your timer changes are saved—this preview may still show the previous GIF until the new one is ready.
                     </div>
                 @endif
                 <div class="d-flex justify-content-center mb-4">
