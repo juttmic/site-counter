@@ -88,12 +88,16 @@
       { "key": "height", "label": "Height", "type": "number", "min": 80, "max": 1000, "step": 5, "group": "Dimensions", "order": 2 },
   
       { "key": "background", "label": "Background", "type": "color", "group": "Appearance", "groupOrder": 1, "order": 1 },
-      { "key": "textColor", "label": "Digit", "type": "color", "group": "Appearance", "order": 2 },
-      { "key": "labelColor", "label": "Label Color", "type": "color", "group": "Appearance", "order": 3 },
-      { "key": "separatorColor", "label": "Divider Color", "type": "color", "group": "Appearance", "order": 4 },
+      
+      { "key": "borderWidth", "label": "Border Width", "type": "number", "min": 0, "max": 50, "step": 1, "group": "Appearance", "order": 2 },
+      { "key": "borderColor", "label": "Border Color", "type": "color", "group": "Appearance", "order": 3 },
+
+      { "key": "textColor", "label": "Digit", "type": "color", "group": "Appearance", "order": 4 },
+      { "key": "labelColor", "label": "Label Color", "type": "color", "group": "Appearance", "order": 5 },
+      { "key": "separatorColor", "label": "Divider Color", "type": "color", "group": "Appearance", "order": 6 },
   
-      { "key": "fontSize", "label": "Digit Font Size", "type": "number", "min": 8, "max": 200, "step": 1, "group": "Appearance", "order": 5 },
-      { "key": "labelFontSize", "label": "Label Font Size", "type": "number", "min": 8, "max": 100, "step": 1, "group": "Appearance", "order": 6 },
+      { "key": "fontSize", "label": "Digit Font Size", "type": "number", "min": 8, "max": 200, "step": 1, "group": "Appearance", "order": 7 },
+      { "key": "labelFontSize", "label": "Label Font Size", "type": "number", "min": 8, "max": 100, "step": 1, "group": "Appearance", "order": 8 },
   
       { "key": "separatorWidth", "label": "Divider Width", "type": "number", "min": 1, "max": 10, "step": 1, "group": "Layout", "groupOrder": 3, "order": 1 },
       { "key": "separatorHeight", "label": "Divider Height", "type": "number", "min": 10, "max": 150, "step": 1, "group": "Layout", "order": 2 },

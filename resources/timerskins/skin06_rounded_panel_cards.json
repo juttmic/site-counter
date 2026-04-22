@@ -104,17 +104,21 @@
       { "key": "height", "label": "Height", "type": "number", "min": 80, "max": 1000, "step": 5, "group": "Dimensions", "order": 2 },
   
       { "key": "background", "label": "Background", "type": "color", "group": "Appearance", "groupOrder": 1, "order": 1 },
-      { "key": "cardBackground", "label": "Card Background", "type": "color", "group": "Appearance", "order": 2 },
-      { "key": "numberBoxBackground", "label": "Digit Box Background", "type": "color", "group": "Appearance", "order": 3 },
-      { "key": "textColor", "label": "Digit", "type": "color", "group": "Appearance", "order": 4 },
-      { "key": "labelColor", "label": "Label Color", "type": "color", "group": "Appearance", "order": 5 },
-      { "key": "accentColor", "label": "Highlight Border Color", "type": "color", "group": "Appearance", "order": 6 },
+      
+      { "key": "borderWidth", "label": "Border Width", "type": "number", "min": 0, "max": 50, "step": 1, "group": "Appearance", "order": 2 },
+      { "key": "borderColor", "label": "Border Color", "type": "color", "group": "Appearance", "order": 3 },
+    
+
+      { "key": "cardBackground", "label": "Card Background", "type": "color", "group": "Appearance", "order": 4 },
+      { "key": "numberBoxBackground", "label": "Digit Box Background", "type": "color", "group": "Appearance", "order": 5 },
+      { "key": "textColor", "label": "Digit", "type": "color", "group": "Appearance", "order": 6 },
+      { "key": "labelColor", "label": "Label Color", "type": "color", "group": "Appearance", "order": 7 },
+      { "key": "accentColor", "label": "Highlight Border Color", "type": "color", "group": "Appearance", "order": 8 },
   
-      { "key": "fontSize", "label": "Digit Font Size", "type": "number", "min": 8, "max": 200, "step": 1, "group": "Appearance", "order": 7 },
-      { "key": "labelFontSize", "label": "Label Font Size", "type": "number", "min": 8, "max": 100, "step": 1, "group": "Appearance", "order": 8 },
+      { "key": "fontSize", "label": "Digit Font Size", "type": "number", "min": 8, "max": 200, "step": 1, "group": "Appearance", "order": 9 },
+      { "key": "labelFontSize", "label": "Label Font Size", "type": "number", "min": 8, "max": 100, "step": 1, "group": "Appearance", "order": 10 },
   
-      { "key": "borderWidth", "label": "Outer Border Width", "type": "number", "min": 0, "max": 20, "step": 1, "group": "Appearance", "order": 9 },
-      { "key": "borderColor", "label": "Outer Border Color", "type": "color", "group": "Appearance", "order": 10 },
+      
   
       { "key": "cardRadius", "label": "Card Radius", "type": "number", "min": 0, "max": 50, "step": 1, "group": "Layout", "groupOrder": 3, "order": 1 },
       { "key": "numberBoxRadius", "label": "Digit Box Radius", "type": "number", "min": 0, "max": 50, "step": 1, "group": "Layout", "order": 2 },
