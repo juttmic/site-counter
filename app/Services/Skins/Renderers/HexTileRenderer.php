@@ -43,7 +43,7 @@ class HexTileRenderer implements SkinRendererInterface
             $points = $this->regularHexagonPoints($centerX, $centerY, $radius);
 
             // Filled hex tile
-            imagefilledpolygon($im, $points, 6, $accentCol);
+            imagefilledpolygon($im, $points, $accentCol);
 
             // Thin red rectangular border around the hex tile
             // $leftX = $centerX - $radius;

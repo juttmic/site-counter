@@ -1809,6 +1809,24 @@ class TimerGifGenerator
 
     private function encodeAnimatedGif(array $pngFrames, string $outputPath, int $totalSeconds, bool $transparentBackground = false): void
     {
+        $swap = function (string $tmpPath, string $finalPath): void {
+            // Atomic-ish replace on Windows: move existing aside, then swap.
+            $backup = $finalPath . '.bak';
+            try {
+                if (File::exists($finalPath)) {
+                    @rename($finalPath, $backup);
+                }
+                @rename($tmpPath, $finalPath);
+            } finally {
+                if (is_file($backup)) {
+                    @unlink($backup);
+                }
+                if (is_file($tmpPath)) {
+                    @unlink($tmpPath);
+                }
+            }
+        };
+
         // Calculate frame delay based on step size (must match buildFrames logic)
         // For durations up to 60s, show every second
         // For 1-5 minutes, show every 2 seconds  
@@ -1824,6 +1842,7 @@ class TimerGifGenerator
         
         // Try Imagick first if available
         if (class_exists(\Imagick::class)) {
+            $tmp = $outputPath . '.tmp.' . bin2hex(random_bytes(3));
             $imagick = new \Imagick();
             $imagick->setFormat('gif');
             foreach ($pngFrames as $frame) {
@@ -1844,7 +1863,8 @@ class TimerGifGenerator
             foreach ($imagick as $img) {
                 $img->setImageIterations(0); // loop forever
             }
-            $imagick->writeImages($outputPath, true);
+            $imagick->writeImages($tmp, true);
+            $swap($tmp, $outputPath);
             return;
         }
 
@@ -1852,7 +1872,9 @@ class TimerGifGenerator
         $encoder = new GifCreator();
         $durations = array_fill(0, count($pngFrames), $frameDelay);
         $encoder->create($pngFrames, $durations, 0);
-        File::put($outputPath, $encoder->getGif());
+        $tmp = $outputPath . '.tmp.' . bin2hex(random_bytes(3));
+        File::put($tmp, $encoder->getGif());
+        $swap($tmp, $outputPath);
     }
 
     private function hexToRgb(string $hex): array

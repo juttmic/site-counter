@@ -76,7 +76,10 @@ class Timer extends Model
 
         if ($this->isFixedDate() && $this->target_datetime instanceof CarbonInterface) {
             $diff = now()->diffInSeconds($this->target_datetime, false);
-            return max(0, $diff);
+            // Carbon may return a float (microseconds precision). Normalize to an int to avoid
+            // PHP 8.3+ deprecation warnings about implicit float->int conversion.
+            $diffInt = (int) ($diff >= 0 ? floor((float) $diff) : ceil((float) $diff));
+            return max(0, $diffInt);
         }
 
         return 0;

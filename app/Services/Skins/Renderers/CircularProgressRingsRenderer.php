@@ -91,7 +91,7 @@ class CircularProgressRingsRenderer implements SkinRendererInterface
                 if ($progress >= 0.999) {
                     $this->thickArc($im, $cx, $centerY, $radius, 0, 360, $accentCol, $ringStroke);
                 } else {
-                    $endAngle = 270 - (360 * $progress);
+                    $endAngle = (int) round(270 - (360 * $progress));
                     $this->thickArc($im, $cx, $centerY, $radius, 270, $endAngle, $accentCol, $ringStroke);
                 }
             }

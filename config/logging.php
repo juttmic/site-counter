@@ -84,6 +84,13 @@ return [
             'days' => (int) env('GIF_QUEUE_LOG_DAYS', 14),
             'replace_placeholders' => true,
         ],
+        'gif_embed' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/gif-embed/gif_embed.log'),
+            'level' => env('LOG_LEVEL', 'info'),
+            'days' => (int) env('GIF_QUEUE_LOG_DAYS', 14),
+            'replace_placeholders' => true,
+        ],
         'fixer' => [
             'driver' => 'daily',
             'path' => storage_path('logs/fixer/fixer.log'),

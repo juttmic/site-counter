@@ -31,7 +31,7 @@ class RibbonTagRenderer implements SkinRendererInterface
                 $x + $unitWidth, $y + (int)($tagH/2),
                 $x + $unitWidth - 12, $y + $tagH
             ];
-            imagefilledpolygon($im, $points, 3, $accentCol);
+            imagefilledpolygon($im, $points, $accentCol);
         }
     }
 
