@@ -2322,6 +2322,16 @@ function renderFields(metadata, savedOverrides = {}) {
       const row = document.createElement('div');
       row.className = 'd-flex justify-content-between align-items-center mb-3';
 
+      function updatePreviewTransparencyBackground(isTransparent) {
+        const preview = document.getElementById('preview_frame');
+        if (!preview) return;
+        if (isTransparent) {
+          preview.style.background = 'conic-gradient(#ccc 25%, #fff 0 50%, #ccc 0 75%, #fff 0) 0 0 / 20px 20px';
+        } else {
+          preview.style.background = '';
+        }
+      }
+
       const toggleWrap = document.createElement('div');
       toggleWrap.className = 'form-check form-switch mb-0';
 
@@ -2372,11 +2382,13 @@ function renderFields(metadata, savedOverrides = {}) {
       toggleWrap.addEventListener('click', (e) => e.stopPropagation());
       toggleInput.addEventListener('change', () => {
         updateBackgroundFieldVisibility();
+        updatePreviewTransparencyBackground(!!toggleInput.checked);
         if (typeof syncOverrides === 'function') syncOverrides();
         if (typeof generatePreviewFrame === 'function') generatePreviewFrame();
       });
 
       updateBackgroundFieldVisibility();
+      updatePreviewTransparencyBackground(!!toggleInput.checked);
 
       row.appendChild(toggleWrap);
       row.appendChild(colorizerBtn);
