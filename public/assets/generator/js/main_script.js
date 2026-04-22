@@ -847,13 +847,7 @@ document.addEventListener('DOMContentLoaded', function() {
     fontSelect.addEventListener('change', syncOverrides);
   }
 
-  const transparentBgToggle = document.getElementById('transparentBackground');
-  if (transparentBgToggle) {
-    transparentBgToggle.addEventListener('change', () => {
-      if (typeof syncOverrides === 'function') syncOverrides();
-      if (typeof generatePreviewFrame === 'function') generatePreviewFrame();
-    });
-  }
+  // transparentBackground toggle is rendered dynamically inside the Design section.
 
   // Fetch fonts and populate font select
   (async function loadFontsIntoSelect() {
@@ -2324,9 +2318,30 @@ function renderFields(metadata, savedOverrides = {}) {
     if (isDesignGroup) {
       header.innerHTML = `<span class="text-muted fw-semibold small">${displayTitle}</span><i class="bi bi-chevron-down collapse-icon float-end"></i>`;
 
-      // Colorizer: inside section body, its own line, right-aligned.
+      // Background transparency toggle (left) + Colorizer (right): inside section body, same row.
       const row = document.createElement('div');
-      row.className = 'd-flex justify-content-end mb-3';
+      row.className = 'd-flex justify-content-between align-items-center mb-3';
+
+      const toggleWrap = document.createElement('div');
+      toggleWrap.className = 'form-check form-switch mb-0';
+
+      const toggleInput = document.createElement('input');
+      toggleInput.className = 'form-check-input';
+      toggleInput.type = 'checkbox';
+      toggleInput.id = 'transparentBackground';
+      toggleInput.name = 'transparentBackground';
+      toggleInput.value = '1';
+      toggleInput.dataset.key = 'transparentBackground';
+      toggleInput.checked = !!(savedOverrides?.transparentBackground);
+
+      const toggleLabel = document.createElement('label');
+      toggleLabel.className = 'form-check-label small';
+      toggleLabel.setAttribute('for', 'transparentBackground');
+      toggleLabel.textContent = 'Transparent GIF';
+
+      toggleWrap.appendChild(toggleInput);
+      toggleWrap.appendChild(toggleLabel);
+
       const colorizerBtn = document.createElement('button');
       colorizerBtn.type = 'button';
       colorizerBtn.className = 'skin-colorizer-btn skin-colorizer-btn--rainbow';
@@ -2337,6 +2352,28 @@ function renderFields(metadata, savedOverrides = {}) {
         e.stopPropagation();
         colorizeDesignGroupColors(body);
       });
+
+      function updateBackgroundFieldVisibility() {
+        const bgInput = body.querySelector('[data-key="background"]');
+        if (!bgInput) return;
+        let container = bgInput.parentElement;
+        while (container && container !== body && !/\bcol-/.test(container.className || '')) {
+          container = container.parentElement;
+        }
+        if (!container || container === body) return;
+        container.classList.toggle('d-none', !!toggleInput.checked);
+      }
+
+      toggleWrap.addEventListener('click', (e) => e.stopPropagation());
+      toggleInput.addEventListener('change', () => {
+        updateBackgroundFieldVisibility();
+        if (typeof syncOverrides === 'function') syncOverrides();
+        if (typeof generatePreviewFrame === 'function') generatePreviewFrame();
+      });
+
+      updateBackgroundFieldVisibility();
+
+      row.appendChild(toggleWrap);
       row.appendChild(colorizerBtn);
       body.prepend(row);
     } else {
