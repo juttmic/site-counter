@@ -1023,8 +1023,8 @@ class TimerGifGenerator
             $transparentBackground
         );
 
-        // Optional border around entire canvas
-        if ($borderWidth > 0) {
+        // Optional border around entire canvas (disabled for transparent GIFs)
+        if (!$transparentBackground && $borderWidth > 0) {
             [$brdR, $brdG, $brdB] = $this->hexToRgb((string) ($skin['borderColor'] ?? '#FFFFFF'));
             $brdCol = imagecolorallocate($im, $brdR, $brdG, $brdB);
             $bw = min($borderWidth, (int) floor(min($canvasW, $canvasH) / 2));
@@ -1770,8 +1770,8 @@ class TimerGifGenerator
             $transparentBackground
         );
 
-        // Optional border on final frame
-        if ($borderWidth > 0) {
+        // Optional border on final frame (disabled for transparent GIFs)
+        if (!$transparentBackground && $borderWidth > 0) {
             [$brdR, $brdG, $brdB] = $this->hexToRgb((string) ($skin['borderColor'] ?? '#FFFFFF'));
             $brdCol = imagecolorallocate($im, $brdR, $brdG, $brdB);
             $bw = min($borderWidth, (int) floor(min($canvasW, $canvasH) / 2));

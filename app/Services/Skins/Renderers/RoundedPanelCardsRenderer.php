@@ -111,9 +111,10 @@ class RoundedPanelCardsRenderer implements SkinRendererInterface
         // Cards only – no outer rounded panel/background box
         $cardBg = $this->allocColor($im, $skin['cardBackground'] ?? '#EDF1F5');
         $numberBoxBg = $this->allocColor($im, $skin['numberBoxBackground'] ?? '#FFFFFF');
-        $accentBorderCol = $this->allocColor($im, (string) ($skin['numberBoxBorderColor'] ?? $skin['accentColor'] ?? '#69B7CB'));
-        $neutralBorderCol = $this->allocColor($im, $skin['borderColor'] ?? '#D8E0E8');
-        // Border width should apply to every segment; only the color is "highlighted" on first segment.
+        // "Highlight Border Color" in the UI is accentColor. Use it as the digit-box border color.
+        // Keep numberBoxBorderColor as a legacy override/fallback.
+        $accentBorderCol = $this->allocColor($im, (string) ($skin['accentColor'] ?? $skin['numberBoxBorderColor'] ?? '#69B7CB'));
+        // Border width for each digit box.
         $borderWidth = max(0, min(10, (int) ($skin['numberBoxBorderWidth'] ?? 3)));
         $numberBoxRadius = max(0, (int) ($skin['numberBoxRadius'] ?? 14));
         $cardShadowCol = $this->allocColor($im, $skin['shadowColor'] ?? '#D9E3EB');
@@ -133,8 +134,7 @@ class RoundedPanelCardsRenderer implements SkinRendererInterface
             $boxY = $cardY + $layout['boxPadY'];
             $boxW = $layout['boxW'];
             $boxH = $layout['boxH'];
-            $isHighlighted = ($i === 0);
-            $boxBorderCol = $isHighlighted ? $accentBorderCol : $neutralBorderCol;
+            $boxBorderCol = $accentBorderCol;
             $boxBorderW = $borderWidth;
 
             if ($boxBorderW > 0) {

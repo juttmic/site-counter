@@ -2497,6 +2497,14 @@ function syncOverrides() {
   } else if (resolvedTextColor) {
     data.finalTextColor = resolvedTextColor;
   }
+
+  // Transparent background mode: do not persist/apply background + outer border controls.
+  // (They are hidden in the UI, but this also protects against legacy saved overrides.)
+  if (data.transparentBackground === true) {
+    delete data.background;
+    delete data.borderWidth;
+    delete data.borderColor;
+  }
   
   // Include static custom text fields from the Custom Text settings card (stored in skin_overrides)
   // Always save these values so they persist across skin changes
