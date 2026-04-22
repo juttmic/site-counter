@@ -2354,14 +2354,19 @@ function renderFields(metadata, savedOverrides = {}) {
       });
 
       function updateBackgroundFieldVisibility() {
-        const bgInput = body.querySelector('[data-key="background"]');
-        if (!bgInput) return;
-        let container = bgInput.parentElement;
-        while (container && container !== body && !/\bcol-/.test(container.className || '')) {
-          container = container.parentElement;
-        }
-        if (!container || container === body) return;
-        container.classList.toggle('d-none', !!toggleInput.checked);
+        const keysToToggle = ['background', 'borderWidth', 'borderColor'];
+        const hide = !!toggleInput.checked;
+
+        keysToToggle.forEach((key) => {
+          const input = body.querySelector(`[data-key="${key}"]`);
+          if (!input) return;
+          let container = input.parentElement;
+          while (container && container !== body && !/\bcol-/.test(container.className || '')) {
+            container = container.parentElement;
+          }
+          if (!container || container === body) return;
+          container.classList.toggle('d-none', hide);
+        });
       }
 
       toggleWrap.addEventListener('click', (e) => e.stopPropagation());
