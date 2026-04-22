@@ -782,7 +782,7 @@
                                     {{-- <label class="form-label">Duration (seconds)</label> --}}
                                     <input type="number" name="duration_seconds" class="form-control" min="1" max="604800"
                                            value="{{ old('duration_seconds', $timer->duration_seconds ?? '') }}">
-                                           <div class="form-text small">Enter how long the counter runs before restarting<br>e.g. Enter 120 for 2 minutes.</div>
+                                           <div class="form-text small">Enter how long the timer runs before restarting<br>e.g. Enter 120 for 2 minutes.</div>
                                 </div>
                                     </div>
                                 </div>
