@@ -1466,6 +1466,7 @@ function bindBoolPillGroupToCheckbox(pillGroupEl, checkboxEl) {
   syncFromCheckbox();
   buttons.forEach((btn) => {
     btn.addEventListener('click', () => {
+      if (btn.disabled || btn.getAttribute('aria-disabled') === 'true') return;
       const turnOn = btn.dataset.boolOn === '1';
       if (checkboxEl.checked === turnOn) return;
       checkboxEl.checked = turnOn;
@@ -1477,12 +1478,13 @@ function bindBoolPillGroupToCheckbox(pillGroupEl, checkboxEl) {
   checkboxEl.addEventListener('change', syncFromCheckbox);
 }
 
-function enforceHideDays24hRuleSilent() {
-  // If user chose "Hide Days" (showDays=false) but the timer exceeds 24h,
-  // automatically switch back to showing days.
+function syncHideDaysToggleAvailability() {
   const showDaysInput = document.querySelector('input[data-key="showDays"]');
   if (!showDaysInput) return;
-  if (showDaysInput.checked) return; // already showing days
+
+  const pillGroup = showDaysInput.closest('.type-toggle')?.querySelector('.toggle-pill-group');
+  const yesBtn = pillGroup?.querySelector('.toggle-pill[data-bool-on="0"]');
+  if (!yesBtn) return;
 
   const timerType = document.getElementById('timer_type')?.value || 'fixed_date';
   let seconds = null;
@@ -1500,7 +1502,46 @@ function enforceHideDays24hRuleSilent() {
     }
   }
 
-  if (seconds != null && seconds > 86400) {
+  const canHideDays = seconds == null || seconds <= 86400;
+  yesBtn.disabled = !canHideDays;
+  yesBtn.setAttribute('aria-disabled', canHideDays ? 'false' : 'true');
+  yesBtn.classList.toggle('disabled', !canHideDays);
+
+  if (!canHideDays && !showDaysInput.checked) {
+    showDaysInput.checked = true;
+    pillGroup.querySelectorAll('.toggle-pill').forEach((btn) => {
+      const isOnPill = btn.dataset.boolOn === '1';
+      btn.classList.toggle('active', isOnPill === true);
+    });
+  }
+}
+
+function enforceHideDays24hRuleSilent() {
+  // If user chose "Hide Days" (showDays=false) but the timer exceeds 24h,
+  // automatically switch back to showing days.
+  const showDaysInput = document.querySelector('input[data-key="showDays"]');
+  if (!showDaysInput) return;
+  const wasChecked = !!showDaysInput.checked;
+  const timerType = document.getElementById('timer_type')?.value || 'fixed_date';
+  let seconds = null;
+  if (timerType === 'reload_based') {
+    const dur = Number(document.querySelector('input[name="duration_seconds"]')?.value);
+    if (Number.isFinite(dur) && dur > 0) seconds = dur;
+  } else {
+    const raw = (document.querySelector('input[name="target_datetime"]')?.value || '').trim();
+    if (raw) {
+      const target = new Date(raw);
+      if (!Number.isNaN(target.getTime())) {
+        const diff = Math.floor((target.getTime() - Date.now()) / 1000);
+        if (Number.isFinite(diff) && diff > 0) seconds = diff;
+      }
+    }
+  }
+
+  syncHideDaysToggleAvailability();
+  if (wasChecked && showDaysInput.checked) return; // already showing days
+
+  if (seconds != null && seconds > 86400 && !wasChecked) {
     showDaysInput.checked = true; // "Hide Days?" -> No
     showDaysInput.dispatchEvent(new Event('change', { bubbles: true }));
     showDaysInput.dispatchEvent(new Event('input', { bubbles: true }));
@@ -2916,6 +2957,11 @@ document.addEventListener('DOMContentLoaded', () => {
   if (durationInput) {
     durationInput.addEventListener('change', () => enforceHideDays24hRuleSilent());
     durationInput.addEventListener('input', () => enforceHideDays24hRuleSilent());
+  }
+  const targetInput = document.querySelector('input[name="target_datetime"]');
+  if (targetInput) {
+    targetInput.addEventListener('change', () => enforceHideDays24hRuleSilent());
+    targetInput.addEventListener('input', () => enforceHideDays24hRuleSilent());
   }
 
   (async () => {
