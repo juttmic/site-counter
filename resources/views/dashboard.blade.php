@@ -158,7 +158,8 @@
                                       <div class="mb-1">
                                         @if($timer->status === 'active')
                                           @if($timer->timer_type == 'fixed_date' && $timer->target_datetime)
-                                            <span class="badge bg-secondary">Timer ends on {{ $timer->target_datetime->format('M d, Y g:i A') }}</span>
+                                            <span class="badge bg-secondary" data-dashboard-local-datetime="{{ $timer->target_datetime->copy()->utc()->toIso8601String() }}"
+                                            >Timer ends on {{ $timer->target_datetime->format('M d, Y g:i A') }}</span>
                                           @elseif($timer->timer_type == 'reload_based' && $timer->duration_seconds)
                                             <span class="badge bg-secondary">Timer restarts in {{ $timer->duration_seconds }} seconds</span>
                                           @endif
@@ -265,6 +266,34 @@
 
     <div id="dashboard-gif-poll-config" class="d-none" data-gif-status-url="{{ route('timers.gif-status') }}"></div>
     <script>
+    (function dashboardLocalDatetimeLabels(){
+      var nodes = document.querySelectorAll('[data-dashboard-local-datetime]');
+      if (!nodes.length || !window.Intl || !Intl.DateTimeFormat) return;
+
+      var formatter;
+      try {
+        formatter = new Intl.DateTimeFormat(undefined, {
+          month: 'short',
+          day: '2-digit',
+          year: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+        });
+      } catch (e) {
+        return;
+      }
+
+      nodes.forEach(function(node){
+        var iso = node.getAttribute('data-dashboard-local-datetime');
+        if (!iso) return;
+
+        var date = new Date(iso);
+        if (isNaN(date.getTime())) return;
+
+        node.textContent = 'Timer ends on ' + formatter.format(date);
+      });
+    })();
+
     // AJAX delete (capture phase runs before layout's data-confirm handler)
     document.addEventListener('submit', function(e){
       var form = e.target && e.target.matches('form[data-ajax-delete]') ? e.target : null;
