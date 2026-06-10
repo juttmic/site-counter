@@ -1483,8 +1483,9 @@ function syncHideDaysToggleAvailability() {
   if (!showDaysInput) return;
 
   const pillGroup = showDaysInput.closest('.type-toggle')?.querySelector('.toggle-pill-group');
-  const yesBtn = pillGroup?.querySelector('.toggle-pill[data-bool-on="0"]');
-  if (!yesBtn) return;
+  if (!pillGroup) return;
+  const buttons = Array.from(pillGroup.querySelectorAll('.toggle-pill'));
+  if (!buttons.length) return;
 
   const timerType = document.getElementById('timer_type')?.value || 'fixed_date';
   let seconds = null;
@@ -1503,13 +1504,18 @@ function syncHideDaysToggleAvailability() {
   }
 
   const canHideDays = seconds == null || seconds <= 86400;
-  yesBtn.disabled = !canHideDays;
-  yesBtn.setAttribute('aria-disabled', canHideDays ? 'false' : 'true');
-  yesBtn.classList.toggle('disabled', !canHideDays);
+  buttons.forEach((btn) => {
+    btn.disabled = !canHideDays;
+    btn.setAttribute('aria-disabled', canHideDays ? 'false' : 'true');
+    btn.classList.toggle('disabled', !canHideDays);
+    btn.style.backgroundColor = canHideDays ? '' : '#e5e7eb';
+    btn.style.color = canHideDays ? '' : '#6b7280';
+    btn.style.borderColor = canHideDays ? '' : '#d1d5db';
+  });
 
   if (!canHideDays && !showDaysInput.checked) {
     showDaysInput.checked = true;
-    pillGroup.querySelectorAll('.toggle-pill').forEach((btn) => {
+    buttons.forEach((btn) => {
       const isOnPill = btn.dataset.boolOn === '1';
       btn.classList.toggle('active', isOnPill === true);
     });
