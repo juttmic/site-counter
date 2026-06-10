@@ -1503,7 +1503,7 @@ function syncHideDaysToggleAvailability() {
     }
   }
 
-  const canHideDays = seconds == null || seconds <= 86400;
+  const canHideDays = seconds != null && seconds <= 86400;
   buttons.forEach((btn) => {
     btn.disabled = !canHideDays;
     btn.setAttribute('aria-disabled', canHideDays ? 'false' : 'true');
@@ -2786,12 +2786,14 @@ function schedulePostSkinSelectSync(isSwitchingToDifferentSkin, isEdit) {
       if (!isEdit) {
         applyDefaultSampleTimeIfEmpty();
       }
+      syncHideDaysToggleAvailability();
       syncOverrides();
     }, 100);
   } else {
     if (!isEdit) {
       applyDefaultSampleTimeIfEmpty();
     }
+    syncHideDaysToggleAvailability();
     generatePreviewFrame();
   }
 }
@@ -2834,6 +2836,7 @@ async function selectSkin(key) {
     collapseAllSectionsExceptGeneral();
     setupCollapsibles(document);
     enforceHideDays24hRuleSilent();
+    syncHideDaysToggleAvailability();
 
     if (isFirstLoad && Object.keys(baseOverrides).length > 0) {
       lastSkinOverrides = { ...baseOverrides };
@@ -3003,15 +3006,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const isEdit = form?.dataset.isEdit === '1';
 
         if (isEdit) {
-        // Edit mode: load existing skin with saved overrides
-        const meta = await fetchJson(`/skins/${encodeURIComponent(current)}`);
-        renderFields(meta, savedOverrides);
-        // Ensure only General is expanded after edit-load render.
-        collapseAllSectionsExceptGeneral();
-        setupCollapsibles(document);
-        enforceHideDays24hRuleSilent();
-        // Seed last overrides with saved values so switching skins keeps the user's base settings
-        lastSkinOverrides = savedOverrides;
+          // Edit mode: load existing skin with saved overrides
+          const meta = await fetchJson(`/skins/${encodeURIComponent(current)}`);
+          renderFields(meta, savedOverrides);
+          // Ensure only General is expanded after edit-load render.
+          collapseAllSectionsExceptGeneral();
+          setupCollapsibles(document);
+          enforceHideDays24hRuleSilent();
+          syncHideDaysToggleAvailability();
+          // Seed last overrides with saved values so switching skins keeps the user's base settings
+          lastSkinOverrides = savedOverrides;
         
         // Load custom text fields from savedOverrides into the static form fields
         if (savedOverrides.customTextColor) {
