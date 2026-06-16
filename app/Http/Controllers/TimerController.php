@@ -355,11 +355,7 @@ class TimerController extends Controller
             // Fixed date mode: use target_datetime, ignore duration_seconds for calculation
             if (!empty($data['target_datetime'])) {
                 $tz = (string) ($data['client_timezone'] ?? $request->input('client_timezone') ?? '');
-                $targetUtc = $this->parseClientDateTimeToUtc((string) $data['target_datetime'], $tz);
-                if ($targetUtc->lt(now()->utc())) {
-                    $targetUtc = now()->utc()->addDays(3);
-                }
-                $data['target_datetime'] = $targetUtc;
+                $data['target_datetime'] = $this->parseClientDateTimeToUtc((string) $data['target_datetime'], $tz);
             } elseif ($timer && $timer->target_datetime) {
                 $data['target_datetime'] = $timer->target_datetime;
             } else {
