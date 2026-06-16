@@ -454,29 +454,6 @@ class TimerController extends Controller
             }
         }
 
-        // If days are hidden, restrict the countdown to at most 24 hours.
-        $overrides = $data['skin_overrides'] ?? [];
-        $daysVisible = $overrides['showDays'] ?? true;
-        if ($daysVisible === false) {
-            $maxSeconds = 86400; // 24h
-
-            if ($data['timer_type'] === 'fixed_date' && !empty($data['target_datetime'])) {
-                $diff = now()->utc()->diffInSeconds($data['target_datetime'], false);
-                if ($diff > $maxSeconds) {
-                    throw \Illuminate\Validation\ValidationException::withMessages([
-                        'target_datetime' => 'The counter duration must be 24 hours or less, because days are hidden.',
-                    ]);
-                }
-            }
-
-            if ($data['timer_type'] === 'reload_based' && !empty($data['duration_seconds'])) {
-                if ((int) $data['duration_seconds'] > $maxSeconds) {
-                    throw \Illuminate\Validation\ValidationException::withMessages([
-                        'duration_seconds' => 'The counter duration must be 24 hours or less, because days are hidden.',
-                    ]);
-                }
-            }
-        }
         return $data;
     }
 

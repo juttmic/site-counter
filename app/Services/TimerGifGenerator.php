@@ -555,6 +555,7 @@ class TimerGifGenerator
 
     public function renderPngFrame(int $secondsRemaining, array $skin, ?string $customText, string $textPosition): string
     {
+        $skin = $this->applyHideDaysInLast24h($skin, $secondsRemaining);
         $skin = $this->resolveVisibilityLayout($skin);
         $transparentBackground = ($skin['transparentBackground'] ?? false) === true;
 
@@ -1057,6 +1058,21 @@ class TimerGifGenerator
         // Default to a shareable GIF (1 fps) unless user overrides.
         $limit = (int) ($timer->animation_frame_limit ?? $max);
         return max(10, min($max, $limit));
+    }
+
+    /**
+     * When showDays is false in overrides, the user chose "hide days in the last 24 hours".
+     * Apply that only while remaining time is within 24 hours; otherwise keep days visible.
+     */
+    private function applyHideDaysInLast24h(array $skin, int $secondsRemaining): array
+    {
+        $hideInLast24h = ($skin['showDays'] ?? true) === false;
+        if ($hideInLast24h) {
+            // Within the last 24 hours: hide the days column; otherwise keep days visible.
+            $skin['showDays'] = $secondsRemaining > 86400;
+        }
+
+        return $skin;
     }
 
     /**

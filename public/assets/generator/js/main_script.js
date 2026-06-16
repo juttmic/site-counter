@@ -48,7 +48,6 @@ function toggleInputs(isUserAction = false) {
   }
   // When switching to fixed_date, we intentionally do NOT touch duration_seconds
   // This keeps the fields independent as requested
-  enforceHideDays24hRuleSilent();
 
   // Final message is only applicable for fixed-date timers.
   // For Evergreen (reload_based), hide the entire "Timer Ends Message (optional)" section.
@@ -180,6 +179,30 @@ function parseOverrides() {
   }
 }
 
+function getTimerRemainingSeconds() {
+  const timerType = document.getElementById('timer_type')?.value || 'fixed_date';
+  if (timerType === 'reload_based') {
+    const dur = Number(document.querySelector('input[name="duration_seconds"]')?.value);
+    if (Number.isFinite(dur) && dur > 0) return dur;
+    return null;
+  }
+  const raw = (document.querySelector('input[name="target_datetime"]')?.value || '').trim();
+  if (!raw) return null;
+  const target = new Date(raw);
+  if (Number.isNaN(target.getTime())) return null;
+  const diff = Math.floor((target.getTime() - Date.now()) / 1000);
+  return Number.isFinite(diff) && diff > 0 ? diff : null;
+}
+
+/** Effective showDays for layout/preview: hide only when preference is set and remaining <= 24h. */
+function effectiveShowDaysForSkin(skin) {
+  const hideInLast24h = (skin.showDays ?? true) === false;
+  if (!hideInLast24h) return true;
+  const remaining = getTimerRemainingSeconds();
+  if (remaining == null) return true;
+  return remaining > 86400;
+}
+
 /** Mirror TimerGifGenerator::resolveVisibilityLayout — effective timer width/height used when drawing. */
 function resolveTimerDimensionsFromVisibilityLayouts(defaults, overrides) {
   const skin = { ...defaults, ...(overrides || {}) };
@@ -190,7 +213,7 @@ function resolveTimerDimensionsFromVisibilityLayouts(defaults, overrides) {
       height: firstNumber(skin.height, 160),
     };
   }
-  const showDays = (skin.showDays ?? true) === true;
+  const showDays = effectiveShowDaysForSkin(skin);
   const showSeconds = (skin.showSeconds ?? true) === true;
   let layout = null;
   if (!showDays && !showSeconds && layouts.daysAndSecondsHidden) {
@@ -741,8 +764,6 @@ document.addEventListener('DOMContentLoaded', () => {
     targetInput.addEventListener('change', enforceMinTargetDateTime);
     // Ensure that changing the date does not affect the duration_seconds field
     // The fields are independent - entering a date should not populate or modify duration_seconds
-    targetInput.addEventListener('change', () => enforceHideDays24hRuleSilent());
-    targetInput.addEventListener('input', () => enforceHideDays24hRuleSilent());
   }
 });
 
@@ -1020,7 +1041,6 @@ document.addEventListener('DOMContentLoaded', function() {
   // Initial pass to ensure spacing/height are consistent on load
   clampCustomTextDistance();
   enforceGifHeightMinimum();
-  enforceHideDays24hRuleSilent();
 });
 
 // Skins loading and dynamic form
@@ -1476,82 +1496,6 @@ function bindBoolPillGroupToCheckbox(pillGroupEl, checkboxEl) {
     });
   });
   checkboxEl.addEventListener('change', syncFromCheckbox);
-}
-
-function syncHideDaysToggleAvailability() {
-  const showDaysInput = document.querySelector('input[data-key="showDays"]');
-  if (!showDaysInput) return;
-
-  const pillGroup = showDaysInput.closest('.type-toggle')?.querySelector('.toggle-pill-group');
-  if (!pillGroup) return;
-  const buttons = Array.from(pillGroup.querySelectorAll('.toggle-pill'));
-  if (!buttons.length) return;
-
-  const timerType = document.getElementById('timer_type')?.value || 'fixed_date';
-  let seconds = null;
-  if (timerType === 'reload_based') {
-    const dur = Number(document.querySelector('input[name="duration_seconds"]')?.value);
-    if (Number.isFinite(dur) && dur > 0) seconds = dur;
-  } else {
-    const raw = (document.querySelector('input[name="target_datetime"]')?.value || '').trim();
-    if (raw) {
-      const target = new Date(raw);
-      if (!Number.isNaN(target.getTime())) {
-        const diff = Math.floor((target.getTime() - Date.now()) / 1000);
-        if (Number.isFinite(diff) && diff > 0) seconds = diff;
-      }
-    }
-  }
-
-  const canHideDays = seconds != null && seconds <= 86400;
-  buttons.forEach((btn) => {
-    btn.disabled = !canHideDays;
-    btn.setAttribute('aria-disabled', canHideDays ? 'false' : 'true');
-    btn.classList.toggle('disabled', !canHideDays);
-    btn.style.backgroundColor = canHideDays ? '' : '#e5e7eb';
-    btn.style.color = canHideDays ? '' : '#6b7280';
-    btn.style.borderColor = canHideDays ? '' : '#d1d5db';
-  });
-
-  if (!canHideDays && !showDaysInput.checked) {
-    showDaysInput.checked = true;
-    buttons.forEach((btn) => {
-      const isOnPill = btn.dataset.boolOn === '1';
-      btn.classList.toggle('active', isOnPill === true);
-    });
-  }
-}
-
-function enforceHideDays24hRuleSilent() {
-  // If user chose "Hide Days" (showDays=false) but the timer exceeds 24h,
-  // automatically switch back to showing days.
-  const showDaysInput = document.querySelector('input[data-key="showDays"]');
-  if (!showDaysInput) return;
-  const wasChecked = !!showDaysInput.checked;
-  const timerType = document.getElementById('timer_type')?.value || 'fixed_date';
-  let seconds = null;
-  if (timerType === 'reload_based') {
-    const dur = Number(document.querySelector('input[name="duration_seconds"]')?.value);
-    if (Number.isFinite(dur) && dur > 0) seconds = dur;
-  } else {
-    const raw = (document.querySelector('input[name="target_datetime"]')?.value || '').trim();
-    if (raw) {
-      const target = new Date(raw);
-      if (!Number.isNaN(target.getTime())) {
-        const diff = Math.floor((target.getTime() - Date.now()) / 1000);
-        if (Number.isFinite(diff) && diff > 0) seconds = diff;
-      }
-    }
-  }
-
-  syncHideDaysToggleAvailability();
-  if (wasChecked && showDaysInput.checked) return; // already showing days
-
-  if (seconds != null && seconds > 86400 && !wasChecked) {
-    showDaysInput.checked = true; // "Hide Days?" -> No
-    showDaysInput.dispatchEvent(new Event('change', { bubbles: true }));
-    showDaysInput.dispatchEvent(new Event('input', { bubbles: true }));
-  }
 }
 
 function renderFields(metadata, savedOverrides = {}) {
@@ -2138,9 +2082,6 @@ function renderFields(metadata, savedOverrides = {}) {
           input.checked = !!value;
           input.id = `skin_${key}`;
           input.addEventListener('change', syncOverrides);
-          if (key === 'showDays') {
-            input.addEventListener('change', () => enforceHideDays24hRuleSilent());
-          }
           wrap.appendChild(group);
           wrap.appendChild(input);
           bindBoolPillGroupToCheckbox(group, input);
@@ -2504,14 +2445,13 @@ function syncOverrides() {
   
   // Fields that are hidden but should always use defaults
   // Note: accentColor is NOT hidden - it's needed for controlling tile/box/ring colors
-  const hiddenFields = new Set(['fontPath', 'font', 'showDays', 'showHours', 'showMinutes', 'showSeconds', 'layout', 'animation']);
+  const hiddenFields = new Set(['fontPath', 'font', 'showHours', 'showMinutes', 'showSeconds', 'layout', 'animation']);
   
   // For hidden fields:
   // - Font fields: don't store (use skin default)
-  // - show* fields: always set to true (always checked)
+  // - showHours/showMinutes/showSeconds: always visible in the GIF
   hiddenFields.forEach(key => {
     if (key.startsWith('show')) {
-      // Always set show* fields to true (always checked)
       data[key] = true;
     }
     // For font fields, don't store anything - will use skin default
@@ -2541,6 +2481,11 @@ function syncOverrides() {
 
     // Always persist borderColor to ensure the chosen/derived color is saved even if it matches defaults
     if (k === 'borderColor') {
+      data[k] = val;
+    }
+
+    // Always persist hide-days preference (showDays=false means "hide in last 24h").
+    if (k === 'showDays') {
       data[k] = val;
     }
   });
@@ -2786,14 +2731,12 @@ function schedulePostSkinSelectSync(isSwitchingToDifferentSkin, isEdit) {
       if (!isEdit) {
         applyDefaultSampleTimeIfEmpty();
       }
-      syncHideDaysToggleAvailability();
       syncOverrides();
     }, 100);
   } else {
     if (!isEdit) {
       applyDefaultSampleTimeIfEmpty();
     }
-    syncHideDaysToggleAvailability();
     generatePreviewFrame();
   }
 }
@@ -2835,8 +2778,6 @@ async function selectSkin(key) {
     // Ensure only General is expanded after skin selection.
     collapseAllSectionsExceptGeneral();
     setupCollapsibles(document);
-    enforceHideDays24hRuleSilent();
-    syncHideDaysToggleAvailability();
 
     if (isFirstLoad && Object.keys(baseOverrides).length > 0) {
       lastSkinOverrides = { ...baseOverrides };
@@ -2921,7 +2862,6 @@ async function resetDesignToDefaults() {
     // Ensure only General is expanded after reset-to-defaults.
     collapseAllSectionsExceptGeneral();
     setupCollapsibles(document);
-    enforceHideDays24hRuleSilent();
 
     resetStaticCustomTextInputsToDefault();
     resetHeadingTimerTypeAndTargetsToDefault();
@@ -2960,17 +2900,6 @@ document.addEventListener('DOMContentLoaded', () => {
         field.addEventListener('input', generatePreviewFrame);
       }
     });
-  }
-
-  const durationInput = document.querySelector('input[name="duration_seconds"]');
-  if (durationInput) {
-    durationInput.addEventListener('change', () => enforceHideDays24hRuleSilent());
-    durationInput.addEventListener('input', () => enforceHideDays24hRuleSilent());
-  }
-  const targetInput = document.querySelector('input[name="target_datetime"]');
-  if (targetInput) {
-    targetInput.addEventListener('change', () => enforceHideDays24hRuleSilent());
-    targetInput.addEventListener('input', () => enforceHideDays24hRuleSilent());
   }
 
   (async () => {
@@ -3012,8 +2941,6 @@ document.addEventListener('DOMContentLoaded', () => {
           // Ensure only General is expanded after edit-load render.
           collapseAllSectionsExceptGeneral();
           setupCollapsibles(document);
-          enforceHideDays24hRuleSilent();
-          syncHideDaysToggleAvailability();
           // Seed last overrides with saved values so switching skins keeps the user's base settings
           lastSkinOverrides = savedOverrides;
         
