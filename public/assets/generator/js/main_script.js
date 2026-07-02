@@ -23,6 +23,7 @@ function primeDocumentFontFaces(fontSpecs) {
 
 let isInitialLoad = true;
 let initialLoadComplete = false;
+let colorPickerIdSeq = 0;
 
 function toggleInputs(isUserAction = false) {
   const type = document.getElementById('timer_type').value;
@@ -774,7 +775,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const wrapper = customTextColorInput.closest('.modern-color-picker');
     const swatch = wrapper.querySelector('.color-picker-swatch');
     const hexSpan = wrapper.querySelector('.color-picker-hex');
-    const display = wrapper.querySelector('.color-picker-display');
     
     const updateDisplay = () => {
       const newColor = customTextColorInput.value;
@@ -786,8 +786,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     customTextColorInput.addEventListener('input', updateDisplay);
     customTextColorInput.addEventListener('change', updateDisplay);
-    display.addEventListener('click', () => customTextColorInput.click());
-    swatch.addEventListener('click', () => customTextColorInput.click());
   }
   
   // Sync distance field to skin_overrides when changed; keep GIF height in sync with padding
@@ -1869,13 +1867,16 @@ function renderFields(metadata, savedOverrides = {}) {
       input.value = colorValue;
       input.className = 'color-picker-native';
       input.setAttribute('data-key', key);
+      const pickerId = `color-picker-${key}-${++colorPickerIdSeq}`;
+      input.id = pickerId;
       
       // Display wrapper
       const displayWrapper = document.createElement('div');
       displayWrapper.className = 'color-picker-input-wrapper';
       
-      const display = document.createElement('div');
+      const display = document.createElement('label');
       display.className = 'color-picker-display';
+      display.htmlFor = pickerId;
       
       const hexSpan = document.createElement('span');
       hexSpan.className = 'color-picker-hex';
@@ -1898,10 +1899,6 @@ function renderFields(metadata, savedOverrides = {}) {
       
       input.addEventListener('input', updateDisplay);
       input.addEventListener('change', updateDisplay);
-      
-      // Make display clickable
-      display.addEventListener('click', () => input.click());
-      swatch.addEventListener('click', () => input.click());
       
       colorWrapper.appendChild(swatch);
       colorWrapper.appendChild(displayWrapper);
