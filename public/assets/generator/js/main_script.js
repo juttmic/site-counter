@@ -1908,7 +1908,7 @@ function renderFields(metadata, savedOverrides = {}) {
     } else if (key === 'finalMessageColor' || key === 'finalMessageFontSize') {
       container.className = 'col-12 col-sm-6';
     } else {
-      container.className = isSmall ? 'col-12 col-lg-6 col-xxl-4' : 'col-12';
+      container.className = isSmall ? 'col-12 col-sm-6 col-md-4' : 'col-12';
     }
     if (!useSwitch) {
       container.innerHTML = `<label class="form-label small mb-1">${label}</label>`;
@@ -2123,7 +2123,7 @@ function renderFields(metadata, savedOverrides = {}) {
       const value = resolveFieldValue(field);
       const fieldContainer = createFieldInput(field, value);
       const classes = fieldContainer.className.split(' ').filter(c => !c.startsWith('col-'));
-      fieldContainer.className = 'col-12 col-lg-6 col-xxl-4 ' + classes.join(' ').trim();
+      fieldContainer.className = 'col-12 col-sm-4 ' + classes.join(' ').trim();
       firstRow.appendChild(fieldContainer);
     });
     body.appendChild(firstRow);
@@ -2136,7 +2136,7 @@ function renderFields(metadata, savedOverrides = {}) {
         const value = resolveFieldValue(field);
         const fieldContainer = createFieldInput(field, value);
         const classes = fieldContainer.className.split(' ').filter(c => !c.startsWith('col-'));
-        fieldContainer.className = 'col-12 col-lg-6 ' + classes.join(' ').trim();
+        fieldContainer.className = 'col-12 col-sm-6 ' + classes.join(' ').trim();
         row.appendChild(fieldContainer);
       });
       body.appendChild(row);
@@ -2148,12 +2148,12 @@ function renderFields(metadata, savedOverrides = {}) {
       const row = document.createElement('div');
       row.className = 'row g-3';
       fields.slice(i, i + 2).forEach(field => {
-        const value = resolveFieldValue(field);
-        const fieldContainer = createFieldInput(field, value);
-        const classes = fieldContainer.className.split(' ').filter(c => !c.startsWith('col-'));
-        fieldContainer.className = 'col-12 col-lg-6 ' + classes.join(' ').trim();
-        row.appendChild(fieldContainer);
-      });
+      const value = resolveFieldValue(field);
+      const fieldContainer = createFieldInput(field, value);
+      const classes = fieldContainer.className.split(' ').filter(c => !c.startsWith('col-'));
+      fieldContainer.className = 'col-12 col-sm-6 ' + classes.join(' ').trim();
+      row.appendChild(fieldContainer);
+    });
       body.appendChild(row);
     }
   }
@@ -2223,8 +2223,8 @@ function renderFields(metadata, savedOverrides = {}) {
       row2.className = 'row g-3';
 
       textCol.className = 'col-12';
-      colorCol.className = 'col-12 col-lg-6';
-      sizeCol.className = 'col-12 col-lg-6';
+      colorCol.className = 'col-12 col-sm-6';
+      sizeCol.className = 'col-12 col-sm-6';
 
       row1.appendChild(textCol);
       row2.appendChild(colorCol);
