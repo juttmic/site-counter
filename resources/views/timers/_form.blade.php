@@ -153,26 +153,40 @@
     display: flex;
     align-items: center;
     gap: 0.75rem;
+    flex-wrap: wrap;
+    min-width: 0;
   }
   
   .color-picker-swatch {
     position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     width: 48px;
     height: 48px;
     border-radius: 0.5rem;
     border: 2px solid #e5e7eb;
     background: #fff;
+    padding: 0;
     cursor: pointer;
     transition: all 0.2s ease;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     overflow: hidden;
     flex-shrink: 0;
+    appearance: none;
+    -webkit-appearance: none;
   }
   
   .color-picker-swatch:hover {
     border-color: #3b82f6;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     transform: translateY(-1px);
+  }
+
+  .color-picker-swatch:focus-visible {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
   }
   
   .color-picker-swatch::before {
@@ -203,25 +217,26 @@
   }
   
   .color-picker-input-wrapper {
-    flex: 1;
+    flex: 1 1 180px;
     position: relative;
     min-height: 48px;
+    min-width: 0;
   }
   
   .color-picker-input-wrapper input[type="color"] {
     position: absolute;
-    inset: 0;
+    width: 1px;
+    height: 1px;
     opacity: 0;
-    width: 100%;
-    height: 100%;
-    cursor: pointer;
-    z-index: 2;
+    pointer-events: none;
     border: 0;
     padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
     background: transparent;
-    -webkit-appearance: none;
-    appearance: none;
-    touch-action: manipulation;
   }
   
   .color-picker-display {
@@ -232,12 +247,15 @@
     border: 1.5px solid #e5e7eb;
     border-radius: 0.5rem;
     background: #fff;
-    cursor: pointer;
     transition: all 0.2s ease;
     font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
     font-size: 0.875rem;
     color: #374151;
     min-height: 48px;
+    min-width: 0;
+    width: 100%;
+    pointer-events: none;
+    user-select: none;
   }
   
   .color-picker-display:hover {
@@ -245,26 +263,20 @@
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
   }
   
-  .color-picker-display:focus-within {
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-    outline: none;
-  }
-  
   .color-picker-hex {
     flex: 1;
     font-weight: 600;
     letter-spacing: 0.05em;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   
   .color-picker-icon {
     color: #6b7280;
     font-size: 1rem;
     transition: color 0.2s ease;
-  }
-  
-  .color-picker-display:hover .color-picker-icon {
-    color: #3b82f6;
   }
 
   /* Toggle pills */
@@ -863,19 +875,26 @@
                                         @endphp
                                         <label class="form-label small mb-1">Text Color</label>
                                         <div class="modern-color-picker">
-                                            <div class="color-picker-swatch" style="--swatch-color: {{ $customTextColor }};"></div>
+                                            <button
+                                                type="button"
+                                                class="color-picker-swatch"
+                                                style="--swatch-color: {{ $customTextColor }};"
+                                                aria-label="Open text color picker"
+                                                title="Open text color picker"
+                                            ></button>
                                             <div class="color-picker-input-wrapper">
+                                                <div class="color-picker-display">
+                                                    <span class="color-picker-hex">{{ strtoupper($customTextColor) }}</span>
+                                                    <i class="bi bi-palette color-picker-icon"></i>
+                                                </div>
                                                 <input
                                                     type="color"
                                                     id="custom_text_color_picker"
                                                     name="customTextColor"
                                                     class="color-picker-native"
+                                                    data-key="customTextColor"
                                                     value="{{ $customTextColor }}"
                                                 >
-                                                <label class="color-picker-display" for="custom_text_color_picker">
-                                                    <span class="color-picker-hex">{{ strtoupper($customTextColor) }}</span>
-                                                    <i class="bi bi-palette color-picker-icon"></i>
-                                                </label>
                                             </div>
                                         </div>
                                     </div>
@@ -957,4 +976,4 @@
   window.COUNTER_FONT_BASE_URL = "{{ rtrim(asset('assets/fonts'), '/') }}";
 </script>
 
-<script src="{{ asset('assets/generator/js/main_script.js?v=5') }}" defer></script>
+<script src="{{ asset('assets/generator/js/main_script.js?v=6') }}" defer></script>

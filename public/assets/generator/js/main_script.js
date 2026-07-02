@@ -773,13 +773,18 @@ document.addEventListener('DOMContentLoaded', function() {
   const customTextColorInput = document.querySelector('input[name="customTextColor"].color-picker-native');
   if (customTextColorInput) {
     const wrapper = customTextColorInput.closest('.modern-color-picker');
-    const swatch = wrapper.querySelector('.color-picker-swatch');
-    const hexSpan = wrapper.querySelector('.color-picker-hex');
+    const swatch = wrapper?.querySelector('.color-picker-swatch');
+    const hexSpan = wrapper?.querySelector('.color-picker-hex');
+    if (swatch) {
+      swatch.addEventListener('click', () => {
+        customTextColorInput.click();
+      });
+    }
     
     const updateDisplay = () => {
       const newColor = customTextColorInput.value;
-      swatch.style.setProperty('--swatch-color', newColor);
-      hexSpan.textContent = newColor.toUpperCase();
+      if (swatch) swatch.style.setProperty('--swatch-color', newColor);
+      if (hexSpan) hexSpan.textContent = newColor.toUpperCase();
       // Sync to skin_overrides when changed
       syncOverrides();
     };
@@ -1808,6 +1813,65 @@ function renderFields(metadata, savedOverrides = {}) {
     return null;
   }
 
+  function createColorPickerControl(label, key, value) {
+    const colorValue = /^#/.test(value) ? value : (defaults[key] || '#000000');
+
+    const colorWrapper = document.createElement('div');
+    colorWrapper.className = 'modern-color-picker';
+
+    const swatch = document.createElement('button');
+    swatch.type = 'button';
+    swatch.className = 'color-picker-swatch';
+    swatch.setAttribute('aria-label', `Open ${label} color picker`);
+    swatch.setAttribute('title', `Open ${label} color picker`);
+    swatch.style.setProperty('--swatch-color', colorValue);
+
+    const input = document.createElement('input');
+    input.type = 'color';
+    input.value = colorValue;
+    input.className = 'color-picker-native';
+    input.setAttribute('data-key', key);
+    input.setAttribute('aria-hidden', 'true');
+    input.tabIndex = -1;
+    input.id = `color-picker-${key}-${++colorPickerIdSeq}`;
+
+    const displayWrapper = document.createElement('div');
+    displayWrapper.className = 'color-picker-input-wrapper';
+
+    const display = document.createElement('div');
+    display.className = 'color-picker-display';
+
+    const hexSpan = document.createElement('span');
+    hexSpan.className = 'color-picker-hex';
+    hexSpan.textContent = colorValue.toUpperCase();
+
+    const icon = document.createElement('i');
+    icon.className = 'bi bi-palette color-picker-icon';
+
+    display.appendChild(hexSpan);
+    display.appendChild(icon);
+    displayWrapper.appendChild(display);
+    displayWrapper.appendChild(input);
+
+    swatch.addEventListener('click', () => {
+      input.click();
+    });
+
+    const updateDisplay = () => {
+      const newColor = input.value;
+      swatch.style.setProperty('--swatch-color', newColor);
+      hexSpan.textContent = newColor.toUpperCase();
+    };
+
+    input.addEventListener('input', updateDisplay);
+    input.addEventListener('change', updateDisplay);
+
+    colorWrapper.appendChild(swatch);
+    colorWrapper.appendChild(displayWrapper);
+
+    return { colorWrapper, input };
+  }
+
   const createFieldInput = (field, value, options = {}) => {
     const key = field.key;
     let label = field.label || key;
@@ -1844,70 +1908,19 @@ function renderFields(metadata, savedOverrides = {}) {
     } else if (key === 'finalMessageColor' || key === 'finalMessageFontSize') {
       container.className = 'col-12 col-sm-6';
     } else {
-      container.className = isSmall ? 'col-12 col-sm-6 col-md-4' : 'col-12';
+      container.className = isSmall ? 'col-12 col-lg-6 col-xxl-4' : 'col-12';
     }
     if (!useSwitch) {
       container.innerHTML = `<label class="form-label small mb-1">${label}</label>`;
     }
     let input;
     if (type === 'color') {
-      // Create modern color picker wrapper
-      const colorWrapper = document.createElement('div');
-      colorWrapper.className = 'modern-color-picker';
-      
-      // Color swatch
-      const swatch = document.createElement('div');
-      swatch.className = 'color-picker-swatch';
-      const colorValue = /^#/.test(value) ? value : (defaults[key] || '#000000');
-      swatch.style.setProperty('--swatch-color', colorValue);
-      
-      // Hidden native color input
-      input = document.createElement('input');
-      input.type = 'color';
-      input.value = colorValue;
-      input.className = 'color-picker-native';
-      input.setAttribute('data-key', key);
-      const pickerId = `color-picker-${key}-${++colorPickerIdSeq}`;
-      input.id = pickerId;
-      
-      // Display wrapper
-      const displayWrapper = document.createElement('div');
-      displayWrapper.className = 'color-picker-input-wrapper';
-      
-      const display = document.createElement('label');
-      display.className = 'color-picker-display';
-      display.htmlFor = pickerId;
-      
-      const hexSpan = document.createElement('span');
-      hexSpan.className = 'color-picker-hex';
-      hexSpan.textContent = colorValue.toUpperCase();
-      
-      const icon = document.createElement('i');
-      icon.className = 'bi bi-palette color-picker-icon';
-      
-      display.appendChild(hexSpan);
-      display.appendChild(icon);
-      displayWrapper.appendChild(display);
-      displayWrapper.appendChild(input);
-      
-      // Update display when color changes
-      const updateDisplay = () => {
-        const newColor = input.value;
-        swatch.style.setProperty('--swatch-color', newColor);
-        hexSpan.textContent = newColor.toUpperCase();
-      };
-      
-      input.addEventListener('input', updateDisplay);
-      input.addEventListener('change', updateDisplay);
-      
-      colorWrapper.appendChild(swatch);
-      colorWrapper.appendChild(displayWrapper);
-      
-      // Replace container content
+      const picker = createColorPickerControl(label, key, value);
+      input = picker.input;
+
       container.innerHTML = `<label class="form-label small mb-1">${label}</label>`;
-      container.appendChild(colorWrapper);
-      
-      // Store reference for sync and add event listener
+      container.appendChild(picker.colorWrapper);
+
       input.dataset.key = key;
       input.addEventListener('change', syncOverrides);
       return container;
@@ -2110,7 +2123,7 @@ function renderFields(metadata, savedOverrides = {}) {
       const value = resolveFieldValue(field);
       const fieldContainer = createFieldInput(field, value);
       const classes = fieldContainer.className.split(' ').filter(c => !c.startsWith('col-'));
-      fieldContainer.className = 'col-12 col-sm-4 ' + classes.join(' ').trim();
+      fieldContainer.className = 'col-12 col-lg-6 col-xxl-4 ' + classes.join(' ').trim();
       firstRow.appendChild(fieldContainer);
     });
     body.appendChild(firstRow);
@@ -2123,7 +2136,7 @@ function renderFields(metadata, savedOverrides = {}) {
         const value = resolveFieldValue(field);
         const fieldContainer = createFieldInput(field, value);
         const classes = fieldContainer.className.split(' ').filter(c => !c.startsWith('col-'));
-        fieldContainer.className = 'col-12 col-sm-6 ' + classes.join(' ').trim();
+        fieldContainer.className = 'col-12 col-lg-6 ' + classes.join(' ').trim();
         row.appendChild(fieldContainer);
       });
       body.appendChild(row);
@@ -2138,7 +2151,7 @@ function renderFields(metadata, savedOverrides = {}) {
         const value = resolveFieldValue(field);
         const fieldContainer = createFieldInput(field, value);
         const classes = fieldContainer.className.split(' ').filter(c => !c.startsWith('col-'));
-        fieldContainer.className = 'col-12 col-sm-6 ' + classes.join(' ').trim();
+        fieldContainer.className = 'col-12 col-lg-6 ' + classes.join(' ').trim();
         row.appendChild(fieldContainer);
       });
       body.appendChild(row);
@@ -2210,8 +2223,8 @@ function renderFields(metadata, savedOverrides = {}) {
       row2.className = 'row g-3';
 
       textCol.className = 'col-12';
-      colorCol.className = 'col-12 col-sm-6';
-      sizeCol.className = 'col-12 col-sm-6';
+      colorCol.className = 'col-12 col-lg-6';
+      sizeCol.className = 'col-12 col-lg-6';
 
       row1.appendChild(textCol);
       row2.appendChild(colorCol);
