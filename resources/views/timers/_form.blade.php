@@ -205,15 +205,23 @@
   .color-picker-input-wrapper {
     flex: 1;
     position: relative;
+    min-height: 48px;
   }
   
   .color-picker-input-wrapper input[type="color"] {
     position: absolute;
+    inset: 0;
     opacity: 0;
     width: 100%;
     height: 100%;
     cursor: pointer;
     z-index: 2;
+    border: 0;
+    padding: 0;
+    background: transparent;
+    -webkit-appearance: none;
+    appearance: none;
+    touch-action: manipulation;
   }
   
   .color-picker-display {
@@ -857,11 +865,17 @@
                                         <div class="modern-color-picker">
                                             <div class="color-picker-swatch" style="--swatch-color: {{ $customTextColor }};"></div>
                                             <div class="color-picker-input-wrapper">
-                                                <div class="color-picker-display">
+                                                <input
+                                                    type="color"
+                                                    id="custom_text_color_picker"
+                                                    name="customTextColor"
+                                                    class="color-picker-native"
+                                                    value="{{ $customTextColor }}"
+                                                >
+                                                <label class="color-picker-display" for="custom_text_color_picker">
                                                     <span class="color-picker-hex">{{ strtoupper($customTextColor) }}</span>
                                                     <i class="bi bi-palette color-picker-icon"></i>
-                                                </div>
-                                                <input type="color" name="customTextColor" class="color-picker-native" value="{{ $customTextColor }}">
+                                                </label>
                                             </div>
                                         </div>
                                     </div>
