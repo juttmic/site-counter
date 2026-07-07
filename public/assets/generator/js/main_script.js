@@ -775,12 +775,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const wrapper = customTextColorInput.closest('.modern-color-picker');
     const swatch = wrapper?.querySelector('.color-picker-swatch');
     const hexSpan = wrapper?.querySelector('.color-picker-hex');
-    if (swatch) {
-      swatch.addEventListener('click', () => {
-        customTextColorInput.click();
-      });
-    }
-    
+
     const updateDisplay = () => {
       const newColor = customTextColorInput.value;
       if (swatch) swatch.style.setProperty('--swatch-color', newColor);
@@ -1819,8 +1814,7 @@ function renderFields(metadata, savedOverrides = {}) {
     const colorWrapper = document.createElement('div');
     colorWrapper.className = 'modern-color-picker';
 
-    const swatch = document.createElement('button');
-    swatch.type = 'button';
+    const swatch = document.createElement('label');
     swatch.className = 'color-picker-swatch';
     swatch.setAttribute('aria-label', `Open ${label} color picker`);
     swatch.setAttribute('title', `Open ${label} color picker`);
@@ -1834,6 +1828,7 @@ function renderFields(metadata, savedOverrides = {}) {
     input.setAttribute('aria-hidden', 'true');
     input.tabIndex = -1;
     input.id = `color-picker-${key}-${++colorPickerIdSeq}`;
+    swatch.htmlFor = input.id;
 
     const displayWrapper = document.createElement('div');
     displayWrapper.className = 'color-picker-input-wrapper';
@@ -1852,10 +1847,6 @@ function renderFields(metadata, savedOverrides = {}) {
     display.appendChild(icon);
     displayWrapper.appendChild(display);
     displayWrapper.appendChild(input);
-
-    swatch.addEventListener('click', () => {
-      input.click();
-    });
 
     const updateDisplay = () => {
       const newColor = input.value;

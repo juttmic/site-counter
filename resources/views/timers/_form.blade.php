@@ -875,13 +875,13 @@
                                         @endphp
                                         <label class="form-label small mb-1">Text Color</label>
                                         <div class="modern-color-picker">
-                                            <button
-                                                type="button"
+                                            <label
+                                                for="custom_text_color_picker"
                                                 class="color-picker-swatch"
                                                 style="--swatch-color: {{ $customTextColor }};"
                                                 aria-label="Open text color picker"
                                                 title="Open text color picker"
-                                            ></button>
+                                            ></label>
                                             <div class="color-picker-input-wrapper">
                                                 <div class="color-picker-display">
                                                     <span class="color-picker-hex">{{ strtoupper($customTextColor) }}</span>
@@ -976,4 +976,4 @@
   window.COUNTER_FONT_BASE_URL = "{{ rtrim(asset('assets/fonts'), '/') }}";
 </script>
 
-<script src="{{ asset('assets/generator/js/main_script.js?v=6') }}" defer></script>
+<script src="{{ asset('assets/generator/js/main_script.js?v=7') }}" defer></script>
